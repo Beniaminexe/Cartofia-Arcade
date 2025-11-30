@@ -1,0 +1,261 @@
+
+# Cartofia Platform – Proxmox + Discord + Web Arcade
+
+> Self-hosted game platform built on Proxmox, Discord bots, and WebAssembly (pygbag).  
+> Starts as a home for the Cartofia Pygame game, and grows into a mini web arcade.
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [High-Level Architecture](#high-level-architecture)
+- [Components](#components)
+- [Networking](#networking)
+- [Current Features](#current-features)
+- [Roadmap](#roadmap)
+- [Inspirations & Credits](#inspirations--credits)
+- [Disclaimer](#disclaimer)
+
+---
+
+## Overview
+
+This project turns a Proxmox host into a small self-hosted game platform:
+
+- A **Discord bot** can start/stop game containers on Proxmox.
+- Games (starting with **Cartofia**, a Pygame project) are compiled to **WebAssembly** using `pygbag`.
+- A dedicated **gateway container** exposes HTTPS endpoints and routes traffic to internal game containers.
+- Over time, the platform is intended to host **multiple browser-playable games and tools**.
+
+The main goals:
+
+- Keep bandwidth usage low (no video streaming, mostly static asset hosting).
+- Use **Proxmox containers (LXC)** for lightweight, isolated services.
+- Build a clean architecture that can grow into “a website with games and other stuff”.
+
+---
+
+## High-Level Architecture
+
+Logical view:
+
+```text
+Discord  ──>  CT1000 (Bot / Orchestration)  ──>  Proxmox API
+                                               │
+Internet ──> Router ──> CT1010 (Gateway / Reverse Proxy) ──> vmbr2 (services network)
+                                                          ├─ CT2000 (Cartofia WebAssembly)
+                                                          ├─ CT2100 (Future: Games Portal)
+                                                          └─ CT22xx... (Future: Other Games/Apps)
+
+
+Bridges on Proxmox:
+
+vmbr0 – external LAN / WAN access (existing).
+
+vmbr1 – unsafe / vulnerable lab (existing).
+
+vmbr2 – new internal network for game and service containers.
+
+Components
+Proxmox Host
+
+Runs all LXC containers.
+
+Provides:
+
+vmbr0 – external bridge.
+
+vmbr1 – unsafe lab.
+
+vmbr2 – internal “games & services” bridge, e.g. 10.22.0.1/24.
+
+CT1000 – Bot / Orchestration
+
+Role: control plane.
+
+Responsibilities:
+
+Run Discord bot(s).
+
+Talk to Proxmox API using an API token.
+
+Start/stop specific containers (e.g. CT2000) on demand.
+
+Post status updates and URLs into Discord.
+
+Network:
+
+Attached to vmbr0 for outbound access to Discord and Proxmox API.
+
+Does not expose public web endpoints.
+
+CT1010 – Gateway / Front Door
+
+Role: public web entry point.
+
+Responsibilities:
+
+Terminate HTTPS (TLS).
+
+Reverse proxy for internal services on vmbr2.
+
+Optionally run a Cloudflare Tunnel or similar, if needed.
+
+Example routing:
+
+https://cartofia.example.com → CT2000.
+
+https://games.example.com → CT2100 (future portal).
+
+Network:
+
+One interface on vmbr0 (public/LAN).
+
+One interface on vmbr2 (internal services).
+
+CT2000 – Cartofia Web Game
+
+Role: host the WebAssembly build of Cartofia.
+
+Responsibilities:
+
+Serve static files produced by pygbag:
+
+index.html, JavaScript, .wasm, assets.
+
+Network:
+
+Only attached to vmbr2 (e.g. 10.22.0.10).
+
+No direct exposure to the internet; only reachable through CT1010.
+
+Future CTs
+
+CT2100 – Games Portal
+
+A main site listing games, tools, and links.
+
+CT22xx – Additional Games / Apps
+
+Each game or app can be a separate CT, or multiple games can share one CT.
+
+CT3000 – Shared Services (optional)
+
+Databases, metrics, etc., shared across games.
+
+Networking
+
+vmbr2 is created as an internal bridge with no physical NIC:
+
+Example configuration:
+
+Bridge: vmbr2
+
+IPv4: 10.22.0.1/24
+
+No bridge ports
+
+Internal IP scheme:
+
+Proxmox host (on vmbr2): 10.22.0.1
+
+CT1010 (gateway): 10.22.0.2
+
+CT2000 (Cartofia): 10.22.0.10
+
+Future CTs: 10.22.0.x
+
+External access:
+
+Router forwards ports 80/443 to CT1010 (vmbr0 IP), or
+
+A Cloudflare Tunnel from CT1010 exposes selected hostnames without direct port forwarding.
+
+All internal HTTP traffic stays on vmbr2.
+
+Current Features
+
+Defined network layout for:
+
+Unsafe lab (vmbr1),
+
+Games/services (vmbr2).
+
+Planned separation of concerns:
+
+Bot/orchestration (CT1000),
+
+Public gateway (CT1010),
+
+Game hosting (CT2000).
+
+Architecture ready for:
+
+Pygame → WebAssembly builds (using pygbag),
+
+Publishing games via HTTPS on subdomains,
+
+Discord commands that start/stop game containers.
+
+Implementation is intentionally staged: infrastructure first, game hosting and automation next.
+
+Roadmap
+
+Phase 1 – Infrastructure
+
+ Design Proxmox network layout (vmbr2 for services).
+
+ Create vmbr2 and verify internal connectivity.
+
+ Create CT1010 (gateway) with reverse proxy.
+
+ Create CT2000 with a simple “Cartofia coming soon” static page.
+
+ Configure domain + HTTPS (via Let’s Encrypt or Cloudflare).
+
+Phase 2 – Cartofia WebAssembly
+
+ Build Cartofia using pygbag to WebAssembly.
+
+ Deploy Cartofia WASM build into CT2000.
+
+ Expose Cartofia at https://cartofia.example.com via CT1010.
+
+ Basic performance and bandwidth testing with a few friends.
+
+Phase 3 – Discord Integration
+
+ Implement Discord bot in CT1000 with /play_cartofia command.
+
+ Wire bot to Proxmox API to start/stop CT2000.
+
+ Add “loading…” / status messages while CT2000 boots.
+
+ Permissions and rate limiting (which roles can start/stop games).
+
+Phase 4 – Platform Expansion
+
+ Add CT2100 as a main games portal.
+
+ Add additional games/tool CTs.
+
+ Shared services CT (databases, metrics, logging).
+
+ Documentation on how to add a new game to the platform.
+
+Inspirations & Credits
+
+Cartofia – original Pygame project.
+
+Proxmox and LXC for containerized infrastructure.
+
+pygbag for running Pygame in the browser via WebAssembly.
+
+Disclaimer
+
+This project is a personal/home lab setup and is not intended as a production-grade hosting environment.
+Security, hardening, and resource limits should be adapted to the specific deployment scenario.
+
+
+---
