@@ -1,7 +1,6 @@
 # src/cartofia_bot/commands/basic.py
-import asyncio
-from __future__ import annotations
 
+import asyncio
 import logging
 from typing import List
 
@@ -9,7 +8,8 @@ import discord
 from discord import app_commands
 
 from cartofia_bot.config import BotConfig
-from cartofia_bot.proxmox_client import ProxmoxClient, ProxmoxConfig
+from cartofia_bot.proxmox_client import ProxmoxClient
+
 log = logging.getLogger(__name__)
 
 
@@ -18,6 +18,10 @@ def _guild_objects(config: BotConfig) -> List[discord.Object]:
 
 
 def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
+    """
+    Register basic commands (ct_ping, cartofia_status) on the given CommandTree.
+    Commands are explicitly attached to the configured guilds.
+    """
     if not config.guild_ids:
         log.warning("No guild IDs configured; skipping command registration.")
         return
@@ -52,6 +56,7 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
             )
             return
 
+        # Show "thinking..." while we talk to Proxmox
         await interaction.response.defer(ephemeral=True, thinking=True)
 
         try:
@@ -69,19 +74,20 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
         mem = data.get("mem")
         maxmem = data.get("maxmem")
 
-        # basic formatting
         mem_mb = mem / 1024**2 if isinstance(mem, (int, float)) else None
         maxmem_mb = maxmem / 1024**2 if isinstance(maxmem, (int, float)) else None
 
         lines = [f"Status: **{status}**"]
-        if cpu is not None:
+        if isinstance(cpu, (int, float)):
             lines.append(f"CPU: `{cpu:.2%}`")
         if mem_mb is not None and maxmem_mb is not None:
             lines.append(f"RAM: `{mem_mb:.0f} / {maxmem_mb:.0f} MiB`")
 
         await interaction.followup.send("\n".join(lines), ephemeral=True)
 
+    # Attach commands to each guild
     for guild in guilds:
+        log.info("Registering commands for guild %s", guild.id)
         tree.add_command(ct_ping, guild=guild)
         tree.add_command(cartofia_status, guild=guild)
 
