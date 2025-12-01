@@ -89,13 +89,12 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
             )
             return
 
-        await interaction.response.defer(ephemeral=True, thinking=True)
-
+        # Do the HTTP call in a thread, but keep it quick so we can reply in time
         try:
             data = await asyncio.to_thread(prox_client.get_cartofia_status)
         except Exception as exc:
             log.exception("Failed to fetch Cartofia status from Proxmox")
-            await interaction.followup.send(
+            await interaction.response.send_message(
                 f"Error talking to Proxmox: `{type(exc).__name__}: {exc}`",
                 ephemeral=True,
             )
@@ -143,18 +142,9 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
                 text=f"Node: {config.proxmox.node} • CTID: {config.proxmox.ct_cartofia_id}"
             )
 
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    # ---- helpers for admin-only commands ----
-
-    def _is_admin(interaction: discord.Interaction) -> bool:
-        # Guild admins only (built-in Administrator permission)
-        member = interaction.user
-        if not isinstance(member, discord.Member):
-            return False
-        return member.guild_permissions.administrator
-
-    # ---- cartofia_start (admin only) ----
+    # ---- cartofia_start / stop helpers ----
 
     @app_commands.command(
         name="cartofia_start",
@@ -169,12 +159,10 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
             )
             return
 
-        await interaction.response.defer(ephemeral=True, thinking=True)
-
         try:
             status = await asyncio.to_thread(prox_client.get_cartofia_status)
             if status.get("status") == "running":
-                await interaction.followup.send(
+                await interaction.response.send_message(
                     "Cartofia is already **running** ✅",
                     ephemeral=True,
                 )
@@ -183,13 +171,13 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
             await asyncio.to_thread(prox_client.start_cartofia)
         except Exception as exc:
             log.exception("Failed to start Cartofia")
-            await interaction.followup.send(
+            await interaction.response.send_message(
                 f"Error starting Cartofia: `{type(exc).__name__}: {exc}`",
                 ephemeral=True,
             )
             return
 
-        await interaction.followup.send(
+        await interaction.response.send_message(
             "Start request sent to Proxmox for Cartofia (CT2000). "
             "Give it a few seconds to boot.",
             ephemeral=True,
@@ -200,26 +188,14 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
         interaction: discord.Interaction, error: app_commands.AppCommandError
     ) -> None:
         if isinstance(error, app_commands.CheckFailure):
-            # Not admin
-            if not interaction.response.is_done():
-                await interaction.response.send_message(
-                    "You must be a server **administrator** to start Cartofia.",
-                    ephemeral=True,
-                )
-            else:
-                await interaction.followup.send(
-                    "You must be a server **administrator** to start Cartofia.",
-                    ephemeral=True,
-                )
+            msg = "You must be a server **administrator** to start Cartofia."
         else:
             log.exception("Unexpected error in cartofia_start", exc_info=error)
-            if not interaction.response.is_done():
-                await interaction.response.send_message(
-                    "Unexpected error while handling the command.",
-                    ephemeral=True,
-                )
-
-    # ---- cartofia_stop (admin only) ----
+            msg = "Unexpected error while handling the command."
+        if not interaction.response.is_done():
+            await interaction.response.send_message(msg, ephemeral=True)
+        else:
+            await interaction.followup.send(msg, ephemeral=True)
 
     @app_commands.command(
         name="cartofia_stop",
@@ -234,12 +210,10 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
             )
             return
 
-        await interaction.response.defer(ephemeral=True, thinking=True)
-
         try:
             status = await asyncio.to_thread(prox_client.get_cartofia_status)
             if status.get("status") == "stopped":
-                await interaction.followup.send(
+                await interaction.response.send_message(
                     "Cartofia is already **stopped** ✅",
                     ephemeral=True,
                 )
@@ -248,13 +222,13 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
             await asyncio.to_thread(prox_client.stop_cartofia)
         except Exception as exc:
             log.exception("Failed to stop Cartofia")
-            await interaction.followup.send(
+            await interaction.response.send_message(
                 f"Error stopping Cartofia: `{type(exc).__name__}: {exc}`",
                 ephemeral=True,
             )
             return
 
-        await interaction.followup.send(
+        await interaction.response.send_message(
             "Stop request sent to Proxmox for Cartofia (CT2000).",
             ephemeral=True,
         )
@@ -264,23 +238,14 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
         interaction: discord.Interaction, error: app_commands.AppCommandError
     ) -> None:
         if isinstance(error, app_commands.CheckFailure):
-            if not interaction.response.is_done():
-                await interaction.response.send_message(
-                    "You must be a server **administrator** to stop Cartofia.",
-                    ephemeral=True,
-                )
-            else:
-                await interaction.followup.send(
-                    "You must be a server **administrator** to stop Cartofia.",
-                    ephemeral=True,
-                )
+            msg = "You must be a server **administrator** to stop Cartofia."
         else:
             log.exception("Unexpected error in cartofia_stop", exc_info=error)
-            if not interaction.response.is_done():
-                await interaction.response.send_message(
-                    "Unexpected error while handling the command.",
-                    ephemeral=True,
-                )
+            msg = "Unexpected error while handling the command."
+        if not interaction.response.is_done():
+            await interaction.response.send_message(msg, ephemeral=True)
+        else:
+            await interaction.followup.send(msg, ephemeral=True)
 
     # ---- register commands on each guild ----
 
@@ -292,6 +257,6 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
         tree.add_command(cartofia_stop, guild=guild)
 
     log.info(
-        "Registered commands: %s",
-        ", ".join(cmd.name for cmd in tree.get_commands())
+        "Registered commands (global only shown here): %s",
+        ", ".join(cmd.name for cmd in tree.get_commands()),
     )
