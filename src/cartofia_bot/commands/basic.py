@@ -46,7 +46,7 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
     Register basic commands on the given CommandTree:
 
       - /ct_ping
-      - /cartofia_status
+      - /cartofia_info   (new status command with embed)
       - /cartofia_start  (admin only)
       - /cartofia_stop   (admin only)
     """
@@ -75,13 +75,13 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
             ephemeral=True,
         )
 
-    # ---- cartofia_status ----
+    # ---- cartofia_info (status embed) ----
 
     @app_commands.command(
-        name="cartofia_status",
-        description="Show the current Cartofia container status.",
+        name="cartofia_info",
+        description="Show the current Cartofia container status (with embed).",
     )
-    async def cartofia_status(interaction: discord.Interaction) -> None:
+    async def cartofia_info(interaction: discord.Interaction) -> None:
         if prox_client is None:
             await interaction.response.send_message(
                 "Proxmox is not configured yet; ask the admin to set PROXMOX_* env vars.",
@@ -89,7 +89,7 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
             )
             return
 
-        # Do the HTTP call in a thread, but keep it quick so we can reply in time
+        # quick blocking HTTP in a thread; should be well under 3s
         try:
             data = await asyncio.to_thread(prox_client.get_cartofia_status)
         except Exception as exc:
@@ -110,7 +110,6 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
         maxmem_mb = maxmem / 1024**2 if isinstance(maxmem, (int, float)) else None
         uptime_str = _format_uptime(uptime_seconds)
 
-        # Choose colour
         if status == "running":
             colour = discord.Colour.green()
         elif status == "stopped":
@@ -144,7 +143,7 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    # ---- cartofia_start / stop helpers ----
+    # ---- admin-only start / stop ----
 
     @app_commands.command(
         name="cartofia_start",
@@ -252,7 +251,7 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
     for guild in guilds:
         log.info("Registering commands for guild %s", guild.id)
         tree.add_command(ct_ping, guild=guild)
-        tree.add_command(cartofia_status, guild=guild)
+        tree.add_command(cartofia_info, guild=guild)
         tree.add_command(cartofia_start, guild=guild)
         tree.add_command(cartofia_stop, guild=guild)
 
