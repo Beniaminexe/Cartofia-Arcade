@@ -19,8 +19,12 @@ def _guild_objects(config: BotConfig) -> List[discord.Object]:
 
 def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
     """
-    Register basic commands (ct_ping, cartofia_status) on the given CommandTree.
-    Commands are explicitly attached to the configured guilds.
+    Register basic commands on the given CommandTree:
+
+      - /ct_ping
+      - /cartofia_status
+      - /cartofia_start
+      - /cartofia_stop
     """
     if not config.guild_ids:
         log.warning("No guild IDs configured; skipping command registration.")
@@ -29,8 +33,9 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
     prox_client: ProxmoxClient | None = None
     if config.proxmox is not None:
         prox_client = ProxmoxClient(config.proxmox)
+        log.info("Proxmox client initialised for host %s", config.proxmox.host)
     else:
-        log.warning("Proxmox config not set; /cartofia_status will not work.")
+        log.warning("Proxmox config not set; Cartofia commands will not work.")
 
     guilds = _guild_objects(config)
 
@@ -56,7 +61,6 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
             )
             return
 
-        # Show "thinking..." while we talk to Proxmox
         await interaction.response.defer(ephemeral=True, thinking=True)
 
         try:
@@ -85,11 +89,88 @@ def register(tree: app_commands.CommandTree, config: BotConfig) -> None:
 
         await interaction.followup.send("\n".join(lines), ephemeral=True)
 
+    @app_commands.command(
+        name="cartofia_start",
+        description="Start the Cartofia container (CT2000) on Proxmox.",
+    )
+    async def cartofia_start(interaction: discord.Interaction) -> None:
+        if prox_client is None:
+            await interaction.response.send_message(
+                "Proxmox is not configured yet; cannot start Cartofia.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
+        try:
+            status = await asyncio.to_thread(prox_client.get_cartofia_status)
+            if status.get("status") == "running":
+                await interaction.followup.send(
+                    "Cartofia is already **running** ✅",
+                    ephemeral=True,
+                )
+                return
+
+            await asyncio.to_thread(prox_client.start_cartofia)
+        except Exception as exc:
+            log.exception("Failed to start Cartofia")
+            await interaction.followup.send(
+                f"Error starting Cartofia: `{type(exc).__name__}: {exc}`",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.followup.send(
+            "Start request sent to Proxmox for Cartofia (CT2000). "
+            "Give it a few seconds to boot.",
+            ephemeral=True,
+        )
+
+    @app_commands.command(
+        name="cartofia_stop",
+        description="Stop the Cartofia container (CT2000) on Proxmox.",
+    )
+    async def cartofia_stop(interaction: discord.Interaction) -> None:
+        if prox_client is None:
+            await interaction.response.send_message(
+                "Proxmox is not configured yet; cannot stop Cartofia.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
+        try:
+            status = await asyncio.to_thread(prox_client.get_cartofia_status)
+            if status.get("status") == "stopped":
+                await interaction.followup.send(
+                    "Cartofia is already **stopped** ✅",
+                    ephemeral=True,
+                )
+                return
+
+            await asyncio.to_thread(prox_client.stop_cartofia)
+        except Exception as exc:
+            log.exception("Failed to stop Cartofia")
+            await interaction.followup.send(
+                f"Error stopping Cartofia: `{type(exc).__name__}: {exc}`",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.followup.send(
+            "Stop request sent to Proxmox for Cartofia (CT2000).",
+            ephemeral=True,
+        )
+
     # Attach commands to each guild
     for guild in guilds:
         log.info("Registering commands for guild %s", guild.id)
         tree.add_command(ct_ping, guild=guild)
         tree.add_command(cartofia_status, guild=guild)
+        tree.add_command(cartofia_start, guild=guild)
+        tree.add_command(cartofia_stop, guild=guild)
 
     log.info(
         "Registered commands: %s",
