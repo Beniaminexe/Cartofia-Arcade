@@ -95,4 +95,111 @@ Planned behaviour:
 
 ---
 
+---
+
+## 2025-12-01 – CT1000 bot + Proxmox integration
+
+**Summary**
+
+- Brought the Cartofia-Arcade Discord bot to life on CT1000 (`ajbot`) and wired it into the Proxmox API.
+- Fixed initial import issues and verified that basic slash commands register and sync to the target guild.
+
+**Details**
+
+- On the Proxmox host, entered CT1000 (`ajbot`) and set up the bot environment under `/opt/Cartofia-Arcade`:
+  - Created and activated a Python virtual environment (`.venv`).
+  - Installed dependencies from `requirements.txt` (Discord, Proxmox API client, dotenv, logging stack, etc.).
+- Cloned/updated the `feature/bot-foundation` branch and ran the bot using:
+  - `export PYTHONPATH=src`
+  - `python -m cartofia_bot.main`
+- Resolved a `SyntaxError` caused by `from __future__ import annotations` not being at the top of `cartofia_bot/commands/basic.py` by moving it to the first line of the file.
+- Observed successful startup logs:
+  - Bot login with static token.
+  - Proxmox client initialization for host `192.168.7.100`.
+  - Slash command registration and sync for guild `529799172636016650`.
+- Temporarily ran the bot in the foreground for testing; a dedicated systemd service is still a future task.
+
+**Next steps**
+
+- Add a systemd unit on CT1000 to run `python -m cartofia_bot.main` as a long-lived service with automatic restart.
+- Extend the command set (beyond basic health checks) to start/stop specific CTs (e.g. CT2000 Cartofia web host, Minecraft server CT, future games).
+
+---
+
+## 2025-12-01 – Cloudflare tunnel + Cartofia web host container
+
+**Summary**
+
+- Started wiring the public entrypoint for Cartofia via Cloudflare Tunnel.
+- Brought up an Nginx-based web host container to serve `cartofia.com` and prepare for `/game/` hosting.
+
+**Details**
+
+- On the Proxmox *host*:
+  - Installed and authenticated `cloudflared`:
+    - `cloudflared tunnel login`
+    - `cloudflared tunnel create cartofia-tunnel`
+  - A tunnel JSON credential file was created and stored under `/root/.cloudflared/`, ready to be tied to DNS and ingress rules for `cartofia.com`.
+- On the Cartofia web host container (named `Cartofia-Arcade` in Proxmox):
+  - Ran `setup_cartofia_web_ct.sh` to:
+    - Install Nginx and enable the service.
+    - Create `/var/www/cartofia` as the site root.
+    - Write and enable an Nginx server block named `cartofia` pointing the main vhost at `/var/www/cartofia`.
+    - Test Nginx configuration and restart the service (status confirmed as `active (running)`).
+- The web host is now ready to receive the Cartofia WebAssembly build (e.g. under `/var/www/cartofia/game/`), even though the final pygbag/pygame build is still in-progress.
+
+**Next steps**
+
+- Finish Cloudflare Tunnel configuration:
+  - Add DNS routing for `cartofia.com` → the tunnel.
+  - Define ingress rules so `/` and `/game/` on `cartofia.com` are served by the Cartofia web host container.
+- Once the web build is stable, copy `build/web/*` from the Cartofia-game repo into `/var/www/cartofia/game/` and verify that `https://cartofia.com/game/` loads the game.
+
+---
+
+## 2025-12-02 – Cartofia-game refactor & web build prep (cross-repo work)
+
+> This work is in the **Cartofia-game** repo but is directly relevant to Cartofia-Arcade, because CT2000 will serve this web build.
+
+**Summary**
+
+- Refactored the Cartofia Pygame codebase to be friendlier to web builds (pygbag) and to future automation.
+- Added helper modules, conversion tools, tests, and build scripts, and documented these changes for future maintainers.   
+
+**Details**
+
+- Core code + helpers:
+  - Introduced `utils.py` to centralize asset handling and text rendering:
+    - `load_image`, `load_sound`, `default_font`, `draw_text`, `load_level_data`.   
+  - Updated `main.py` to:
+    - Route all image/sound loads through `utils`.
+    - Use a logical `game_surface` (GW x GH) and a `DRAW_SURFACE` abstraction so desktop draws directly to `screen` while web builds can draw to an offscreen surface and scale it each frame.
+    - Add `screen_to_game_pos` so mouse input / button hitboxes still work correctly after scaling.
+    - Add `IS_WEB` detection and safer audio init with a dummy backend fallback for browsers. :contentReference[oaicite:2]{index=2}  
+  - Updated `level_editor.py` to:
+    - Use `utils.load_image` for all sprites and tiles.
+    - Prefer JSON (`levelN.json`) for saving/loading, with pickle fallback for compatibility.
+    - Use `utils.draw_text` for consistent text drawing.   
+- Asset and format changes:
+  - Added `tools/convert_levels.py` to convert `levelN_data` pickles into JSON for cross-platform safety.
+  - Added `tools/convert_audio.py` to convert MP3 tracks into OGG for better browser support.
+  - Added `tools/fetch_font.py` to optionally fetch a TTF into `img/` for consistent typography across platforms.   
+- Build + release tooling:
+  - Added web build docs (`README_WEB.md`) and a Windows helper script (`build_web.bat`) for a one-step web build using pygbag/pgbag.
+  - Created Windows release scripts under `release/windows/` (`build_win.bat`, `run_game.bat`, `README_WINDOWS.md`) to produce a PyInstaller-based desktop build.
+  - Introduced `tests/test_smoke.py` and `requirements.txt` to:
+    - Verify that level data, images, and sounds load correctly.
+    - Ensure `main.World()` can be constructed without blowing up.   
+- Documentation:
+  - Wrote `CONFIGURATION_CHANGES.txt` and `AGENT_LOG.md` to capture the refactor rationale, file-level changes, test steps, and next-step suggestions for future work on Cartofia-game (including CI, further refactors, and full OGG migration).   
+
+**Next steps**
+
+- Finish stabilising the pygbag/pygame-web build so CT2000 can serve a working `build/web` bundle.
+- Hook the successful web build into the Cartofia-Arcade architecture:
+  - CT2000 = static host for Cartofia-game web bundle.
+  - CT1000 bot = start/stop CT2000 and post the game URL into Discord when it’s ready.
+- Once things are stable, mirror a shortened version of the Cartofia-game change summary into that repo’s own `PROJECT_LOG` for cross-project consistency.
+
+
 *This log is updated as new milestones and design decisions are made.*
