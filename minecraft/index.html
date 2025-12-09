@@ -429,7 +429,7 @@
     const CONFIG = {
       SERVER_IP: 'answers-advertising.gl.joinmc.link',
       SERVER_PORT: 25565,
-      API_ENDPOINT: 'https://api.mcsrvstat.us/3/answers-advertising.gl.joinmc.link'
+      API_ENDPOINT: 'https://api.mcstatus.io/v2/status/java/answers-advertising.gl.joinmc.link:25565'
     };
 
     async function checkServerStatus() {
@@ -437,7 +437,6 @@
       const statusText = document.getElementById('statusText');
       const serverIP = document.getElementById('serverIP');
       const playerCount = document.getElementById('playerCount');
-      const startButton = document.getElementById('startButton');
 
       try {
         const response = await fetch(CONFIG.API_ENDPOINT);
