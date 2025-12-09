@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Minecraft Server – Cartofia Lab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #020617;
+      --bg-alt: #020617;
+      --card: #020617;
+      --card-soft: #020617;
+      --accent: #6366f1;
+      --accent-soft: rgba(99, 102, 241, 0.12);
+      --accent-strong: #4f46e5;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --border-subtle: rgba(148, 163, 184, 0.35);
+      --border-strong: rgba(129, 140, 248, 0.85);
+      --pill-bg: rgba(15, 23, 42, 0.9);
+      --ok: #22c55e;
+      --info: #22d3ee;
+      --warn: #facc15;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 42%, #000 100%);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 24px clamp(16px, 3vw, 32px) 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      padding-block: 6px 12px;
+      backdrop-filter: blur(20px);
+      background: linear-gradient(to bottom, rgba(2, 6, 23, 0.96), transparent);
+      z-index: 10;
+    }
+
+    @media (max-width: 880px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: conic-gradient(from 240deg, #6366f1, #22c55e, #06b6d4, #6366f1);
+      padding: 1px;
+    }
+
+    .brand-mark-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: #020617;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-mark-inner svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .brand-text-main {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .brand-text-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 6px 11px;
+      border: 1px solid transparent;
+      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.08s ease;
+    }
+
+    nav a:hover {
+      color: var(--text);
+      background: rgba(15, 23, 42, 0.95);
+      border-color: rgba(148, 163, 253, 0.55);
+      transform: translateY(-1px);
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .hero-section {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .hero-title {
+      font-size: clamp(30px, 4vw, 40px);
+      line-height: 1.1;
+    }
+
+    .hero-title span {
+      background: linear-gradient(120deg, #a855f7, #22d3ee, #4ade80);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--muted);
+      max-width: 40rem;
+    }
+
+    .server-info {
+      border-radius: 18px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.98);
+      padding: 20px;
+      margin-top: 12px;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(55, 65, 81, 0.5);
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: var(--muted);
+      font-size: 13px;
+      min-width: 100px;
+      font-weight: 500;
+    }
+
+    .info-value {
+      color: var(--text);
+      font-size: 13px;
+      font-family: monospace;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .status-online {
+      background: var(--ok);
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
+    }
+
+    .status-offline {
+      background: #ef4444;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.9);
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .content-card {
+      border-radius: 14px;
+      padding: 16px;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .content-card:hover {
+      background: rgba(25, 33, 52, 0.98);
+      border-color: rgba(148, 163, 253, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .card-meta {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .card-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.2s ease;
+    }
+
+    .card-link:hover {
+      transform: translateX(4px);
+    }
+
+    footer {
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(15, 23, 42, 0.95);
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    @media (max-width: 640px) {
+      footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 11px;
+    }
+
+    .footer-links a:hover {
+      color: #e5e7eb;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <a href="/" class="brand">
+        <div class="brand-mark">
+          <div class="brand-mark-inner">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="6" height="6" rx="1" fill="#6366f1"/>
+              <rect x="12" y="2" width="6" height="6" rx="1" fill="#22c55e"/>
+              <rect x="2" y="12" width="6" height="6" rx="1" fill="#06b6d4"/>
+              <rect x="12" y="12" width="6" height="6" rx="1" fill="#a855f7"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <div class="brand-text-main">Cartofia Lab</div>
+          <div class="brand-text-sub">Self-hosted games, bots & infrastructure</div>
+        </div>
+      </a>
+
+      <nav>
+        <a href="/">Home</a>
+        <a href="/arcade/">Arcade</a>
+        <a href="/minecraft/">Minecraft</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero-section">
+        <h1 class="hero-title">
+          Minecraft <span>Server</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          A self-hosted Minecraft server running on the Cartofia Lab infrastructure. Join us for survival, building, and adventure!
+        </p>
+
+        <div class="server-info">
+          <div class="info-row">
+            <span class="info-label">Status:</span>
+            <span class="info-value">
+              <span class="status-indicator" id="statusIndicator"></span>
+              <span id="statusText">Checking...</span>
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Server IP:</span>
+            <span class="info-value" id="serverIP">Loading...</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Port:</span>
+            <span class="info-value">25565</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Players:</span>
+            <span class="info-value" id="playerCount">--</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Version:</span>
+            <span class="info-value">1.20.1</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Mode:</span>
+            <span class="info-value">Vanilla Survival</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="hero-title" style="font-size: 24px; margin-bottom: 12px;">Server Details</h2>
+
+        <div class="content-grid">
+          <div class="content-card">
+            <div class="card-title">⛏️ Survival Mode</div>
+            <div class="card-meta">
+              Pure vanilla survival experience with no plugins. Build, explore, and survive in a shared world.
+            </div>
+          </div>
+
+          <div class="content-card">
+            <div class="card-title">👥 Community</div>
+            <div class="card-meta">
+              Join our community on Discord to coordinate builds, share resources, and plan adventures together.
+            </div>
+            <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer" class="card-link">
+              Join Discord
+              <span>↗</span>
+            </a>
+          </div>
+
+          <div class="content-card">
+            <div class="card-title">🗺️ World Backup</div>
+            <div class="card-meta">
+              Regular snapshots ensure your builds are safe. World backups stored on Proxmox storage.
+            </div>
+          </div>
+
+          <div class="content-card">
+            <div class="card-title">🔧 Infrastructure</div>
+            <div class="card-meta">
+              Running on Cartofia Lab infrastructure via CT, with Cloudflare Tunnel for reliable access.
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div>
+        <span>Minecraft server hosted as part of Cartofia Lab</span>
+      </div>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const CONFIG = {
+      SERVER_IP: 'answers-advertising.gl.joinmc.link',
+      SERVER_PORT: 25565,
+      API_ENDPOINT: 'https://api.mcsrvstat.us/3/answers-advertising.gl.joinmc.link'
+    };
+
+    async function checkServerStatus() {
+      const statusIndicator = document.getElementById('statusIndicator');
+      const statusText = document.getElementById('statusText');
+      const serverIP = document.getElementById('serverIP');
+      const playerCount = document.getElementById('playerCount');
+      const startButton = document.getElementById('startButton');
+
+      try {
+        const response = await fetch(CONFIG.API_ENDPOINT);
+        const data = await response.json();
+
+        if (data.online) {
+          statusIndicator.classList.remove('status-offline');
+          statusIndicator.classList.add('status-online');
+          statusText.textContent = 'Online';
+          serverIP.textContent = CONFIG.SERVER_IP;
+          playerCount.textContent = `${data.players.online}/${data.players.max}`;
+        } else {
+          statusIndicator.classList.remove('status-online');
+          statusIndicator.classList.add('status-offline');
+          statusText.textContent = 'Offline';
+          serverIP.textContent = CONFIG.SERVER_IP;
+          playerCount.textContent = '0/--';
+        }
+      } catch (error) {
+        console.error('Failed to fetch server status:', error);
+        statusText.textContent = 'Unknown';
+        serverIP.textContent = CONFIG.SERVER_IP;
+        playerCount.textContent = '--';
+      }
+    }
+
+    // Check status on page load
+    checkServerStatus();
+
+    // Check status every 30 seconds
+    setInterval(checkServerStatus, 30000);
+  </script>
+        <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

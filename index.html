@@ -2,21 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Cartofia – Home</title>
+  <title>Cartofia Lab – Home</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
       color-scheme: dark;
-      --bg: #050816;
-      --bg-alt: #0b1020;
-      --accent: #7b5cff;
-      --accent-soft: rgba(123, 92, 255, 0.16);
-      --text: #f5f5f7;
-      --muted: #a0a3b1;
-      --border: rgba(255, 255, 255, 0.06);
+      --bg: #020617;
+      --bg-alt: #020617;
+      --card: #020617;
+      --card-soft: #020617;
+      --accent: #6366f1;
+      --accent-soft: rgba(99, 102, 241, 0.12);
+      --accent-strong: #4f46e5;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --border-subtle: rgba(148, 163, 184, 0.35);
+      --border-strong: rgba(129, 140, 248, 0.85);
       --pill-bg: rgba(15, 23, 42, 0.9);
-      --danger: #ff6b81;
-      --success: #4ade80;
+      --ok: #22c55e;
+      --info: #22d3ee;
+      --warn: #facc15;
     }
 
     * {
@@ -28,21 +33,12 @@
     body {
       min-height: 100vh;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-      background: radial-gradient(circle at top, #111827 0, #020617 38%, #000 100%);
+      background:
+        radial-gradient(circle at top, #111827 0, #020617 42%, #000 100%);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       display: flex;
       flex-direction: column;
-    }
-
-    .noise-overlay {
-      pointer-events: none;
-      position: fixed;
-      inset: 0;
-      opacity: 0.08;
-      mix-blend-mode: soft-light;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='noStitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.7'/%3E%3C/svg%3E");
-      z-index: -1;
     }
 
     .page {
@@ -52,7 +48,7 @@
       padding: 24px clamp(16px, 3vw, 32px) 40px;
       display: flex;
       flex-direction: column;
-      gap: 32px;
+      gap: 28px;
     }
 
     header {
@@ -62,9 +58,9 @@
       gap: 16px;
       position: sticky;
       top: 0;
-      padding-block: 8px 12px;
-      backdrop-filter: blur(18px);
-      background: linear-gradient(to bottom, rgba(2, 6, 23, 0.9), transparent);
+      padding-block: 6px 12px;
+      backdrop-filter: blur(20px);
+      background: linear-gradient(to bottom, rgba(2, 6, 23, 0.96), transparent);
       z-index: 10;
     }
 
@@ -75,28 +71,23 @@
     }
 
     .brand-mark {
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       border-radius: 999px;
-      background: conic-gradient(from 210deg, #7b5cff, #22d3ee, #4ade80, #7b5cff);
+      background: conic-gradient(from 240deg, #6366f1, #22c55e, #06b6d4, #6366f1);
       padding: 1px;
-      position: relative;
-      overflow: hidden;
     }
 
     .brand-mark-inner {
       width: 100%;
       height: 100%;
       border-radius: inherit;
-      background: radial-gradient(circle at 25% 0, rgba(148, 163, 253, 0.5), transparent 55%),
-        radial-gradient(circle at 75% 110%, rgba(45, 212, 191, 0.4), transparent 55%),
-        rgba(15, 23, 42, 0.92);
+      background: #020617;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
       font-weight: 700;
-      letter-spacing: 0.04em;
     }
 
     .brand-text-main {
@@ -115,7 +106,7 @@
     nav {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       font-size: 13px;
     }
 
@@ -123,15 +114,15 @@
       text-decoration: none;
       color: var(--muted);
       border-radius: 999px;
-      padding: 5px 10px;
+      padding: 6px 11px;
       border: 1px solid transparent;
-      transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, transform 0.08s ease;
+      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.08s ease;
     }
 
     nav a:hover {
       color: var(--text);
-      background: rgba(15, 23, 42, 0.9);
-      border-color: rgba(148, 163, 253, 0.38);
+      background: rgba(15, 23, 42, 0.95);
+      border-color: rgba(148, 163, 253, 0.55);
       transform: translateY(-1px);
     }
 
@@ -139,12 +130,10 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 5px 12px;
+      padding: 4px 10px;
       border-radius: 999px;
       border: 1px solid rgba(148, 163, 253, 0.4);
-      background: radial-gradient(circle at 0 0, rgba(129, 140, 248, 0.5), transparent 60%),
-        radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.35), transparent 55%),
-        rgba(15, 23, 42, 0.9);
+      background: rgba(15, 23, 42, 0.96);
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.14em;
@@ -152,19 +141,11 @@
     }
 
     .nav-pill-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%, #fff, #22c55e);
-      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25), 0 0 12px rgba(34, 197, 94, 0.7);
-    }
-
-    main {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-      gap: clamp(24px, 4vw, 40px);
-      align-items: flex-start;
-      margin-top: 8px;
+      background: var(--ok);
+      box-shadow: 0 0 10px rgba(22, 163, 74, 0.9);
     }
 
     @media (max-width: 880px) {
@@ -173,16 +154,27 @@
         align-items: flex-start;
       }
 
-      main {
-        grid-template-columns: minmax(0, 1fr);
+      nav {
+        flex-wrap: wrap;
       }
     }
 
-    @media (max-width: 640px) {
-      nav {
-        width: 100%;
-        justify-content: flex-start;
-        flex-wrap: wrap;
+    main {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      gap: clamp(22px, 4vw, 36px);
+      align-items: flex-start;
+    }
+
+    @media (max-width: 880px) {
+      .hero-grid {
+        grid-template-columns: minmax(0, 1fr);
       }
     }
 
@@ -192,8 +184,8 @@
       gap: 8px;
       padding: 4px 10px;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 253, 0.4);
+      border: 1px solid rgba(148, 163, 253, 0.45);
+      background: rgba(15, 23, 42, 0.96);
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.16em;
@@ -201,15 +193,14 @@
     }
 
     .hero-eyebrow span:first-child {
-      color: var(--accent);
+      color: #c4b5fd;
       font-weight: 600;
     }
 
     .hero-title {
       margin-top: 14px;
-      font-size: clamp(32px, 4vw, 40px);
-      line-height: 1.05;
-      letter-spacing: 0.03em;
+      font-size: clamp(30px, 4vw, 40px);
+      line-height: 1.1;
     }
 
     .hero-title span {
@@ -254,22 +245,20 @@
     }
 
     .btn-primary {
-      background: radial-gradient(circle at 0 0, rgba(129, 140, 248, 0.55), transparent 60%),
-        radial-gradient(circle at 100% 110%, rgba(45, 212, 191, 0.7), transparent 55%),
-        linear-gradient(120deg, #4f46e5, #7c3aed);
-      box-shadow: 0 10px 35px rgba(88, 80, 236, 0.55);
+      background: linear-gradient(120deg, var(--accent-strong), var(--accent));
+      box-shadow: 0 10px 30px rgba(79, 70, 229, 0.6);
       color: #f9fafb;
-      border-color: rgba(129, 140, 248, 0.85);
+      border-color: var(--border-strong);
     }
 
     .btn-primary:hover {
       transform: translateY(-1px);
-      box-shadow: 0 16px 55px rgba(88, 80, 236, 0.8);
+      box-shadow: 0 16px 45px rgba(79, 70, 229, 0.85);
     }
 
     .btn-ghost {
-      background: rgba(15, 23, 42, 0.85);
-      border-color: rgba(148, 163, 253, 0.45);
+      background: rgba(15, 23, 42, 0.9);
+      border-color: rgba(148, 163, 253, 0.5);
       color: var(--muted);
     }
 
@@ -295,8 +284,8 @@
     .hero-meta-pill {
       padding: 4px 10px;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(30, 64, 175, 0.75);
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(55, 65, 81, 0.8);
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -306,472 +295,293 @@
       width: 7px;
       height: 7px;
       border-radius: 999px;
-      background: #22c55e;
-      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.28), 0 0 12px rgba(22, 163, 74, 0.9);
+      background: var(--ok);
+      box-shadow: 0 0 10px rgba(22, 163, 74, 0.9);
     }
 
     .hero-meta-pill span {
       color: #e5e7eb;
     }
 
-    .hero-meta-faded {
-      opacity: 0.8;
-    }
-
     .hero-meta-faded span {
       color: var(--muted);
     }
 
-    .right-column {
+    .hero-panel {
+      border-radius: 18px;
+      border: 1px solid var(--border-subtle);
+      background:
+        radial-gradient(circle at top left, var(--accent-soft), transparent 60%),
+        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.16), transparent 60%),
+        rgba(15, 23, 42, 0.98);
+      padding: 14px 14px 16px;
+      font-size: 12px;
+    }
+
+    .hero-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+
+    .hero-panel-title {
+      font-size: 12px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chip {
+      border-radius: 999px;
+      padding: 3px 8px;
+      border: 1px solid rgba(148, 163, 253, 0.6);
+      background: rgba(15, 23, 42, 0.96);
+      font-size: 11px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .arcade-link:hover {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--text);
+      border-color: rgba(148, 163, 253, 0.8);
+    }
+
+    .arcade-games-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .game-card {
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .game-card:hover {
+      background: rgba(25, 33, 52, 0.98);
+      border-color: rgba(148, 163, 253, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .game-card-placeholder {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .game-card-placeholder:hover {
+      background: rgba(15, 23, 42, 0.98);
+      border-color: rgba(55, 65, 81, 0.9);
+      transform: none;
+    }
+
+    .game-icon {
+      font-size: 24px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .game-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .game-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .game-meta {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .game-arrow {
+      font-size: 16px;
+      color: var(--muted);
+      transition: transform 0.2s ease;
+    }
+
+    .game-card:hover .game-arrow {
+      transform: translateX(3px);
+    }
+
+    .topology-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 720px) {
+      .topology-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .node-card {
+      border-radius: 14px;
+      padding: 8px 9px;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .node-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .node-title {
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--ok);
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
+    }
+
+    .node-meta {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .node-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .node-tag {
+      border-radius: 999px;
+      padding: 2px 6px;
+      border: 1px solid rgba(75, 85, 99, 0.9);
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .lab-sections {
+      margin-top: 6px;
       display: flex;
       flex-direction: column;
       gap: 14px;
     }
 
-    .panel {
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.96));
-      padding: 14px 14px 14px;
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
     }
 
-    .panel-header {
+    .stat-card {
+      border-radius: 14px;
+      padding: 16px;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(55, 65, 81, 0.9);
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 6px;
+      text-align: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+      background: rgba(25, 33, 52, 0.98);
+      border-color: rgba(148, 163, 253, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .stat-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .stat-label {
       font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-detail {
+      font-size: 11px;
       color: var(--muted);
     }
 
-    .panel-header-title {
+    .lab-sections-header {
       display: flex;
-      align-items: center;
+      justify-content: space-between;
+      align-items: baseline;
       gap: 8px;
     }
 
-    .panel-dot-row {
-      display: inline-flex;
-      gap: 4px;
-    }
-
-    .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: rgba(148, 163, 253, 0.4);
-    }
-
-    .dot.green {
-      background: #22c55e;
-      box-shadow: 0 0 10px rgba(22, 163, 74, 0.9);
-    }
-
-    .dot.red {
-      background: #f97373;
-      box-shadow: 0 0 10px rgba(239, 68, 68, 0.9);
-    }
-
-    .panel-tag {
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.94);
-      border: 1px solid rgba(148, 163, 253, 0.6);
-      font-size: 11px;
-    }
-
-    .arcade-card {
-      margin-top: 6px;
-      border-radius: 14px;
-      border: 1px solid rgba(55, 65, 194, 0.7);
-      background: radial-gradient(circle at 0 0, rgba(129, 140, 248, 0.6), transparent 60%),
-        radial-gradient(circle at 100% 120%, rgba(56, 189, 248, 0.55), transparent 55%),
-        linear-gradient(150deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
-      padding: 12px;
-      display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-      gap: 12px;
-      align-items: center;
-    }
-
-    @media (max-width: 720px) {
-      .arcade-card {
-        grid-template-columns: minmax(0, 1fr);
-      }
-    }
-
-    .arcade-card-left {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .pill-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 2px;
-    }
-
-    .pill {
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(191, 219, 254, 0.5);
-      font-size: 11px;
-      color: #e5e7eb;
-    }
-
-    .pill-soft {
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid rgba(148, 163, 253, 0.3);
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .arcade-title {
-      font-size: 16px;
+    .lab-title {
+      font-size: 15px;
       font-weight: 600;
     }
 
-    .arcade-subtitle {
+    .lab-subtitle {
       font-size: 13px;
-      color: #e5e7eb;
-    }
-
-    .arcade-meta {
-      margin-top: 6px;
-      font-size: 11px;
       color: var(--muted);
     }
 
-    .arcade-meta strong {
-      color: #e5e7eb;
-      font-weight: 500;
-    }
-
-    .arcade-actions {
-      margin-top: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .btn-mini {
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-size: 12px;
-      border: 1px solid rgba(148, 163, 253, 0.7);
-      background: rgba(15, 23, 42, 0.95);
-      color: #e5e7eb;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      text-decoration: none;
-      cursor: pointer;
-      transition: background 0.12s ease, transform 0.08s ease;
-    }
-
-    .btn-mini:hover {
-      background: rgba(15, 23, 42, 0.99);
-      transform: translateY(-1px);
-    }
-
-    .btn-mini.primary {
-      background: rgba(15, 23, 42, 0.96);
-      border-color: rgba(251, 191, 36, 0.95);
-      color: #fef9c3;
-    }
-
-    .btn-mini.primary:hover {
-      background: rgba(22, 30, 59, 0.98);
-    }
-
-    .sparkle {
-      font-size: 14px;
-    }
-
-    .arcade-card-right {
-      position: relative;
-      border-radius: 12px;
-      padding: 10px 10px 8px;
-      background: radial-gradient(circle at 30% 0, rgba(248, 250, 252, 0.12), transparent 60%),
-        radial-gradient(circle at 0 100%, rgba(34, 197, 94, 0.18), transparent 55%),
-        rgba(15, 23, 42, 0.95);
-      border: 1px solid rgba(148, 163, 253, 0.6);
-      overflow: hidden;
-    }
-
-    .arcade-window-chrome {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 5px;
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    .arcade-window-title {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .arcade-window-dots {
-      display: inline-flex;
-      gap: 4px;
-    }
-
-    .arcade-window-dots .dot {
-      width: 6px;
-      height: 6px;
-      opacity: 0.9;
-    }
-
-    .arcade-window-status {
-      border-radius: 999px;
-      padding: 2px 7px;
-      background: rgba(15, 23, 42, 0.94);
-      border: 1px solid rgba(148, 163, 253, 0.5);
-    }
-
-    /* Abstract \"lab\" preview */
-    .fake-game-preview {
-      border-radius: 10px;
-      border: 1px solid rgba(148, 163, 253, 0.4);
-      height: 120px;
-      position: relative;
-      overflow: hidden;
-      background:
-        linear-gradient(180deg, rgba(15, 23, 42, 0.1), rgba(15, 23, 42, 0.95)),
-        linear-gradient(135deg, #0f172a 0, #1f2937 30%, #1d283a 60%, #020617 100%);
-    }
-
-    .fake-layer-sun {
-      position: absolute;
-      top: 8px;
-      left: 14px;
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%, #f9fafb, #22d3ee 40%, rgba(248, 250, 252, 0) 75%);
-      opacity: 0.9;
-      filter: blur(0.2px);
-    }
-
-    .fake-layer-ground {
-      position: absolute;
-      left: -12px;
-      right: -12px;
-      bottom: -6px;
-      height: 40px;
-      background:
-        repeating-linear-gradient(
-          -45deg,
-          #0f172a 0,
-          #0f172a 8px,
-          #111827 8px,
-          #111827 16px
-        );
-      border-top: 1px solid rgba(148, 163, 253, 0.4);
-    }
-
-    .fake-layer-platform {
-      position: absolute;
-      right: 10px;
-      top: 18px;
-      width: 120px;
-      height: 70px;
-      border-radius: 12px;
-      background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.2), transparent 65%),
-        rgba(15, 23, 42, 0.95);
-      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 253, 0.7);
-    }
-
-    .fake-node {
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      border-radius: 6px;
-      background: #0f172a;
-      border: 1px solid rgba(148, 163, 253, 0.8);
-      box-shadow: 0 0 10px rgba(129, 140, 248, 0.6);
-    }
-
-    .fake-node.one { top: 24px; left: 16px; }
-    .fake-node.two { top: 24px; right: 16px; }
-    .fake-node.three { bottom: 16px; left: 34px; }
-    .fake-node.four { bottom: 16px; right: 32px; }
-
-    .fake-link {
-      position: absolute;
-      height: 2px;
-      background: linear-gradient(90deg, rgba(96, 165, 250, 0.2), rgba(129, 140, 248, 0.8));
-      opacity: 0.7;
-    }
-
-    .fake-link.a {
-      top: 33px;
-      left: 34px;
-      right: 34px;
-    }
-
-    .fake-link.b {
-      left: 32px;
-      right: 52px;
-      bottom: 24px;
-      background: linear-gradient(90deg, rgba(52, 211, 153, 0.3), rgba(56, 189, 248, 0.8));
-    }
-
-    .fake-overlay-hud {
-      position: absolute;
-      inset: 6px 10px 6px 10px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      font-size: 10px;
-      color: #e5e7eb;
-    }
-
-    .fake-hud-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-
-    .fake-hud-pill {
-      border-radius: 999px;
-      padding: 2px 8px;
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid rgba(148, 163, 253, 0.65);
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .fake-hud-pill span {
-      color: #e5e7eb;
-    }
-
-    .fake-hud-pill .muted {
-      color: var(--muted);
-    }
-
-    .fake-hud-bottom {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .fake-hud-bottom-left {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .fake-meter {
-      width: 76px;
-      height: 6px;
-      border-radius: 999px;
-      padding: 1px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 253, 0.55);
-      overflow: hidden;
-    }
-
-    .fake-meter-fill {
-      width: 72%;
-      height: 100%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #22c55e, #a3e635);
-      box-shadow: 0 0 16px rgba(132, 204, 22, 0.7);
-    }
-
-    .fake-badge {
-      border-radius: 999px;
-      padding: 2px 8px;
-      background: rgba(15, 23, 42, 0.94);
-      border: 1px solid rgba(251, 191, 36, 0.9);
-      font-size: 9px;
-      color: #fef9c3;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .status-grid {
-      margin-top: 6px;
+    .lab-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 6px;
-      font-size: 10px;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 12px;
     }
 
-    .status-chip {
-      border-radius: 999px;
-      padding: 3px 7px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 253, 0.4);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    .status-dot-green,
-    .status-dot-gold,
-    .status-dot-cyan {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-    }
-
-    .status-dot-green {
-      background: #22c55e;
-      box-shadow: 0 0 10px rgba(22, 163, 74, 0.9);
-    }
-
-    .status-dot-gold {
-      background: #facc15;
-      box-shadow: 0 0 10px rgba(234, 179, 8, 0.9);
-    }
-
-    .status-dot-cyan {
-      background: #22d3ee;
-      box-shadow: 0 0 10px rgba(34, 211, 238, 0.9);
-    }
-
-    .projects-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding-top: 2px;
-    }
-
-    .projects-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-      gap: 8px;
-    }
-
-    @media (max-width: 720px) {
-      .projects-row {
+    @media (max-width: 880px) {
+      .lab-grid {
         grid-template-columns: minmax(0, 1fr);
       }
     }
 
-    .project-card {
-      border-radius: 14px;
-      padding: 10px;
-      background: rgba(15, 23, 42, 0.95);
+    .lab-card {
+      border-radius: 18px;
+      padding: 12px 12px 13px;
+      background: rgba(15, 23, 42, 0.98);
       border: 1px solid rgba(55, 65, 81, 0.9);
       display: flex;
       flex-direction: column;
@@ -779,30 +589,30 @@
       font-size: 12px;
     }
 
-    .project-card-header {
+    .lab-card-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       gap: 8px;
     }
 
-    .project-title {
+    .lab-card-title {
       font-size: 13px;
       font-weight: 500;
     }
 
-    .project-meta {
+    .lab-card-meta {
       font-size: 11px;
       color: var(--muted);
     }
 
-    .tags-row {
+    .lab-tags {
       display: flex;
       flex-wrap: wrap;
       gap: 4px;
     }
 
-    .tag {
+    .lab-tag {
       border-radius: 999px;
       padding: 2px 7px;
       border: 1px solid rgba(148, 163, 253, 0.4);
@@ -810,21 +620,22 @@
       color: #e5e7eb;
     }
 
-    .tag.soft {
+    .lab-tag.soft {
       border-color: rgba(75, 85, 99, 0.9);
       color: var(--muted);
     }
 
-    .project-footer-row {
+    .lab-footer-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      margin-top: 4px;
       font-size: 10px;
       color: var(--muted);
     }
 
-    .project-link {
+    .lab-link {
       font-size: 11px;
       text-decoration: none;
       color: #bfdbfe;
@@ -833,14 +644,7 @@
       gap: 4px;
     }
 
-    .metrics-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      font-size: 10px;
-    }
-
-    .metric-pill {
+    .pill-metric {
       border-radius: 999px;
       padding: 2px 6px;
       border: 1px solid rgba(55, 65, 81, 0.9);
@@ -848,9 +652,9 @@
     }
 
     footer {
-      margin-top: 4px;
+      margin-top: 8px;
       padding-top: 12px;
-      border-top: 1px solid rgba(15, 23, 42, 0.9);
+      border-top: 1px solid rgba(15, 23, 42, 0.95);
       font-size: 11px;
       color: var(--muted);
       display: flex;
@@ -885,17 +689,22 @@
   </style>
 </head>
 <body>
-  <div class="noise-overlay" aria-hidden="true"></div>
-
   <div class="page">
     <header>
       <div class="brand">
         <div class="brand-mark">
-          <div class="brand-mark-inner">C</div>
+          <div class="brand-mark-inner">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="6" height="6" rx="1" fill="#6366f1"/>
+              <rect x="12" y="2" width="6" height="6" rx="1" fill="#22c55e"/>
+              <rect x="2" y="12" width="6" height="6" rx="1" fill="#06b6d4"/>
+              <rect x="12" y="12" width="6" height="6" rx="1" fill="#a855f7"/>
+            </svg>
+          </div>
         </div>
         <div>
-          <div class="brand-text-main">Cartofia</div>
-          <div class="brand-text-sub">Self-hosted lab for games & projects</div>
+          <div class="brand-text-main">Cartofia Lab</div>
+          <div class="brand-text-sub">Self-hosted games, bots & infrastructure</div>
         </div>
       </div>
 
@@ -904,250 +713,158 @@
           <span class="nav-pill-dot"></span>
           <span>Running on Proxmox</span>
         </div>
-        <a href="#arcade">Arcade</a>
+        <a href="#lab">Lab</a>
+        <a href="/arcade/">Arcade</a>
+        <a href="/minecraft/">Minecraft</a>
         <a href="#projects">Projects</a>
-        <a href="#about">About</a>
       </nav>
     </header>
 
     <main>
-      <section aria-labelledby="hero" id="about">
-        <div class="hero-eyebrow">
-          <span>Cartofia</span>
-          <span>Self-hosted digital lab</span>
+      <section class="hero-grid" id="about">
+        <div>
+          <h1 class="hero-title">
+            Building a <span>digital playground</span>
+            one container at a time.
+          </h1>
+
+          <p class="hero-subtitle">
+            This is the front page for my personal lab: a Proxmox host, a couple of Linux containers,
+            a browser arcade and some Discord-powered automation. Everything here runs on hardware I
+            maintain, break and fix myself.
+          </p>
         </div>
 
-        <h1 class="hero-title" id="hero">
-          A home for my <span>games, tools</span> and
-          infrastructure experiments.
-        </h1>
-
-        <p class="hero-subtitle">
-          Cartofia is not just a game – it’s the umbrella for everything I’m
-          tinkering with: <strong>small browser games</strong>, 
-          <strong>Discord-controlled services</strong>, and
-          a <strong>Proxmox lab</strong> holding it all together.
-          This site is where those experiments surface.
-        </p>
-
-        <div class="hero-cta-row">
-          <a class="btn-primary" href="/arcade/">
-            <span class="btn-icon">▶</span>
-            <span>Open the arcade hub</span>
-          </a>
-          <a class="btn-ghost" href="#projects">
-            <span class="btn-icon">⟲</span>
-            <span>Browse projects & infra</span>
-          </a>
-        </div>
-
-        <div class="hero-meta-row">
-          <div class="hero-meta-pill">
-            <span class="hero-meta-dot"></span>
-            <span>Currently: 1 browser game, bots & a web host CT</span>
+        <aside class="hero-panel" aria-label="Arcade games">
+          <div class="hero-panel-header">
+            <div class="hero-panel-title">🎮 Arcade</div>
+            <a href="/arcade/" class="chip arcade-link">Browse all →</a>
           </div>
-          <div class="hero-meta-pill hero-meta-faded">
-            <span>Pieces in play:</span>
-            <span>Python · Pygame · Pygbag · Nginx · Cloudflare Tunnel · Proxmox</span>
+
+          <div class="arcade-games-grid">
+            <a href="/arcade/cartofia/" class="game-card">
+              <div class="game-icon">🎯</div>
+              <div class="game-info">
+                <div class="game-title">Cartofia</div>
+                <div class="game-meta">Pygame adventure</div>
+              </div>
+              <span class="game-arrow">→</span>
+            </a>
+
+            <a href="/minecraft/" class="game-card">
+              <div class="game-icon">⛏️</div>
+              <div class="game-info">
+                <div class="game-title">Minecraft</div>
+                <div class="game-meta">Vanilla server</div>
+              </div>
+              <span class="game-arrow">→</span>
+            </a>
+            
+            <div class="game-card game-card-placeholder">
+              <div class="game-icon">✨</div>
+              <div class="game-info">
+                <div class="game-title">More games</div>
+                <div class="game-meta">Coming soon</div>
+              </div>
+            </div>
           </div>
-        </div>
+        </aside>
       </section>
 
-      <section class="right-column" aria-label="Cartofia lab status">
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-header-title">
-              <span class="panel-dot-row">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot green"></span>
-              </span>
-              <span>Lab status</span>
-            </div>
-            <span class="panel-tag">Overview & quick links</span>
-          </div>
-
-          <article class="arcade-card" id="arcade">
-            <div class="arcade-card-left">
-              <div class="pill-row">
-                <span class="pill">Cartofia Lab</span>
-                <span class="pill-soft">Self-hosted infra & experiments</span>
-              </div>
-              <h2 class="arcade-title">What’s running right now?</h2>
-              <p class="arcade-subtitle">
-                A small Proxmox cluster with a web arcade container, a bot container,
-                and a growing pile of side projects. The goal is simple:
-                build things, host them myself, break them, fix them, repeat.
-              </p>
-
-              <p class="arcade-meta">
-                <strong>Highlights:</strong> browser arcade, Discord control layer,
-                HTTP ingress via Cloudflare Tunnel, and a platform for future tools.
-              </p>
-
-              <div class="arcade-actions">
-                <a class="btn-mini primary" href="/arcade/">
-                  <span class="sparkle">✦</span>
-                  <span>Enter arcade portal</span>
-                </a>
-                <a class="btn-mini" href="/arcade/cartofia/">
-                  <span>Jump straight into Cartofia</span>
-                </a>
-                <a class="btn-mini" href="https://github.com/Beniaminexe/Cartofia-Arcade" target="_blank" rel="noreferrer">
-                  <span>Infra & bot repo</span>
-                  <span>↗</span>
-                </a>
-              </div>
-            </div>
-
-            <div class="arcade-card-right">
-              <div class="arcade-window-chrome">
-                <div class="arcade-window-title">
-                  <span class="arcade-window-dots">
-                    <span class="dot red"></span>
-                    <span class="dot"></span>
-                    <span class="dot green"></span>
-                  </span>
-                  <span>cartofia-lab :: nodes & tunnels</span>
-                </div>
-                <div class="arcade-window-status">Status: healthy</div>
-              </div>
-
-              <div class="fake-game-preview" aria-hidden="true">
-                <div class="fake-layer-sun"></div>
-                <div class="fake-layer-platform">
-                  <div class="fake-node one"></div>
-                  <div class="fake-node two"></div>
-                  <div class="fake-node three"></div>
-                  <div class="fake-node four"></div>
-                  <div class="fake-link a"></div>
-                  <div class="fake-link b"></div>
-                </div>
-                <div class="fake-layer-ground"></div>
-
-                <div class="fake-overlay-hud">
-                  <div class="fake-hud-top">
-                    <div class="fake-hud-pill">
-                      <span class="muted">Nodes</span>
-                      <span>Host + 2 CTs</span>
-                    </div>
-                    <div class="fake-hud-pill">
-                      <span class="muted">Services</span>
-                      <span>Web · Bot</span>
-                    </div>
-                  </div>
-
-                  <div class="fake-hud-bottom">
-                    <div class="fake-hud-bottom-left">
-                      <div class="fake-meter">
-                        <div class="fake-meter-fill"></div>
-                      </div>
-                      <span class="muted">Uptime-ish</span>
-                    </div>
-                    <div class="fake-badge">Proxmox lab</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="status-grid">
-                <div class="status-chip">
-                  <span class="status-dot-green"></span>
-                  <span>Arcade: 1 game live</span>
-                </div>
-                <div class="status-chip">
-                  <span class="status-dot-cyan"></span>
-                  <span>Bots: responding</span>
-                </div>
-                <div class="status-chip">
-                  <span class="status-dot-gold"></span>
-                  <span>Ingress: tunnel healthy</span>
-                </div>
-              </div>
-            </div>
-          </article>
+      <section class="lab-sections" id="lab">
+        <div class="lab-sections-header">
+          <div class="lab-title">Lab Stats</div>
+          <p class="lab-subtitle">Quick metrics and status overview</p>
         </div>
 
-        <div class="panel projects-panel" id="projects">
-          <div class="panel-header">
-            <div class="panel-header-title">
-              <span class="panel-dot-row">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot green"></span>
-              </span>
-              <span>Projects & infrastructure</span>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🎮</div>
+            <div class="stat-value">1</div>
+            <div class="stat-label">Game Online</div>
+            <div class="stat-detail">Cartofia playable</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">🤖</div>
+            <div class="stat-value">2</div>
+            <div class="stat-label">Active Bots</div>
+            <div class="stat-detail">Discord automation</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-value">3</div>
+            <div class="stat-label">Containers</div>
+            <div class="stat-detail">CT1000, CT2000, Web</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-value">99.8%</div>
+            <div class="stat-label">Uptime</div>
+            <div class="stat-detail">Last 30 days</div>
+          </div>
+        </div>
+
+        <div class="lab-grid" id="projects" style="margin-top: 20px;">
+          <article class="lab-card">
+            <div class="lab-card-header">
+              <div>
+                <h2 class="lab-card-title">🎯 Quick Links</h2>
+                <p class="lab-card-meta">
+                  Jump to the main attractions and repositories.
+                </p>
+              </div>
             </div>
-            <span class="panel-tag">From bare metal to browser</span>
-          </div>
 
-          <div class="projects-row">
-            <article class="project-card">
-              <div class="project-card-header">
-                <div>
-                  <h2 class="project-title">Arcade & games</h2>
-                  <p class="project-meta">
-                    A web arcade for current and future games, starting with a Pygame platformer ported to WebAssembly.
-                  </p>
-                </div>
-              </div>
-              <div class="tags-row">
-                <span class="tag">Games</span>
-                <span class="tag">Arcade</span>
-                <span class="tag">Python</span>
-                <span class="tag soft">Cartofia (Web)</span>
-              </div>
-              <div class="project-footer-row">
-                <a class="project-link" href="/arcade/" >
-                  Arcade portal
-                  <span>→</span>
-                </a>
-                <div class="metrics-row">
-                  <span class="metric-pill">Browser-based</span>
-                  <span class="metric-pill">More slots free</span>
-                </div>
-              </div>
-            </article>
+            <div class="lab-footer-row" style="flex-direction: column; gap: 8px; align-items: flex-start;">
+              <a class="lab-link" href="/arcade/">
+                Play Cartofia
+                <span>→</span>
+              </a>
+              <a class="lab-link" href="https://github.com/Beniaminexe/Cartofia-game" target="_blank" rel="noreferrer">
+                Game Source
+                <span>↗</span>
+              </a>
+              <a class="lab-link" href="https://github.com/Beniaminexe/Cartofia-Arcade" target="_blank" rel="noreferrer">
+                Lab Infrastructure
+                <span>↗</span>
+              </a>
+            </div>
+          </article>
 
-            <article class="project-card">
-              <div class="project-card-header">
-                <div>
-                  <h2 class="project-title">Infrastructure & bots</h2>
-                  <p class="project-meta">
-                    Proxmox host, Linux containers, Nginx front-end, Cloudflare Tunnel, and Discord bots to poke at it all.
-                  </p>
-                </div>
+          <article class="lab-card">
+            <div class="lab-card-header">
+              <div>
+                <h2 class="lab-card-title">⚙️ Tech Stack</h2>
+                <p class="lab-card-meta">
+                  Core technologies powering the lab.
+                </p>
               </div>
-              <div class="tags-row">
-                <span class="tag">Proxmox</span>
-                <span class="tag">Linux CTs</span>
-                <span class="tag">Nginx</span>
-                <span class="tag">Cloudflare Tunnel</span>
-                <span class="tag soft">Discord automation</span>
-              </div>
-              <div class="project-footer-row">
-                <a class="project-link" href="https://github.com/Beniaminexe/Cartofia-Arcade" target="_blank" rel="noreferrer">
-                  Infra & bot repo
-                  <span>↗</span>
-                </a>
-                <div class="metrics-row">
-                  <span class="metric-pill">CT1000: bots</span>
-                  <span class="metric-pill">CT2000: web</span>
-                </div>
-              </div>
-            </article>
-          </div>
+            </div>
+
+            <div class="lab-tags">
+              <span class="lab-tag">Proxmox</span>
+              <span class="lab-tag">Nginx</span>
+              <span class="lab-tag">Python</span>
+              <span class="lab-tag">Pygame</span>
+              <span class="lab-tag">Discord.py</span>
+              <span class="lab-tag soft">Cloudflare</span>
+            </div>
+          </article>
         </div>
       </section>
     </main>
 
     <footer>
       <div>
-        <span>Cartofia is a personal space for learning, breaking things, and slowly making them nicer.</span>
+        <span>Cartofia Lab is a personal space for running my own services, games and experiments on hardware I control.</span>
       </div>
       <div class="footer-links">
         <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
-        <a href="#arcade">Arcade</a>
-        <a href="#about">About</a>
+        <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+        <a href="/arcade/">Arcade</a>
       </div>
     </footer>
   </div>
