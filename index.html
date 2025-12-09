@@ -534,6 +534,25 @@
       font-weight: 700;
       color: var(--text);
       line-height: 1;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-value.loading::after {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(99, 102, 241, 0.3);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     .stat-label {
@@ -780,30 +799,30 @@
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">🎮</div>
-            <div class="stat-value">1</div>
+            <div class="stat-value" data-stat="games_online">1</div>
             <div class="stat-label">Game Online</div>
             <div class="stat-detail">Cartofia playable</div>
           </div>
 
           <div class="stat-card">
             <div class="stat-icon">🤖</div>
-            <div class="stat-value">2</div>
+            <div class="stat-value" data-stat="active_bots">--</div>
             <div class="stat-label">Active Bots</div>
             <div class="stat-detail">Discord automation</div>
           </div>
 
           <div class="stat-card">
             <div class="stat-icon">📦</div>
-            <div class="stat-value">3</div>
+            <div class="stat-value" data-stat="online_containers">--</div>
             <div class="stat-label">Containers</div>
-            <div class="stat-detail">CT1000, CT2000, Web</div>
+            <div class="stat-detail" data-stat-detail="containers">Loading...</div>
           </div>
 
           <div class="stat-card">
             <div class="stat-icon">⚡</div>
-            <div class="stat-value">99.8%</div>
+            <div class="stat-value" data-stat="uptime_display">--</div>
             <div class="stat-label">Uptime</div>
-            <div class="stat-detail">Last 30 days</div>
+            <div class="stat-detail">Node running</div>
           </div>
         </div>
 
@@ -868,5 +887,51 @@
       </div>
     </footer>
   </div>
+
+  <script>
+    const API_URL = 'http://localhost:5000/api/stats';
+    const REFRESH_INTERVAL = 30000; // 30 seconds
+
+    async function updateStats() {
+      const statElements = document.querySelectorAll('[data-stat]');
+      
+      // Show loading state
+      statElements.forEach(el => {
+        el.classList.add('loading');
+      });
+
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json();
+        
+        // Update each stat element
+        statElements.forEach(el => {
+          const statKey = el.getAttribute('data-stat');
+          if (statKey in data) {
+            el.textContent = data[statKey];
+          }
+          el.classList.remove('loading');
+        });
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+        // Keep loading state visible on error, retry on next interval
+        setTimeout(() => {
+          statElements.forEach(el => el.classList.remove('loading'));
+        }, 2000);
+      }
+    }
+
+    // Initial load when page is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', updateStats);
+    } else {
+      updateStats();
+    }
+
+    // Refresh every 30 seconds
+    setInterval(updateStats, REFRESH_INTERVAL);
+  </script>
 </body>
 </html>
