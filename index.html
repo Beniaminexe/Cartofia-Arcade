@@ -682,6 +682,52 @@
       gap: 8px;
     }
 
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .footer-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.92);
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .footer-socials {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .footer-socials a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.92);
+      color: var(--muted);
+      font-size: 11px;
+      text-decoration: none;
+      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    }
+
+    .footer-socials a:hover {
+      color: #e5e7eb;
+      border-color: rgba(99, 102, 241, 0.65);
+      background: rgba(37, 49, 76, 0.95);
+    }
+
     @media (max-width: 640px) {
       footer {
         flex-direction: column;
@@ -743,8 +789,8 @@
       <section class="hero-grid" id="about">
         <div>
           <h1 class="hero-title">
-            Building a <span>digital playground</span>
-            one container at a time.
+            Welcome to <span>Cartofia Lab</span>,
+            a digital playground built one container at a time.
           </h1>
 
           <p class="hero-subtitle">
@@ -842,6 +888,10 @@
                 Play Cartofia
                 <span>→</span>
               </a>
+              <a class="lab-link" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">
+                Join Discord
+                <span>↗</span>
+              </a>
               <a class="lab-link" href="https://github.com/Beniaminexe/Cartofia-game" target="_blank" rel="noreferrer">
                 Game Source
                 <span>↗</span>
@@ -877,13 +927,13 @@
     </main>
 
     <footer>
-      <div>
-        <span>Cartofia Lab is a personal space for running my own services, games and experiments on hardware I control.</span>
-      </div>
-      <div class="footer-links">
-        <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
-        <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
-        <a href="/arcade/">Arcade</a>
+      <span>© <span id="year"></span> Cartofia. All rights reserved.</span>
+      <div class="footer-right">
+        <span class="footer-pill">Made with Python, Pygame &amp; a slightly over-engineered homelab.</span>
+        <div class="footer-socials">
+          <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord ↗</a>
+          <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub ↗</a>
+        </div>
       </div>
     </footer>
   </div>
@@ -932,6 +982,12 @@
 
     // Refresh every 30 seconds
     setInterval(updateStats, REFRESH_INTERVAL);
+
+    // Footer year
+    const yearEl = document.getElementById('year');
+    if (yearEl) {
+      yearEl.textContent = new Date().getFullYear();
+    }
   </script>
 </body>
 </html>
