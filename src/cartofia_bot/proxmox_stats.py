@@ -13,7 +13,7 @@ class ProxmoxStats:
         self.proxmox_url = os.getenv('PROXMOX_URL', 'https://192.168.7.100:8006')
         self.proxmox_user = os.getenv('PROXMOX_USER', 'root@pam')
         self.proxmox_token = os.getenv('PROXMOX_TOKEN')
-        self.proxmox_node = os.getenv('PROXMOX_NODE', 'pve')
+        self.proxmox_node = os.getenv('PROXMOX_NODE', 'proxmox')
         self.session = None
         self._auth_token = None
         
