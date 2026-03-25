@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Cartofia Archive</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .activity-list b {
+      color: #66c7ff;
+      font-weight: 700;
+    }
+
+    .activity-time {
+      display: block;
+      color: #7f95ad;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .account-state {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .account-meta {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .form-box {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(6, 12, 19, 0.68);
+    }
+
+    .form-title {
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .selected-file {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .selected-file strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .table-name {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .table-muted {
+      color: var(--muted);
+      font-size: 12px;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .empty-message {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .dropzone-icon {
+      width: 28px;
+      height: 28px;
+    }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="app-header reveal">
+      <a class="brand" href="/">
+        <span class="brand-chip" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+          </svg>
+        </span>
+        <span class="brand-text">Cartofia Archive</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a class="active" href="#archive">Archive</a>
+        <a href="#upload">Upload</a>
+        <a href="#activity">Activity</a>
+        <a href="#account">Account</a>
+      </nav>
+      <div class="avatar" aria-hidden="true">CA</div>
+    </header>
+
+    <main>
+      <section class="hero-card reveal" data-delay="1">
+        <div class="hero-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 4H10V10H4V4ZM14 4H20V10H14V4ZM4 14H10V20H4V14ZM14 14H20V20H14V14Z" fill="#4FC0FF"></path>
+          </svg>
+        </div>
+        <div class="hero-copy">
+          <p class="hero-kicker">Private Storage</p>
+          <h1 class="hero-title">Cartofia Archive</h1>
+          <p class="hero-lead">
+            A private page where account holders can upload and download files, with a shared index for the whole group.
+          </p>
+          <div class="pill-row">
+            <span class="pill"><strong>Auth</strong> account required</span>
+            <span class="pill"><strong>Upload</strong> drag and browse</span>
+            <span class="pill"><strong>Access</strong> private file index</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="layout-grid">
+        <article class="card reveal" data-delay="2" id="upload">
+          <h2 class="card-title">Upload Files</h2>
+          <p class="card-subtitle">Drag a file into the area or click to browse from your device.</p>
+
+          <div class="dropzone" id="dropZone" role="button" tabindex="0" aria-label="Select file to upload">
+            <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 4V16" stroke="#56C3FF" stroke-width="1.8" stroke-linecap="round"></path>
+              <path d="M7 9L12 4L17 9" stroke="#56C3FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M5 18H19" stroke="#56C3FF" stroke-width="1.8" stroke-linecap="round"></path>
+            </svg>
+            <strong>Drag files here or click to browse</strong>
+            <span>Any file type is supported. Access is restricted to signed-in users.</span>
+          </div>
+          <input id="fileInput" class="hidden" type="file" />
+
+          <p class="selected-file" id="selectedFileLabel">No file selected.</p>
+
+          <div class="button-row">
+            <button id="uploadButton" class="btn btn-primary" type="button" disabled>Upload File</button>
+          </div>
+
+          <div class="notice" id="uploadNotice">Sign in first, then upload.</div>
+        </article>
+
+        <div class="stack">
+          <article class="card reveal" data-delay="3" id="activity">
+            <h2 class="card-title">Recent Activity</h2>
+            <p class="card-subtitle">Latest file events from this archive.</p>
+            <ul class="list activity-list" id="activityList">
+              <li>Sign in to view archive activity.</li>
+            </ul>
+          </article>
+
+          <article class="card reveal" data-delay="3" id="account">
+            <h2 class="card-title">Account</h2>
+            <p class="card-subtitle">Create an account or sign in to unlock upload and download.</p>
+
+            <div class="account-state" id="accountState">
+              <div class="notice warn" id="accountNotice">Not authenticated.</div>
+              <div class="account-meta" id="accountMeta">Sign in to access archive files.</div>
+            </div>
+
+            <div id="authForms" class="form-grid columns-2">
+              <form id="registerForm" class="form-box stack" autocomplete="off">
+                <h3 class="form-title">Create account</h3>
+                <label for="registerUsername">Username</label>
+                <input class="input" id="registerUsername" name="username" type="text" minlength="3" maxlength="32" required />
+                <label for="registerPassword">Password</label>
+                <input class="input" id="registerPassword" name="password" type="password" minlength="8" required />
+                <button class="btn btn-primary" type="submit">Register</button>
+              </form>
+
+              <form id="loginForm" class="form-box stack" autocomplete="off">
+                <h3 class="form-title">Sign in</h3>
+                <label for="loginUsername">Username</label>
+                <input class="input" id="loginUsername" name="username" type="text" required />
+                <label for="loginPassword">Password</label>
+                <input class="input" id="loginPassword" name="password" type="password" required />
+                <button class="btn btn-primary" type="submit">Login</button>
+              </form>
+            </div>
+
+            <div id="accountActions" class="hidden">
+              <button id="logoutButton" class="btn btn-ghost" type="button">Logout</button>
+            </div>
+          </article>
+        </div>
+
+        <article class="card col-span-2 reveal" data-delay="2" id="archive">
+          <h2 class="card-title">File Archive</h2>
+          <p class="card-subtitle">Search and filter files, then download what you need.</p>
+
+          <div class="search-row">
+            <input id="searchInput" class="input" type="search" placeholder="Search files..." />
+            <select id="typeFilter" class="select">
+              <option value="all">All types</option>
+            </select>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Size</th>
+                  <th>Uploaded by</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="filesBody"></tbody>
+            </table>
+          </div>
+          <p class="empty-message" id="emptyMessage">Sign in to view archive files.</p>
+        </article>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Only authenticated accounts can upload and download archive files.</span>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/arcade/">Arcade</a>
+        <a href="/minecraft/">Minecraft</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const state = {
+      user: null,
+      files: [],
+      selectedFile: null
+    };
+
+    const refs = {
+      dropZone: document.getElementById("dropZone"),
+      fileInput: document.getElementById("fileInput"),
+      uploadButton: document.getElementById("uploadButton"),
+      selectedFileLabel: document.getElementById("selectedFileLabel"),
+      uploadNotice: document.getElementById("uploadNotice"),
+      accountNotice: document.getElementById("accountNotice"),
+      accountMeta: document.getElementById("accountMeta"),
+      authForms: document.getElementById("authForms"),
+      accountActions: document.getElementById("accountActions"),
+      logoutButton: document.getElementById("logoutButton"),
+      registerForm: document.getElementById("registerForm"),
+      loginForm: document.getElementById("loginForm"),
+      searchInput: document.getElementById("searchInput"),
+      typeFilter: document.getElementById("typeFilter"),
+      filesBody: document.getElementById("filesBody"),
+      emptyMessage: document.getElementById("emptyMessage"),
+      activityList: document.getElementById("activityList")
+    };
+
+    function setNotice(el, message, type) {
+      el.textContent = message;
+      el.className = "notice";
+      if (type) {
+        el.classList.add(type);
+      }
+    }
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes) || bytes < 0) {
+        return "-";
+      }
+      if (bytes < 1024) {
+        return `${bytes} B`;
+      }
+      const units = ["KB", "MB", "GB", "TB"];
+      let value = bytes / 1024;
+      let index = 0;
+      while (value >= 1024 && index < units.length - 1) {
+        value /= 1024;
+        index += 1;
+      }
+      return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[index]}`;
+    }
+
+    function formatDate(iso) {
+      const dt = new Date(iso);
+      if (Number.isNaN(dt.getTime())) {
+        return iso;
+      }
+      return dt.toLocaleString();
+    }
+
+    function getFileType(name) {
+      const idx = name.lastIndexOf(".");
+      if (idx <= 0 || idx === name.length - 1) {
+        return "none";
+      }
+      return name.slice(idx + 1).toLowerCase();
+    }
+
+    async function apiRequest(path, options) {
+      const response = await fetch(path, {
+        credentials: "include",
+        ...options
+      });
+
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch (_error) {
+        payload = null;
+      }
+
+      if (!response.ok) {
+        const message = payload && payload.error ? payload.error : `Request failed (${response.status})`;
+        throw new Error(message);
+      }
+
+      return payload;
+    }
+
+    function setSelectedFile(file) {
+      state.selectedFile = file || null;
+      if (state.selectedFile) {
+        refs.selectedFileLabel.textContent = `Selected file: ${state.selectedFile.name} (${formatBytes(state.selectedFile.size)})`;
+      } else {
+        refs.selectedFileLabel.textContent = "No file selected.";
+      }
+    }
+
+    function setUser(user) {
+      state.user = user || null;
+      const authenticated = Boolean(state.user);
+
+      refs.uploadButton.disabled = !authenticated || !state.selectedFile;
+
+      if (authenticated) {
+        setNotice(refs.accountNotice, `Signed in as ${state.user.username}`, "ok");
+        refs.accountMeta.textContent = "Upload and download access is enabled for this session.";
+        refs.authForms.classList.add("hidden");
+        refs.accountActions.classList.remove("hidden");
+        setNotice(refs.uploadNotice, "Ready to upload files.", "ok");
+      } else {
+        setNotice(refs.accountNotice, "Not authenticated.", "warn");
+        refs.accountMeta.textContent = "Sign in to access archive files.";
+        refs.authForms.classList.remove("hidden");
+        refs.accountActions.classList.add("hidden");
+        setNotice(refs.uploadNotice, "Sign in first, then upload.", "warn");
+      }
+    }
+
+    function updateTypeFilterOptions() {
+      const previous = refs.typeFilter.value;
+      const types = Array.from(new Set(state.files.map((file) => getFileType(file.name)).filter((type) => type !== "none"))).sort();
+
+      refs.typeFilter.innerHTML = "";
+      const allOpt = document.createElement("option");
+      allOpt.value = "all";
+      allOpt.textContent = "All types";
+      refs.typeFilter.appendChild(allOpt);
+
+      types.forEach((type) => {
+        const option = document.createElement("option");
+        option.value = type;
+        option.textContent = type;
+        refs.typeFilter.appendChild(option);
+      });
+
+      refs.typeFilter.value = Array.from(refs.typeFilter.options).some((opt) => opt.value === previous) ? previous : "all";
+    }
+
+    function renderActivity(files) {
+      refs.activityList.innerHTML = "";
+
+      if (!state.user) {
+        const li = document.createElement("li");
+        li.textContent = "Sign in to view archive activity.";
+        refs.activityList.appendChild(li);
+        return;
+      }
+
+      if (!files.length) {
+        const li = document.createElement("li");
+        li.textContent = "No activity yet. Upload a file to start.";
+        refs.activityList.appendChild(li);
+        return;
+      }
+
+      files.slice(0, 6).forEach((file) => {
+        const li = document.createElement("li");
+        const title = document.createElement("div");
+        const uploader = document.createElement("b");
+        uploader.textContent = file.uploaded_by;
+        const actionText = document.createTextNode(" uploaded ");
+        const fileName = document.createElement("span");
+        fileName.textContent = file.name;
+        title.appendChild(uploader);
+        title.appendChild(actionText);
+        title.appendChild(fileName);
+        const time = document.createElement("span");
+        time.className = "activity-time";
+        time.textContent = formatDate(file.uploaded_at);
+        li.appendChild(title);
+        li.appendChild(time);
+        refs.activityList.appendChild(li);
+      });
+    }
+
+    function renderFiles() {
+      refs.filesBody.innerHTML = "";
+
+      if (!state.user) {
+        refs.emptyMessage.textContent = "Sign in to view archive files.";
+        refs.emptyMessage.style.display = "block";
+        renderActivity([]);
+        return;
+      }
+
+      const query = refs.searchInput.value.trim().toLowerCase();
+      const selectedType = refs.typeFilter.value;
+
+      const filtered = state.files.filter((file) => {
+        const matchesQuery = !query || file.name.toLowerCase().includes(query) || file.uploaded_by.toLowerCase().includes(query);
+        const fileType = getFileType(file.name);
+        const matchesType = selectedType === "all" || fileType === selectedType;
+        return matchesQuery && matchesType;
+      });
+
+      if (!filtered.length) {
+        refs.emptyMessage.textContent = "No files match your filters.";
+        refs.emptyMessage.style.display = "block";
+      } else {
+        refs.emptyMessage.style.display = "none";
+      }
+
+      filtered.forEach((file) => {
+        const tr = document.createElement("tr");
+
+        const nameTd = document.createElement("td");
+        const nameMain = document.createElement("span");
+        nameMain.className = "table-name";
+        nameMain.textContent = file.name;
+        const nameSub = document.createElement("span");
+        nameSub.className = "table-muted";
+        nameSub.textContent = `ID ${file.id}`;
+        nameTd.appendChild(nameMain);
+        nameTd.appendChild(nameSub);
+
+        const sizeTd = document.createElement("td");
+        sizeTd.textContent = formatBytes(file.size_bytes);
+
+        const byTd = document.createElement("td");
+        byTd.textContent = file.uploaded_by;
+
+        const dateTd = document.createElement("td");
+        dateTd.textContent = formatDate(file.uploaded_at);
+
+        const actionTd = document.createElement("td");
+        const link = document.createElement("a");
+        link.className = "inline-link";
+        link.href = `/api/archive/download/${file.id}`;
+        link.textContent = "Download";
+        actionTd.appendChild(link);
+
+        tr.appendChild(nameTd);
+        tr.appendChild(sizeTd);
+        tr.appendChild(byTd);
+        tr.appendChild(dateTd);
+        tr.appendChild(actionTd);
+
+        refs.filesBody.appendChild(tr);
+      });
+
+      renderActivity(state.files);
+    }
+
+    async function loadSession() {
+      try {
+        const result = await apiRequest("/api/auth/me", { method: "GET" });
+        setUser(result.authenticated ? result.user : null);
+      } catch (error) {
+        setUser(null);
+        setNotice(refs.accountNotice, `Session check failed: ${error.message}`, "error");
+      }
+    }
+
+    async function refreshFiles() {
+      if (!state.user) {
+        state.files = [];
+        updateTypeFilterOptions();
+        renderFiles();
+        return;
+      }
+
+      try {
+        const result = await apiRequest("/api/archive/files", { method: "GET" });
+        state.files = Array.isArray(result.files) ? result.files : [];
+        updateTypeFilterOptions();
+        renderFiles();
+      } catch (error) {
+        state.files = [];
+        updateTypeFilterOptions();
+        renderFiles();
+        setNotice(refs.uploadNotice, `Could not load files: ${error.message}`, "error");
+      }
+    }
+
+    async function handleRegister(event) {
+      event.preventDefault();
+      const formData = new FormData(refs.registerForm);
+
+      try {
+        const result = await apiRequest("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: String(formData.get("username") || "").trim(),
+            password: String(formData.get("password") || "")
+          })
+        });
+
+        refs.registerForm.reset();
+        setUser(result);
+        setNotice(refs.accountNotice, `Registered and signed in as ${result.username}`, "ok");
+        await refreshFiles();
+      } catch (error) {
+        setNotice(refs.accountNotice, error.message, "error");
+      }
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      const formData = new FormData(refs.loginForm);
+
+      try {
+        const result = await apiRequest("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: String(formData.get("username") || "").trim(),
+            password: String(formData.get("password") || "")
+          })
+        });
+
+        refs.loginForm.reset();
+        setUser(result);
+        setNotice(refs.accountNotice, `Signed in as ${result.username}`, "ok");
+        await refreshFiles();
+      } catch (error) {
+        setNotice(refs.accountNotice, error.message, "error");
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        await apiRequest("/api/auth/logout", { method: "POST" });
+        setUser(null);
+        state.files = [];
+        updateTypeFilterOptions();
+        renderFiles();
+        setNotice(refs.accountNotice, "Signed out.", "warn");
+      } catch (error) {
+        setNotice(refs.accountNotice, error.message, "error");
+      }
+    }
+
+    async function handleUpload() {
+      if (!state.user) {
+        setNotice(refs.uploadNotice, "Please sign in first.", "warn");
+        return;
+      }
+
+      if (!state.selectedFile) {
+        setNotice(refs.uploadNotice, "Select a file first.", "warn");
+        return;
+      }
+
+      refs.uploadButton.disabled = true;
+      refs.uploadButton.textContent = "Uploading...";
+
+      const data = new FormData();
+      data.append("file", state.selectedFile);
+
+      try {
+        const result = await apiRequest("/api/archive/upload", {
+          method: "POST",
+          body: data
+        });
+
+        setSelectedFile(null);
+        refs.fileInput.value = "";
+        setNotice(refs.uploadNotice, `Uploaded ${result.name}`, "ok");
+        await refreshFiles();
+      } catch (error) {
+        setNotice(refs.uploadNotice, error.message, "error");
+      } finally {
+        refs.uploadButton.textContent = "Upload File";
+        refs.uploadButton.disabled = !state.user || !state.selectedFile;
+      }
+    }
+
+    function onDropZoneClick() {
+      refs.fileInput.click();
+    }
+
+    function onDropZoneKey(event) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        refs.fileInput.click();
+      }
+    }
+
+    function onFileInputChange() {
+      const file = refs.fileInput.files && refs.fileInput.files[0] ? refs.fileInput.files[0] : null;
+      setSelectedFile(file);
+      refs.uploadButton.disabled = !state.user || !state.selectedFile;
+    }
+
+    function onDragOver(event) {
+      event.preventDefault();
+      refs.dropZone.classList.add("dragover");
+    }
+
+    function onDragLeave(event) {
+      event.preventDefault();
+      refs.dropZone.classList.remove("dragover");
+    }
+
+    function onDrop(event) {
+      event.preventDefault();
+      refs.dropZone.classList.remove("dragover");
+      const files = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files : null;
+      const file = files && files[0] ? files[0] : null;
+      setSelectedFile(file);
+      refs.uploadButton.disabled = !state.user || !state.selectedFile;
+    }
+
+    function bindEvents() {
+      refs.registerForm.addEventListener("submit", handleRegister);
+      refs.loginForm.addEventListener("submit", handleLogin);
+      refs.logoutButton.addEventListener("click", handleLogout);
+      refs.uploadButton.addEventListener("click", handleUpload);
+      refs.fileInput.addEventListener("change", onFileInputChange);
+
+      refs.dropZone.addEventListener("click", onDropZoneClick);
+      refs.dropZone.addEventListener("keydown", onDropZoneKey);
+      refs.dropZone.addEventListener("dragover", onDragOver);
+      refs.dropZone.addEventListener("dragleave", onDragLeave);
+      refs.dropZone.addEventListener("drop", onDrop);
+
+      refs.searchInput.addEventListener("input", renderFiles);
+      refs.typeFilter.addEventListener("change", renderFiles);
+    }
+
+    async function boot() {
+      bindEvents();
+      await loadSession();
+      await refreshFiles();
+      refs.uploadButton.disabled = !state.user || !state.selectedFile;
+    }
+
+    boot();
+  </script>
+</body>
+</html>

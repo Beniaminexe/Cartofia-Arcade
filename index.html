@@ -2,1030 +2,254 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Cartofia Lab – Home</title>
+  <title>Cartofia Home</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css" />
   <style>
-    :root {
-      color-scheme: dark;
-      --bg: #020617;
-      --bg-alt: #020617;
-      --card: #020617;
-      --card-soft: #020617;
-      --accent: #6366f1;
-      --accent-soft: rgba(99, 102, 241, 0.12);
-      --accent-strong: #4f46e5;
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --border-subtle: rgba(148, 163, 184, 0.35);
-      --border-strong: rgba(129, 140, 248, 0.85);
-      --pill-bg: rgba(15, 23, 42, 0.9);
-      --ok: #22c55e;
-      --info: #22d3ee;
-      --warn: #facc15;
+    .tile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    .tile {
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(8, 15, 23, 0.72);
+      padding: 12px;
+      display: grid;
+      gap: 6px;
     }
 
-    body {
-      min-height: 100vh;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-      background:
-        radial-gradient(circle at top, #111827 0, #020617 42%, #000 100%);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      display: flex;
-      flex-direction: column;
+    .tile h3 {
+      font-size: 17px;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-weight: 600;
     }
 
-    .page {
-      width: 100%;
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 24px clamp(16px, 3vw, 32px) 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
+    .tile p {
+      font-size: 14px;
+      color: var(--muted);
     }
 
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      position: sticky;
-      top: 0;
-      padding-block: 6px 12px;
-      backdrop-filter: blur(20px);
-      background: linear-gradient(to bottom, rgba(2, 6, 23, 0.96), transparent);
-      z-index: 10;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .brand-mark {
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: conic-gradient(from 240deg, #6366f1, #22c55e, #06b6d4, #6366f1);
-      padding: 1px;
-    }
-
-    .brand-mark-inner {
-      width: 100%;
-      height: 100%;
-      border-radius: inherit;
-      background: #020617;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
+    .tile a {
+      color: #7ecfff;
+      text-decoration: none;
+      font-size: 14px;
       font-weight: 700;
     }
-    
-    .learning-embed-shell {
-      width: fit-content;
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 0;
-      background: rgba(11, 18, 32, 0.96);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
-      margin-top: 8px;
-      align-self: flex-start;
-      overflow: hidden;
+
+    .tile a:hover {
+      color: #a8dcff;
     }
 
-    .learning-embed {
-      width: 100%;
-      height: 80px;
-      border: none;
-      background: transparent;
+    .stats-note {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    .embed-wrap {
       border-radius: 12px;
+      border: 1px solid var(--line);
       overflow: hidden;
+      background: rgba(6, 12, 18, 0.8);
+    }
+
+    .embed-wrap iframe {
+      width: 100%;
+      height: 84px;
+      border: 0;
       display: block;
-      scrollbar-width: none;
-    }
-
-    .learning-embed::-webkit-scrollbar {
-      display: none;
-    }
-
-    .brand-text-main {
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .brand-text-sub {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    nav {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-    }
-
-    nav a {
-      text-decoration: none;
-      color: var(--muted);
-      border-radius: 999px;
-      padding: 6px 11px;
-      border: 1px solid transparent;
-      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.08s ease;
-    }
-
-    nav a:hover {
-      color: var(--text);
-      background: rgba(15, 23, 42, 0.95);
-      border-color: rgba(148, 163, 253, 0.55);
-      transform: translateY(-1px);
-    }
-
-    .nav-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 253, 0.4);
-      background: rgba(15, 23, 42, 0.96);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--text);
-    }
-
-    .nav-pill-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: var(--ok);
-      box-shadow: 0 0 10px rgba(22, 163, 74, 0.9);
-    }
-
-    @media (max-width: 880px) {
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      nav {
-        flex-wrap: wrap;
-      }
-    }
-
-    main {
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-    }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-      gap: clamp(22px, 4vw, 36px);
-      align-items: flex-start;
-    }
-
-    @media (max-width: 880px) {
-      .hero-grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
-    }
-
-    .hero-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 253, 0.45);
-      background: rgba(15, 23, 42, 0.96);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      color: var(--muted);
-    }
-
-    .hero-eyebrow span:first-child {
-      color: #c4b5fd;
-      font-weight: 600;
-    }
-
-    .hero-title {
-      margin-top: 14px;
-      font-size: clamp(30px, 4vw, 40px);
-      line-height: 1.1;
-    }
-
-    .hero-title span {
-      background: linear-gradient(120deg, #a855f7, #22d3ee, #4ade80);
-      -webkit-background-clip: text;
-      color: transparent;
-    }
-
-    .hero-subtitle {
-      margin-top: 14px;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--muted);
-      max-width: 40rem;
-    }
-
-    .hero-subtitle strong {
-      color: #e5e7eb;
-      font-weight: 500;
-    }
-
-    .hero-cta-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .btn-primary,
-    .btn-ghost {
-      border-radius: 999px;
-      padding: 9px 16px;
-      font-size: 14px;
-      font-weight: 500;
-      border: 1px solid transparent;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: transform 0.08s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease;
-    }
-
-    .btn-primary {
-      background: linear-gradient(120deg, var(--accent-strong), var(--accent));
-      box-shadow: 0 10px 30px rgba(79, 70, 229, 0.6);
-      color: #f9fafb;
-      border-color: var(--border-strong);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 16px 45px rgba(79, 70, 229, 0.85);
-    }
-
-    .btn-ghost {
-      background: rgba(15, 23, 42, 0.9);
-      border-color: rgba(148, 163, 253, 0.5);
-      color: var(--muted);
-    }
-
-    .btn-ghost:hover {
-      background: rgba(15, 23, 42, 0.98);
-      color: var(--text);
-      transform: translateY(-1px);
-    }
-
-    .btn-icon {
-      font-size: 16px;
-    }
-
-    .hero-meta-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .hero-meta-pill {
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.96);
-      border: 1px solid rgba(55, 65, 81, 0.8);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .hero-meta-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: var(--ok);
-      box-shadow: 0 0 10px rgba(22, 163, 74, 0.9);
-    }
-
-    .hero-meta-pill span {
-      color: #e5e7eb;
-    }
-
-    .hero-meta-faded span {
-      color: var(--muted);
-    }
-
-    .hero-panel {
-      border-radius: 18px;
-      border: 1px solid var(--border-subtle);
-      background:
-        radial-gradient(circle at top left, var(--accent-soft), transparent 60%),
-        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.16), transparent 60%),
-        rgba(15, 23, 42, 0.98);
-      padding: 14px 14px 16px;
-      font-size: 12px;
-    }
-
-    .hero-panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      color: var(--muted);
-    }
-
-    .hero-panel-title {
-      font-size: 12px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .chip {
-      border-radius: 999px;
-      padding: 3px 8px;
-      border: 1px solid rgba(148, 163, 253, 0.6);
-      background: rgba(15, 23, 42, 0.96);
-      font-size: 11px;
-      color: var(--muted);
-      text-decoration: none;
-      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-    }
-
-    .arcade-link:hover {
-      background: rgba(99, 102, 241, 0.15);
-      color: var(--text);
-      border-color: rgba(148, 163, 253, 0.8);
-    }
-
-    .arcade-games-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .game-card {
-      border-radius: 14px;
-      padding: 10px 12px;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-
-    .game-card:hover {
-      background: rgba(25, 33, 52, 0.98);
-      border-color: rgba(148, 163, 253, 0.6);
-      transform: translateY(-1px);
-    }
-
-    .game-card-placeholder {
-      opacity: 0.5;
-      cursor: default;
-    }
-
-    .game-card-placeholder:hover {
-      background: rgba(15, 23, 42, 0.98);
-      border-color: rgba(55, 65, 81, 0.9);
-      transform: none;
-    }
-
-    .game-icon {
-      font-size: 24px;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 10px;
-      background: rgba(99, 102, 241, 0.12);
-      border: 1px solid rgba(99, 102, 241, 0.3);
-    }
-
-    .game-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .game-title {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    .game-meta {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .game-arrow {
-      font-size: 16px;
-      color: var(--muted);
-      transition: transform 0.2s ease;
-    }
-
-    .game-card:hover .game-arrow {
-      transform: translateX(3px);
-    }
-
-    .topology-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-      gap: 10px;
-      margin-top: 4px;
-    }
-
-    @media (max-width: 720px) {
-      .topology-grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
-    }
-
-    .node-card {
-      border-radius: 14px;
-      padding: 8px 9px;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .node-title-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-      font-size: 12px;
-    }
-
-    .node-title {
-      font-weight: 500;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--ok);
-      box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
-    }
-
-    .node-meta {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .node-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 4px;
-    }
-
-    .node-tag {
-      border-radius: 999px;
-      padding: 2px 6px;
-      border: 1px solid rgba(75, 85, 99, 0.9);
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    .lab-sections {
-      margin-top: 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      margin-top: 8px;
-    }
-
-    .stat-card {
-      border-radius: 14px;
-      padding: 16px;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .stat-card:hover {
-      background: rgba(25, 33, 52, 0.98);
-      border-color: rgba(148, 163, 253, 0.5);
-      transform: translateY(-2px);
-    }
-
-    .stat-icon {
-      font-size: 28px;
-      line-height: 1;
-    }
-
-    .stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1;
-      min-height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .stat-value.loading::after {
-      content: '';
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 2px solid rgba(99, 102, 241, 0.3);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .stat-label {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .stat-detail {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .lab-sections-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 8px;
-    }
-
-    .lab-title {
-      font-size: 15px;
-      font-weight: 600;
-    }
-
-    .lab-subtitle {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .lab-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-      gap: 12px;
-    }
-
-    @media (max-width: 880px) {
-      .lab-grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
-    }
-
-    .lab-card {
-      border-radius: 18px;
-      padding: 12px 12px 13px;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 12px;
-    }
-
-    .lab-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .lab-card-title {
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    .lab-card-meta {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .lab-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-
-    .lab-tag {
-      border-radius: 999px;
-      padding: 2px 7px;
-      border: 1px solid rgba(148, 163, 253, 0.4);
-      font-size: 10px;
-      color: #e5e7eb;
-    }
-
-    .lab-tag.soft {
-      border-color: rgba(75, 85, 99, 0.9);
-      color: var(--muted);
-    }
-
-    .lab-footer-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-top: 4px;
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    .lab-link {
-      font-size: 11px;
-      text-decoration: none;
-      color: #bfdbfe;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .pill-metric {
-      border-radius: 999px;
-      padding: 2px 6px;
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      color: var(--muted);
-    }
-
-    footer {
-      margin-top: 8px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(15, 23, 42, 0.95);
-      font-size: 11px;
-      color: var(--muted);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .footer-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 11px;
-    }
-
-    .footer-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      background: rgba(15, 23, 42, 0.92);
-      color: var(--muted);
-      font-size: 11px;
-    }
-
-    .footer-socials {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .footer-socials a {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      background: rgba(15, 23, 42, 0.92);
-      color: var(--muted);
-      font-size: 11px;
-      text-decoration: none;
-      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-    }
-
-    .footer-socials a:hover {
-      color: #e5e7eb;
-      border-color: rgba(99, 102, 241, 0.65);
-      background: rgba(37, 49, 76, 0.95);
-    }
-
-    @media (max-width: 640px) {
-      footer {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
-
-    .footer-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .footer-links a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 11px;
-    }
-
-    .footer-links a:hover {
-      color: #e5e7eb;
-      text-decoration: underline;
+      background: transparent;
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <header>
-      <div class="brand">
-        <div class="brand-mark">
-          <div class="brand-mark-inner">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="2" width="6" height="6" rx="1" fill="#6366f1"/>
-              <rect x="12" y="2" width="6" height="6" rx="1" fill="#22c55e"/>
-              <rect x="2" y="12" width="6" height="6" rx="1" fill="#06b6d4"/>
-              <rect x="12" y="12" width="6" height="6" rx="1" fill="#a855f7"/>
-            </svg>
-          </div>
-        </div>
-        <div>
-          <div class="brand-text-main">Cartofia Lab</div>
-          <div class="brand-text-sub">Self-hosted games, bots & infrastructure</div>
-        </div>
-      </div>
-
-      <nav>
-        <div class="nav-pill">
-          <span class="nav-pill-dot"></span>
-          <span>Running on Proxmox</span>
-        </div>
-        <a href="#lab">Lab</a>
+  <div class="site-shell">
+    <header class="app-header reveal">
+      <a class="brand" href="/">
+        <span class="brand-chip" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+          </svg>
+        </span>
+        <span class="brand-text">Cartofia Archive</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a class="active" href="/">Home</a>
+        <a href="/archive/">Archive</a>
         <a href="/arcade/">Arcade</a>
         <a href="/minecraft/">Minecraft</a>
-        <a href="#projects">Projects</a>
       </nav>
+      <div class="avatar" aria-hidden="true">CA</div>
     </header>
 
     <main>
-      <section class="hero-grid" id="about">
-        <div>
-          <h1 class="hero-title">
-            Welcome to <span>Cartofia Lab</span>,
-            a digital playground built one container at a time.
-          </h1>
-
-          <p class="hero-subtitle">
-            This is the front page for my personal lab: a Proxmox host, a couple of Linux containers,
-            a browser arcade and some Discord-powered automation. Everything here runs on hardware I
-            maintain, break and fix myself.
-          </p>
+      <section class="hero-card reveal" data-delay="1">
+        <div class="hero-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 4H10V10H4V4ZM14 4H20V10H14V4ZM4 14H10V20H4V14ZM14 14H20V20H14V14Z" fill="#4FC0FF"></path>
+          </svg>
         </div>
-
-        <aside class="hero-panel" aria-label="Arcade games">
-          <div class="hero-panel-header">
-            <div class="hero-panel-title">🎮 Arcade</div>
-            <a href="/arcade/" class="chip arcade-link">Browse all →</a>
+        <div class="hero-copy">
+          <p class="hero-kicker">Self Hosted Platform</p>
+          <h1 class="hero-title">Cartofia Home</h1>
+          <p class="hero-lead">
+            One place for games, private file archive access, and lab services running on the same Proxmox setup.
+          </p>
+          <div class="pill-row">
+            <span class="pill"><strong>Gateway</strong> Nginx + Cloudflare Tunnel</span>
+            <span class="pill"><strong>Automation</strong> Discord bot controls</span>
+            <span class="pill"><strong>Storage</strong> Account gated archive files</span>
           </div>
-
-          <div class="arcade-games-grid">
-            <a href="/arcade/cartofia/" class="game-card">
-              <div class="game-icon">🎯</div>
-              <div class="game-info">
-                <div class="game-title">Cartofia</div>
-                <div class="game-meta">Pygame adventure</div>
-              </div>
-              <span class="game-arrow">→</span>
-            </a>
-
-            <a href="/minecraft/" class="game-card">
-              <div class="game-icon">⛏️</div>
-              <div class="game-info">
-                <div class="game-title">Minecraft</div>
-                <div class="game-meta">Vanilla server</div>
-              </div>
-              <span class="game-arrow">→</span>
-            </a>
-            
-            <div class="game-card game-card-placeholder">
-              <div class="game-icon">✨</div>
-              <div class="game-info">
-                <div class="game-title">More games</div>
-                <div class="game-meta">Coming soon</div>
-              </div>
-            </div>
-          </div>
-        </aside>
+        </div>
       </section>
 
-      <section class="lab-sections" id="lab">
-        <div class="lab-sections-header">
-          <div class="lab-title">Lab Stats</div>
-          <p class="lab-subtitle">Quick metrics and status overview</p>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">🎮</div>
-            <div class="stat-value" data-stat="games_online">1</div>
-            <div class="stat-label">Game Online</div>
-            <div class="stat-detail">Cartofia playable</div>
+      <section class="layout-grid">
+        <article class="card reveal" data-delay="2">
+          <h2 class="card-title">Platform Overview</h2>
+          <p class="card-subtitle">
+            Launch games, monitor infrastructure stats, and move to the private archive where authenticated users can upload and download shared files.
+          </p>
+          <div class="button-row">
+            <a class="btn btn-primary" href="/archive/">Open Archive</a>
+            <a class="btn btn-ghost" href="/arcade/">Browse Arcade</a>
+            <a class="btn btn-ghost" href="/minecraft/">Minecraft Info</a>
           </div>
-
-          <div class="stat-card">
-            <div class="stat-icon">🤖</div>
-            <div class="stat-value" data-stat="active_bots">--</div>
-            <div class="stat-label">Active Bots</div>
-            <div class="stat-detail">Discord automation</div>
+          <div class="notice">
+            Archive access is restricted to signed-in accounts.
           </div>
+        </article>
 
-          <div class="stat-card">
-            <div class="stat-icon">📦</div>
-            <div class="stat-value" data-stat="online_containers">--</div>
-            <div class="stat-label">Containers</div>
-            <div class="stat-detail" data-stat-detail="containers">Loading...</div>
+        <article class="card reveal" data-delay="3">
+          <h2 class="card-title">Live Infrastructure</h2>
+          <p class="card-subtitle">Values update every 30 seconds from the API.</p>
+          <div class="status-list">
+            <div class="status-row">
+              <span class="status-label">Games Online</span>
+              <span class="status-value" data-stat="games_online">--</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Active Bots</span>
+              <span class="status-value" data-stat="active_bots">--</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Containers</span>
+              <span class="status-value"><span data-stat="online_containers">--</span> / <span data-stat="total_containers">--</span></span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Node Uptime</span>
+              <span class="status-value" data-stat="uptime_display">--</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Memory Usage</span>
+              <span class="status-value"><span data-stat="memory_used_gb">--</span> / <span data-stat="memory_total_gb">--</span> GB</span>
+            </div>
           </div>
+          <p class="stats-note" id="statsTimestamp">Last update: waiting for first fetch.</p>
+        </article>
 
-          <div class="stat-card">
-            <div class="stat-icon">⚡</div>
-            <div class="stat-value" data-stat="uptime_display">--</div>
-            <div class="stat-label">Uptime</div>
-            <div class="stat-detail">Node running</div>
+        <article class="card col-span-2 reveal" data-delay="2">
+          <h2 class="card-title">Quick Access</h2>
+          <p class="card-subtitle">Jump directly to the main parts of the website.</p>
+          <div class="tile-grid">
+            <div class="tile">
+              <h3>Archive</h3>
+              <p>Upload and download files with account based access control.</p>
+              <a href="/archive/">Go to Archive</a>
+            </div>
+            <div class="tile">
+              <h3>Arcade</h3>
+              <p>Play Cartofia in the browser and track current slots.</p>
+              <a href="/arcade/">Go to Arcade</a>
+            </div>
+            <div class="tile">
+              <h3>Minecraft</h3>
+              <p>Live status page with server details and join instructions.</p>
+              <a href="/minecraft/">Go to Minecraft</a>
+            </div>
+            <div class="tile">
+              <h3>Community</h3>
+              <p>Join Discord and follow source repositories for updates.</p>
+              <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Open Discord</a>
+            </div>
           </div>
-        </div>
+        </article>
 
-        <div class="lab-grid" id="projects" style="margin-top: 20px;">
-          <article class="lab-card" style="grid-column: 1 / -1;">
-            <div class="lab-card-header">
-              <div>
-                <h2 class="lab-card-title">🎓 Learning Progress</h2>
-                <p class="lab-card-meta">Live TryHackMe profile badge.</p>
-              </div>
-            </div>
-            <div class="learning-embed-shell">
-              <iframe class="learning-embed" src="https://tryhackme.com/api/v2/badges/public-profile?userPublicId=5285070" title="TryHackMe progress" loading="lazy" scrolling="no" referrerpolicy="no-referrer"></iframe>
-            </div>
-          </article>
-
-          <article class="lab-card">
-            <div class="lab-card-header">
-              <div>
-                <h2 class="lab-card-title">🎯 Quick Links</h2>
-                <p class="lab-card-meta">
-                  Jump to the main attractions and repositories.
-                </p>
-              </div>
-            </div>
-
-            <div class="lab-footer-row" style="flex-direction: column; gap: 8px; align-items: flex-start;">
-              <a class="lab-link" href="/arcade/">
-                Play Cartofia
-                <span>→</span>
-              </a>
-              <a class="lab-link" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">
-                Join Discord
-                <span>↗</span>
-              </a>
-              <a class="lab-link" href="https://github.com/Beniaminexe/Cartofia-game" target="_blank" rel="noreferrer">
-                Game Source
-                <span>↗</span>
-              </a>
-              <a class="lab-link" href="https://github.com/Beniaminexe/Cartofia-Arcade" target="_blank" rel="noreferrer">
-                Lab Infrastructure
-                <span>↗</span>
-              </a>
-            </div>
-          </article>
-
-          <article class="lab-card">
-            <div class="lab-card-header">
-              <div>
-                <h2 class="lab-card-title">⚙️ Tech Stack</h2>
-                <p class="lab-card-meta">
-                  Core technologies powering the lab.
-                </p>
-              </div>
-            </div>
-
-            <div class="lab-tags">
-              <span class="lab-tag">Proxmox</span>
-              <span class="lab-tag">Nginx</span>
-              <span class="lab-tag">Python</span>
-              <span class="lab-tag">Pygame</span>
-              <span class="lab-tag">Discord.py</span>
-              <span class="lab-tag soft">Cloudflare</span>
-            </div>
-          </article>
-        </div>
+        <article class="card col-span-2 reveal" data-delay="3">
+          <h2 class="card-title">Learning Progress</h2>
+          <p class="card-subtitle">Live TryHackMe profile badge.</p>
+          <div class="embed-wrap">
+            <iframe src="https://tryhackme.com/api/v2/badges/public-profile?userPublicId=5285070" title="TryHackMe progress" loading="lazy" scrolling="no" referrerpolicy="no-referrer"></iframe>
+          </div>
+        </article>
       </section>
     </main>
 
-    <footer>
-      <span>© <span id="year"></span> Cartofia. All rights reserved.</span>
-      <div class="footer-right">
-        <span class="footer-pill">Made with Python, Pygame &amp; a slightly over-engineered homelab.</span>
-        <div class="footer-socials">
-          <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord ↗</a>
-          <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub ↗</a>
-        </div>
+    <footer class="footer">
+      <span>Copyright <span id="year"></span> Cartofia. All rights reserved.</span>
+      <div class="footer-links">
+        <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+        <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
       </div>
     </footer>
   </div>
 
   <script>
-    const API_URL = 'http://localhost:5000/api/stats';
-    const REFRESH_INTERVAL = 30000; // 30 seconds
+    const API_URL = "/api/stats";
+    const REFRESH_INTERVAL = 30000;
+
+    function updateTimestamp(iso) {
+      const el = document.getElementById("statsTimestamp");
+      if (!el) {
+        return;
+      }
+      if (!iso) {
+        el.textContent = "Last update: unavailable.";
+        return;
+      }
+      const dt = new Date(iso);
+      if (Number.isNaN(dt.getTime())) {
+        el.textContent = "Last update: unavailable.";
+        return;
+      }
+      el.textContent = `Last update: ${dt.toLocaleString()}`;
+    }
 
     async function updateStats() {
-      const statElements = document.querySelectorAll('[data-stat]');
-      
-      // Show loading state
-      statElements.forEach(el => {
-        el.classList.add('loading');
-      });
-
+      const targets = document.querySelectorAll("[data-stat]");
       try {
         const response = await fetch(API_URL);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
         const data = await response.json();
-        
-        // Update each stat element
-        statElements.forEach(el => {
-          const statKey = el.getAttribute('data-stat');
-          if (statKey in data) {
-            el.textContent = data[statKey];
+        targets.forEach((el) => {
+          const key = el.getAttribute("data-stat");
+          if (key && Object.prototype.hasOwnProperty.call(data, key)) {
+            el.textContent = data[key];
           }
-          el.classList.remove('loading');
         });
+        updateTimestamp(data.timestamp);
       } catch (error) {
-        console.error('Failed to fetch stats:', error);
-        // Keep loading state visible on error, retry on next interval
-        setTimeout(() => {
-          statElements.forEach(el => el.classList.remove('loading'));
-        }, 2000);
+        console.error("Failed to fetch stats:", error);
+        updateTimestamp(null);
       }
     }
 
-    // Initial load when page is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', updateStats);
-    } else {
-      updateStats();
-    }
-
-    // Refresh every 30 seconds
+    updateStats();
     setInterval(updateStats, REFRESH_INTERVAL);
 
-    // Footer year
-    const yearEl = document.getElementById('year');
-    if (yearEl) {
-      yearEl.textContent = new Date().getFullYear();
+    const year = document.getElementById("year");
+    if (year) {
+      year.textContent = String(new Date().getFullYear());
     }
   </script>
 </body>

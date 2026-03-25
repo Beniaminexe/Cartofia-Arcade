@@ -1,617 +1,213 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   <title>Cartofia Arcade</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css" />
   <style>
-    :root {
-      --bg: #020617;
-      --bg-alt: #020617;
-      --card: #020617;
-      --card-soft: #020617;
-      --accent: #6366f1;
-      --accent-soft: rgba(99, 102, 241, 0.12);
-      --accent-strong: #4f46e5;
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --border-subtle: rgba(148, 163, 184, 0.35);
-      --border-strong: rgba(129, 140, 248, 0.85);
-      --pill-bg: rgba(15, 23, 42, 0.9);
-      --ok: #22c55e;
-      --info: #22d3ee;
-      --warn: #facc15;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-    }
-
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-      background: radial-gradient(circle at top, #111827 0, #020617 42%, #000 100%);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .scanlines::before {
-      display: none;
-    }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 24px clamp(16px, 3vw, 32px) 40px;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      position: sticky;
-      top: 0;
-      padding-block: 6px 12px;
-      backdrop-filter: blur(20px);
-      background: linear-gradient(to bottom, rgba(2, 6, 23, 0.96), transparent);
-      z-index: 10;
-      margin-bottom: 28px;
-    }
-
-    @media (max-width: 880px) {
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: var(--text);
-    }
-
-    .logo-symbol {
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: conic-gradient(from 240deg, #6366f1, #22c55e, #06b6d4, #6366f1);
-      padding: 1px;
-    }
-
-    .logo-symbol::after {
-      display: none;
-    }
-
-    .logo-text-title {
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .logo-sub {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    nav {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-    }
-
-    nav a {
-      text-decoration: none;
-      color: var(--muted);
-      border-radius: 999px;
-      padding: 6px 11px;
-      border: 1px solid transparent;
-      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.08s ease;
-    }
-
-    nav a:hover {
-      color: var(--text);
-      background: rgba(15, 23, 42, 0.95);
-      border-color: rgba(148, 163, 253, 0.55);
-      transform: translateY(-1px);
-    }
-
-    main {
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-    }
-
-    .hero {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    @media (max-width: 880px) {
-      .hero {
-        flex-direction: column;
-      }
-    }
-
-    .hero-title {
-      margin: 0;
-      font-size: clamp(30px, 4vw, 40px);
-      line-height: 1.1;
-    }
-
-    .hero-title span {
-      background: linear-gradient(120deg, #a855f7, #22d3ee, #4ade80);
-      -webkit-background-clip: text;
-      color: transparent;
-    }
-
-    .hero-highlight {
-      color: inherit;
-    }
-
-    .hero-tagline {
-      margin-top: 14px;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--muted);
-      max-width: 40rem;
-    }
-
-    .hero-cta {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-top: 20px;
-    }
-
-    .hero-link {
-      font-size: 13px;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color 0.2s ease;
-    }
-
-    .hero-link:hover {
-      color: var(--text);
-    }
-
-    .hero-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .btn {
-      border-radius: 999px;
-      padding: 9px 16px;
-      font-size: 14px;
-      font-weight: 500;
-      border: 1px solid transparent;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: transform 0.08s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease;
-    }
-
-    .btn-primary {
-      background: linear-gradient(120deg, var(--accent-strong), var(--accent));
-      box-shadow: 0 10px 30px rgba(79, 70, 229, 0.6);
-      color: #f9fafb;
-      border-color: var(--border-strong);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 16px 45px rgba(79, 70, 229, 0.85);
-    }
-
-    .btn-ghost {
-      background: rgba(15, 23, 42, 0.9);
-      border-color: rgba(148, 163, 253, 0.5);
-      color: var(--muted);
-    }
-
-    .btn-ghost:hover {
-      background: rgba(15, 23, 42, 0.98);
-      color: var(--text);
-      transform: translateY(-1px);
-    }
-
-    .hero-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .hero-meta span {
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.96);
-      border: 1px solid rgba(55, 65, 81, 0.8);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .hero-screen {
-      position: relative;
-      border-radius: 18px;
-      border: 1px solid var(--border-subtle);
-      background: radial-gradient(circle at top left, var(--accent-soft), transparent 60%), rgba(15, 23, 42, 0.98);
-      padding: 14px 14px 16px;
-      margin-top: 12px;
-      font-size: 12px;
-    }
-
-    .hero-feature {
-      margin-top: 12px;
-    }
-
-    .feature-card {
-      border-radius: 14px;
-      padding: 16px;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: all 0.2s ease;
-    }
-
-    .feature-card:hover {
-      background: rgba(25, 33, 52, 0.98);
-      border-color: rgba(148, 163, 253, 0.5);
-      transform: translateY(-2px);
-    }
-
-    .feature-icon {
-      font-size: 32px;
-      line-height: 1;
-    }
-
-    .feature-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .feature-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      margin: 0;
-    }
-
-    .feature-meta {
-      font-size: 12px;
-      color: var(--muted);
-      margin: 0;
-      line-height: 1.4;
-    }
-
-    .feature-arrow {
-      font-size: 18px;
-      color: var(--muted);
-      transition: transform 0.2s ease;
-    }
-
-    .feature-card:hover .feature-arrow {
-      transform: translateX(4px);
-      color: var(--accent);
-    }
-
-    .screen-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(transparent 0, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
-      mix-blend-mode: soft-light;
-      pointer-events: none;
-    }
-
-    .games-section {
-      margin-top: 22px;
-    }
-
-    .games-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .games-title {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    .games-count {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .games-grid {
+    .game-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 12px;
     }
 
-    .game-card {
-      position: relative;
-      border-radius: 14px;
-      padding: 16px;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      overflow: hidden;
-      transition: all 0.2s ease;
-      text-decoration: none;
-      color: inherit;
+    .game-entry {
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(7, 13, 20, 0.76);
+      padding: 14px;
+      display: grid;
+      gap: 8px;
     }
 
-    .game-card:hover {
-      background: rgba(25, 33, 52, 0.98);
-      border-color: rgba(148, 163, 253, 0.5);
-      transform: translateY(-2px);
-    }
-
-    .game-card::before {
-      display: none;
-    }
-
-    .game-header {
+    .game-head {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      gap: 6px;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
-    .game-badge {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 4px 10px;
+    .game-name {
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
       border-radius: 999px;
-      border: 1px solid rgba(99, 102, 241, 0.6);
-      color: var(--accent);
-      background: var(--accent-soft);
-      flex-shrink: 0;
-    }
-
-    .game-tagline {
+      padding: 5px 10px;
+      border: 1px solid var(--line-strong);
+      color: #8ad4ff;
       font-size: 12px;
-      color: var(--muted);
-      line-height: 1.4;
-      margin: 0;
-      text-align: right;
-    }
-
-    .game-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      margin: 0;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: rgba(15, 42, 66, 0.5);
     }
 
     .game-meta {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .meta-row {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      font-size: 12px;
-      color: var(--muted);
     }
 
     .meta-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(8, 14, 21, 0.72);
+      color: var(--muted);
       padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(55, 65, 81, 0.8);
-      background: rgba(15, 23, 42, 0.96);
-    }
-
-    .meta-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--ok);
-      box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
-    }
-
-    .game-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      padding-top: 8px;
-      border-top: 1px solid rgba(55, 65, 81, 0.5);
-    }
-
-    .play-link {
-      font-size: 13px;
-      font-weight: 500;
-      text-decoration: none;
-      padding: 8px 14px;
-      border-radius: 999px;
-      border: 1px solid var(--border-strong);
-      color: var(--text);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: linear-gradient(120deg, var(--accent-strong), var(--accent));
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
-      transition: all 0.2s ease;
-    }
-
-    .play-link:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.6);
-    }
-
-    .game-note {
       font-size: 12px;
-      color: var(--muted);
-      line-height: 1.4;
     }
 
-    footer {
-      margin-top: 28px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(15, 23, 42, 0.95);
-      font-size: 11px;
-      color: var(--muted);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .footer-right {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .footer-pill {
-      padding: 0;
-      border: none;
-    }
-
-    @media (max-width: 640px) {
-      footer {
-        flex-direction: column;
-        align-items: flex-start;
-      }
+    .activity-list b {
+      color: #74ccff;
+      font-weight: 700;
     }
   </style>
 </head>
 <body>
-  <div class="scanlines"></div>
-  <div class="container">
-    <header>
-      <div class="logo">
-        <div class="logo-symbol"></div>
-        <div>
-          <div class="logo-text-title">Cartofia Arcade</div>
-          <div class="logo-sub">Self‑hosted retro lab of experiments &amp; games</div>
-        </div>
-      </div>
-      <nav>
+  <div class="site-shell">
+    <header class="app-header reveal">
+      <a class="brand" href="/">
+        <span class="brand-chip" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+          </svg>
+        </span>
+        <span class="brand-text">Cartofia Archive</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
         <a href="/">Home</a>
+        <a href="/archive/">Archive</a>
+        <a class="active" href="/arcade/">Arcade</a>
         <a href="/minecraft/">Minecraft</a>
       </nav>
+      <div class="avatar" aria-hidden="true">CA</div>
     </header>
 
     <main>
-      <section class="hero">
-        <div>
-          <h1 class="hero-title">
-            Insert coin to start<br>
-            <span class="hero-highlight">Cartofia Arcade</span>
-          </h1>
-          <p class="hero-tagline">
-            A tiny corner of the internet where experiments, side-quests, and 2D worlds live on a Proxmox box in my lab.
-          </p>
-
-          <div class="hero-meta">
-            <span>🎮 Pygame → WebAssembly</span>
-            <span>🛰 Hosted via Proxmox &amp; Cloudflare Tunnel</span>
-            <span>🧪 Early access lab build</span>
-          </div>
+      <section class="hero-card reveal" data-delay="1">
+        <div class="hero-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 4H17L20 7V17L17 20H7L4 17V7L7 4Z" stroke="#57C2FF" stroke-width="1.5"></path>
+            <circle cx="9" cy="10" r="1.2" fill="#57C2FF"></circle>
+            <circle cx="15" cy="10" r="1.2" fill="#57C2FF"></circle>
+            <path d="M8.5 14.5H15.5" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
+          </svg>
         </div>
-
-        <div class="hero-feature">
-          <div class="feature-card">
-            <div class="feature-icon">🎮</div>
-            <div class="feature-content">
-              <h3 class="feature-title">1 Game Online</h3>
-              <p class="feature-meta">Cartofia – A 2D platformer built with Pygame and WebAssembly</p>
-            </div>
-            <div class="feature-arrow">→</div>
+        <div class="hero-copy">
+          <p class="hero-kicker">Web Games</p>
+          <h1 class="hero-title">Cartofia Arcade</h1>
+          <p class="hero-lead">
+            Browser playable projects from the same private platform. Start with Cartofia and expand into more games over time.
+          </p>
+          <div class="pill-row">
+            <span class="pill"><strong>Build</strong> Pygame to WebAssembly</span>
+            <span class="pill"><strong>Delivery</strong> Served from your own infrastructure</span>
+            <span class="pill"><strong>Current Slots</strong> 1 / 8 online</span>
           </div>
         </div>
       </section>
 
-      <section class="games-section">
-        <div class="games-header">
-          <div class="games-title">Available games</div>
-          <div class="games-count">1 / 8 slots online</div>
-        </div>
+      <section class="layout-grid">
+        <article class="card reveal" data-delay="2">
+          <h2 class="card-title">Available Games</h2>
+          <p class="card-subtitle">Launch from this page. No install required for browser titles.</p>
 
-        <div class="games-grid">
-          <article class="game-card">
-            <div class="game-header">
-              <span class="game-badge">Now playable</span>
-              <p class="game-tagline">A 2D platformer built in Pygame and beamed into your browser.</p>
+          <div class="game-grid">
+            <div class="game-entry">
+              <div class="game-head">
+                <div class="game-name">Cartofia</div>
+                <span class="tag">Now Playable</span>
+              </div>
+              <p class="game-meta">2D platform adventure built with Pygame, exported to WebAssembly.</p>
+              <div class="meta-row">
+                <span class="meta-pill">Single player</span>
+                <span class="meta-pill">Keyboard controls</span>
+                <span class="meta-pill">In browser</span>
+              </div>
+              <div class="button-row">
+                <a class="btn btn-primary" href="/arcade/cartofia/">Play Cartofia</a>
+              </div>
             </div>
 
-            <h2 class="game-title">Cartofia</h2>
-
-            <div class="game-meta">
-              <span class="meta-pill"><span class="meta-dot"></span> Platformer</span>
-              <span class="meta-pill">Single‑player</span>
-              <span class="meta-pill">Keyboard controls</span>
+            <div class="game-entry">
+              <div class="game-head">
+                <div class="game-name">Next Slot</div>
+                <span class="tag">Planned</span>
+              </div>
+              <p class="game-meta">Reserved for the next game deployment in the arcade stack.</p>
+              <div class="meta-row">
+                <span class="meta-pill">Pipeline ready</span>
+                <span class="meta-pill">Containerized</span>
+              </div>
             </div>
+          </div>
+        </article>
 
-            <div class="game-footer">
-              <a class="play-link" href="/arcade/cartofia/">
-                <span>▶</span> Play now
-              </a>
-              <p class="game-note">Runs entirely in the browser – no install, just vibes.</p>
+        <article class="card reveal" data-delay="3">
+          <h2 class="card-title">Recent Activity</h2>
+          <p class="card-subtitle">Sample events from this arcade node.</p>
+          <ul class="list activity-list">
+            <li><b>Cartofia</b> build deployed to web runtime 2h ago.</li>
+            <li>Gateway routed <b>/arcade/cartofia/</b> successfully 4h ago.</li>
+            <li>New slot created for upcoming game 1d ago.</li>
+            <li>Cloudflare tunnel health check passed 1d ago.</li>
+          </ul>
+          <div class="notice">Game telemetry stays lightweight by design.</div>
+        </article>
+
+        <article class="card col-span-2 reveal" data-delay="2">
+          <h2 class="card-title">How This Arcade Works</h2>
+          <div class="tile-grid">
+            <div class="tile">
+              <h3>Build Step</h3>
+              <p>Projects are exported from Python game code into browser compatible bundles.</p>
             </div>
-          </article>
-
-          <!-- Future game card template:
-          <article class="game-card">
-            ...
-          </article>
-          -->
-        </div>
+            <div class="tile">
+              <h3>Host Step</h3>
+              <p>Static outputs are hosted behind your gateway with secure routing.</p>
+            </div>
+            <div class="tile">
+              <h3>Scale Step</h3>
+              <p>New game pages can be added with separate containers when needed.</p>
+            </div>
+          </div>
+        </article>
       </section>
     </main>
 
-    <footer>
-      <span>© <span id="year"></span> Cartofia. All rights reserved.</span>
-      <div class="footer-right">
-        <span class="footer-pill">Made with Python, Pygame &amp; a slightly over‑engineered homelab.</span>
+    <footer class="footer">
+      <span>Copyright <span id="year"></span> Cartofia. All rights reserved.</span>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/archive/">Archive</a>
+        <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
       </div>
     </footer>
   </div>
 
   <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
+    const year = document.getElementById("year");
+    if (year) {
+      year.textContent = String(new Date().getFullYear());
+    }
   </script>
 </body>
 </html>
