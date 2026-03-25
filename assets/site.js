@@ -25,51 +25,71 @@
     }
 
     const username = session && session.user && session.user.username ? String(session.user.username) : null;
-    const initials = username ? username.slice(0, 2).toUpperCase() : "AC";
+    const email = session && session.user && session.user.email ? String(session.user.email) : null;
+    const initials = username ? username.slice(0, 2).toUpperCase() : "CA";
     button.textContent = initials;
 
     dropdown.innerHTML = "";
     const frag = document.createDocumentFragment();
 
-    const addMeta = (text) => {
-      const meta = document.createElement("div");
-      meta.className = "account-meta";
-      meta.textContent = text;
-      frag.appendChild(meta);
-    };
+    const head = document.createElement("div");
+    head.className = "account-head";
 
-    const addLink = (label, href) => {
+    const avatar = document.createElement("div");
+    avatar.className = "account-avatar";
+    avatar.textContent = initials;
+    head.appendChild(avatar);
+
+    const identity = document.createElement("div");
+    identity.className = "account-identity";
+    const nameEl = document.createElement("div");
+    nameEl.className = "account-name";
+    nameEl.textContent = username || "Guest";
+    const emailEl = document.createElement("div");
+    emailEl.className = "account-email";
+    emailEl.textContent = email || "Not signed in";
+    identity.appendChild(nameEl);
+    identity.appendChild(emailEl);
+    head.appendChild(identity);
+    frag.appendChild(head);
+
+    const actions = document.createElement("div");
+    actions.className = "account-actions";
+
+    const addLink = (label, href, options = {}) => {
       const link = document.createElement("a");
       link.className = "account-item";
       link.href = href;
       link.setAttribute("role", "menuitem");
+      if (options.accent) {
+        link.classList.add("accent");
+      }
       link.textContent = label;
-      frag.appendChild(link);
+      actions.appendChild(link);
     };
 
-    const addLogout = () => {
+    const addButton = (label, dataset) => {
       const btn = document.createElement("button");
       btn.className = "account-item account-action";
       btn.type = "button";
       btn.setAttribute("role", "menuitem");
-      btn.dataset.logout = "true";
-      btn.textContent = "Logout";
-      frag.appendChild(btn);
+      Object.assign(btn.dataset, dataset);
+      btn.textContent = label;
+      actions.appendChild(btn);
     };
 
     if (session && session.authenticated && username) {
-      addMeta(`Signed in as ${username}`);
       addLink("Account", "/account/");
       addLink("Archive", "/archive/");
-      addLogout();
+      addLink("Minecraft", "/minecraft/");
+      addButton("Logout", { logout: "true" });
     } else {
-      addMeta("You are not signed in.");
-      addLink("Login", "/account/#login");
+      addLink("Login", "/account/#login", { accent: true });
       addLink("Register", "/account/#register");
-      addLink("Account Home", "/account/");
       addLink("Archive", "/archive/");
     }
 
+    frag.appendChild(actions);
     dropdown.appendChild(frag);
   }
 

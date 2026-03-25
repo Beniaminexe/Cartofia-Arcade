@@ -83,7 +83,7 @@
             <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
           </svg>
         </span>
-        <span class="brand-text">Cartofia Archive</span>
+        <span class="brand-text">Cartofia</span>
       </a>
       <nav class="site-nav" aria-label="Primary">
         <a class="active" href="/">Home</a>
@@ -122,19 +122,27 @@
       </section>
 
       <section class="layout-grid">
-        <article class="card reveal" data-delay="2">
-          <h2 class="card-title">Platform Overview</h2>
-          <p class="card-subtitle">
-            Launch games, monitor infrastructure stats, and move to the private archive where authenticated users can upload and download shared files.
-          </p>
-          <div class="button-row">
+        <article class="card reveal cta-panel" data-delay="2">
+          <div class="cta-head">
+            <div class="cta-text">
+              <p class="cta-kicker">Start here</p>
+              <h2 class="card-title">Choose where to go</h2>
+              <p class="card-subtitle">Jump into the archive, launch a game, or check the Minecraft node without hunting around.</p>
+            </div>
+            <div class="cta-badges" aria-hidden="true">
+              <span class="cta-badge ok">Archive</span>
+              <span class="cta-badge">Arcade</span>
+              <span class="cta-badge">Minecraft</span>
+            </div>
+          </div>
+
+          <div class="cta-actions button-row">
             <a class="btn btn-primary" href="/archive/">Open Archive</a>
-            <a class="btn btn-ghost" href="/arcade/">Browse Arcade</a>
-            <a class="btn btn-ghost" href="/minecraft/">Minecraft Info</a>
+            <a class="btn btn-ghost" href="/arcade/">Play Arcade</a>
+            <a class="btn btn-ghost" href="/minecraft/">Minecraft Status</a>
           </div>
-          <div class="notice">
-            Archive access is restricted to signed-in accounts.
-          </div>
+
+          <div class="cta-note">Authentication is required to access archive uploads and downloads.</div>
         </article>
 
         <article class="card reveal" data-delay="3">
@@ -189,6 +197,11 @@
               <p>Join Discord and follow source repositories for updates.</p>
               <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Open Discord</a>
             </div>
+            <div class="tile">
+              <h3>Account</h3>
+              <p>Log in or create an account to reach the private archive.</p>
+              <a href="/account/#login">Go to Account</a>
+            </div>
           </div>
         </article>
 
@@ -213,10 +226,62 @@
 
   <script src="/assets/site.js"></script>
   <script>
-    const API_URL = "/api/stats";
+    const API_PATH = "/api/stats";
     const REFRESH_INTERVAL = 30000;
 
-    function updateTimestamp(iso) {
+    function normalizeStatsUrl(base) {
+      const value = String(base || "").trim();
+      if (!value) {
+        return "";
+      }
+      const noSlash = value.replace(/\/+$/, "");
+      if (noSlash.endsWith("/api/stats")) {
+        return noSlash;
+      }
+      if (noSlash.endsWith("/api")) {
+        return `${noSlash}/stats`;
+      }
+      return `${noSlash}${API_PATH}`;
+    }
+
+    function getStatsCandidates() {
+      const candidates = [];
+      const fromMeta = document.querySelector('meta[name="cartofia-api-base"]');
+      const fromGlobal = window.CARTOFIA_API_BASE;
+      const fromQuery = new URLSearchParams(window.location.search).get("apiBase") || "";
+      let fromStorage = "";
+      try {
+        fromStorage = window.localStorage.getItem("cartofia-api-base") || "";
+      } catch (_error) {
+        fromStorage = "";
+      }
+
+      const configured = [
+        normalizeStatsUrl(fromQuery),
+        normalizeStatsUrl(fromMeta ? fromMeta.content : ""),
+        normalizeStatsUrl(fromGlobal),
+        normalizeStatsUrl(fromStorage),
+      ].filter(Boolean);
+
+      candidates.push(...configured, API_PATH);
+
+      const host = window.location.hostname;
+      const protocol = window.location.protocol;
+      const isLocalHost = host === "localhost" || host === "127.0.0.1" || host === "::1";
+      const isFile = protocol === "file:";
+
+      if (isLocalHost || isFile) {
+        if (protocol === "https:") {
+          candidates.push("https://127.0.0.1:5000/api/stats", "https://localhost:5000/api/stats");
+        } else {
+          candidates.push("http://127.0.0.1:5000/api/stats", "http://localhost:5000/api/stats");
+        }
+      }
+
+      return Array.from(new Set(candidates));
+    }
+
+    function updateTimestamp(iso, sourceUrl) {
       const el = document.getElementById("statsTimestamp");
       if (!el) {
         return;
@@ -230,27 +295,45 @@
         el.textContent = "Last update: unavailable.";
         return;
       }
-      el.textContent = `Last update: ${dt.toLocaleString()}`;
+      const suffix = sourceUrl && sourceUrl !== API_PATH ? " (fallback API)" : "";
+      el.textContent = `Last update: ${dt.toLocaleString()}${suffix}`;
+    }
+
+    async function fetchStats() {
+      const candidates = getStatsCandidates();
+      const attempts = [];
+
+      for (const url of candidates) {
+        try {
+          const response = await fetch(url, { credentials: "include" });
+          if (!response.ok) {
+            attempts.push(`${url} -> HTTP ${response.status}`);
+            continue;
+          }
+          const data = await response.json();
+          return { data, sourceUrl: url };
+        } catch (error) {
+          attempts.push(`${url} -> ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+
+      throw new Error(attempts.join(" | "));
     }
 
     async function updateStats() {
       const targets = document.querySelectorAll("[data-stat]");
       try {
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        const data = await response.json();
+        const { data, sourceUrl } = await fetchStats();
         targets.forEach((el) => {
           const key = el.getAttribute("data-stat");
           if (key && Object.prototype.hasOwnProperty.call(data, key)) {
             el.textContent = data[key];
           }
         });
-        updateTimestamp(data.timestamp);
+        updateTimestamp(data.timestamp, sourceUrl);
       } catch (error) {
         console.error("Failed to fetch stats:", error);
-        updateTimestamp(null);
+        updateTimestamp(null, "");
       }
     }
 

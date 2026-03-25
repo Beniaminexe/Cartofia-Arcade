@@ -8,87 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css" />
-  <style>
-    .section-label {
-      color: var(--muted);
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .account-grid {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: 1.2fr 1fr;
-    }
-
-    .auth-panel {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: rgba(6, 12, 19, 0.7);
-      padding: 12px;
-      display: grid;
-      gap: 9px;
-    }
-
-    .auth-title {
-      font-family: "Sora", "Segoe UI", sans-serif;
-      font-size: 17px;
-      font-weight: 650;
-    }
-
-    .meta-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      border-bottom: 1px solid rgba(138, 160, 185, 0.16);
-      padding-bottom: 8px;
-      font-size: 14px;
-      color: var(--muted);
-    }
-
-    .meta-row:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-
-    .meta-row strong {
-      color: var(--text);
-      font-weight: 700;
-    }
-
-    .resource-list {
-      list-style: none;
-      display: grid;
-      gap: 10px;
-    }
-
-    .resource-list li {
-      border-bottom: 1px solid rgba(138, 160, 185, 0.14);
-      padding-bottom: 8px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .resource-list li:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-
-    .resource-list b {
-      color: #81d2ff;
-      font-weight: 700;
-    }
-
-    @media (max-width: 980px) {
-      .account-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
 </head>
 <body>
   <div class="site-shell">
@@ -102,7 +21,7 @@
             <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
           </svg>
         </span>
-        <span class="brand-text">Cartofia Archive</span>
+        <span class="brand-text">Cartofia</span>
       </a>
       <nav class="site-nav" aria-label="Primary">
         <a href="/">Home</a>
@@ -129,77 +48,110 @@
         </div>
         <div class="hero-copy">
           <p class="hero-kicker">Authentication</p>
-          <h1 class="hero-title">Account Center</h1>
+          <h1 class="hero-title">Account Access</h1>
           <p class="hero-lead">
-            Create your account, sign in, and manage your active session for private archive upload and download access.
+            Sign in or create an account to reach the private archive and keep your session on this device with remember-me.
           </p>
           <div class="pill-row">
-            <span class="pill"><strong>Register</strong> create a username and password</span>
-            <span class="pill"><strong>Login</strong> restore session on this browser</span>
-            <span class="pill"><strong>Logout</strong> clear current session</span>
+            <span class="pill"><strong>Login</strong> restore your session</span>
+            <span class="pill"><strong>Register</strong> add email + password</span>
+            <span class="pill"><strong>Remember</strong> stay signed in</span>
           </div>
         </div>
       </section>
 
-      <section class="layout-grid">
+      <section class="auth-layout">
         <article class="card reveal" data-delay="2">
-          <h2 class="card-title">Session Status</h2>
-          <p class="card-subtitle">Current authentication state and account details.</p>
+          <div class="section-label">Why sign in</div>
+          <h2 class="card-title" style="margin-bottom: 6px;">Private archive access</h2>
+          <p class="card-subtitle">Accounts unlock uploads, downloads, and personalized navigation across the site.</p>
+          <ul class="list">
+            <li><b>Secure session</b>: cookie-based auth scoped to this device.</li>
+            <li><b>File access</b>: required for archive uploads and downloads.</li>
+            <li><b>Navigation</b>: quick links from the header account dropdown.</li>
+          </ul>
 
-          <div id="accountNotice" class="notice warn">Checking session...</div>
-
-          <div class="auth-panel" id="accountInfoPanel">
-            <div class="section-label">Current account</div>
-            <div class="meta-row">
+          <div class="session-card" id="sessionCard">
+            <div class="session-head">
+              <span class="badge">Session</span>
+              <span id="sessionStatus">Checking session...</span>
+            </div>
+            <div class="session-row">
               <span>Username</span>
-              <strong id="currentUsername">-</strong>
+              <strong id="sessionUsername">-</strong>
             </div>
-            <div class="meta-row">
-              <span>User ID</span>
-              <strong id="currentUserId">-</strong>
+            <div class="session-row">
+              <span>Email</span>
+              <strong id="sessionEmail">-</strong>
             </div>
-            <div class="meta-row">
+            <div class="session-row">
               <span>Created</span>
-              <strong id="currentCreatedAt">-</strong>
+              <strong id="sessionCreated">-</strong>
             </div>
-            <div class="button-row" id="logoutContainer">
-              <button id="logoutButton" class="btn btn-ghost" type="button">Logout</button>
+            <div class="button-row hidden" id="sessionActions">
+              <a class="btn btn-primary" href="/archive/">Open Archive</a>
+              <button class="btn btn-ghost" type="button" id="logoutButton">Logout</button>
             </div>
-          </div>
-
-          <div id="authForms" class="form-grid columns-2" style="margin-top: 12px;">
-            <form id="registerForm" class="auth-panel" autocomplete="off">
-              <h3 class="auth-title">Create account</h3>
-              <label for="registerUsername">Username</label>
-              <input class="input" id="registerUsername" name="username" type="text" minlength="3" maxlength="32" required />
-              <label for="registerPassword">Password</label>
-              <input class="input" id="registerPassword" name="password" type="password" minlength="8" required />
-              <button class="btn btn-primary" type="submit">Register</button>
-            </form>
-
-            <form id="loginForm" class="auth-panel" autocomplete="off">
-              <h3 class="auth-title">Sign in</h3>
-              <label for="loginUsername">Username</label>
-              <input class="input" id="loginUsername" name="username" type="text" required />
-              <label for="loginPassword">Password</label>
-              <input class="input" id="loginPassword" name="password" type="password" required />
-              <button class="btn btn-primary" type="submit">Login</button>
-            </form>
           </div>
         </article>
 
-        <article class="card reveal" data-delay="3">
-          <h2 class="card-title">Account Usage</h2>
-          <p class="card-subtitle">Where this account is used in your website.</p>
-          <ul class="resource-list">
-            <li><b>Archive access</b>: upload and download files from the private archive.</li>
-            <li><b>Session cookie</b>: remains on this browser until logout or expiration.</li>
-            <li><b>Protected API</b>: required for <code>/api/archive/files</code> and <code>/api/archive/upload</code>.</li>
-            <li><b>Navigation</b>: jump directly to archive after signing in.</li>
-          </ul>
-          <div class="button-row" style="margin-top: 14px;">
-            <a class="btn btn-primary" href="/archive/">Open Archive</a>
-            <a class="btn btn-ghost" href="/">Back Home</a>
+        <article class="card auth-card reveal" data-delay="2">
+          <div id="authNotice" class="notice warn">Checking session...</div>
+
+          <div class="auth-tabs" role="tablist" aria-label="Authentication forms">
+            <button class="auth-tab active" type="button" role="tab" aria-selected="true" data-auth-tab="login">Login</button>
+            <button class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-tab="register">Register</button>
+          </div>
+
+          <div id="authPanels">
+            <form id="loginForm" class="auth-panel active" data-auth-panel="login" autocomplete="on">
+              <label for="loginUsername">Username</label>
+              <input class="input" id="loginUsername" name="username" type="text" autocomplete="username" required />
+
+              <label for="loginPassword">Password</label>
+              <input class="input" id="loginPassword" name="password" type="password" autocomplete="current-password" required />
+
+              <label class="checkbox-field">
+                <input type="checkbox" name="remember" />
+                <span>Remember this device</span>
+              </label>
+
+              <button class="btn btn-primary" type="submit">Login</button>
+            </form>
+
+            <form id="registerForm" class="auth-panel" data-auth-panel="register" autocomplete="on">
+              <label for="registerUsername">Username</label>
+              <input class="input" id="registerUsername" name="username" type="text" minlength="3" maxlength="32" autocomplete="username" required />
+
+              <label for="registerEmail">Email</label>
+              <input class="input" id="registerEmail" name="email" type="email" autocomplete="email" required />
+
+              <label for="registerPassword">Password</label>
+              <input class="input" id="registerPassword" name="password" type="password" minlength="8" autocomplete="new-password" required />
+
+              <label for="registerConfirm">Confirm password</label>
+              <input class="input" id="registerConfirm" name="confirm_password" type="password" minlength="8" autocomplete="new-password" required />
+
+              <label class="checkbox-field">
+                <input type="checkbox" name="remember" />
+                <span>Remember this device</span>
+              </label>
+
+              <label class="checkbox-field">
+                <input type="checkbox" name="accept_terms" required />
+                <span>I agree to the private archive rules.</span>
+              </label>
+
+              <button class="btn btn-primary" type="submit">Create account</button>
+            </form>
+          </div>
+
+          <div id="authSuccess" class="auth-success hidden">
+            <div class="notice ok" id="authSuccessNotice">Signed in.</div>
+            <div class="button-row">
+              <a class="btn btn-primary" href="/archive/">Open Archive</a>
+              <a class="btn btn-ghost" href="/">Back Home</a>
+            </div>
           </div>
         </article>
       </section>
@@ -218,23 +170,30 @@
   <script src="/assets/site.js"></script>
   <script>
     const refs = {
-      accountNotice: document.getElementById("accountNotice"),
-      accountInfoPanel: document.getElementById("accountInfoPanel"),
-      currentUsername: document.getElementById("currentUsername"),
-      currentUserId: document.getElementById("currentUserId"),
-      currentCreatedAt: document.getElementById("currentCreatedAt"),
-      authForms: document.getElementById("authForms"),
-      logoutContainer: document.getElementById("logoutContainer"),
-      logoutButton: document.getElementById("logoutButton"),
+      authNotice: document.getElementById("authNotice"),
+      authPanels: document.getElementById("authPanels"),
+      authTabs: document.querySelectorAll("[data-auth-tab]"),
+      authPanelsList: document.querySelectorAll("[data-auth-panel]"),
+      authSuccess: document.getElementById("authSuccess"),
+      authSuccessNotice: document.getElementById("authSuccessNotice"),
+      loginForm: document.getElementById("loginForm"),
       registerForm: document.getElementById("registerForm"),
-      loginForm: document.getElementById("loginForm")
+      logoutButton: document.getElementById("logoutButton"),
+      sessionStatus: document.getElementById("sessionStatus"),
+      sessionUsername: document.getElementById("sessionUsername"),
+      sessionEmail: document.getElementById("sessionEmail"),
+      sessionCreated: document.getElementById("sessionCreated"),
+      sessionActions: document.getElementById("sessionActions"),
+      sessionCard: document.getElementById("sessionCard")
     };
 
+    const redirectTarget = new URLSearchParams(window.location.search).get("next") || "";
+
     function setNotice(message, type) {
-      refs.accountNotice.textContent = message;
-      refs.accountNotice.className = "notice";
+      refs.authNotice.textContent = message;
+      refs.authNotice.className = "notice";
       if (type) {
-        refs.accountNotice.classList.add(type);
+        refs.authNotice.classList.add(type);
       }
     }
 
@@ -247,6 +206,43 @@
         return isoString;
       }
       return dt.toLocaleString();
+    }
+
+    function switchTab(name) {
+      refs.authTabs.forEach((tab) => {
+        const isActive = tab.dataset.authTab === name;
+        tab.classList.toggle("active", isActive);
+        tab.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+
+      refs.authPanelsList.forEach((panel) => {
+        const isActive = panel.dataset.authPanel === name;
+        panel.classList.toggle("active", isActive);
+        panel.classList.toggle("hidden", !isActive);
+      });
+    }
+
+    function applySession(user) {
+      const authenticated = Boolean(user);
+
+      refs.sessionStatus.textContent = authenticated ? "Signed in" : "Not signed in";
+      refs.sessionUsername.textContent = authenticated ? user.username : "-";
+      refs.sessionEmail.textContent = authenticated ? user.email || "-" : "-";
+      refs.sessionCreated.textContent = authenticated ? formatDate(user.created_at) : "-";
+
+      refs.sessionActions.classList.toggle("hidden", !authenticated);
+      refs.authPanels.classList.toggle("hidden", authenticated);
+      refs.authSuccess.classList.toggle("hidden", !authenticated);
+
+      if (authenticated) {
+        setNotice(`Signed in as ${user.username}`, "ok");
+        refs.authSuccessNotice.textContent = "Signed in. You can open the archive or stay here.";
+        if (redirectTarget) {
+          window.location.href = redirectTarget;
+        }
+      } else {
+        setNotice("Not authenticated. Login or create an account to continue.", "warn");
+      }
     }
 
     async function apiRequest(path, options) {
@@ -270,36 +266,28 @@
       return payload;
     }
 
-    function renderUser(user) {
-      const authenticated = Boolean(user);
-
-      refs.currentUsername.textContent = authenticated ? user.username : "-";
-      refs.currentUserId.textContent = authenticated ? String(user.id) : "-";
-      refs.currentCreatedAt.textContent = authenticated ? formatDate(user.created_at) : "-";
-
-      refs.authForms.classList.toggle("hidden", authenticated);
-      refs.logoutContainer.classList.toggle("hidden", !authenticated);
-
-      if (authenticated) {
-        setNotice(`Signed in as ${user.username}`, "ok");
-      } else {
-        setNotice("Not authenticated. Create an account or sign in.", "warn");
-      }
-    }
-
     async function loadSession() {
       try {
         const result = await apiRequest("/api/auth/me", { method: "GET" });
-        renderUser(result.authenticated ? result.user : null);
+        applySession(result.authenticated ? result.user : null);
       } catch (error) {
-        renderUser(null);
+        applySession(null);
         setNotice(`Session check failed: ${error.message}`, "error");
       }
+    }
+
+    function disableForms(disabled) {
+      [refs.loginForm, refs.registerForm].forEach((form) => {
+        form.querySelectorAll("input, button").forEach((el) => {
+          el.disabled = disabled;
+        });
+      });
     }
 
     async function onRegister(event) {
       event.preventDefault();
       const form = new FormData(refs.registerForm);
+      disableForms(true);
 
       try {
         const result = await apiRequest("/api/auth/register", {
@@ -307,21 +295,32 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: String(form.get("username") || "").trim(),
-            password: String(form.get("password") || "")
+            email: String(form.get("email") || "").trim(),
+            password: String(form.get("password") || ""),
+            confirm_password: String(form.get("confirm_password") || ""),
+            accept_terms: Boolean(form.get("accept_terms")),
+            remember: Boolean(form.get("remember"))
           })
         });
 
         refs.registerForm.reset();
-        renderUser(result);
-        setNotice(`Registered and signed in as ${result.username}`, "ok");
+        applySession({
+          id: result.id,
+          username: result.username,
+          email: result.email,
+          created_at: result.created_at
+        });
       } catch (error) {
         setNotice(error.message, "error");
+      } finally {
+        disableForms(false);
       }
     }
 
     async function onLogin(event) {
       event.preventDefault();
       const form = new FormData(refs.loginForm);
+      disableForms(true);
 
       try {
         const result = await apiRequest("/api/auth/login", {
@@ -329,31 +328,50 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: String(form.get("username") || "").trim(),
-            password: String(form.get("password") || "")
+            password: String(form.get("password") || ""),
+            remember: Boolean(form.get("remember"))
           })
         });
 
         refs.loginForm.reset();
-        renderUser(result);
-        setNotice(`Signed in as ${result.username}`, "ok");
+        applySession({
+          id: result.id,
+          username: result.username,
+          email: result.email,
+          created_at: result.created_at || new Date().toISOString()
+        });
       } catch (error) {
         setNotice(error.message, "error");
+      } finally {
+        disableForms(false);
       }
     }
 
     async function onLogout() {
       try {
         await apiRequest("/api/auth/logout", { method: "POST" });
-        renderUser(null);
-        setNotice("Signed out.", "warn");
+        applySession(null);
       } catch (error) {
         setNotice(error.message, "error");
       }
     }
 
+    refs.authTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        switchTab(tab.dataset.authTab);
+      });
+    });
+
     refs.registerForm.addEventListener("submit", onRegister);
     refs.loginForm.addEventListener("submit", onLogin);
     refs.logoutButton.addEventListener("click", onLogout);
+
+    const hash = window.location.hash.replace("#", "");
+    if (hash === "register") {
+      switchTab("register");
+    } else {
+      switchTab("login");
+    }
 
     loadSession();
   </script>

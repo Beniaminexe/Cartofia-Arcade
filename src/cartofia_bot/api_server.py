@@ -6,7 +6,7 @@ import os
 import re
 import sqlite3
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from pathlib import Path
 
@@ -27,6 +27,7 @@ ARCHIVE_DB_PATH = Path(
 ARCHIVE_FILES_DIR = (ARCHIVE_DATA_DIR / "files").resolve()
 MAX_UPLOAD_MB = int(os.getenv("ARCHIVE_MAX_UPLOAD_MB", "50"))
 USERNAME_RE = re.compile(r"^[a-zA-Z0-9_-]{3,32}$")
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("API_SECRET_KEY", "change-me-in-production")
@@ -34,6 +35,9 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = (
     os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
+)
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(
+    days=int(os.getenv("SESSION_LIFETIME_DAYS", "14"))
 )
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
 
@@ -56,11 +60,13 @@ def init_storage() -> None:
     ARCHIVE_FILES_DIR.mkdir(parents=True, exist_ok=True)
     ARCHIVE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(ARCHIVE_DB_PATH)
+    conn.row_factory = sqlite3.Row
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
+            email TEXT UNIQUE,
             password_hash TEXT NOT NULL,
             created_at TEXT NOT NULL
         )
@@ -77,6 +83,16 @@ def init_storage() -> None:
             uploaded_at TEXT NOT NULL,
             FOREIGN KEY(uploaded_by) REFERENCES users(id)
         )
+        """
+    )
+    # Backfill email column/index for pre-existing databases.
+    existing_columns = {row["name"] for row in conn.execute("PRAGMA table_info(users)")}
+    if "email" not in existing_columns:
+        conn.execute("ALTER TABLE users ADD COLUMN email TEXT")
+    conn.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx
+        ON users(email) WHERE email IS NOT NULL
         """
     )
     conn.commit()
@@ -105,7 +121,7 @@ def current_user() -> dict | None:
         return None
 
     row = get_db().execute(
-        "SELECT id, username, created_at FROM users WHERE id = ?",
+        "SELECT id, username, email, created_at FROM users WHERE id = ?",
         (user_id,),
     ).fetchone()
     if row is None:
@@ -136,32 +152,58 @@ def validate_credentials(username: str, password: str) -> str | None:
     return None
 
 
+def validate_email(email: str) -> str | None:
+    """Lightweight email validation."""
+    if not email:
+        return "Email is required."
+    if not EMAIL_RE.fullmatch(email):
+        return "Provide a valid email address."
+    return None
+
+
+def set_session(user_id: int, username: str, remember: bool) -> None:
+    """Persist session keys and apply remember-me lifetime."""
+    session["user_id"] = user_id
+    session["username"] = username
+    session.permanent = bool(remember)
+
+
 @app.route("/api/auth/register", methods=["POST"])
 def register():
     """Create a new account and start a session."""
     payload = request.get_json(silent=True) or {}
     username = str(payload.get("username", "")).strip()
+    email = str(payload.get("email", "")).strip().lower()
     password = str(payload.get("password", ""))
+    confirm_password = str(payload.get("confirm_password", ""))
+    accept_terms = bool(payload.get("accept_terms"))
+    remember = bool(payload.get("remember"))
 
     error = validate_credentials(username, password)
     if error:
         return jsonify({"error": error}), 400
+    email_error = validate_email(email)
+    if email_error:
+        return jsonify({"error": email_error}), 400
+    if password != confirm_password:
+        return jsonify({"error": "Passwords do not match."}), 400
+    if not accept_terms:
+        return jsonify({"error": "You must accept the terms to register."}), 400
 
     db = get_db()
     now = datetime.now(timezone.utc).isoformat()
     try:
         cursor = db.execute(
-            "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
-            (username, generate_password_hash(password), now),
+            "INSERT INTO users (username, email, password_hash, created_at) VALUES (?, ?, ?, ?)",
+            (username, email, generate_password_hash(password), now),
         )
         db.commit()
     except sqlite3.IntegrityError:
-        return jsonify({"error": "Username is already taken."}), 409
+        return jsonify({"error": "Username or email is already taken."}), 409
 
     user_id = cursor.lastrowid
-    session["user_id"] = user_id
-    session["username"] = username
-    return jsonify({"id": user_id, "username": username}), 201
+    set_session(user_id, username, remember)
+    return jsonify({"id": user_id, "username": username, "email": email, "created_at": now}), 201
 
 
 @app.route("/api/auth/login", methods=["POST"])
@@ -170,20 +212,27 @@ def login():
     payload = request.get_json(silent=True) or {}
     username = str(payload.get("username", "")).strip()
     password = str(payload.get("password", ""))
+    remember = bool(payload.get("remember"))
 
     if not username or not password:
         return jsonify({"error": "Username and password are required."}), 400
 
     row = get_db().execute(
-        "SELECT id, username, password_hash FROM users WHERE username = ?",
+        "SELECT id, username, email, password_hash, created_at FROM users WHERE username = ?",
         (username,),
     ).fetchone()
     if row is None or not check_password_hash(row["password_hash"], password):
         return jsonify({"error": "Invalid username or password."}), 401
 
-    session["user_id"] = row["id"]
-    session["username"] = row["username"]
-    return jsonify({"id": row["id"], "username": row["username"]}), 200
+    set_session(row["id"], row["username"], remember)
+        return jsonify(
+                {
+                    "id": row["id"],
+                    "username": row["username"],
+                    "email": row["email"],
+                    "created_at": row["created_at"],
+                }
+        ), 200
 
 
 @app.route("/api/auth/logout", methods=["POST"])
