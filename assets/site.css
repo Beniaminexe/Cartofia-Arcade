@@ -117,10 +117,16 @@ a {
   color: var(--text);
 }
 
-.avatar {
+.account-menu {
+  position: relative;
+  justify-self: end;
+}
+
+.avatar-btn {
   width: 34px;
   height: 34px;
   border-radius: 50%;
+  border: 1px solid rgba(46, 168, 255, 0.9);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -128,7 +134,61 @@ a {
   font-weight: 700;
   color: #001827;
   background: linear-gradient(150deg, #52bcff, #1f98f5);
-  border: 1px solid rgba(46, 168, 255, 0.9);
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.2s ease;
+}
+
+.avatar-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.account-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  min-width: 190px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(12, 19, 29, 0.97), rgba(9, 15, 24, 0.98));
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  z-index: 40;
+}
+
+.account-meta {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--muted);
+  border-bottom: 1px solid rgba(138, 160, 185, 0.14);
+}
+
+.account-item {
+  display: block;
+  padding: 10px 12px;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 14px;
+  border-bottom: 1px solid rgba(138, 160, 185, 0.14);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.account-action {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.account-item:last-child {
+  border-bottom: none;
+}
+
+.account-item:hover {
+  background: rgba(14, 31, 48, 0.7);
+  color: var(--text);
 }
 
 main {
@@ -568,8 +628,8 @@ tbody tr:hover {
     gap: 14px;
   }
 
-  .avatar {
-    display: none;
+  .account-menu {
+    justify-self: start;
   }
 
   .layout-grid {

@@ -98,7 +98,13 @@
         <a class="active" href="/arcade/">Arcade</a>
         <a href="/minecraft/">Minecraft</a>
       </nav>
-      <div class="avatar" aria-hidden="true">CA</div>
+      <div class="account-menu" data-account-menu>
+        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+          <a class="account-item" href="/archive/" role="menuitem">Open Archive</a>
+        </div>
+      </div>
     </header>
 
     <main>
@@ -203,6 +209,7 @@
     </footer>
   </div>
 
+  <script src="/assets/site.js"></script>
   <script>
     const year = document.getElementById("year");
     if (year) {

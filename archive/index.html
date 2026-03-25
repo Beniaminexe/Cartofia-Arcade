@@ -21,31 +21,6 @@
       margin-top: 3px;
     }
 
-    .account-state {
-      display: grid;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .account-meta {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .form-box {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      background: rgba(6, 12, 19, 0.68);
-    }
-
-    .form-title {
-      font-family: "Sora", "Segoe UI", sans-serif;
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
     .selected-file {
       color: var(--muted);
       font-size: 13px;
@@ -100,9 +75,14 @@
         <a class="active" href="#archive">Archive</a>
         <a href="#upload">Upload</a>
         <a href="#activity">Activity</a>
-        <a href="#account">Account</a>
       </nav>
-      <div class="avatar" aria-hidden="true">CA</div>
+      <div class="account-menu" data-account-menu>
+        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+          <a class="account-item" href="/archive/" role="menuitem">Open Archive</a>
+        </div>
+      </div>
     </header>
 
     <main>
@@ -159,40 +139,6 @@
               <li>Sign in to view archive activity.</li>
             </ul>
           </article>
-
-          <article class="card reveal" data-delay="3" id="account">
-            <h2 class="card-title">Account</h2>
-            <p class="card-subtitle">Create an account or sign in to unlock upload and download.</p>
-
-            <div class="account-state" id="accountState">
-              <div class="notice warn" id="accountNotice">Not authenticated.</div>
-              <div class="account-meta" id="accountMeta">Sign in to access archive files.</div>
-            </div>
-
-            <div id="authForms" class="form-grid columns-2">
-              <form id="registerForm" class="form-box stack" autocomplete="off">
-                <h3 class="form-title">Create account</h3>
-                <label for="registerUsername">Username</label>
-                <input class="input" id="registerUsername" name="username" type="text" minlength="3" maxlength="32" required />
-                <label for="registerPassword">Password</label>
-                <input class="input" id="registerPassword" name="password" type="password" minlength="8" required />
-                <button class="btn btn-primary" type="submit">Register</button>
-              </form>
-
-              <form id="loginForm" class="form-box stack" autocomplete="off">
-                <h3 class="form-title">Sign in</h3>
-                <label for="loginUsername">Username</label>
-                <input class="input" id="loginUsername" name="username" type="text" required />
-                <label for="loginPassword">Password</label>
-                <input class="input" id="loginPassword" name="password" type="password" required />
-                <button class="btn btn-primary" type="submit">Login</button>
-              </form>
-            </div>
-
-            <div id="accountActions" class="hidden">
-              <button id="logoutButton" class="btn btn-ghost" type="button">Logout</button>
-            </div>
-          </article>
         </div>
 
         <article class="card col-span-2 reveal" data-delay="2" id="archive">
@@ -235,6 +181,7 @@
     </footer>
   </div>
 
+  <script src="/assets/site.js"></script>
   <script>
     const state = {
       user: null,
@@ -248,13 +195,6 @@
       uploadButton: document.getElementById("uploadButton"),
       selectedFileLabel: document.getElementById("selectedFileLabel"),
       uploadNotice: document.getElementById("uploadNotice"),
-      accountNotice: document.getElementById("accountNotice"),
-      accountMeta: document.getElementById("accountMeta"),
-      authForms: document.getElementById("authForms"),
-      accountActions: document.getElementById("accountActions"),
-      logoutButton: document.getElementById("logoutButton"),
-      registerForm: document.getElementById("registerForm"),
-      loginForm: document.getElementById("loginForm"),
       searchInput: document.getElementById("searchInput"),
       typeFilter: document.getElementById("typeFilter"),
       filesBody: document.getElementById("filesBody"),
@@ -340,17 +280,9 @@
       refs.uploadButton.disabled = !authenticated || !state.selectedFile;
 
       if (authenticated) {
-        setNotice(refs.accountNotice, `Signed in as ${state.user.username}`, "ok");
-        refs.accountMeta.textContent = "Upload and download access is enabled for this session.";
-        refs.authForms.classList.add("hidden");
-        refs.accountActions.classList.remove("hidden");
-        setNotice(refs.uploadNotice, "Ready to upload files.", "ok");
+        setNotice(refs.uploadNotice, `Ready to upload files as ${state.user.username}.`, "ok");
       } else {
-        setNotice(refs.accountNotice, "Not authenticated.", "warn");
-        refs.accountMeta.textContent = "Sign in to access archive files.";
-        refs.authForms.classList.remove("hidden");
-        refs.accountActions.classList.add("hidden");
-        setNotice(refs.uploadNotice, "Sign in first, then upload.", "warn");
+        setNotice(refs.uploadNotice, "Sign in on the Account page, then return to upload.", "warn");
       }
     }
 
@@ -485,7 +417,7 @@
         setUser(result.authenticated ? result.user : null);
       } catch (error) {
         setUser(null);
-        setNotice(refs.accountNotice, `Session check failed: ${error.message}`, "error");
+        setNotice(refs.uploadNotice, `Session check failed: ${error.message}`, "error");
       }
     }
 
@@ -507,65 +439,6 @@
         updateTypeFilterOptions();
         renderFiles();
         setNotice(refs.uploadNotice, `Could not load files: ${error.message}`, "error");
-      }
-    }
-
-    async function handleRegister(event) {
-      event.preventDefault();
-      const formData = new FormData(refs.registerForm);
-
-      try {
-        const result = await apiRequest("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: String(formData.get("username") || "").trim(),
-            password: String(formData.get("password") || "")
-          })
-        });
-
-        refs.registerForm.reset();
-        setUser(result);
-        setNotice(refs.accountNotice, `Registered and signed in as ${result.username}`, "ok");
-        await refreshFiles();
-      } catch (error) {
-        setNotice(refs.accountNotice, error.message, "error");
-      }
-    }
-
-    async function handleLogin(event) {
-      event.preventDefault();
-      const formData = new FormData(refs.loginForm);
-
-      try {
-        const result = await apiRequest("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: String(formData.get("username") || "").trim(),
-            password: String(formData.get("password") || "")
-          })
-        });
-
-        refs.loginForm.reset();
-        setUser(result);
-        setNotice(refs.accountNotice, `Signed in as ${result.username}`, "ok");
-        await refreshFiles();
-      } catch (error) {
-        setNotice(refs.accountNotice, error.message, "error");
-      }
-    }
-
-    async function handleLogout() {
-      try {
-        await apiRequest("/api/auth/logout", { method: "POST" });
-        setUser(null);
-        state.files = [];
-        updateTypeFilterOptions();
-        renderFiles();
-        setNotice(refs.accountNotice, "Signed out.", "warn");
-      } catch (error) {
-        setNotice(refs.accountNotice, error.message, "error");
       }
     }
 
@@ -641,9 +514,6 @@
     }
 
     function bindEvents() {
-      refs.registerForm.addEventListener("submit", handleRegister);
-      refs.loginForm.addEventListener("submit", handleLogin);
-      refs.logoutButton.addEventListener("click", handleLogout);
       refs.uploadButton.addEventListener("click", handleUpload);
       refs.fileInput.addEventListener("change", onFileInputChange);
 
