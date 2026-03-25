@@ -99,14 +99,19 @@
             A private page where account holders can upload and download files, with a shared index for the whole group.
           </p>
           <div class="pill-row">
-            <span class="pill"><strong>Auth</strong> account required</span>
+            <span class="pill"><strong>SSO</strong> Cartofia account required</span>
             <span class="pill"><strong>Upload</strong> drag and browse</span>
-            <span class="pill"><strong>Access</strong> private file index</span>
+            <span class="pill"><strong>Groups</strong> role-based access</span>
           </div>
         </div>
       </section>
 
-      <section class="layout-grid">
+      <section class="card hidden" id="gateCard">
+        <div class="notice warn" id="gateNotice">Checking access...</div>
+        <div class="button-row" id="gateActions" style="margin-top:12px;"></div>
+      </section>
+
+      <section class="layout-grid" id="archiveContent">
         <article class="card reveal" data-delay="2" id="upload">
           <h2 class="card-title">Upload Files</h2>
           <p class="card-subtitle">Drag a file into the area or click to browse from your device.</p>
@@ -128,7 +133,7 @@
             <button id="uploadButton" class="btn btn-primary" type="button" disabled>Upload File</button>
           </div>
 
-          <div class="notice" id="uploadNotice">Sign in first, then upload. Visit the <a class="inline-link" href="/account/#login">account page</a>.</div>
+          <div class="notice" id="uploadNotice">Checking access...</div>
         </article>
 
         <div class="stack">
@@ -136,7 +141,7 @@
             <h2 class="card-title">Recent Activity</h2>
             <p class="card-subtitle">Latest file events from this archive.</p>
             <ul class="list activity-list" id="activityList">
-              <li>Sign in to view archive activity. Go to <a class="inline-link" href="/account/#login">Login</a>.</li>
+              <li>Checking access...</li>
             </ul>
           </article>
         </div>
@@ -166,7 +171,7 @@
               <tbody id="filesBody"></tbody>
             </table>
           </div>
-          <p class="empty-message" id="emptyMessage">Sign in to view archive files. Use the <a class="inline-link" href="/account/#login">account page</a> to authenticate.</p>
+          <p class="empty-message" id="emptyMessage">Checking access...</p>
         </article>
       </section>
     </main>
@@ -183,158 +188,302 @@
 
   <script src="/assets/site.js"></script>
   <script>
-    const state = {
+    /* ── OIDC / access configuration ───────────────────────────────── */
+    var OIDC_USERINFO_URL = "/application/o/userinfo/";
+    var OIDC_LOGIN_URL    = "/account/";
+
+    var ARCHIVE_VIEW_GROUPS   = ["archive_view", "archive_upload", "archive_admin"];
+    var ARCHIVE_UPLOAD_GROUPS = ["archive_upload", "archive_admin"];
+
+    /* ── State ─────────────────────────────────────────────────────── */
+    var state = {
       user: null,
+      canView: false,
+      canUpload: false,
       files: [],
       selectedFile: null
     };
 
-    const refs = {
-      dropZone: document.getElementById("dropZone"),
-      fileInput: document.getElementById("fileInput"),
-      uploadButton: document.getElementById("uploadButton"),
+    /* ── DOM refs ──────────────────────────────────────────────────── */
+    var refs = {
+      gateCard:          document.getElementById("gateCard"),
+      gateNotice:        document.getElementById("gateNotice"),
+      gateActions:       document.getElementById("gateActions"),
+      archiveContent:    document.getElementById("archiveContent"),
+      uploadSection:     document.getElementById("upload"),
+      dropZone:          document.getElementById("dropZone"),
+      fileInput:         document.getElementById("fileInput"),
+      uploadButton:      document.getElementById("uploadButton"),
       selectedFileLabel: document.getElementById("selectedFileLabel"),
-      uploadNotice: document.getElementById("uploadNotice"),
-      searchInput: document.getElementById("searchInput"),
-      typeFilter: document.getElementById("typeFilter"),
-      filesBody: document.getElementById("filesBody"),
-      emptyMessage: document.getElementById("emptyMessage"),
-      activityList: document.getElementById("activityList")
+      uploadNotice:      document.getElementById("uploadNotice"),
+      searchInput:       document.getElementById("searchInput"),
+      typeFilter:        document.getElementById("typeFilter"),
+      filesBody:         document.getElementById("filesBody"),
+      emptyMessage:      document.getElementById("emptyMessage"),
+      activityList:      document.getElementById("activityList")
     };
+
+    /* ── Helpers ───────────────────────────────────────────────────── */
+    function getToken() {
+      /* Reads the access token stored by the account page after OIDC callback. */
+      return typeof localStorage !== "undefined"
+        ? localStorage.getItem("oidc_access_token")
+        : null;
+    }
+
+    function hasAnyGroup(userGroups, allowed) {
+      for (var i = 0; i < userGroups.length; i++) {
+        if (allowed.indexOf(userGroups[i]) !== -1) return true;
+      }
+      return false;
+    }
 
     function setNotice(el, message, type) {
       el.textContent = message;
       el.className = "notice";
-      if (type) {
-        el.classList.add(type);
-      }
+      if (type) el.classList.add(type);
     }
 
     function formatBytes(bytes) {
-      if (!Number.isFinite(bytes) || bytes < 0) {
-        return "-";
-      }
-      if (bytes < 1024) {
-        return `${bytes} B`;
-      }
-      const units = ["KB", "MB", "GB", "TB"];
-      let value = bytes / 1024;
-      let index = 0;
+      if (!Number.isFinite(bytes) || bytes < 0) return "-";
+      if (bytes < 1024) return bytes + " B";
+      var units = ["KB", "MB", "GB", "TB"];
+      var value = bytes / 1024;
+      var index = 0;
       while (value >= 1024 && index < units.length - 1) {
         value /= 1024;
         index += 1;
       }
-      return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[index]}`;
+      return (value >= 10 ? value.toFixed(0) : value.toFixed(1)) + " " + units[index];
     }
 
     function formatDate(iso) {
-      const dt = new Date(iso);
-      if (Number.isNaN(dt.getTime())) {
-        return iso;
-      }
+      var dt = new Date(iso);
+      if (Number.isNaN(dt.getTime())) return iso;
       return dt.toLocaleString();
     }
 
     function getFileType(name) {
-      const idx = name.lastIndexOf(".");
-      if (idx <= 0 || idx === name.length - 1) {
-        return "none";
-      }
+      var idx = name.lastIndexOf(".");
+      if (idx <= 0 || idx === name.length - 1) return "none";
       return name.slice(idx + 1).toLowerCase();
     }
 
-    async function apiRequest(path, options) {
-      const response = await fetch(path, {
-        credentials: "include",
-        ...options
-      });
+    /* ── Authenticated fetch wrapper ───────────────────────────────── */
+    function authHeaders() {
+      var token = getToken();
+      return token ? { "Authorization": "Bearer " + token } : {};
+    }
 
-      let payload = null;
-      try {
-        payload = await response.json();
-      } catch (_error) {
-        payload = null;
-      }
+    async function apiRequest(path, options) {
+      var opts = Object.assign({}, options || {});
+      opts.credentials = "include";
+      opts.headers = Object.assign({}, authHeaders(), opts.headers || {});
+
+      var response = await fetch(path, opts);
+
+      var payload = null;
+      try { payload = await response.json(); } catch (_e) { payload = null; }
 
       if (!response.ok) {
-        const message = payload && payload.error ? payload.error : `Request failed (${response.status})`;
+        var message = payload && payload.error ? payload.error : "Request failed (" + response.status + ")";
         throw new Error(message);
       }
-
       return payload;
     }
 
+    /* ── Download via fetch + blob (sends Bearer token) ────────────── */
+    async function downloadFile(fileId, fileName) {
+      try {
+        var resp = await fetch("/api/archive/download/" + fileId, {
+          credentials: "include",
+          headers: authHeaders(),
+        });
+        if (!resp.ok) {
+          var err = null;
+          try { err = await resp.json(); } catch (_e) { /* ignore */ }
+          throw new Error(err && err.error ? err.error : "Download failed (" + resp.status + ")");
+        }
+        var blob = await resp.blob();
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        setNotice(refs.uploadNotice, "Download error: " + error.message, "error");
+      }
+    }
+
+    /* ── File selection ─────────────────────────────────────────────── */
     function setSelectedFile(file) {
       state.selectedFile = file || null;
       if (state.selectedFile) {
-        refs.selectedFileLabel.textContent = `Selected file: ${state.selectedFile.name} (${formatBytes(state.selectedFile.size)})`;
+        refs.selectedFileLabel.textContent = "Selected file: " + state.selectedFile.name + " (" + formatBytes(state.selectedFile.size) + ")";
       } else {
         refs.selectedFileLabel.textContent = "No file selected.";
       }
     }
 
-    function setUser(user) {
-      state.user = user || null;
-      const authenticated = Boolean(state.user);
+    /* ── Gate / access UI ──────────────────────────────────────────── */
+    function showGate(message, type, showSignIn) {
+      refs.gateCard.classList.remove("hidden");
+      refs.archiveContent.classList.add("hidden");
+      refs.gateNotice.textContent = message;
+      refs.gateNotice.className = "notice";
+      if (type) refs.gateNotice.classList.add(type);
 
-      refs.uploadButton.disabled = !authenticated || !state.selectedFile;
-
-      if (authenticated) {
-        setNotice(refs.uploadNotice, `Ready to upload files as ${state.user.username}.`, "ok");
-      } else {
-        setNotice(refs.uploadNotice, "Sign in on the Account page, then return to upload.", "warn");
+      refs.gateActions.innerHTML = "";
+      if (showSignIn) {
+        var btn = document.createElement("a");
+        btn.className = "btn btn-primary";
+        btn.href = OIDC_LOGIN_URL;
+        btn.textContent = "Sign In to access the archive";
+        refs.gateActions.appendChild(btn);
       }
     }
 
+    function hideGate() {
+      refs.gateCard.classList.add("hidden");
+      refs.archiveContent.classList.remove("hidden");
+    }
+
+    /* ── User / permission state ───────────────────────────────────── */
+    function setUser(user) {
+      state.user = user || null;
+
+      if (!state.user) {
+        state.canView = false;
+        state.canUpload = false;
+        showGate("Sign in with your Cartofia account to access the archive.", "warn", true);
+        return;
+      }
+
+      var groups = state.user.groups || [];
+      state.canView = hasAnyGroup(groups, ARCHIVE_VIEW_GROUPS);
+      state.canUpload = hasAnyGroup(groups, ARCHIVE_UPLOAD_GROUPS);
+
+      if (!state.canView) {
+        showGate(
+          "Access not granted. Your account does not have an archive group. Contact an admin to request access.",
+          "error",
+          false
+        );
+        return;
+      }
+
+      /* User can at least view — show the archive UI */
+      hideGate();
+
+      if (state.canUpload) {
+        refs.uploadSection.classList.remove("hidden");
+        refs.dropZone.style.pointerEvents = "";
+        refs.dropZone.style.opacity = "";
+        refs.uploadButton.disabled = !state.selectedFile;
+        setNotice(refs.uploadNotice, "Ready to upload files as " + state.user.username + ".", "ok");
+      } else {
+        /* View-only: disable upload interactions */
+        refs.dropZone.style.pointerEvents = "none";
+        refs.dropZone.style.opacity = "0.45";
+        refs.uploadButton.disabled = true;
+        refs.fileInput.disabled = true;
+        setNotice(refs.uploadNotice, "Upload access requires a higher role. You can browse and download files.", "warn");
+      }
+    }
+
+    /* ── Session check via OIDC userinfo ───────────────────────────── */
+    async function loadSession() {
+      try {
+        var token = getToken();
+        var headers = token ? { "Authorization": "Bearer " + token } : {};
+        var response = await fetch(OIDC_USERINFO_URL, {
+          credentials: "include",
+          headers: headers,
+        });
+
+        if (response.status === 401 || !response.ok) {
+          setUser(null);
+          return;
+        }
+
+        var claims = await response.json();
+        setUser({
+          username: claims.preferred_username || claims.sub || "",
+          email: claims.email || "",
+          groups: claims.groups || [],
+        });
+      } catch (_error) {
+        setUser(null);
+      }
+    }
+
+    /* ── Type filter ───────────────────────────────────────────────── */
     function updateTypeFilterOptions() {
-      const previous = refs.typeFilter.value;
-      const types = Array.from(new Set(state.files.map((file) => getFileType(file.name)).filter((type) => type !== "none"))).sort();
+      var previous = refs.typeFilter.value;
+      var seen = {};
+      var types = [];
+      state.files.forEach(function (file) {
+        var t = getFileType(file.name);
+        if (t !== "none" && !seen[t]) {
+          seen[t] = true;
+          types.push(t);
+        }
+      });
+      types.sort();
 
       refs.typeFilter.innerHTML = "";
-      const allOpt = document.createElement("option");
+      var allOpt = document.createElement("option");
       allOpt.value = "all";
       allOpt.textContent = "All types";
       refs.typeFilter.appendChild(allOpt);
 
-      types.forEach((type) => {
-        const option = document.createElement("option");
+      types.forEach(function (type) {
+        var option = document.createElement("option");
         option.value = type;
         option.textContent = type;
         refs.typeFilter.appendChild(option);
       });
 
-      refs.typeFilter.value = Array.from(refs.typeFilter.options).some((opt) => opt.value === previous) ? previous : "all";
+      var found = false;
+      for (var i = 0; i < refs.typeFilter.options.length; i++) {
+        if (refs.typeFilter.options[i].value === previous) { found = true; break; }
+      }
+      refs.typeFilter.value = found ? previous : "all";
     }
 
+    /* ── Activity panel ────────────────────────────────────────────── */
     function renderActivity(files) {
       refs.activityList.innerHTML = "";
 
-      if (!state.user) {
-        const li = document.createElement("li");
+      if (!state.user || !state.canView) {
+        var li = document.createElement("li");
         li.textContent = "Sign in to view archive activity.";
         refs.activityList.appendChild(li);
         return;
       }
 
       if (!files.length) {
-        const li = document.createElement("li");
-        li.textContent = "No activity yet. Upload a file to start.";
-        refs.activityList.appendChild(li);
+        var li2 = document.createElement("li");
+        li2.textContent = "No activity yet. Upload a file to start.";
+        refs.activityList.appendChild(li2);
         return;
       }
 
-      files.slice(0, 6).forEach((file) => {
-        const li = document.createElement("li");
-        const title = document.createElement("div");
-        const uploader = document.createElement("b");
+      files.slice(0, 6).forEach(function (file) {
+        var li = document.createElement("li");
+        var title = document.createElement("div");
+        var uploader = document.createElement("b");
         uploader.textContent = file.uploaded_by;
-        const actionText = document.createTextNode(" uploaded ");
-        const fileName = document.createElement("span");
+        var actionText = document.createTextNode(" uploaded ");
+        var fileName = document.createElement("span");
         fileName.textContent = file.name;
         title.appendChild(uploader);
         title.appendChild(actionText);
         title.appendChild(fileName);
-        const time = document.createElement("span");
+        var time = document.createElement("span");
         time.className = "activity-time";
         time.textContent = formatDate(file.uploaded_at);
         li.appendChild(title);
@@ -343,61 +492,68 @@
       });
     }
 
+    /* ── File table ────────────────────────────────────────────────── */
     function renderFiles() {
       refs.filesBody.innerHTML = "";
 
-      if (!state.user) {
+      if (!state.user || !state.canView) {
         refs.emptyMessage.textContent = "Sign in to view archive files.";
         refs.emptyMessage.style.display = "block";
         renderActivity([]);
         return;
       }
 
-      const query = refs.searchInput.value.trim().toLowerCase();
-      const selectedType = refs.typeFilter.value;
+      var query = refs.searchInput.value.trim().toLowerCase();
+      var selectedType = refs.typeFilter.value;
 
-      const filtered = state.files.filter((file) => {
-        const matchesQuery = !query || file.name.toLowerCase().includes(query) || file.uploaded_by.toLowerCase().includes(query);
-        const fileType = getFileType(file.name);
-        const matchesType = selectedType === "all" || fileType === selectedType;
+      var filtered = state.files.filter(function (file) {
+        var matchesQuery = !query || file.name.toLowerCase().indexOf(query) !== -1 || file.uploaded_by.toLowerCase().indexOf(query) !== -1;
+        var fileType = getFileType(file.name);
+        var matchesType = selectedType === "all" || fileType === selectedType;
         return matchesQuery && matchesType;
       });
 
       if (!filtered.length) {
-        refs.emptyMessage.textContent = "No files match your filters.";
+        refs.emptyMessage.textContent = state.files.length ? "No files match your filters." : "No files in the archive yet.";
         refs.emptyMessage.style.display = "block";
       } else {
         refs.emptyMessage.style.display = "none";
       }
 
-      filtered.forEach((file) => {
-        const tr = document.createElement("tr");
+      filtered.forEach(function (file) {
+        var tr = document.createElement("tr");
 
-        const nameTd = document.createElement("td");
-        const nameMain = document.createElement("span");
+        var nameTd = document.createElement("td");
+        var nameMain = document.createElement("span");
         nameMain.className = "table-name";
         nameMain.textContent = file.name;
-        const nameSub = document.createElement("span");
+        var nameSub = document.createElement("span");
         nameSub.className = "table-muted";
-        nameSub.textContent = `ID ${file.id}`;
+        nameSub.textContent = "ID " + file.id;
         nameTd.appendChild(nameMain);
         nameTd.appendChild(nameSub);
 
-        const sizeTd = document.createElement("td");
+        var sizeTd = document.createElement("td");
         sizeTd.textContent = formatBytes(file.size_bytes);
 
-        const byTd = document.createElement("td");
+        var byTd = document.createElement("td");
         byTd.textContent = file.uploaded_by;
 
-        const dateTd = document.createElement("td");
+        var dateTd = document.createElement("td");
         dateTd.textContent = formatDate(file.uploaded_at);
 
-        const actionTd = document.createElement("td");
-        const link = document.createElement("a");
-        link.className = "inline-link";
-        link.href = `/api/archive/download/${file.id}`;
-        link.textContent = "Download";
-        actionTd.appendChild(link);
+        var actionTd = document.createElement("td");
+        var dlBtn = document.createElement("button");
+        dlBtn.className = "inline-link";
+        dlBtn.type = "button";
+        dlBtn.textContent = "Download";
+        dlBtn.style.background = "none";
+        dlBtn.style.border = "none";
+        dlBtn.style.cursor = "pointer";
+        dlBtn.style.font = "inherit";
+        dlBtn.setAttribute("data-file-id", file.id);
+        dlBtn.setAttribute("data-file-name", file.name);
+        actionTd.appendChild(dlBtn);
 
         tr.appendChild(nameTd);
         tr.appendChild(sizeTd);
@@ -411,18 +567,9 @@
       renderActivity(state.files);
     }
 
-    async function loadSession() {
-      try {
-        const result = await apiRequest("/api/auth/me", { method: "GET" });
-        setUser(result.authenticated ? result.user : null);
-      } catch (error) {
-        setUser(null);
-        setNotice(refs.uploadNotice, `Session check failed: ${error.message}`, "error");
-      }
-    }
-
+    /* ── Load files ────────────────────────────────────────────────── */
     async function refreshFiles() {
-      if (!state.user) {
+      if (!state.user || !state.canView) {
         state.files = [];
         updateTypeFilterOptions();
         renderFiles();
@@ -430,7 +577,7 @@
       }
 
       try {
-        const result = await apiRequest("/api/archive/files", { method: "GET" });
+        var result = await apiRequest("/api/archive/files", { method: "GET" });
         state.files = Array.isArray(result.files) ? result.files : [];
         updateTypeFilterOptions();
         renderFiles();
@@ -438,13 +585,14 @@
         state.files = [];
         updateTypeFilterOptions();
         renderFiles();
-        setNotice(refs.uploadNotice, `Could not load files: ${error.message}`, "error");
+        setNotice(refs.uploadNotice, "Could not load files: " + error.message, "error");
       }
     }
 
+    /* ── Upload handler ────────────────────────────────────────────── */
     async function handleUpload() {
-      if (!state.user) {
-        setNotice(refs.uploadNotice, "Please sign in first.", "warn");
+      if (!state.user || !state.canUpload) {
+        setNotice(refs.uploadNotice, "You do not have upload permission.", "warn");
         return;
       }
 
@@ -456,47 +604,50 @@
       refs.uploadButton.disabled = true;
       refs.uploadButton.textContent = "Uploading...";
 
-      const data = new FormData();
+      var data = new FormData();
       data.append("file", state.selectedFile);
 
       try {
-        const result = await apiRequest("/api/archive/upload", {
+        var result = await apiRequest("/api/archive/upload", {
           method: "POST",
           body: data
         });
 
         setSelectedFile(null);
         refs.fileInput.value = "";
-        setNotice(refs.uploadNotice, `Uploaded ${result.name}`, "ok");
+        setNotice(refs.uploadNotice, "Uploaded " + result.name, "ok");
         await refreshFiles();
       } catch (error) {
         setNotice(refs.uploadNotice, error.message, "error");
       } finally {
         refs.uploadButton.textContent = "Upload File";
-        refs.uploadButton.disabled = !state.user || !state.selectedFile;
+        refs.uploadButton.disabled = !state.canUpload || !state.selectedFile;
       }
     }
 
+    /* ── Drag/drop + file input ────────────────────────────────────── */
     function onDropZoneClick() {
+      if (!state.canUpload) return;
       refs.fileInput.click();
     }
 
     function onDropZoneKey(event) {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
+        if (!state.canUpload) return;
         refs.fileInput.click();
       }
     }
 
     function onFileInputChange() {
-      const file = refs.fileInput.files && refs.fileInput.files[0] ? refs.fileInput.files[0] : null;
+      var file = refs.fileInput.files && refs.fileInput.files[0] ? refs.fileInput.files[0] : null;
       setSelectedFile(file);
-      refs.uploadButton.disabled = !state.user || !state.selectedFile;
+      refs.uploadButton.disabled = !state.canUpload || !state.selectedFile;
     }
 
     function onDragOver(event) {
       event.preventDefault();
-      refs.dropZone.classList.add("dragover");
+      if (state.canUpload) refs.dropZone.classList.add("dragover");
     }
 
     function onDragLeave(event) {
@@ -507,12 +658,22 @@
     function onDrop(event) {
       event.preventDefault();
       refs.dropZone.classList.remove("dragover");
-      const files = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files : null;
-      const file = files && files[0] ? files[0] : null;
+      if (!state.canUpload) return;
+      var files = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files : null;
+      var file = files && files[0] ? files[0] : null;
       setSelectedFile(file);
-      refs.uploadButton.disabled = !state.user || !state.selectedFile;
+      refs.uploadButton.disabled = !state.canUpload || !state.selectedFile;
     }
 
+    /* ── Download delegation ───────────────────────────────────────── */
+    function onTableClick(event) {
+      var btn = event.target.closest("[data-file-id]");
+      if (!btn) return;
+      event.preventDefault();
+      downloadFile(Number(btn.getAttribute("data-file-id")), btn.getAttribute("data-file-name"));
+    }
+
+    /* ── Wire up events ────────────────────────────────────────────── */
     function bindEvents() {
       refs.uploadButton.addEventListener("click", handleUpload);
       refs.fileInput.addEventListener("change", onFileInputChange);
@@ -525,13 +686,16 @@
 
       refs.searchInput.addEventListener("input", renderFiles);
       refs.typeFilter.addEventListener("change", renderFiles);
+
+      refs.filesBody.addEventListener("click", onTableClick);
     }
 
+    /* ── Boot ──────────────────────────────────────────────────────── */
     async function boot() {
       bindEvents();
       await loadSession();
       await refreshFiles();
-      refs.uploadButton.disabled = !state.user || !state.selectedFile;
+      refs.uploadButton.disabled = !state.canUpload || !state.selectedFile;
     }
 
     boot();

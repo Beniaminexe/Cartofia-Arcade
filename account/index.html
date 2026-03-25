@@ -47,15 +47,15 @@
           </svg>
         </div>
         <div class="hero-copy">
-          <p class="hero-kicker">Authentication</p>
-          <h1 class="hero-title">Account Access</h1>
+          <p class="hero-kicker">Cartofia Accounts</p>
+          <h1 class="hero-title">Single Sign-On</h1>
           <p class="hero-lead">
-            Sign in or create an account to reach the private archive and keep your session on this device with remember-me.
+            Sign in with your Cartofia account to access the private archive and manage your identity across all Cartofia services.
           </p>
           <div class="pill-row">
-            <span class="pill"><strong>Login</strong> restore your session</span>
-            <span class="pill"><strong>Register</strong> add email + password</span>
-            <span class="pill"><strong>Remember</strong> stay signed in</span>
+            <span class="pill"><strong>SSO</strong> one account everywhere</span>
+            <span class="pill"><strong>Secure</strong> OIDC authentication</span>
+            <span class="pill"><strong>Groups</strong> role-based access</span>
           </div>
         </div>
       </section>
@@ -64,11 +64,11 @@
         <article class="card reveal" data-delay="2">
           <div class="section-label">Why sign in</div>
           <h2 class="card-title" style="margin-bottom: 6px;">Private archive access</h2>
-          <p class="card-subtitle">Accounts unlock uploads, downloads, and personalized navigation across the site.</p>
+          <p class="card-subtitle">Your Cartofia account unlocks uploads, downloads, and personalized navigation across the site.</p>
           <ul class="list">
-            <li><b>Secure session</b>: cookie-based auth scoped to this device.</li>
+            <li><b>Single sign-on</b>: one account for all Cartofia services.</li>
             <li><b>File access</b>: required for archive uploads and downloads.</li>
-            <li><b>Navigation</b>: quick links from the header account dropdown.</li>
+            <li><b>Groups</b>: your permissions are managed through Cartofia account groups.</li>
           </ul>
 
           <div class="session-card" id="sessionCard">
@@ -85,8 +85,8 @@
               <strong id="sessionEmail">-</strong>
             </div>
             <div class="session-row">
-              <span>Created</span>
-              <strong id="sessionCreated">-</strong>
+              <span>Groups</span>
+              <strong id="sessionGroups">-</strong>
             </div>
             <div class="button-row hidden" id="sessionActions">
               <a class="btn btn-primary" href="/archive/">Open Archive</a>
@@ -98,52 +98,12 @@
         <article class="card auth-card reveal" data-delay="2">
           <div id="authNotice" class="notice warn">Checking session...</div>
 
-          <div class="auth-tabs" role="tablist" aria-label="Authentication forms">
-            <button class="auth-tab active" type="button" role="tab" aria-selected="true" data-auth-tab="login">Login</button>
-            <button class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-tab="register">Register</button>
-          </div>
-
-          <div id="authPanels">
-            <form id="loginForm" class="auth-panel active" data-auth-panel="login" autocomplete="on">
-              <label for="loginUsername">Username</label>
-              <input class="input" id="loginUsername" name="username" type="text" autocomplete="username" required />
-
-              <label for="loginPassword">Password</label>
-              <input class="input" id="loginPassword" name="password" type="password" autocomplete="current-password" required />
-
-              <label class="checkbox-field">
-                <input type="checkbox" name="remember" />
-                <span>Remember this device</span>
-              </label>
-
-              <button class="btn btn-primary" type="submit">Login</button>
-            </form>
-
-            <form id="registerForm" class="auth-panel" data-auth-panel="register" autocomplete="on">
-              <label for="registerUsername">Username</label>
-              <input class="input" id="registerUsername" name="username" type="text" minlength="3" maxlength="32" autocomplete="username" required />
-
-              <label for="registerEmail">Email</label>
-              <input class="input" id="registerEmail" name="email" type="email" autocomplete="email" required />
-
-              <label for="registerPassword">Password</label>
-              <input class="input" id="registerPassword" name="password" type="password" minlength="8" autocomplete="new-password" required />
-
-              <label for="registerConfirm">Confirm password</label>
-              <input class="input" id="registerConfirm" name="confirm_password" type="password" minlength="8" autocomplete="new-password" required />
-
-              <label class="checkbox-field">
-                <input type="checkbox" name="remember" />
-                <span>Remember this device</span>
-              </label>
-
-              <label class="checkbox-field">
-                <input type="checkbox" name="accept_terms" required />
-                <span>I agree to the private archive rules.</span>
-              </label>
-
-              <button class="btn btn-primary" type="submit">Create account</button>
-            </form>
+          <div id="authActions" class="stack" style="gap:14px;margin-top:6px;">
+            <button class="btn btn-primary" type="button" id="signInButton" style="width:100%">Sign In with Cartofia</button>
+            <p style="text-align:center;color:var(--muted);font-size:14px;">
+              Don't have an account?
+              <a class="inline-link" id="registerLink" href="#">Create one</a>
+            </p>
           </div>
 
           <div id="authSuccess" class="auth-success hidden">
@@ -158,7 +118,7 @@
     </main>
 
     <footer class="footer">
-      <span>Account page for Cartofia private archive authentication.</span>
+      <span>Cartofia account management powered by single sign-on.</span>
       <div class="footer-links">
         <a href="/archive/">Archive</a>
         <a href="/arcade/">Arcade</a>
@@ -169,211 +129,245 @@
 
   <script src="/assets/site.js"></script>
   <script>
-    const refs = {
-      authNotice: document.getElementById("authNotice"),
-      authPanels: document.getElementById("authPanels"),
-      authTabs: document.querySelectorAll("[data-auth-tab]"),
-      authPanelsList: document.querySelectorAll("[data-auth-panel]"),
-      authSuccess: document.getElementById("authSuccess"),
-      authSuccessNotice: document.getElementById("authSuccessNotice"),
-      loginForm: document.getElementById("loginForm"),
-      registerForm: document.getElementById("registerForm"),
-      logoutButton: document.getElementById("logoutButton"),
-      sessionStatus: document.getElementById("sessionStatus"),
-      sessionUsername: document.getElementById("sessionUsername"),
-      sessionEmail: document.getElementById("sessionEmail"),
-      sessionCreated: document.getElementById("sessionCreated"),
-      sessionActions: document.getElementById("sessionActions"),
-      sessionCard: document.getElementById("sessionCard")
+    /* ── OIDC Configuration ─────────────────────────────────────────── */
+    const OIDC = {
+      AUTHORITY:                  "https://accounts.cartofia.com/application/o/cartofia/",
+      CLIENT_ID:                  "CHANGE_ME",
+      REDIRECT_URI:               "https://cartofia.com/account/callback/",
+      POST_LOGOUT_REDIRECT_URI:   "https://cartofia.com/",
+      USERINFO_URL:               "https://accounts.cartofia.com/application/o/userinfo/",
+      REGISTRATION_URL:           "https://accounts.cartofia.com/if/flow/cartofia-enrollment/",
     };
 
-    const redirectTarget = new URLSearchParams(window.location.search).get("next") || "";
+    /* ── DOM refs ───────────────────────────────────────────────────── */
+    const refs = {
+      authNotice:       document.getElementById("authNotice"),
+      authActions:      document.getElementById("authActions"),
+      authSuccess:      document.getElementById("authSuccess"),
+      authSuccessNotice:document.getElementById("authSuccessNotice"),
+      signInButton:     document.getElementById("signInButton"),
+      registerLink:     document.getElementById("registerLink"),
+      logoutButton:     document.getElementById("logoutButton"),
+      sessionStatus:    document.getElementById("sessionStatus"),
+      sessionUsername:   document.getElementById("sessionUsername"),
+      sessionEmail:     document.getElementById("sessionEmail"),
+      sessionGroups:    document.getElementById("sessionGroups"),
+      sessionActions:   document.getElementById("sessionActions"),
+    };
 
     function setNotice(message, type) {
       refs.authNotice.textContent = message;
       refs.authNotice.className = "notice";
-      if (type) {
-        refs.authNotice.classList.add(type);
-      }
+      if (type) refs.authNotice.classList.add(type);
     }
 
-    function formatDate(isoString) {
-      if (!isoString) {
-        return "-";
-      }
-      const dt = new Date(isoString);
-      if (Number.isNaN(dt.getTime())) {
-        return isoString;
-      }
-      return dt.toLocaleString();
+    /* ── PKCE helpers (Web Crypto) ──────────────────────────────────── */
+    function randomString(length) {
+      const bytes = new Uint8Array(length);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
     }
 
-    function switchTab(name) {
-      refs.authTabs.forEach((tab) => {
-        const isActive = tab.dataset.authTab === name;
-        tab.classList.toggle("active", isActive);
-        tab.setAttribute("aria-selected", isActive ? "true" : "false");
-      });
-
-      refs.authPanelsList.forEach((panel) => {
-        const isActive = panel.dataset.authPanel === name;
-        panel.classList.toggle("active", isActive);
-        panel.classList.toggle("hidden", !isActive);
-      });
+    function base64url(buffer) {
+      return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
     }
 
+    async function generatePKCE() {
+      const verifier = randomString(64);
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+      return { verifier, challenge: base64url(digest) };
+    }
+
+    /* ── OIDC Discovery ─────────────────────────────────────────────── */
+    let _discovery = null;
+    async function discover() {
+      if (_discovery) return _discovery;
+      const url = OIDC.AUTHORITY.replace(/\/$/, "") + "/.well-known/openid-configuration";
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error("OIDC discovery failed");
+      _discovery = await resp.json();
+      return _discovery;
+    }
+
+    /* ── Token storage ──────────────────────────────────────────────── */
+    function getToken()  { return localStorage.getItem("oidc_access_token"); }
+    function getIdToken() { return localStorage.getItem("oidc_id_token"); }
+
+    function storeTokens(tokens) {
+      localStorage.setItem("oidc_access_token", tokens.access_token);
+      if (tokens.id_token) localStorage.setItem("oidc_id_token", tokens.id_token);
+      /* Also set a cookie so direct-navigation requests (e.g. file downloads)
+         can authenticate without an Authorization header. */
+      document.cookie = "access_token=" + tokens.access_token + "; path=/; SameSite=Lax; Secure";
+    }
+
+    function clearTokens() {
+      localStorage.removeItem("oidc_access_token");
+      localStorage.removeItem("oidc_id_token");
+      document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    }
+
+    /* ── Session UI ─────────────────────────────────────────────────── */
     function applySession(user) {
-      const authenticated = Boolean(user);
+      const ok = Boolean(user);
 
-      refs.sessionStatus.textContent = authenticated ? "Signed in" : "Not signed in";
-      refs.sessionUsername.textContent = authenticated ? user.username : "-";
-      refs.sessionEmail.textContent = authenticated ? user.email || "-" : "-";
-      refs.sessionCreated.textContent = authenticated ? formatDate(user.created_at) : "-";
+      refs.sessionStatus.textContent   = ok ? "Signed in" : "Not signed in";
+      refs.sessionUsername.textContent  = ok ? user.username : "-";
+      refs.sessionEmail.textContent    = ok ? (user.email || "-") : "-";
+      refs.sessionGroups.textContent   = ok && user.groups.length ? user.groups.join(", ") : "-";
 
-      refs.sessionActions.classList.toggle("hidden", !authenticated);
-      refs.authPanels.classList.toggle("hidden", authenticated);
-      refs.authSuccess.classList.toggle("hidden", !authenticated);
+      refs.sessionActions.classList.toggle("hidden", !ok);
+      refs.authActions.classList.toggle("hidden", ok);
+      refs.authSuccess.classList.toggle("hidden", !ok);
 
-      if (authenticated) {
-        setNotice(`Signed in as ${user.username}`, "ok");
-        refs.authSuccessNotice.textContent = "Signed in. You can open the archive or stay here.";
-        if (redirectTarget) {
-          window.location.href = redirectTarget;
-        }
+      if (ok) {
+        setNotice("Signed in as " + user.username, "ok");
+        refs.authSuccessNotice.textContent = "Signed in. You can open the archive or go back home.";
+        var next = new URLSearchParams(window.location.search).get("next");
+        if (next) window.location.href = next;
       } else {
-        setNotice("Not authenticated. Login or create an account to continue.", "warn");
+        setNotice("Not signed in. Use your Cartofia account to continue.", "warn");
       }
     }
 
-    async function apiRequest(path, options) {
-      const response = await fetch(path, {
-        credentials: "include",
-        ...options
+    /* ── Userinfo ───────────────────────────────────────────────────── */
+    async function fetchUserinfo(token) {
+      var resp = await fetch(OIDC.USERINFO_URL, {
+        headers: { "Authorization": "Bearer " + token },
       });
-
-      let payload = null;
-      try {
-        payload = await response.json();
-      } catch (_error) {
-        payload = null;
-      }
-
-      if (!response.ok) {
-        const message = payload && payload.error ? payload.error : `Request failed (${response.status})`;
-        throw new Error(message);
-      }
-
-      return payload;
+      if (!resp.ok) { clearTokens(); return null; }
+      var claims = await resp.json();
+      return {
+        username: claims.preferred_username || claims.sub || "",
+        email:    claims.email || "",
+        groups:   claims.groups || [],
+      };
     }
 
-    async function loadSession() {
+    /* ── Login (PKCE Authorization Code) ────────────────────────────── */
+    async function startLogin() {
       try {
-        const result = await apiRequest("/api/auth/me", { method: "GET" });
-        applySession(result.authenticated ? result.user : null);
-      } catch (error) {
-        applySession(null);
-        setNotice(`Session check failed: ${error.message}`, "error");
-      }
-    }
+        var disc = await discover();
+        var pkce = await generatePKCE();
+        var state = randomString(16);
 
-    function disableForms(disabled) {
-      [refs.loginForm, refs.registerForm].forEach((form) => {
-        form.querySelectorAll("input, button").forEach((el) => {
-          el.disabled = disabled;
+        sessionStorage.setItem("oidc_pkce_verifier", pkce.verifier);
+        sessionStorage.setItem("oidc_state", state);
+
+        var params = new URLSearchParams({
+          response_type:        "code",
+          client_id:            OIDC.CLIENT_ID,
+          redirect_uri:         OIDC.REDIRECT_URI,
+          scope:                "openid profile email groups",
+          code_challenge:       pkce.challenge,
+          code_challenge_method:"S256",
+          state:                state,
         });
-      });
+
+        window.location.href = disc.authorization_endpoint + "?" + params.toString();
+      } catch (err) {
+        setNotice("Failed to start login: " + err.message, "error");
+      }
     }
 
-    async function onRegister(event) {
-      event.preventDefault();
-      const form = new FormData(refs.registerForm);
-      disableForms(true);
+    /* ── Callback handler ───────────────────────────────────────────── */
+    async function handleCallback() {
+      var params = new URLSearchParams(window.location.search);
+      var code = params.get("code");
+      if (!code) return false;
+
+      var error = params.get("error");
+      if (error) {
+        setNotice("Login denied: " + (params.get("error_description") || error), "error");
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return true;
+      }
+
+      var storedState = sessionStorage.getItem("oidc_state");
+      if (params.get("state") !== storedState) {
+        setNotice("Invalid state parameter. Please try signing in again.", "error");
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return true;
+      }
+
+      var verifier = sessionStorage.getItem("oidc_pkce_verifier");
+      if (!verifier) {
+        setNotice("Missing PKCE verifier. Please try signing in again.", "error");
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return true;
+      }
 
       try {
-        const result = await apiRequest("/api/auth/register", {
+        var disc = await discover();
+        var resp = await fetch(disc.token_endpoint, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: String(form.get("username") || "").trim(),
-            email: String(form.get("email") || "").trim(),
-            password: String(form.get("password") || ""),
-            confirm_password: String(form.get("confirm_password") || ""),
-            accept_terms: Boolean(form.get("accept_terms")),
-            remember: Boolean(form.get("remember"))
-          })
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            grant_type:    "authorization_code",
+            code:          code,
+            redirect_uri:  OIDC.REDIRECT_URI,
+            client_id:     OIDC.CLIENT_ID,
+            code_verifier: verifier,
+          }),
         });
 
-        refs.registerForm.reset();
-        applySession({
-          id: result.id,
-          username: result.username,
-          email: result.email,
-          created_at: result.created_at
-        });
-      } catch (error) {
-        setNotice(error.message, "error");
-      } finally {
-        disableForms(false);
+        if (!resp.ok) {
+          var errBody = await resp.json().catch(function () { return {}; });
+          throw new Error(errBody.error_description || errBody.error || "Token exchange failed");
+        }
+
+        var tokens = await resp.json();
+        storeTokens(tokens);
+
+        sessionStorage.removeItem("oidc_pkce_verifier");
+        sessionStorage.removeItem("oidc_state");
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        var user = await fetchUserinfo(tokens.access_token);
+        applySession(user);
+      } catch (err) {
+        setNotice("Login failed: " + err.message, "error");
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
+      return true;
     }
 
-    async function onLogin(event) {
-      event.preventDefault();
-      const form = new FormData(refs.loginForm);
-      disableForms(true);
-
+    /* ── Logout ─────────────────────────────────────────────────────── */
+    async function doLogout() {
+      var idToken = getIdToken();
+      clearTokens();
       try {
-        const result = await apiRequest("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: String(form.get("username") || "").trim(),
-            password: String(form.get("password") || ""),
-            remember: Boolean(form.get("remember"))
-          })
+        var disc = await discover();
+        var params = new URLSearchParams({
+          post_logout_redirect_uri: OIDC.POST_LOGOUT_REDIRECT_URI,
         });
-
-        refs.loginForm.reset();
-        applySession({
-          id: result.id,
-          username: result.username,
-          email: result.email,
-          created_at: result.created_at || new Date().toISOString()
-        });
-      } catch (error) {
-        setNotice(error.message, "error");
-      } finally {
-        disableForms(false);
-      }
-    }
-
-    async function onLogout() {
-      try {
-        await apiRequest("/api/auth/logout", { method: "POST" });
+        if (idToken) params.set("id_token_hint", idToken);
+        window.location.href = disc.end_session_endpoint + "?" + params.toString();
+      } catch (_err) {
         applySession(null);
-      } catch (error) {
-        setNotice(error.message, "error");
       }
     }
 
-    refs.authTabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
-        switchTab(tab.dataset.authTab);
-      });
-    });
+    /* ── Wire up events ─────────────────────────────────────────────── */
+    refs.signInButton.addEventListener("click", startLogin);
+    refs.registerLink.href = OIDC.REGISTRATION_URL;
+    refs.logoutButton.addEventListener("click", doLogout);
 
-    refs.registerForm.addEventListener("submit", onRegister);
-    refs.loginForm.addEventListener("submit", onLogin);
-    refs.logoutButton.addEventListener("click", onLogout);
+    /* ── Init ───────────────────────────────────────────────────────── */
+    (async function init() {
+      if (await handleCallback()) return;
 
-    const hash = window.location.hash.replace("#", "");
-    if (hash === "register") {
-      switchTab("register");
-    } else {
-      switchTab("login");
-    }
-
-    loadSession();
+      var token = getToken();
+      if (token) {
+        var user = await fetchUserinfo(token);
+        applySession(user);
+      } else {
+        applySession(null);
+      }
+    })();
   </script>
 </body>
 </html>

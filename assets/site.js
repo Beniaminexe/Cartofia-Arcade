@@ -1,4 +1,9 @@
 (function () {
+  /* ── OIDC configuration ──────────────────────────────────────────── */
+  var OIDC_USERINFO_URL = "/application/o/userinfo/";
+  var OIDC_LOGOUT_URL   = "/application/o/cartofia/end-session/";
+  var OIDC_LOGIN_URL    = "/account/#login";
+
   function setExpanded(button, dropdown, expanded) {
     button.setAttribute("aria-expanded", expanded ? "true" : "false");
     dropdown.classList.toggle("hidden", !expanded);
@@ -6,12 +11,24 @@
 
   async function fetchSession() {
     try {
-      const response = await fetch("/api/auth/me", { credentials: "include" });
-      const payload = await response.json();
-      if (!response.ok || !payload || !payload.authenticated) {
+      var token = typeof localStorage !== "undefined" ? localStorage.getItem("oidc_access_token") : null;
+      var headers = token ? { "Authorization": "Bearer " + token } : {};
+      var response = await fetch(OIDC_USERINFO_URL, {
+        credentials: "include",
+        headers: headers,
+      });
+      if (response.status === 401 || !response.ok) {
         return { authenticated: false };
       }
-      return payload;
+      var claims = await response.json();
+      return {
+        authenticated: true,
+        user: {
+          username: claims.preferred_username || claims.sub || "",
+          email: claims.email || "",
+          groups: claims.groups || [],
+        },
+      };
     } catch (_error) {
       return { authenticated: false };
     }
@@ -84,8 +101,7 @@
       addLink("Minecraft", "/minecraft/");
       addButton("Logout", { logout: "true" });
     } else {
-      addLink("Login", "/account/#login", { accent: true });
-      addLink("Register", "/account/#register");
+      addLink("Sign In", OIDC_LOGIN_URL, { accent: true });
       addLink("Archive", "/archive/");
     }
 
@@ -110,18 +126,18 @@
       setExpanded(button, dropdown, !isOpen);
     });
 
-    dropdown.addEventListener("click", async function (event) {
-      const action = event.target && event.target.closest("[data-logout]");
+    dropdown.addEventListener("click", function (event) {
+      var action = event.target && event.target.closest("[data-logout]");
       if (action) {
         event.preventDefault();
-        try {
-          await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-        } catch (_error) {
-          // Ignore logout errors and fall back to local state change.
+        if (typeof localStorage !== "undefined") {
+          localStorage.removeItem("oidc_access_token");
+          localStorage.removeItem("oidc_id_token");
         }
+        document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         renderAccountDropdown(menu, { authenticated: false });
         setExpanded(button, dropdown, false);
-        window.location.href = "/account/";
+        window.location.href = OIDC_LOGOUT_URL;
       }
     });
 
