@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Snake Classic - Cartofia Arcade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 560px) minmax(260px, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .board-panel {
+      position: relative;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: radial-gradient(circle at 50% 0%, rgba(46, 168, 255, 0.1), rgba(5, 13, 20, 0.95) 62%);
+      padding: 12px;
+      overflow: hidden;
+    }
+
+    .board-frame {
+      position: relative;
+      border-radius: 10px;
+      border: 1px solid rgba(46, 168, 255, 0.25);
+      background: #04101a;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+    }
+
+    #game {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      image-rendering: pixelated;
+    }
+
+    .board-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      background: rgba(2, 8, 13, 0.72);
+      color: #d8ecff;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+      padding: 22px;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .board-overlay.hidden {
+      opacity: 0;
+    }
+
+    .game-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    .stat-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(138, 160, 185, 0.16);
+      padding-bottom: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .stat-row b {
+      color: #cbe8ff;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+
+    .button-row {
+      margin-top: 2px;
+    }
+
+    .controls-list {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .controls-list b {
+      color: #90d4ff;
+      font-weight: 700;
+    }
+
+    .touch-controls {
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(7, 14, 22, 0.7);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .touch-controls p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pad-grid {
+      width: 180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .pad-btn {
+      min-height: 40px;
+      border-radius: 10px;
+      border: 1px solid rgba(46, 168, 255, 0.36);
+      background: rgba(8, 22, 34, 0.95);
+      color: #cbebff;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .pad-btn:active {
+      transform: translateY(1px);
+      filter: brightness(1.08);
+    }
+
+    .pad-btn.empty {
+      border-color: transparent;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    .game-note {
+      border-radius: 10px;
+      border: 1px dashed var(--line);
+      background: rgba(4, 10, 16, 0.66);
+      color: var(--muted);
+      font-size: 13px;
+      padding: 9px 10px;
+    }
+
+    @media (max-width: 950px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .pad-grid {
+        width: 210px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="app-header reveal">
+      <a class="brand" href="/">
+        <span class="brand-chip" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+          </svg>
+        </span>
+        <span class="brand-text">Cartofia</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a href="/archive/">Archive</a>
+        <a class="active" href="/arcade/">Arcade</a>
+        <a href="/minecraft/">Minecraft</a>
+      </nav>
+      <div class="account-menu" data-account-menu>
+        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+          <a class="account-item" href="/arcade/" role="menuitem">Back to Arcade</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-card reveal" data-delay="1">
+        <div class="hero-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4.5 12C4.5 7.02944 8.52944 3 13.5 3H17.5V7" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M19.5 12C19.5 16.9706 15.4706 21 10.5 21H6.5V17" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            <circle cx="13.5" cy="12" r="2" fill="#57C2FF"></circle>
+          </svg>
+        </div>
+        <div class="hero-copy">
+          <p class="hero-kicker">Arcade Slot 2</p>
+          <h1 class="hero-title">Snake Classic</h1>
+          <p class="hero-lead">
+            Eat apples, grow longer, and survive as long as possible. Keyboard and touch controls are both supported.
+          </p>
+          <div class="pill-row">
+            <span class="pill"><strong>Mode</strong> Single player</span>
+            <span class="pill"><strong>Controls</strong> Arrows or WASD</span>
+            <span class="pill"><strong>Playable</strong> In browser</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card reveal" data-delay="2">
+        <div class="game-layout">
+          <div class="board-panel">
+            <div class="board-frame">
+              <canvas id="game" width="576" height="576" aria-label="Snake game board"></canvas>
+              <div id="overlay" class="board-overlay">Press Start or any direction key to begin.</div>
+            </div>
+          </div>
+
+          <aside class="game-panel">
+            <div>
+              <h2 class="card-title">Run Stats</h2>
+              <p class="card-subtitle">Your best score is saved in this browser.</p>
+              <div class="stat-grid">
+                <div class="stat-row"><span>Score</span><b id="score">0</b></div>
+                <div class="stat-row"><span>Best</span><b id="best">0</b></div>
+                <div class="stat-row"><span>Length</span><b id="length">3</b></div>
+                <div class="stat-row"><span>Speed</span><b id="speed">7.1</b></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="button-row">
+                <button id="start-btn" class="btn btn-primary" type="button">Start</button>
+                <button id="pause-btn" class="btn btn-ghost" type="button">Pause</button>
+                <button id="restart-btn" class="btn btn-ghost" type="button">Restart</button>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="section-label">How To Play</h3>
+              <ul class="controls-list">
+                <li><b>Move:</b> Arrow keys or <b>W A S D</b></li>
+                <li><b>Pause:</b> Space or P</li>
+                <li><b>Goal:</b> Eat apples and avoid your own tail (walls wrap around)</li>
+              </ul>
+            </div>
+
+            <div class="touch-controls">
+              <p>Touch controls</p>
+              <div class="pad-grid">
+                <button class="pad-btn empty" type="button" aria-hidden="true"></button>
+                <button class="pad-btn" type="button" data-dir="up" aria-label="Move up">▲</button>
+                <button class="pad-btn empty" type="button" aria-hidden="true"></button>
+                <button class="pad-btn" type="button" data-dir="left" aria-label="Move left">◀</button>
+                <button class="pad-btn empty" type="button" aria-hidden="true"></button>
+                <button class="pad-btn" type="button" data-dir="right" aria-label="Move right">▶</button>
+                <button class="pad-btn empty" type="button" aria-hidden="true"></button>
+                <button class="pad-btn" type="button" data-dir="down" aria-label="Move down">▼</button>
+                <button class="pad-btn empty" type="button" aria-hidden="true"></button>
+              </div>
+            </div>
+
+            <div class="game-note">
+              Tip: swipe directly on the board on mobile to steer. Going off one edge brings you back on the opposite side.
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Copyright <span id="year"></span> Cartofia. All rights reserved.</span>
+      <div class="footer-links">
+        <a href="/arcade/">Arcade</a>
+        <a href="/">Home</a>
+        <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/assets/site.js"></script>
+  <script>
+    (function () {
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const overlay = document.getElementById("overlay");
+
+      const scoreEl = document.getElementById("score");
+      const bestEl = document.getElementById("best");
+      const lengthEl = document.getElementById("length");
+      const speedEl = document.getElementById("speed");
+
+      const startBtn = document.getElementById("start-btn");
+      const pauseBtn = document.getElementById("pause-btn");
+      const restartBtn = document.getElementById("restart-btn");
+      const touchButtons = document.querySelectorAll("[data-dir]");
+
+      const year = document.getElementById("year");
+      if (year) {
+        year.textContent = String(new Date().getFullYear());
+      }
+
+      const gridCount = 24;
+      const cellSize = canvas.width / gridCount;
+      const defaultDelay = 140;
+      const minDelay = 70;
+
+      let snake = [];
+      let direction = { x: 1, y: 0 };
+      let queuedDirection = { x: 1, y: 0 };
+      let food = { x: 12, y: 12 };
+      let score = 0;
+      let best = 0;
+      let stepDelay = defaultDelay;
+      let running = false;
+      let paused = false;
+      let gameOver = false;
+      let accumulator = 0;
+      let lastFrameTime = 0;
+
+      function loadBest() {
+        try {
+          const raw = window.localStorage.getItem("cartofia_snake_best");
+          const value = Number(raw);
+          if (Number.isFinite(value) && value > 0) {
+            best = value;
+          }
+        } catch (_error) {
+          best = 0;
+        }
+      }
+
+      function saveBest() {
+        try {
+          window.localStorage.setItem("cartofia_snake_best", String(best));
+        } catch (_error) {
+          // Ignore storage errors and keep gameplay unaffected.
+        }
+      }
+
+      function isSameDirection(a, b) {
+        return a.x === b.x && a.y === b.y;
+      }
+
+      function isOppositeDirection(a, b) {
+        return a.x + b.x === 0 && a.y + b.y === 0;
+      }
+
+      function setOverlay(message) {
+        overlay.textContent = message;
+        overlay.classList.toggle("hidden", message.length === 0);
+      }
+
+      function randomCell() {
+        return {
+          x: Math.floor(Math.random() * gridCount),
+          y: Math.floor(Math.random() * gridCount)
+        };
+      }
+
+      function spawnFood() {
+        for (let i = 0; i < 512; i += 1) {
+          const candidate = randomCell();
+          const blocked = snake.some((part) => part.x === candidate.x && part.y === candidate.y);
+          if (!blocked) {
+            food = candidate;
+            return;
+          }
+        }
+      }
+
+      function updateHud() {
+        scoreEl.textContent = String(score);
+        bestEl.textContent = String(best);
+        lengthEl.textContent = String(snake.length);
+        speedEl.textContent = (1000 / stepDelay).toFixed(1);
+      }
+
+      function resetState() {
+        snake = [
+          { x: 10, y: 12 },
+          { x: 9, y: 12 },
+          { x: 8, y: 12 }
+        ];
+        direction = { x: 1, y: 0 };
+        queuedDirection = { x: 1, y: 0 };
+        score = 0;
+        stepDelay = defaultDelay;
+        running = false;
+        paused = false;
+        gameOver = false;
+        accumulator = 0;
+        spawnFood();
+        setOverlay("Press Start or any direction key to begin.");
+        updateHud();
+      }
+
+      function handleDeath() {
+        running = false;
+        paused = false;
+        gameOver = true;
+
+        if (score > best) {
+          best = score;
+          saveBest();
+        }
+
+        updateHud();
+        setOverlay("Game Over. Press Restart or Enter.");
+      }
+
+      function beginRun() {
+        if (gameOver) {
+          resetState();
+        }
+
+        if (!running) {
+          running = true;
+          paused = false;
+          setOverlay("");
+        }
+      }
+
+      function togglePause() {
+        if (!running && !paused) {
+          return;
+        }
+
+        if (paused) {
+          paused = false;
+          running = true;
+          setOverlay("");
+        } else {
+          paused = true;
+          running = false;
+          setOverlay("Paused. Press Space, P, or Pause to resume.");
+        }
+      }
+
+      function setDirection(nextDirection) {
+        if (!isSameDirection(nextDirection, queuedDirection) && !isOppositeDirection(direction, nextDirection)) {
+          queuedDirection = nextDirection;
+        }
+
+        if (!running && !paused) {
+          beginRun();
+        }
+      }
+
+      function collidesWithSnake(point, includeTail) {
+        const limit = includeTail ? snake.length : snake.length - 1;
+        for (let i = 0; i < limit; i += 1) {
+          const part = snake[i];
+          if (part.x === point.x && part.y === point.y) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function step() {
+        direction = queuedDirection;
+        const head = snake[0];
+        let nextX = head.x + direction.x;
+        let nextY = head.y + direction.y;
+
+        if (nextX < 0) {
+          nextX = gridCount - 1;
+        } else if (nextX >= gridCount) {
+          nextX = 0;
+        }
+
+        if (nextY < 0) {
+          nextY = gridCount - 1;
+        } else if (nextY >= gridCount) {
+          nextY = 0;
+        }
+
+        const nextHead = { x: nextX, y: nextY };
+        const isEating = nextHead.x === food.x && nextHead.y === food.y;
+
+        if (collidesWithSnake(nextHead, isEating)) {
+          handleDeath();
+          return;
+        }
+
+        snake.unshift(nextHead);
+
+        if (isEating) {
+          score += 1;
+          stepDelay = Math.max(minDelay, defaultDelay - (score * 3));
+          spawnFood();
+        } else {
+          snake.pop();
+        }
+
+        updateHud();
+      }
+
+      function drawGrid() {
+        ctx.strokeStyle = "rgba(88, 140, 188, 0.14)";
+        ctx.lineWidth = 1;
+        for (let i = 1; i < gridCount; i += 1) {
+          const offset = i * cellSize + 0.5;
+          ctx.beginPath();
+          ctx.moveTo(offset, 0);
+          ctx.lineTo(offset, canvas.height);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(0, offset);
+          ctx.lineTo(canvas.width, offset);
+          ctx.stroke();
+        }
+      }
+
+      function drawFood() {
+        const centerX = (food.x * cellSize) + (cellSize / 2);
+        const centerY = (food.y * cellSize) + (cellSize / 2);
+        const radius = cellSize * 0.33;
+
+        ctx.fillStyle = "#ff5d7a";
+        ctx.shadowColor = "rgba(255, 93, 122, 0.4)";
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      function drawSnake() {
+        snake.forEach((part, index) => {
+          const padding = index === 0 ? 2 : 3;
+          const x = (part.x * cellSize) + padding;
+          const y = (part.y * cellSize) + padding;
+          const size = cellSize - (padding * 2);
+
+          if (index === 0) {
+            ctx.fillStyle = "#78d0ff";
+          } else {
+            const alpha = 0.95 - (Math.min(index, 10) * 0.05);
+            ctx.fillStyle = `rgba(46, 168, 255, ${Math.max(alpha, 0.35)})`;
+          }
+
+          ctx.fillRect(x, y, size, size);
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#05101a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawGrid();
+        drawFood();
+        drawSnake();
+      }
+
+      function frame(timestamp) {
+        if (!lastFrameTime) {
+          lastFrameTime = timestamp;
+        }
+
+        const delta = timestamp - lastFrameTime;
+        lastFrameTime = timestamp;
+
+        if (running) {
+          accumulator += delta;
+          while (accumulator >= stepDelay && running) {
+            step();
+            accumulator -= stepDelay;
+          }
+        }
+
+        draw();
+        window.requestAnimationFrame(frame);
+      }
+
+      function directionFromName(name) {
+        switch (name) {
+          case "up":
+            return { x: 0, y: -1 };
+          case "down":
+            return { x: 0, y: 1 };
+          case "left":
+            return { x: -1, y: 0 };
+          case "right":
+            return { x: 1, y: 0 };
+          default:
+            return null;
+        }
+      }
+
+      function onDirectionInput(name) {
+        const next = directionFromName(name);
+        if (next) {
+          setDirection(next);
+        }
+      }
+
+      document.addEventListener("keydown", (event) => {
+        const key = event.key.toLowerCase();
+
+        if (key === "arrowup" || key === "w") {
+          event.preventDefault();
+          onDirectionInput("up");
+          return;
+        }
+
+        if (key === "arrowdown" || key === "s") {
+          event.preventDefault();
+          onDirectionInput("down");
+          return;
+        }
+
+        if (key === "arrowleft" || key === "a") {
+          event.preventDefault();
+          onDirectionInput("left");
+          return;
+        }
+
+        if (key === "arrowright" || key === "d") {
+          event.preventDefault();
+          onDirectionInput("right");
+          return;
+        }
+
+        if (key === " " || key === "p") {
+          event.preventDefault();
+          togglePause();
+          return;
+        }
+
+        if (key === "enter" && !running && !paused) {
+          event.preventDefault();
+          beginRun();
+        }
+      });
+
+      startBtn.addEventListener("click", () => {
+        beginRun();
+      });
+
+      pauseBtn.addEventListener("click", () => {
+        togglePause();
+      });
+
+      restartBtn.addEventListener("click", () => {
+        resetState();
+        beginRun();
+      });
+
+      touchButtons.forEach((button) => {
+        const action = () => {
+          onDirectionInput(button.dataset.dir);
+        };
+        button.addEventListener("click", action);
+        button.addEventListener("touchstart", (event) => {
+          event.preventDefault();
+          action();
+        }, { passive: false });
+      });
+
+      let startTouchX = 0;
+      let startTouchY = 0;
+
+      canvas.addEventListener("touchstart", (event) => {
+        const touch = event.changedTouches[0];
+        startTouchX = touch.clientX;
+        startTouchY = touch.clientY;
+      }, { passive: true });
+
+      canvas.addEventListener("touchend", (event) => {
+        const touch = event.changedTouches[0];
+        const dx = touch.clientX - startTouchX;
+        const dy = touch.clientY - startTouchY;
+        const absX = Math.abs(dx);
+        const absY = Math.abs(dy);
+
+        if (Math.max(absX, absY) < 20) {
+          return;
+        }
+
+        if (absX > absY) {
+          onDirectionInput(dx > 0 ? "right" : "left");
+        } else {
+          onDirectionInput(dy > 0 ? "down" : "up");
+        }
+      }, { passive: true });
+
+      loadBest();
+      resetState();
+      draw();
+      window.requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>
