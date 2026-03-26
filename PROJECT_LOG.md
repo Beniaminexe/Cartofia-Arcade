@@ -425,5 +425,21 @@ Planned behaviour:
 **Validation performed**
 
 - Ran inline Bomber Raid JavaScript syntax validation via `node --check` after script extraction.
+
+---
+
+## 2026-03-26 - Account frontend registration flow URL update
+
+**Summary**
+
+- Updated the frontend account registration link to use the existing source-enrollment flow endpoint.
+
+**Details**
+
+- Changed `REGISTRATION_URL` in `account/index.html`:
+  - from: `https://accounts.cartofia.com/if/flow/cartofia-enrollment/`
+  - to: `https://accounts.cartofia.com/if/flow/default-source-enrollment/`
+- Result: clicking `Create one` on the account page now routes to the current enrollment flow URL.
+
 *This log is updated as new milestones and design decisions are made.*
 
