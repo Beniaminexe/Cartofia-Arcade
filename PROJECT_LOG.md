@@ -398,5 +398,32 @@ Planned behaviour:
 - Add optional room lock indicator/icon in the lobby header before join attempts.
 - Add joystick sensitivity/deadzone controls for mobile tuning.
 - Add brief in-game reconnect hint flow when online sockets drop mid-match.
+
+---
+
+## 2026-03-26 - Bomber Raid NPC bomb AI and contact-damage rules
+
+**Summary**
+
+- Updated Bomber Raid enemy behavior so NPCs now place bombs and no longer kill players by touch collision.
+- Added multiplayer spawn safety rule so enemies do not spawn adjacent to player spawn points.
+
+**Details**
+
+- Frontend gameplay updates in `arcade/bomber-raid/index.html`:
+  - Added NPC bomb placement AI with cooldown-driven decision making:
+    - enemies can place bombs when pressuring players (close range / clear line) or when near crates
+    - enemy bombs use owner IDs and integrate with existing bomb-cap logic
+  - Removed enemy touch-contact elimination paths:
+    - players are no longer damaged by standing on the same tile as an enemy
+    - bomb/explosion damage remains lethal as intended
+  - Added multiplayer-safe enemy spawn filtering:
+    - enemy spawn candidates are rejected when adjacent (including diagonals) to player spawns
+    - fallback spawn selection keeps enemy count intact while respecting safety constraints
+  - Extended online state sync payload for enemies (`id`, bomb cooldown, bomb count/range settings) for host/guest consistency.
+
+**Validation performed**
+
+- Ran inline Bomber Raid JavaScript syntax validation via `node --check` after script extraction.
 *This log is updated as new milestones and design decisions are made.*
 

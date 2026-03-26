@@ -625,7 +625,17 @@
         eye: p.eye,
         ord: p.ord
       })),
-      enemies: en.map((o) => ({ x: o.x, y: o.y, a: o.a, d: o.d, t: o.t })),
+      enemies: en.map((o) => ({
+        id: o.id,
+        x: o.x,
+        y: o.y,
+        a: o.a,
+        d: o.d,
+        t: o.t,
+        cd: o.cd,
+        mb: o.mb,
+        rg: o.rg
+      })),
       bombs: bb.map((b) => ({ x: b.x, y: b.y, t: b.t, r: b.r, owner: b.owner })),
       explosions: ex.map((e) => ({ x: e.x, y: e.y, t: e.t })),
       powerups: powerups.map((p) => ({ x: p.x, y: p.y, type: p.type })),
@@ -730,7 +740,17 @@
       }));
     }
     if (Array.isArray(state.enemies)) {
-      en = state.enemies.map((o) => ({ x: o.x, y: o.y, a: !!o.a, d: o.d || "u", t: Number.isFinite(o.t) ? o.t : 180 }));
+      en = state.enemies.map((o, i) => ({
+        id: o.id || ("e" + i),
+        x: Number.isFinite(o.x) ? o.x : 1,
+        y: Number.isFinite(o.y) ? o.y : 1,
+        a: !!o.a,
+        d: o.d || "u",
+        t: Number.isFinite(o.t) ? o.t : 320,
+        cd: Number.isFinite(o.cd) ? o.cd : 1100,
+        mb: clamp(Number.isFinite(o.mb) ? Math.round(o.mb) : 1, 1, 3),
+        rg: clamp(Number.isFinite(o.rg) ? Math.round(o.rg) : 2, 1, 5)
+      }));
     }
     if (Array.isArray(state.bombs)) {
       bb = state.bombs.map((b) => ({ x: b.x, y: b.y, t: b.t, r: b.r, owner: b.owner || "" }));
@@ -1156,7 +1176,7 @@
 
     const p1Spawn = { x: 1, y: 1 };
     const p2Spawn = { x: W - 2, y: H - 2 };
-    const enemySpawns = gameMode === "single"
+    const seedEnemySpawns = gameMode === "single"
       ? [
         { x: W - 2, y: H - 2 },
         { x: W - 2, y: 1 },
@@ -1167,7 +1187,62 @@
         { x: 1, y: H - 2 },
         { x: W - 2, y: H - 4 }
       ];
+    const enemySpawns = [];
+    const playerSpawns = gameMode === "multi" ? [p1Spawn, p2Spawn] : [p1Spawn];
     const safe = new Set();
+
+    function nearAnyPlayerSpawn(x1, y1) {
+      if (gameMode !== "multi") {
+        return false;
+      }
+      for (let i = 0; i < playerSpawns.length; i += 1) {
+        const sp = playerSpawns[i];
+        if (Math.abs(sp.x - x1) <= 1 && Math.abs(sp.y - y1) <= 1) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function addEnemySpawn(x1, y1) {
+      if (!inb(x1, y1) || tile(x1, y1) !== "floor") {
+        return false;
+      }
+      if (nearAnyPlayerSpawn(x1, y1)) {
+        return false;
+      }
+      for (let i = 0; i < enemySpawns.length; i += 1) {
+        if (enemySpawns[i].x === x1 && enemySpawns[i].y === y1) {
+          return false;
+        }
+      }
+      enemySpawns.push({ x: x1, y: y1 });
+      return true;
+    }
+
+    for (let i = 0; i < seedEnemySpawns.length; i += 1) {
+      addEnemySpawn(seedEnemySpawns[i].x, seedEnemySpawns[i].y);
+    }
+
+    if (enemySpawns.length < seedEnemySpawns.length) {
+      const fallback = [];
+      for (let y = 1; y < H - 1; y += 1) {
+        for (let x1 = 1; x1 < W - 1; x1 += 1) {
+          if (tile(x1, y) !== "floor") { continue; }
+          if (nearAnyPlayerSpawn(x1, y)) { continue; }
+          let score = 99;
+          for (let i = 0; i < playerSpawns.length; i += 1) {
+            const sp = playerSpawns[i];
+            score = Math.min(score, Math.abs(sp.x - x1) + Math.abs(sp.y - y));
+          }
+          fallback.push({ x: x1, y: y, score: score });
+        }
+      }
+      fallback.sort((a, b) => b.score - a.score || b.y - a.y || b.x - a.x);
+      for (let i = 0; i < fallback.length && enemySpawns.length < seedEnemySpawns.length; i += 1) {
+        addEnemySpawn(fallback[i].x, fallback[i].y);
+      }
+    }
 
     function mark(x1, y1) {
       const pts = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]];
@@ -1220,7 +1295,17 @@
       });
     }
 
-    en = enemySpawns.map((s, i) => ({ x: s.x, y: s.y, a: true, d: i % 2 ? "u" : "l", t: 280 + i * 120 }));
+    en = enemySpawns.map((s, i) => ({
+      id: "e" + i,
+      x: s.x,
+      y: s.y,
+      a: true,
+      d: i % 2 ? "u" : "l",
+      t: 320 + i * 140,
+      cd: 1000 + i * 260,
+      mb: 1,
+      rg: 2
+    }));
   }
 
   function reset() {
@@ -1588,20 +1673,84 @@
     o.t = 320 + Math.floor(Math.random() * 140);
   }
 
+  function hasClearLine(x1, y1, x2, y2) {
+    if (x1 !== x2 && y1 !== y2) {
+      return false;
+    }
+    const dx = x2 === x1 ? 0 : (x2 > x1 ? 1 : -1);
+    const dy = y2 === y1 ? 0 : (y2 > y1 ? 1 : -1);
+    let cx = x1 + dx;
+    let cy = y1 + dy;
+    while (cx !== x2 || cy !== y2) {
+      const t = tile(cx, cy);
+      if (t === "wall" || t === "crate") {
+        return false;
+      }
+      cx += dx;
+      cy += dy;
+    }
+    return true;
+  }
+
+  function enemyWantsBomb(o) {
+    let nearest = 999;
+    for (let i = 0; i < players.length; i += 1) {
+      const p = players[i];
+      if (!p.a) { continue; }
+      const dist = Math.abs(p.x - o.x) + Math.abs(p.y - o.y);
+      nearest = Math.min(nearest, dist);
+      if (dist <= 1) {
+        return true;
+      }
+      if (dist <= 4 && hasClearLine(o.x, o.y, p.x, p.y)) {
+        return true;
+      }
+    }
+
+    if (nearest <= 2 && Math.random() < 0.55) {
+      return true;
+    }
+
+    const dirs = ["u", "d", "l", "r"];
+    for (let i = 0; i < dirs.length; i += 1) {
+      const v = D[dirs[i]];
+      if (tile(o.x + v[0], o.y + v[1]) === "crate") {
+        return Math.random() < 0.45;
+      }
+    }
+    return false;
+  }
+
+  function enemyPlaceBomb(o) {
+    if (!o || !o.a) { return false; }
+    if (!o.id) { return false; }
+    if (activeBombsFor(o.id) >= Math.max(1, o.mb || 1)) { return false; }
+    if (bombAt(o.x, o.y)) { return false; }
+    bb.push({
+      x: o.x,
+      y: o.y,
+      t: 1650 + Math.floor(Math.random() * 250),
+      r: clamp(Number.isFinite(o.rg) ? o.rg : 2, 1, 6),
+      owner: o.id
+    });
+    return true;
+  }
+
   function updateEnemies(dt) {
     for (let i = 0; i < en.length; i += 1) {
       const o = en[i];
       if (!o.a) { continue; }
 
       o.t -= dt;
+      o.cd -= dt;
       if (o.t <= 0) {
         moveEnemy(o);
       }
-
-      for (let j = 0; j < players.length; j += 1) {
-        const p = players[j];
-        if (p.a && o.x === p.x && o.y === p.y) {
-          damagePlayer(p, p.name + " was tagged by an enemy bot.");
+      if (o.cd <= 0) {
+        if (enemyWantsBomb(o) && enemyPlaceBomb(o)) {
+          o.cd = 2100 + Math.floor(Math.random() * 1100);
+        } else {
+          o.cd = 280 + Math.floor(Math.random() * 220);
         }
       }
     }
@@ -1636,16 +1785,6 @@
     updateBombs(dt);
     updateExplosions(dt);
     explodeContacts();
-
-    for (let i = 0; i < en.length; i += 1) {
-      if (!en[i].a) { continue; }
-      for (let j = 0; j < players.length; j += 1) {
-        const p = players[j];
-        if (p.a && en[i].x === p.x && en[i].y === p.y) {
-          damagePlayer(p, p.name + " was tagged by an enemy bot.");
-        }
-      }
-    }
 
     checkWin();
     if (isOnlineHost()) {
