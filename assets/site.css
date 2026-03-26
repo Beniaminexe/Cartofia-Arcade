@@ -844,26 +844,35 @@ tbody tr:hover {
 
 @media (max-width: 980px) {
   .app-header {
-    grid-template-columns: 1fr;
-    justify-items: start;
+    grid-template-columns: 1fr auto;
     gap: 10px;
     padding-top: 10px;
     padding-bottom: 10px;
   }
 
+  .brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
   .site-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
     justify-self: start;
     flex-wrap: wrap;
     gap: 14px;
   }
 
   .account-menu {
-    justify-self: start;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    align-self: start;
   }
 
   .account-dropdown {
-    left: 0;
-    right: auto;
+    left: auto;
+    right: 0;
   }
 
   .layout-grid {
