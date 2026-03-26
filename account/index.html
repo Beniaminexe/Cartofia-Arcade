@@ -353,7 +353,7 @@
 
     /* ── Wire up events ─────────────────────────────────────────────── */
     refs.signInButton.addEventListener("click", startLogin);
-    refs.registerLink.href = OIDC.REGISTRATION_URL;
+    refs.registerLink.addEventListener("click", function(e) { e.preventDefault(); startLogin(); });
     refs.logoutButton.addEventListener("click", doLogout);
 
     /* ── Init ───────────────────────────────────────────────────────── */

@@ -479,5 +479,20 @@ Planned behaviour:
 
 - Ran inline Bomber Raid JavaScript syntax validation via `node --check` after AI changes.
 
+---
+
+## 2026-03-26 - Account register-link login-handler update
+
+**Summary**
+
+- Updated account page register-link behavior to trigger the login flow handler instead of directly assigning a registration URL.
+
+**Details**
+
+- In `account/index.html`, replaced:
+  - `refs.registerLink.href = OIDC.REGISTRATION_URL;`
+  - with: `refs.registerLink.addEventListener("click", function(e) { e.preventDefault(); startLogin(); });`
+- Result: clicking `Create one` now runs the same OIDC login-start flow as the sign-in button.
+
 *This log is updated as new milestones and design decisions are made.*
 
