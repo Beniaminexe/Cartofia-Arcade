@@ -441,5 +441,43 @@ Planned behaviour:
   - to: `https://accounts.cartofia.com/if/flow/default-source-enrollment/`
 - Result: clicking `Create one` on the account page now routes to the current enrollment flow URL.
 
+---
+
+## 2026-03-26 - Account frontend registration flow URL reverted
+
+**Summary**
+
+- Reverted the frontend account registration URL back to the Cartofia enrollment flow.
+
+**Details**
+
+- Updated `REGISTRATION_URL` in `account/index.html`:
+  - from: `https://accounts.cartofia.com/if/flow/default-source-enrollment/`
+  - to: `https://accounts.cartofia.com/if/flow/cartofia-enrollment/`
+- Result: the `Create one` account link now points back to the original enrollment flow URL.
+
+---
+
+## 2026-03-26 - Bomber Raid NPC survival AI upgrade
+
+**Summary**
+
+- Improved Bomber Raid enemy decision-making so NPCs are less likely to suicide with their own bombs.
+
+**Details**
+
+- Updated enemy AI in `arcade/bomber-raid/index.html`:
+  - Added bomb danger evaluation helpers (blast coverage + time-to-blast checks).
+  - Added active-explosion awareness for movement decisions.
+  - Added escape-route validation before NPC bomb placement:
+    - enemies now only place bombs when a viable escape path exists.
+  - Updated movement selection to prioritize safer tiles when bombs are about to explode.
+  - Added local-threat suppression so enemies avoid dropping bombs while already in immediate danger.
+- Result: enemies still pressure players with bombs, but now bias toward survival instead of frequent self-elimination.
+
+**Validation performed**
+
+- Ran inline Bomber Raid JavaScript syntax validation via `node --check` after AI changes.
+
 *This log is updated as new milestones and design decisions are made.*
 

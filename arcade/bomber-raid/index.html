@@ -1632,26 +1632,134 @@
     }
   }
 
+  function blastCellsFor(x1, y1, range) {
+    const r = clamp(Number.isFinite(range) ? range : 2, 1, 6);
+    const cells = [{ x: x1, y: y1 }];
+    const dirs = ["u", "d", "l", "r"];
+    for (let i = 0; i < dirs.length; i += 1) {
+      const v = D[dirs[i]];
+      for (let s = 1; s <= r; s += 1) {
+        const nx = x1 + v[0] * s;
+        const ny = y1 + v[1] * s;
+        const t = tile(nx, ny);
+        if (t === "wall") { break; }
+        cells.push({ x: nx, y: ny });
+        if (t === "crate") { break; }
+      }
+    }
+    return cells;
+  }
+
+  function bombHitsCell(b, x1, y1) {
+    const cells = blastCellsFor(b.x, b.y, b.r);
+    for (let i = 0; i < cells.length; i += 1) {
+      if (cells[i].x === x1 && cells[i].y === y1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function earliestBlastMsAt(x1, y1) {
+    let soonest = Infinity;
+    for (let i = 0; i < bb.length; i += 1) {
+      const b = bb[i];
+      if (bombHitsCell(b, x1, y1)) {
+        soonest = Math.min(soonest, b.t);
+      }
+    }
+    return soonest;
+  }
+
+  function hasActiveExplosionAt(x1, y1) {
+    for (let i = 0; i < ex.length; i += 1) {
+      if (ex[i].x === x1 && ex[i].y === y1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function nearestAlivePlayerDistance(x1, y1) {
+    let best = Infinity;
+    for (let i = 0; i < players.length; i += 1) {
+      const p = players[i];
+      if (!p.a) { continue; }
+      best = Math.min(best, Math.abs(p.x - x1) + Math.abs(p.y - y1));
+    }
+    return best;
+  }
+
+  function enemyCanStepTo(o, x1, y1) {
+    if (!inb(x1, y1)) { return false; }
+    const t = tile(x1, y1);
+    if (t === "wall" || t === "crate") { return false; }
+    if (bombAt(x1, y1)) { return false; }
+    for (let i = 0; i < en.length; i += 1) {
+      if (en[i] !== o && en[i].a && en[i].x === x1 && en[i].y === y1) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function enemyCanEscapeAfterBomb(o, range) {
+    const blastCells = blastCellsFor(o.x, o.y, range);
+    const blastSet = new Set(blastCells.map((c) => key(c.x, c.y)));
+    const queue = [{ x: o.x, y: o.y, d: 0 }];
+    const seen = new Set([key(o.x, o.y)]);
+    const maxDepth = 4;
+    const stepMs = 320;
+
+    while (queue.length) {
+      const cur = queue.shift();
+      if (cur.d > 0) {
+        const k = key(cur.x, cur.y);
+        const threat = earliestBlastMsAt(cur.x, cur.y);
+        const arrival = cur.d * stepMs;
+        if (!blastSet.has(k) &&
+            !hasActiveExplosionAt(cur.x, cur.y) &&
+            (!Number.isFinite(threat) || threat > arrival + 280)) {
+          return true;
+        }
+      }
+
+      if (cur.d >= maxDepth) { continue; }
+      const dirs = ["u", "d", "l", "r"];
+      for (let i = 0; i < dirs.length; i += 1) {
+        const v = D[dirs[i]];
+        const nx = cur.x + v[0];
+        const ny = cur.y + v[1];
+        if (nx === o.x && ny === o.y) { continue; }
+        const nk = key(nx, ny);
+        if (seen.has(nk)) { continue; }
+        if (!enemyCanStepTo(o, nx, ny)) { continue; }
+        seen.add(nk);
+        queue.push({ x: nx, y: ny, d: cur.d + 1 });
+      }
+    }
+
+    return false;
+  }
+
   function moveEnemy(o) {
     const opts = [];
     const dirs = ["u", "d", "l", "r"];
 
     for (let i = 0; i < dirs.length; i += 1) {
-      const v = D[dirs[i]];
+      const dir = dirs[i];
+      const v = D[dir];
       const nx = o.x + v[0];
       const ny = o.y + v[1];
-      if (blocked(nx, ny)) { continue; }
-
-      let occupied = false;
-      for (let j = 0; j < en.length; j += 1) {
-        if (en[j] !== o && en[j].a && en[j].x === nx && en[j].y === ny) {
-          occupied = true;
-          break;
-        }
-      }
-      if (!occupied) {
-        opts.push(dirs[i]);
-      }
+      if (!enemyCanStepTo(o, nx, ny)) { continue; }
+      opts.push({
+        dir: dir,
+        x: nx,
+        y: ny,
+        hot: hasActiveExplosionAt(nx, ny),
+        threat: earliestBlastMsAt(nx, ny),
+        dist: nearestAlivePlayerDistance(nx, ny)
+      });
     }
 
     if (!opts.length) {
@@ -1659,17 +1767,47 @@
       return;
     }
 
-    let pick = o.d;
-    if (opts.indexOf(pick) < 0 || Math.random() < 0.36) {
-      let nr = opts.filter((d) => d !== R[o.d]);
-      if (!nr.length) { nr = opts; }
-      pick = randomPick(nr);
+    const hereThreat = earliestBlastMsAt(o.x, o.y);
+    const urgent = hasActiveExplosionAt(o.x, o.y) || hereThreat <= 520;
+
+    let pool = opts.slice();
+    if (urgent) {
+      const escapeOpts = opts.filter((c) => !c.hot && (!Number.isFinite(c.threat) || c.threat > 520));
+      if (escapeOpts.length) {
+        pool = escapeOpts;
+      }
+    } else {
+      const saferOpts = opts.filter((c) => !c.hot && (!Number.isFinite(c.threat) || c.threat > 720));
+      if (saferOpts.length) {
+        pool = saferOpts;
+      }
     }
 
-    const v = D[pick];
+    let best = -Infinity;
+    for (let i = 0; i < pool.length; i += 1) {
+      const c = pool[i];
+      let score = 0;
+      if (c.dir === o.d) { score += 3; }
+      if (c.dir === R[o.d]) { score -= 4; }
+      if (c.hot) { score -= 80; }
+      if (Number.isFinite(c.dist)) {
+        score += Math.max(0, 10 - c.dist) * 1.2;
+      }
+      if (Number.isFinite(c.threat)) {
+        score -= Math.max(0, 900 - c.threat) * 0.02;
+      } else {
+        score += 2;
+      }
+      c.score = score;
+      best = Math.max(best, score);
+    }
+
+    const top = pool.filter((c) => c.score >= best - 0.7);
+    const pick = randomPick(top);
+    const v = D[pick.dir];
     o.x += v[0];
     o.y += v[1];
-    o.d = pick;
+    o.d = pick.dir;
     o.t = 320 + Math.floor(Math.random() * 140);
   }
 
@@ -1693,6 +1831,11 @@
   }
 
   function enemyWantsBomb(o) {
+    const localThreat = earliestBlastMsAt(o.x, o.y);
+    if (hasActiveExplosionAt(o.x, o.y) || localThreat <= 680) {
+      return false;
+    }
+
     let nearest = 999;
     for (let i = 0; i < players.length; i += 1) {
       const p = players[i];
@@ -1747,7 +1890,8 @@
         moveEnemy(o);
       }
       if (o.cd <= 0) {
-        if (enemyWantsBomb(o) && enemyPlaceBomb(o)) {
+        const range = clamp(Number.isFinite(o.rg) ? o.rg : 2, 1, 6);
+        if (enemyWantsBomb(o) && enemyCanEscapeAfterBomb(o, range) && enemyPlaceBomb(o)) {
           o.cd = 2100 + Math.floor(Math.random() * 1100);
         } else {
           o.cd = 280 + Math.floor(Math.random() * 220);
