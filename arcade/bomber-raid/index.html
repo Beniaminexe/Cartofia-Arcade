@@ -1,0 +1,1551 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Bomber Raid - Cartofia Arcade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .wrap { display: grid; gap: 14px; }
+    .board { position: relative; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    #g { width: 100%; height: auto; aspect-ratio: 13/11; display: block; background: #071322; image-rendering: pixelated; touch-action: none; }
+    #ov { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; background: rgba(2,8,13,.72); color: #d8ecff; font-family: "Sora","Segoe UI",sans-serif; pointer-events: none; transition: opacity .2s ease; }
+    #ov.hide { opacity: 0; }
+    .hud { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+    .hud div { border: 1px solid var(--line); border-radius: 10px; padding: 8px; background: rgba(8,14,21,.72); color: var(--muted); font-size: 12px; }
+    .hud b { display: block; color: #cbe8ff; font-size: 16px; font-family: "Sora","Segoe UI",sans-serif; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ctl { border: 1px solid rgba(46,168,255,.36); border-radius: 10px; background: rgba(8,22,34,.95); color: #cbebff; min-height: 38px; min-width: 80px; padding: 8px 12px; font-weight: 700; cursor: pointer; touch-action: manipulation; }
+    .bomb { border-color: rgba(255,171,76,.55); background: linear-gradient(145deg, rgba(255,182,92,.35), rgba(140,70,26,.45)); color: #ffe0be; }
+    .room-input { min-width: 140px; max-width: 220px; cursor: text; }
+    .room-input::placeholder { color: #7aa0c3; }
+    .net { display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--line); padding: 0 10px; min-height: 38px; color: #a7c2df; font-size: 12px; background: rgba(9,16,25,.75); }
+    .net.ok { border-color: rgba(41,196,108,.5); color: #a7efc7; }
+    .net.warn { border-color: rgba(246,183,60,.55); color: #ffd89b; }
+    .note { color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="app-header reveal">
+      <a class="brand" href="/"><span class="brand-text">Cartofia</span></a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a class="active" href="/arcade/">Arcade</a>
+      </nav>
+      <div></div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero-card reveal" data-delay="1">
+        <div class="hero-copy">
+          <p class="hero-kicker">Arcade Slot 4</p>
+          <h1 class="hero-title">Bomber Raid</h1>
+          <p class="hero-lead">Choose singleplayer or 2-player co-op, drop bombs, grab powerups, destroy crates, and clear enemy bots.</p>
+        </div>
+      </section>
+
+      <section class="card reveal" data-delay="2">
+        <div class="board">
+          <canvas id="g" width="624" height="528" aria-label="Bomber Raid game board"></canvas>
+          <div id="ov">Choose a mode, then press Start.</div>
+        </div>
+        <div class="hud">
+          <div>Score<b id="sc">0</b></div>
+          <div>Best<b id="bs">0</b></div>
+          <div>Enemies<b id="en">3</b></div>
+          <div>Mode<b id="mode">Online</b></div>
+          <div>P1 Kit<b id="p1k">B1 R2 S1.0</b></div>
+          <div>P2 Kit<b id="p2k">B1 R2 S1.0</b></div>
+          <div>Powerups<b id="pu">0</b></div>
+          <div>Status<b id="st">Ready</b></div>
+        </div>
+        <div class="row">
+          <button id="mode-single" class="btn btn-ghost" type="button">Singleplayer</button>
+          <button id="mode-multi" class="btn btn-primary" type="button">Online Multiplayer</button>
+        </div>
+        <div class="row">
+          <input id="room-code" class="ctl room-input" type="text" maxlength="6" autocomplete="off" placeholder="ROOM" />
+          <button id="create-room" class="btn btn-ghost" type="button">Create Room</button>
+          <button id="join-room" class="btn btn-ghost" type="button">Join Room</button>
+          <span id="net-status" class="net">Offline</span>
+        </div>
+        <div class="row">
+          <button id="start" class="btn btn-primary" type="button">Start</button>
+          <button id="pause" class="btn btn-ghost" type="button">Pause</button>
+          <button id="restart" class="btn btn-ghost" type="button">Restart</button>
+          <button id="bomb" class="ctl bomb" type="button">Place Bomb (P1)</button>
+        </div>
+        <div class="row">
+          <button class="ctl" data-d="u" type="button">Up</button>
+          <button class="ctl" data-d="l" type="button">Left</button>
+          <button class="ctl" data-d="d" type="button">Down</button>
+          <button class="ctl" data-d="r" type="button">Right</button>
+        </div>
+        <p id="control-note" class="note">Singleplayer: WASD or Arrow keys + Space/Enter. Online mode: P1 host uses WASD + Space, guest uses Arrows + Enter. Powerups: +Bomb, +Range, +Speed, +Shield.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+(() => {
+  const g = document.getElementById("g");
+  const x = g.getContext("2d");
+  const ov = document.getElementById("ov");
+  const scEl = document.getElementById("sc");
+  const bsEl = document.getElementById("bs");
+  const enEl = document.getElementById("en");
+  const modeEl = document.getElementById("mode");
+  const p1kEl = document.getElementById("p1k");
+  const p2kEl = document.getElementById("p2k");
+  const puEl = document.getElementById("pu");
+  const stEl = document.getElementById("st");
+  const noteEl = document.getElementById("control-note");
+  const directionButtons = document.querySelectorAll("[data-d]");
+  const modeSingleBtn = document.getElementById("mode-single");
+  const modeMultiBtn = document.getElementById("mode-multi");
+  const roomCodeInput = document.getElementById("room-code");
+  const createRoomBtn = document.getElementById("create-room");
+  const joinRoomBtn = document.getElementById("join-room");
+  const netStatusEl = document.getElementById("net-status");
+  const startBtn = document.getElementById("start");
+  const pauseBtn = document.getElementById("pause");
+  const restartBtn = document.getElementById("restart");
+  const bombBtn = document.getElementById("bomb");
+
+  const W = 13;
+  const H = 11;
+  const T = 48;
+  const STEP = 1000 / 60;
+  const D = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] };
+  const R = { u: "d", d: "u", l: "r", r: "l" };
+  const DIR_ORDER = ["u", "d", "l", "r"];
+
+  let m = [];
+  let players = [];
+  let en = [];
+  let bb = [];
+  let ex = [];
+  let powerups = [];
+
+  let sc = 0;
+  let bs = 0;
+  let run = false;
+  let pau = false;
+  let over = false;
+  let win = false;
+  let gameMode = "multi";
+  let last = 0;
+  let acc = 0;
+
+  const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+  const wsFallbackUrl = wsProtocol + "://" + window.location.host + "/ws/bomber-raid";
+  const wsUrl = (window.CARTOFIA_BOMBER_WS_URL || wsFallbackUrl);
+  const online = {
+    ws: null,
+    room: "",
+    clientId: "",
+    role: "",
+    connected: false,
+    participants: [],
+    snapshotTimer: 0
+  };
+
+  function key(x1, y1) { return x1 + "," + y1; }
+  function inb(x1, y1) { return x1 >= 0 && x1 < W && y1 >= 0 && y1 < H; }
+  function tile(x1, y1) { return inb(x1, y1) ? m[y1][x1] : "wall"; }
+  function setTile(x1, y1, v) { if (inb(x1, y1)) { m[y1][x1] = v; } }
+
+  function bombAt(x1, y1) {
+    for (let i = 0; i < bb.length; i += 1) {
+      if (bb[i].x === x1 && bb[i].y === y1) { return bb[i]; }
+    }
+    return null;
+  }
+
+  function activeBombsFor(owner) {
+    let c = 0;
+    for (let i = 0; i < bb.length; i += 1) {
+      if (bb[i].owner === owner) { c += 1; }
+    }
+    return c;
+  }
+
+  function powerupIndexAt(x1, y1) {
+    for (let i = 0; i < powerups.length; i += 1) {
+      if (powerups[i].x === x1 && powerups[i].y === y1) { return i; }
+    }
+    return -1;
+  }
+
+  function powerupAt(x1, y1) {
+    const idx = powerupIndexAt(x1, y1);
+    return idx >= 0 ? powerups[idx] : null;
+  }
+
+  function blocked(x1, y1) {
+    if (!inb(x1, y1)) { return true; }
+    const t = tile(x1, y1);
+    if (t === "wall" || t === "crate") { return true; }
+    return !!bombAt(x1, y1);
+  }
+
+  function aliveEnemies() {
+    let c = 0;
+    for (let i = 0; i < en.length; i += 1) {
+      if (en[i].a) { c += 1; }
+    }
+    return c;
+  }
+
+  function alivePlayers() {
+    let c = 0;
+    for (let i = 0; i < players.length; i += 1) {
+      if (players[i].a) { c += 1; }
+    }
+    return c;
+  }
+
+  function statusText() {
+    if (win) { return "Victory"; }
+    if (over) { return "Defeat"; }
+    if (pau) { return "Paused"; }
+    if (run) { return "Live"; }
+    return "Ready";
+  }
+
+  function modeLabel() {
+    return gameMode === "single" ? "Single" : "Online";
+  }
+
+  function modeHelpText() {
+    if (gameMode === "single") {
+      return "Singleplayer: WASD or Arrow keys to move, Space/Enter to place bomb. Powerups: +Bomb, +Range, +Speed, +Shield.";
+    }
+    return "Online multiplayer: host controls P1 with WASD + Space, guest controls P2 with Arrow keys + Enter. Connect to a room first.";
+  }
+
+  function modeStartText() {
+    if (gameMode === "single") {
+      return "Press Start. Singleplayer mode: move with WASD or Arrows, bomb with Space or Enter.";
+    }
+    if (!online.connected) {
+      return "Online mode selected. Create a room or join an existing room code.";
+    }
+    if (online.participants.length < 2) {
+      return "Connected to room " + online.room + ". Waiting for second player...";
+    }
+    if (online.role === "host") {
+      return "Room " + online.room + " ready. You are host (P1). Press Start.";
+    }
+    return "Room " + online.room + " ready. You are guest (P2). Host can start.";
+  }
+
+  function setNetStatus(text, variant) {
+    netStatusEl.textContent = text;
+    netStatusEl.classList.remove("ok", "warn");
+    if (variant) {
+      netStatusEl.classList.add(variant);
+    }
+  }
+
+  function normalizeRoom(raw) {
+    return String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+  }
+
+  function randomRoomCode() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let out = "";
+    for (let i = 0; i < 6; i += 1) {
+      out += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return out;
+  }
+
+  function syncModeButtons() {
+    const singleActive = gameMode === "single";
+    modeSingleBtn.classList.toggle("btn-primary", singleActive);
+    modeSingleBtn.classList.toggle("btn-ghost", !singleActive);
+    modeMultiBtn.classList.toggle("btn-primary", !singleActive);
+    modeMultiBtn.classList.toggle("btn-ghost", singleActive);
+    roomCodeInput.disabled = singleActive;
+    createRoomBtn.disabled = singleActive;
+    joinRoomBtn.disabled = singleActive;
+    if (singleActive) {
+      setNetStatus("Offline", "");
+    } else if (!online.connected) {
+      setNetStatus("Disconnected", "warn");
+    }
+    if (singleActive) {
+      bombBtn.textContent = "Place Bomb";
+    } else if (isOnlineGuest()) {
+      bombBtn.textContent = "Place Bomb (P2)";
+    } else {
+      bombBtn.textContent = "Place Bomb (P1)";
+    }
+    if (noteEl) {
+      noteEl.textContent = modeHelpText();
+    }
+  }
+
+  function kitText(p) {
+    const speedScale = (110 / p.md).toFixed(1);
+    const shield = p.sh > 0 ? " +" + p.sh + "S" : "";
+    return "B" + Math.max(0, p.mb - activeBombsFor(p.id)) + " R" + p.rg + " S" + speedScale + shield;
+  }
+
+  function hud() {
+    const p1 = players[0];
+    const p2 = players[1];
+    scEl.textContent = String(sc);
+    bsEl.textContent = String(bs);
+    enEl.textContent = String(aliveEnemies());
+    modeEl.textContent = modeLabel();
+    p1kEl.textContent = p1 ? kitText(p1) : "-";
+    p2kEl.textContent = p2 ? kitText(p2) : "-";
+    puEl.textContent = String(powerups.length);
+    stEl.textContent = statusText();
+  }
+
+  function msg(t) {
+    ov.textContent = t;
+    ov.classList.toggle("hide", t.length === 0);
+  }
+
+  function isOnlineMode() {
+    return gameMode === "multi";
+  }
+
+  function isOnlineHost() {
+    return isOnlineMode() && online.connected && online.role === "host";
+  }
+
+  function isOnlineGuest() {
+    return isOnlineMode() && online.connected && online.role === "guest";
+  }
+
+  function serializeState() {
+    return {
+      m: m.map((row) => row.slice()),
+      players: players.map((p) => ({
+        id: p.id,
+        name: p.name,
+        x: p.x,
+        y: p.y,
+        a: p.a,
+        mb: p.mb,
+        rg: p.rg,
+        md: p.md,
+        cd: p.cd,
+        sh: p.sh,
+        color: p.color,
+        eye: p.eye,
+        ord: p.ord
+      })),
+      enemies: en.map((o) => ({ x: o.x, y: o.y, a: o.a, d: o.d, t: o.t })),
+      bombs: bb.map((b) => ({ x: b.x, y: b.y, t: b.t, r: b.r, owner: b.owner })),
+      explosions: ex.map((e) => ({ x: e.x, y: e.y, t: e.t })),
+      powerups: powerups.map((p) => ({ x: p.x, y: p.y, type: p.type })),
+      sc: sc,
+      run: run,
+      pau: pau,
+      over: over,
+      win: win,
+      overlay: ov.textContent,
+      overlayHidden: ov.classList.contains("hide")
+    };
+  }
+
+  function applyRemoteState(state) {
+    if (!state || typeof state !== "object") {
+      return;
+    }
+    if (Array.isArray(state.m)) {
+      m = state.m.map((row) => Array.isArray(row) ? row.slice() : []);
+    }
+    if (Array.isArray(state.players)) {
+      players = state.players.map((p) => ({
+        id: p.id || "",
+        name: p.name || "",
+        x: Number.isFinite(p.x) ? p.x : 1,
+        y: Number.isFinite(p.y) ? p.y : 1,
+        a: !!p.a,
+        mb: Number.isFinite(p.mb) ? p.mb : 1,
+        rg: Number.isFinite(p.rg) ? p.rg : 2,
+        md: Number.isFinite(p.md) ? p.md : 110,
+        cd: Number.isFinite(p.cd) ? p.cd : 0,
+        sh: Number.isFinite(p.sh) ? p.sh : 0,
+        color: p.color || "#6fd1ff",
+        eye: p.eye || "#10324c",
+        k: { u: false, d: false, l: false, r: false },
+        ord: p.ord || "r"
+      }));
+    }
+    if (Array.isArray(state.enemies)) {
+      en = state.enemies.map((o) => ({ x: o.x, y: o.y, a: !!o.a, d: o.d || "u", t: Number.isFinite(o.t) ? o.t : 180 }));
+    }
+    if (Array.isArray(state.bombs)) {
+      bb = state.bombs.map((b) => ({ x: b.x, y: b.y, t: b.t, r: b.r, owner: b.owner || "" }));
+    }
+    if (Array.isArray(state.explosions)) {
+      ex = state.explosions.map((e) => ({ x: e.x, y: e.y, t: e.t }));
+    }
+    if (Array.isArray(state.powerups)) {
+      powerups = state.powerups.map((p) => ({ x: p.x, y: p.y, type: p.type || "bomb" }));
+    }
+    if (Number.isFinite(state.sc)) {
+      sc = state.sc;
+    }
+    run = !!state.run;
+    pau = !!state.pau;
+    over = !!state.over;
+    win = !!state.win;
+    if (typeof state.overlay === "string") {
+      msg(state.overlay);
+      if (state.overlayHidden) {
+        ov.classList.add("hide");
+      } else {
+        ov.classList.remove("hide");
+      }
+    }
+    hud();
+  }
+
+  function sendOnline(payload) {
+    if (!online.ws || online.ws.readyState !== WebSocket.OPEN) {
+      return;
+    }
+    try {
+      online.ws.send(JSON.stringify(payload));
+    } catch (_error) {
+      // Ignore transient socket errors.
+    }
+  }
+
+  function maybeBroadcastState(force) {
+    if (!isOnlineHost()) {
+      return;
+    }
+    if (online.participants.length < 2) {
+      return;
+    }
+    if (force) {
+      online.snapshotTimer = 0;
+    }
+    if (online.snapshotTimer <= 0) {
+      sendOnline({ type: "state", kind: "state", state: serializeState() });
+      online.snapshotTimer = 120;
+    }
+  }
+
+  function updateRoomParticipants(participants) {
+    if (!Array.isArray(participants)) {
+      return;
+    }
+    online.participants = participants;
+    const me = participants.find((p) => p.id === online.clientId);
+    if (me && me.role && me.role !== online.role) {
+      online.role = me.role;
+      if (online.role === "host") {
+        msg("You are now host in room " + online.room + ".");
+      }
+    }
+    if (!online.connected) {
+      return;
+    }
+    if (participants.length < 2) {
+      setNetStatus("Room " + online.room + " waiting", "warn");
+      if (run) {
+        run = false;
+        pau = false;
+        msg(modeStartText());
+      }
+    } else {
+      setNetStatus("Room " + online.room + " ready", "ok");
+    }
+    if (!run) {
+      msg(modeStartText());
+    }
+    syncModeButtons();
+  }
+
+  function closeOnlineSocket(reasonText) {
+    if (online.ws) {
+      try {
+        online.ws.close();
+      } catch (_e) {
+        // Ignore close errors.
+      }
+    }
+    online.ws = null;
+    online.connected = false;
+    online.clientId = "";
+    online.role = "";
+    online.room = "";
+    online.participants = [];
+    if (reasonText) {
+      setNetStatus(reasonText, "warn");
+    }
+  }
+
+  function handleOnlineRelay(payload) {
+    if (!payload || typeof payload !== "object") {
+      return;
+    }
+
+    if (isOnlineGuest() && payload.kind === "state") {
+      applyRemoteState(payload.state);
+      return;
+    }
+
+    if (!isOnlineHost()) {
+      return;
+    }
+
+    const p2 = players[1];
+    if (!p2) {
+      return;
+    }
+
+    if (payload.kind === "input") {
+      if (payload.key && Object.prototype.hasOwnProperty.call(p2.k, payload.key)) {
+        setDir(p2, payload.key, !!payload.pressed);
+      }
+      return;
+    }
+
+    if (payload.kind === "bomb") {
+      placeBomb(p2);
+      return;
+    }
+
+    if (payload.kind === "control" && payload.action) {
+      if (payload.action === "start") {
+        begin();
+      } else if (payload.action === "pause") {
+        pauseToggle();
+      } else if (payload.action === "restart") {
+        reset();
+        begin();
+      }
+    }
+  }
+
+  function connectOnlineRoom(roomCode) {
+    const room = normalizeRoom(roomCode);
+    if (!room || room.length < 4) {
+      setNetStatus("Invalid room code", "warn");
+      return;
+    }
+
+    closeOnlineSocket("");
+    roomCodeInput.value = room;
+    setNetStatus("Connecting...", "warn");
+
+    let ws;
+    try {
+      ws = new WebSocket(wsUrl);
+    } catch (_error) {
+      setNetStatus("WebSocket unavailable", "warn");
+      return;
+    }
+
+    online.ws = ws;
+    online.room = room;
+
+    ws.addEventListener("open", () => {
+      if (online.ws !== ws) {
+        return;
+      }
+      sendOnline({ type: "join", room: room });
+    });
+
+    ws.addEventListener("message", (event) => {
+      if (online.ws !== ws) {
+        return;
+      }
+      let msgData;
+      try {
+        msgData = JSON.parse(event.data);
+      } catch (_error) {
+        return;
+      }
+
+      if (msgData.type === "error") {
+        setNetStatus(String(msgData.message || "Socket error"), "warn");
+        return;
+      }
+
+      if (msgData.type === "joined") {
+        online.connected = true;
+        online.clientId = msgData.client_id || "";
+        online.role = msgData.role || "";
+        online.snapshotTimer = 0;
+        updateRoomParticipants(msgData.participants || []);
+        setNetStatus("Room " + room + " connected", msgData.participants && msgData.participants.length > 1 ? "ok" : "warn");
+        syncModeButtons();
+        if (online.role === "host") {
+          reset();
+        } else {
+          run = false;
+          pau = false;
+          over = false;
+          win = false;
+          msg(modeStartText());
+          hud();
+        }
+        if (!run) {
+          msg(modeStartText());
+        }
+        return;
+      }
+
+      if (msgData.type === "room_state") {
+        updateRoomParticipants(msgData.participants || []);
+        if (isOnlineHost()) {
+          maybeBroadcastState(true);
+        }
+        return;
+      }
+
+      if (msgData.type === "relay") {
+        handleOnlineRelay(msgData.payload || {});
+      }
+    });
+
+    ws.addEventListener("close", () => {
+      if (online.ws !== ws) {
+        return;
+      }
+      const roomWas = online.room;
+      closeOnlineSocket("Disconnected");
+      if (isOnlineMode() && roomWas) {
+        msg("Disconnected from room " + roomWas + ". Reconnect to continue online play.");
+      }
+    });
+  }
+
+  function loadBest() {
+    try {
+      const raw = window.localStorage.getItem("cartofia_bomber_raid_best");
+      const n = Number(raw);
+      if (Number.isFinite(n) && n > 0) { bs = n; }
+    } catch (_e) {
+      bs = 0;
+    }
+  }
+
+  function saveBest() {
+    try {
+      window.localStorage.setItem("cartofia_bomber_raid_best", String(bs));
+    } catch (_e) {
+      // ignore storage errors
+    }
+  }
+
+  function randomPick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function clearPlayerInput(p) {
+    p.k.u = false;
+    p.k.d = false;
+    p.k.l = false;
+    p.k.r = false;
+  }
+
+  function setDir(p, d, on) {
+    if (!Object.prototype.hasOwnProperty.call(p.k, d)) { return; }
+    p.k[d] = on;
+    if (on) {
+      p.ord = d;
+    } else if (p.ord === d) {
+      for (let i = 0; i < DIR_ORDER.length; i += 1) {
+        const k = DIR_ORDER[i];
+        if (p.k[k]) {
+          p.ord = k;
+          return;
+        }
+      }
+    }
+  }
+
+  function inputDir(p) {
+    if (p.k[p.ord]) { return p.ord; }
+    for (let i = 0; i < DIR_ORDER.length; i += 1) {
+      const k = DIR_ORDER[i];
+      if (p.k[k]) { return k; }
+    }
+    return null;
+  }
+
+  function build() {
+    m = [];
+    for (let y = 0; y < H; y += 1) {
+      const row = [];
+      for (let x1 = 0; x1 < W; x1 += 1) {
+        const border = x1 === 0 || y === 0 || x1 === W - 1 || y === H - 1;
+        const pillar = x1 % 2 === 0 && y % 2 === 0;
+        row.push(border || pillar ? "wall" : "floor");
+      }
+      m.push(row);
+    }
+
+    const p1Spawn = { x: 1, y: 1 };
+    const p2Spawn = { x: W - 2, y: H - 2 };
+    const enemySpawns = gameMode === "single"
+      ? [
+        { x: W - 2, y: H - 2 },
+        { x: W - 2, y: 1 },
+        { x: 1, y: H - 2 }
+      ]
+      : [
+        { x: W - 2, y: 1 },
+        { x: 1, y: H - 2 },
+        { x: W - 2, y: H - 4 }
+      ];
+    const safe = new Set();
+
+    function mark(x1, y1) {
+      const pts = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]];
+      for (let i = 0; i < pts.length; i += 1) {
+        const nx = x1 + pts[i][0];
+        const ny = y1 + pts[i][1];
+        if (inb(nx, ny)) { safe.add(key(nx, ny)); }
+      }
+    }
+
+    mark(p1Spawn.x, p1Spawn.y);
+    if (gameMode === "multi") {
+      mark(p2Spawn.x, p2Spawn.y);
+    }
+    for (let i = 0; i < enemySpawns.length; i += 1) {
+      mark(enemySpawns[i].x, enemySpawns[i].y);
+    }
+
+    for (let y = 1; y < H - 1; y += 1) {
+      for (let x1 = 1; x1 < W - 1; x1 += 1) {
+        if (tile(x1, y) !== "floor") { continue; }
+        if (safe.has(key(x1, y))) { continue; }
+        if (Math.random() < 0.43) { setTile(x1, y, "crate"); }
+      }
+    }
+
+    setTile(p1Spawn.x, p1Spawn.y, "floor");
+    if (gameMode === "multi") {
+      setTile(p2Spawn.x, p2Spawn.y, "floor");
+    }
+    for (let i = 0; i < enemySpawns.length; i += 1) {
+      setTile(enemySpawns[i].x, enemySpawns[i].y, "floor");
+    }
+
+    players = [
+      {
+        id: "p1", name: "P1", x: p1Spawn.x, y: p1Spawn.y, a: true,
+        mb: 1, rg: 2, md: 110, cd: 0, sh: 0,
+        color: "#6fd1ff", eye: "#10324c",
+        k: { u: false, d: false, l: false, r: false }, ord: "r"
+      }
+    ];
+
+    if (gameMode === "multi") {
+      players.push({
+        id: "p2", name: "P2", x: p2Spawn.x, y: p2Spawn.y, a: true,
+        mb: 1, rg: 2, md: 110, cd: 0, sh: 0,
+        color: "#8dff9a", eye: "#1d4f29",
+        k: { u: false, d: false, l: false, r: false }, ord: "l"
+      });
+    }
+
+    en = enemySpawns.map((s, i) => ({ x: s.x, y: s.y, a: true, d: i % 2 ? "u" : "l", t: 280 + i * 120 }));
+  }
+
+  function reset() {
+    build();
+    bb = [];
+    ex = [];
+    powerups = [];
+    sc = 0;
+    run = false;
+    pau = false;
+    over = false;
+    win = false;
+    for (let i = 0; i < players.length; i += 1) {
+      clearPlayerInput(players[i]);
+      players[i].cd = 0;
+    }
+    online.snapshotTimer = 0;
+    msg(modeStartText());
+    hud();
+    maybeBroadcastState(true);
+  }
+
+  function begin() {
+    if (isOnlineMode()) {
+      if (!online.connected || online.participants.length < 2) {
+        msg(modeStartText());
+        return;
+      }
+      if (isOnlineGuest()) {
+        sendOnline({ type: "control", kind: "control", action: "start" });
+        return;
+      }
+    }
+    if (over || win) { reset(); }
+    run = true;
+    pau = false;
+    msg("");
+    hud();
+    maybeBroadcastState(true);
+  }
+
+  function pauseToggle() {
+    if (isOnlineGuest()) {
+      sendOnline({ type: "control", kind: "control", action: "pause" });
+      return;
+    }
+    if (over || win) { return; }
+    if (!run && !pau) { return; }
+    if (pau) {
+      pau = false;
+      run = true;
+      msg("");
+    } else {
+      pau = true;
+      run = false;
+      msg("Paused. Press P or Pause to resume.");
+    }
+    hud();
+    maybeBroadcastState(true);
+  }
+
+  function roundLoss(text) {
+    if (over || win) { return; }
+    run = false;
+    pau = false;
+    over = true;
+    win = false;
+    if (sc > bs) {
+      bs = sc;
+      saveBest();
+    }
+    msg(text);
+    hud();
+    maybeBroadcastState(true);
+  }
+
+  function roundWin() {
+    if (over || win) { return; }
+    win = true;
+    over = true;
+    run = false;
+    pau = false;
+    sc += 200;
+    if (sc > bs) {
+      bs = sc;
+      saveBest();
+    }
+    msg("Area cleared. Team victory. Press Restart for another run.");
+    hud();
+    maybeBroadcastState(true);
+  }
+
+  function maybeSpawnPowerup(x1, y1) {
+    if (powerupAt(x1, y1)) { return; }
+    if (Math.random() > 0.38) { return; }
+
+    const roll = Math.random();
+    let type = "bomb";
+    if (roll < 0.35) {
+      type = "bomb";
+    } else if (roll < 0.68) {
+      type = "range";
+    } else if (roll < 0.9) {
+      type = "speed";
+    } else {
+      type = "shield";
+    }
+
+    powerups.push({ x: x1, y: y1, type: type });
+  }
+
+  function applyPowerup(p, type) {
+    if (type === "bomb") {
+      p.mb = Math.min(4, p.mb + 1);
+    } else if (type === "range") {
+      p.rg = Math.min(6, p.rg + 1);
+    } else if (type === "speed") {
+      p.md = Math.max(70, p.md - 12);
+    } else if (type === "shield") {
+      p.sh = Math.min(2, p.sh + 1);
+    }
+    sc += 25;
+  }
+
+  function collectPowerups() {
+    for (let i = 0; i < players.length; i += 1) {
+      const p = players[i];
+      if (!p.a) { continue; }
+      const idx = powerupIndexAt(p.x, p.y);
+      if (idx >= 0) {
+        const item = powerups[idx];
+        powerups.splice(idx, 1);
+        applyPowerup(p, item.type);
+      }
+    }
+  }
+
+  function placeBomb(p) {
+    if (!p || !p.a || pau || over || win) { return; }
+    if (isOnlineGuest()) {
+      if (p.id !== "p2") {
+        return;
+      }
+      sendOnline({ type: "bomb", kind: "bomb" });
+      return;
+    }
+    if (!run) { begin(); }
+    if (activeBombsFor(p.id) >= p.mb) { return; }
+    if (bombAt(p.x, p.y)) { return; }
+
+    bb.push({ x: p.x, y: p.y, t: 1800, r: p.rg, owner: p.id });
+    hud();
+  }
+
+  function damagePlayer(p, text) {
+    if (!p || !p.a) { return; }
+    if (p.sh > 0) {
+      p.sh -= 1;
+      return;
+    }
+
+    p.a = false;
+
+    if (alivePlayers() === 0) {
+      roundLoss(gameMode === "single" ? "You were eliminated. Press Restart." : "Both players eliminated. Press Restart.");
+    } else {
+      msg(text);
+      window.setTimeout(() => {
+        if (run && !pau && !over && !win) {
+          msg("");
+        }
+      }, 900);
+    }
+
+    hud();
+  }
+
+  function blastHit(cells) {
+    const hit = new Set(cells.map((c) => key(c.x, c.y)));
+
+    for (let i = 0; i < players.length; i += 1) {
+      const p = players[i];
+      if (p.a && hit.has(key(p.x, p.y))) {
+        damagePlayer(p, p.name + " was caught in an explosion.");
+      }
+    }
+
+    for (let i = 0; i < en.length; i += 1) {
+      const o = en[i];
+      if (!o.a) { continue; }
+      if (hit.has(key(o.x, o.y))) {
+        o.a = false;
+        sc += 120;
+      }
+    }
+  }
+
+  function detonate(b) {
+    const idx = bb.indexOf(b);
+    if (idx < 0) { return; }
+    bb.splice(idx, 1);
+
+    const cells = [{ x: b.x, y: b.y }];
+    const dirs = ["u", "d", "l", "r"];
+
+    for (let i = 0; i < dirs.length; i += 1) {
+      const v = D[dirs[i]];
+      for (let s = 1; s <= b.r; s += 1) {
+        const nx = b.x + v[0] * s;
+        const ny = b.y + v[1] * s;
+        const t = tile(nx, ny);
+
+        if (t === "wall") { break; }
+
+        cells.push({ x: nx, y: ny });
+
+        if (t === "crate") {
+          setTile(nx, ny, "floor");
+          sc += 5;
+          maybeSpawnPowerup(nx, ny);
+          break;
+        }
+
+        const linked = bombAt(nx, ny);
+        if (linked) { linked.t = 0; }
+      }
+    }
+
+    for (let i = 0; i < cells.length; i += 1) {
+      ex.push({ x: cells[i].x, y: cells[i].y, t: 520 });
+    }
+
+    blastHit(cells);
+    hud();
+  }
+
+  function updateBombs(dt) {
+    for (let i = 0; i < bb.length; i += 1) {
+      bb[i].t -= dt;
+    }
+
+    let loop = true;
+    while (loop) {
+      loop = false;
+      for (let i = bb.length - 1; i >= 0; i -= 1) {
+        if (bb[i].t <= 0) {
+          detonate(bb[i]);
+          loop = true;
+          break;
+        }
+      }
+    }
+  }
+
+  function updateExplosions(dt) {
+    for (let i = ex.length - 1; i >= 0; i -= 1) {
+      ex[i].t -= dt;
+      if (ex[i].t <= 0) {
+        ex.splice(i, 1);
+      }
+    }
+  }
+
+  function explodeContacts() {
+    if (!ex.length) { return; }
+    const cells = new Set(ex.map((c) => key(c.x, c.y)));
+
+    for (let i = 0; i < players.length; i += 1) {
+      const p = players[i];
+      if (p.a && cells.has(key(p.x, p.y))) {
+        damagePlayer(p, p.name + " was caught in an explosion.");
+      }
+    }
+
+    for (let i = 0; i < en.length; i += 1) {
+      const o = en[i];
+      if (!o.a) { continue; }
+      if (cells.has(key(o.x, o.y))) {
+        o.a = false;
+        sc += 120;
+      }
+    }
+  }
+
+  function movePlayer(p, dir) {
+    const v = D[dir];
+    if (!v || !p.a) { return; }
+
+    const nx = p.x + v[0];
+    const ny = p.y + v[1];
+    if (blocked(nx, ny)) { return; }
+
+    for (let i = 0; i < players.length; i += 1) {
+      const other = players[i];
+      if (other !== p && other.a && other.x === nx && other.y === ny) {
+        return;
+      }
+    }
+
+    p.x = nx;
+    p.y = ny;
+  }
+
+  function updatePlayers(dt) {
+    for (let i = 0; i < players.length; i += 1) {
+      const p = players[i];
+      if (!p.a) { continue; }
+
+      p.cd -= dt;
+      if (p.cd > 0) { continue; }
+
+      const dir = inputDir(p);
+      if (!dir) { continue; }
+
+      movePlayer(p, dir);
+      p.cd = p.md;
+    }
+  }
+
+  function moveEnemy(o) {
+    const opts = [];
+    const dirs = ["u", "d", "l", "r"];
+
+    for (let i = 0; i < dirs.length; i += 1) {
+      const v = D[dirs[i]];
+      const nx = o.x + v[0];
+      const ny = o.y + v[1];
+      if (blocked(nx, ny)) { continue; }
+
+      let occupied = false;
+      for (let j = 0; j < en.length; j += 1) {
+        if (en[j] !== o && en[j].a && en[j].x === nx && en[j].y === ny) {
+          occupied = true;
+          break;
+        }
+      }
+      if (!occupied) {
+        opts.push(dirs[i]);
+      }
+    }
+
+    if (!opts.length) {
+      o.t = 320;
+      return;
+    }
+
+    let pick = o.d;
+    if (opts.indexOf(pick) < 0 || Math.random() < 0.36) {
+      let nr = opts.filter((d) => d !== R[o.d]);
+      if (!nr.length) { nr = opts; }
+      pick = randomPick(nr);
+    }
+
+    const v = D[pick];
+    o.x += v[0];
+    o.y += v[1];
+    o.d = pick;
+    o.t = 320 + Math.floor(Math.random() * 140);
+  }
+
+  function updateEnemies(dt) {
+    for (let i = 0; i < en.length; i += 1) {
+      const o = en[i];
+      if (!o.a) { continue; }
+
+      o.t -= dt;
+      if (o.t <= 0) {
+        moveEnemy(o);
+      }
+
+      for (let j = 0; j < players.length; j += 1) {
+        const p = players[j];
+        if (p.a && o.x === p.x && o.y === p.y) {
+          damagePlayer(p, p.name + " was tagged by an enemy bot.");
+        }
+      }
+    }
+  }
+
+  function checkWin() {
+    if (over || win) { return; }
+    if (alivePlayers() <= 0) {
+      roundLoss(gameMode === "single" ? "You were eliminated. Press Restart." : "Both players eliminated. Press Restart.");
+      return;
+    }
+    if (aliveEnemies() === 0) {
+      roundWin();
+    }
+  }
+
+  function update(dt) {
+    if (isOnlineGuest()) {
+      return;
+    }
+    if (isOnlineMode() && (!online.connected || online.participants.length < 2)) {
+      return;
+    }
+    if (!run || pau || over || win) { return; }
+
+    updatePlayers(dt);
+    collectPowerups();
+    updateEnemies(dt);
+    updateBombs(dt);
+    updateExplosions(dt);
+    explodeContacts();
+
+    for (let i = 0; i < en.length; i += 1) {
+      if (!en[i].a) { continue; }
+      for (let j = 0; j < players.length; j += 1) {
+        const p = players[j];
+        if (p.a && en[i].x === p.x && en[i].y === p.y) {
+          damagePlayer(p, p.name + " was tagged by an enemy bot.");
+        }
+      }
+    }
+
+    checkWin();
+    if (isOnlineHost()) {
+      online.snapshotTimer -= dt;
+      maybeBroadcastState(false);
+    }
+    hud();
+  }
+
+  function drawBoard() {
+    for (let y = 0; y < H; y += 1) {
+      for (let x1 = 0; x1 < W; x1 += 1) {
+        const px = x1 * T;
+        const py = y * T;
+        const t = tile(x1, y);
+
+        if (t === "wall") {
+          x.fillStyle = "#1b3349";
+          x.fillRect(px, py, T, T);
+          x.fillStyle = "rgba(89,147,197,.24)";
+          x.fillRect(px + 6, py + 6, T - 12, T - 12);
+        } else if (t === "crate") {
+          x.fillStyle = "#6a4632";
+          x.fillRect(px + 3, py + 3, T - 6, T - 6);
+          x.fillStyle = "#8e6247";
+          x.fillRect(px + 8, py + 8, T - 16, T - 16);
+        } else {
+          x.fillStyle = (x1 + y) % 2 === 0 ? "#091726" : "#071322";
+          x.fillRect(px, py, T, T);
+        }
+      }
+    }
+  }
+
+  function drawPowerups() {
+    for (let i = 0; i < powerups.length; i += 1) {
+      const p = powerups[i];
+      const px = p.x * T;
+      const py = p.y * T;
+
+      let color = "#ffd166";
+      let label = "B";
+      if (p.type === "range") {
+        color = "#7bc9ff";
+        label = "R";
+      } else if (p.type === "speed") {
+        color = "#75f2a9";
+        label = "S";
+      } else if (p.type === "shield") {
+        color = "#c4a7ff";
+        label = "H";
+      }
+
+      x.fillStyle = color;
+      x.fillRect(px + 12, py + 12, T - 24, T - 24);
+      x.fillStyle = "#102233";
+      x.font = "bold 14px Sora, sans-serif";
+      x.textAlign = "center";
+      x.textBaseline = "middle";
+      x.fillText(label, px + T / 2, py + T / 2);
+    }
+  }
+
+  function drawBombs() {
+    for (let i = 0; i < bb.length; i += 1) {
+      const b = bb[i];
+      const cx = b.x * T + T / 2;
+      const cy = b.y * T + T / 2;
+      const pulse = 0.85 + Math.sin(b.t / 110) * 0.1;
+
+      x.fillStyle = "#f9c66f";
+      x.beginPath();
+      x.arc(cx, cy, T * 0.24 * pulse, 0, Math.PI * 2);
+      x.fill();
+
+      x.fillStyle = "#322410";
+      x.beginPath();
+      x.arc(cx, cy, T * 0.11, 0, Math.PI * 2);
+      x.fill();
+    }
+  }
+
+  function drawExplosions() {
+    for (let i = 0; i < ex.length; i += 1) {
+      const c = ex[i];
+      const px = c.x * T;
+      const py = c.y * T;
+      const a = Math.max(0.2, c.t / 520);
+
+      x.fillStyle = "rgba(255,185,88," + a.toFixed(3) + ")";
+      x.fillRect(px + 4, py + 4, T - 8, T - 8);
+
+      x.fillStyle = "rgba(255,99,71," + (a * 0.75).toFixed(3) + ")";
+      x.fillRect(px + 11, py + 11, T - 22, T - 22);
+    }
+  }
+
+  function drawPlayers() {
+    for (let i = 0; i < players.length; i += 1) {
+      const p = players[i];
+      if (!p.a) { continue; }
+
+      const px = p.x * T;
+      const py = p.y * T;
+      x.fillStyle = p.color;
+      x.fillRect(px + 8, py + 8, T - 16, T - 16);
+      x.fillStyle = p.eye;
+      x.fillRect(px + 14, py + 14, 7, 7);
+      x.fillRect(px + T - 21, py + 14, 7, 7);
+    }
+  }
+
+  function drawEnemies() {
+    for (let i = 0; i < en.length; i += 1) {
+      if (!en[i].a) { continue; }
+
+      const px = en[i].x * T;
+      const py = en[i].y * T;
+      x.fillStyle = "#ff7987";
+      x.fillRect(px + 9, py + 9, T - 18, T - 18);
+      x.fillStyle = "#4f1b22";
+      x.fillRect(px + 15, py + 15, 6, 6);
+      x.fillRect(px + T - 21, py + 15, 6, 6);
+    }
+  }
+
+  function draw() {
+    x.clearRect(0, 0, g.width, g.height);
+    drawBoard();
+    drawPowerups();
+    drawBombs();
+    drawExplosions();
+    drawEnemies();
+    drawPlayers();
+  }
+
+  function frame(ts) {
+    if (!last) { last = ts; }
+    const dt = Math.min(40, ts - last);
+    last = ts;
+
+    acc += dt;
+    while (acc >= STEP) {
+      update(STEP);
+      acc -= STEP;
+    }
+
+    draw();
+    window.requestAnimationFrame(frame);
+  }
+
+  function press(p, d) {
+    setDir(p, d, true);
+    if (!run && !pau && !over && !win) {
+      begin();
+    }
+  }
+
+  function release(p, d) {
+    setDir(p, d, false);
+  }
+
+  function setGameMode(mode) {
+    if (mode !== "single" && mode !== "multi") {
+      return;
+    }
+    if (gameMode === mode) {
+      return;
+    }
+    if (mode === "single") {
+      closeOnlineSocket("");
+    }
+    gameMode = mode;
+    syncModeButtons();
+    reset();
+  }
+
+  document.addEventListener("keydown", (e) => {
+    const q = e.key.toLowerCase();
+    const p1 = players[0];
+    const p2 = players[1];
+
+    if (gameMode === "single") {
+      if (p1 && (q === "w" || q === "a" || q === "s" || q === "d" || q === "arrowup" || q === "arrowdown" || q === "arrowleft" || q === "arrowright")) {
+        e.preventDefault();
+        if (q === "w" || q === "arrowup") { press(p1, "u"); return; }
+        if (q === "s" || q === "arrowdown") { press(p1, "d"); return; }
+        if (q === "a" || q === "arrowleft") { press(p1, "l"); return; }
+        if (q === "d" || q === "arrowright") { press(p1, "r"); return; }
+      }
+      if ((q === " " || q === "enter") && p1) {
+        e.preventDefault();
+        placeBomb(p1);
+        return;
+      }
+    } else {
+      if (isOnlineHost() && p1 && (q === "w" || q === "a" || q === "s" || q === "d")) {
+        e.preventDefault();
+        if (q === "w") { press(p1, "u"); return; }
+        if (q === "s") { press(p1, "d"); return; }
+        if (q === "a") { press(p1, "l"); return; }
+        if (q === "d") { press(p1, "r"); return; }
+      }
+
+      if (isOnlineGuest() && (q === "arrowup" || q === "arrowdown" || q === "arrowleft" || q === "arrowright")) {
+        e.preventDefault();
+        if (q === "arrowup") { sendOnline({ type: "input", kind: "input", key: "u", pressed: true }); return; }
+        if (q === "arrowdown") { sendOnline({ type: "input", kind: "input", key: "d", pressed: true }); return; }
+        if (q === "arrowleft") { sendOnline({ type: "input", kind: "input", key: "l", pressed: true }); return; }
+        if (q === "arrowright") { sendOnline({ type: "input", kind: "input", key: "r", pressed: true }); return; }
+      }
+
+      if (q === " " && isOnlineHost() && p1) {
+        e.preventDefault();
+        placeBomb(p1);
+        return;
+      }
+
+      if (q === "enter") {
+        e.preventDefault();
+        if (isOnlineGuest()) {
+          sendOnline({ type: "bomb", kind: "bomb" });
+        }
+        return;
+      }
+    }
+
+    if (q === "p") {
+      e.preventDefault();
+      pauseToggle();
+    }
+  });
+
+  document.addEventListener("keyup", (e) => {
+    const q = e.key.toLowerCase();
+    const p1 = players[0];
+    const p2 = players[1];
+
+    if (gameMode === "single") {
+      if (p1) {
+        if (q === "w" || q === "arrowup") { release(p1, "u"); return; }
+        if (q === "s" || q === "arrowdown") { release(p1, "d"); return; }
+        if (q === "a" || q === "arrowleft") { release(p1, "l"); return; }
+        if (q === "d" || q === "arrowright") { release(p1, "r"); return; }
+      }
+    } else {
+      if (isOnlineHost() && p1) {
+        if (q === "w") { release(p1, "u"); return; }
+        if (q === "s") { release(p1, "d"); return; }
+        if (q === "a") { release(p1, "l"); return; }
+        if (q === "d") { release(p1, "r"); return; }
+      }
+      if (isOnlineGuest()) {
+        if (q === "arrowup") { sendOnline({ type: "input", kind: "input", key: "u", pressed: false }); return; }
+        if (q === "arrowdown") { sendOnline({ type: "input", kind: "input", key: "d", pressed: false }); return; }
+        if (q === "arrowleft") { sendOnline({ type: "input", kind: "input", key: "l", pressed: false }); return; }
+        if (q === "arrowright") { sendOnline({ type: "input", kind: "input", key: "r", pressed: false }); return; }
+      }
+    }
+  });
+
+  window.addEventListener("blur", () => {
+    for (let i = 0; i < players.length; i += 1) {
+      clearPlayerInput(players[i]);
+    }
+  });
+
+  modeSingleBtn.addEventListener("click", () => {
+    setGameMode("single");
+  });
+  modeMultiBtn.addEventListener("click", () => {
+    setGameMode("multi");
+  });
+
+  roomCodeInput.addEventListener("input", () => {
+    roomCodeInput.value = normalizeRoom(roomCodeInput.value);
+  });
+  roomCodeInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      connectOnlineRoom(roomCodeInput.value);
+    }
+  });
+
+  createRoomBtn.addEventListener("click", () => {
+    if (gameMode !== "multi") {
+      setGameMode("multi");
+    }
+    const room = randomRoomCode();
+    roomCodeInput.value = room;
+    connectOnlineRoom(room);
+  });
+  joinRoomBtn.addEventListener("click", () => {
+    if (gameMode !== "multi") {
+      setGameMode("multi");
+    }
+    connectOnlineRoom(roomCodeInput.value);
+  });
+
+  startBtn.addEventListener("click", begin);
+  pauseBtn.addEventListener("click", pauseToggle);
+  restartBtn.addEventListener("click", () => {
+    if (isOnlineGuest()) {
+      sendOnline({ type: "control", kind: "control", action: "restart" });
+      return;
+    }
+    reset();
+    begin();
+  });
+
+  bombBtn.addEventListener("click", () => {
+    if (!isOnlineGuest() && players[0]) {
+      placeBomb(players[0]);
+    } else if (isOnlineGuest()) {
+      sendOnline({ type: "bomb", kind: "bomb" });
+    }
+  });
+  bombBtn.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    if (!isOnlineGuest() && players[0]) {
+      placeBomb(players[0]);
+    } else if (isOnlineGuest()) {
+      sendOnline({ type: "bomb", kind: "bomb" });
+    }
+  }, { passive: false });
+
+  directionButtons.forEach((b) => {
+    const d = b.dataset.d;
+
+    b.addEventListener("mousedown", () => {
+      if (isOnlineGuest()) { return; }
+      if (players[0]) { press(players[0], d); }
+    });
+    b.addEventListener("mouseup", () => {
+      if (isOnlineGuest()) { return; }
+      if (players[0]) { release(players[0], d); }
+    });
+    b.addEventListener("mouseleave", () => {
+      if (isOnlineGuest()) { return; }
+      if (players[0]) { release(players[0], d); }
+    });
+
+    b.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      if (isOnlineGuest()) { return; }
+      if (players[0]) { press(players[0], d); }
+    }, { passive: false });
+    b.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      if (isOnlineGuest()) { return; }
+      if (players[0]) { release(players[0], d); }
+    }, { passive: false });
+    b.addEventListener("touchcancel", (e) => {
+      e.preventDefault();
+      if (isOnlineGuest()) { return; }
+      if (players[0]) { release(players[0], d); }
+    }, { passive: false });
+  });
+
+  ["touchstart", "touchmove", "touchend"].forEach((n) => {
+    g.addEventListener(n, (e) => {
+      e.preventDefault();
+    }, { passive: false });
+  });
+
+  loadBest();
+  syncModeButtons();
+  reset();
+  draw();
+  window.requestAnimationFrame(frame);
+})();
+
+  </script>
+</body>
+</html>
+

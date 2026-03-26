@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import os
+import json
 import sqlite3
+import threading
 import uuid
 from datetime import datetime, timezone
 from functools import wraps
@@ -12,6 +14,7 @@ from pathlib import Path
 import requests
 from flask import Flask, g, jsonify, request, send_file
 from flask_cors import CORS
+from flask_sock import Sock
 from werkzeug.utils import secure_filename
 
 from proxmox_stats import ProxmoxStats
@@ -45,6 +48,7 @@ OIDC_UPLOAD_GROUPS = [
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
+sock = Sock(app)
 
 allowed_origins = [
     origin.strip()
@@ -55,6 +59,11 @@ if allowed_origins:
     CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
 else:
     CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+ROOM_CODE_LENGTH = 6
+ROOM_CAPACITY = 2
+ws_rooms_lock = threading.Lock()
+ws_rooms: dict[str, dict[str, object]] = {}
 
 # Initialize Proxmox stats fetcher
 proxmox = ProxmoxStats()
@@ -305,6 +314,190 @@ def get_node_stats():
 def health():
     """Health check endpoint."""
     return jsonify({"status": "ok"}), 200
+
+
+def _normalize_room_code(raw: str) -> str:
+    code = "".join(ch for ch in str(raw).upper() if ch.isalnum())
+    return code[:ROOM_CODE_LENGTH]
+
+
+def _ws_send_json(ws, payload: dict) -> bool:
+    try:
+        ws.send(json.dumps(payload))
+        return True
+    except Exception:
+        return False
+
+
+def _room_participants(room: dict[str, object]) -> list[dict[str, str]]:
+    participants: list[dict[str, str]] = []
+    order = room.get("order", [])
+    if not isinstance(order, list):
+        return participants
+    for idx, client_id in enumerate(order):
+        participants.append(
+            {
+                "id": str(client_id),
+                "role": "host" if idx == 0 else "guest",
+            }
+        )
+    return participants
+
+
+def _broadcast_room_state(room_code: str) -> None:
+    with ws_rooms_lock:
+        room = ws_rooms.get(room_code)
+        if room is None:
+            return
+        sockets = list(room.get("clients", {}).values())
+        participants = _room_participants(room)
+
+    message = {
+        "type": "room_state",
+        "room": room_code,
+        "participants": participants,
+    }
+    for ws in sockets:
+        _ws_send_json(ws, message)
+
+
+def _relay_room_payload(room_code: str, sender_id: str, payload: dict) -> None:
+    with ws_rooms_lock:
+        room = ws_rooms.get(room_code)
+        if room is None:
+            return
+        clients = room.get("clients", {})
+        if not isinstance(clients, dict):
+            return
+        targets = [
+            socket
+            for client_id, socket in clients.items()
+            if str(client_id) != sender_id
+        ]
+
+    relay_message = {
+        "type": "relay",
+        "room": room_code,
+        "from": sender_id,
+        "payload": payload,
+    }
+    for ws in targets:
+        _ws_send_json(ws, relay_message)
+
+
+def _remove_ws_client(room_code: str, client_id: str) -> None:
+    with ws_rooms_lock:
+        room = ws_rooms.get(room_code)
+        if room is None:
+            return
+
+        clients = room.get("clients", {})
+        order = room.get("order", [])
+
+        if isinstance(clients, dict):
+            clients.pop(client_id, None)
+        if isinstance(order, list) and client_id in order:
+            order.remove(client_id)
+
+        has_clients = isinstance(order, list) and len(order) > 0
+        if not has_clients:
+            ws_rooms.pop(room_code, None)
+            return
+
+    _broadcast_room_state(room_code)
+
+
+@sock.route("/ws/bomber-raid")
+def bomber_raid_socket(ws):
+    """WebSocket room relay for Bomber Raid online multiplayer."""
+    client_id = uuid.uuid4().hex
+    room_code: str | None = None
+
+    try:
+        join_raw = ws.receive()
+        if join_raw is None:
+            return
+
+        try:
+            join_data = json.loads(join_raw)
+        except json.JSONDecodeError:
+            _ws_send_json(ws, {"type": "error", "message": "Invalid JSON payload."})
+            return
+
+        if not isinstance(join_data, dict) or join_data.get("type") != "join":
+            _ws_send_json(
+                ws,
+                {"type": "error", "message": "First message must be a join payload."},
+            )
+            return
+
+        room_code = _normalize_room_code(str(join_data.get("room", "")))
+        if len(room_code) < 4:
+            _ws_send_json(
+                ws,
+                {
+                    "type": "error",
+                    "message": "Room code must be at least 4 alphanumeric characters.",
+                },
+            )
+            return
+
+        room_full = False
+        participants: list[dict[str, str]] = []
+        role = "guest"
+        with ws_rooms_lock:
+            room = ws_rooms.setdefault(room_code, {"clients": {}, "order": []})
+            clients = room.get("clients", {})
+            order = room.get("order", [])
+            if not isinstance(clients, dict) or not isinstance(order, list):
+                ws_rooms[room_code] = {"clients": {}, "order": []}
+                room = ws_rooms[room_code]
+                clients = room["clients"]
+                order = room["order"]
+
+            if len(order) >= ROOM_CAPACITY:
+                room_full = True
+            else:
+                clients[client_id] = ws
+                order.append(client_id)
+                participants = _room_participants(room)
+                role = "host" if participants and participants[0]["id"] == client_id else "guest"
+
+        if room_full:
+            _ws_send_json(ws, {"type": "error", "message": "Room is full."})
+            return
+
+        _ws_send_json(
+            ws,
+            {
+                "type": "joined",
+                "room": room_code,
+                "client_id": client_id,
+                "role": role,
+                "participants": participants,
+            },
+        )
+        _broadcast_room_state(room_code)
+
+        while True:
+            incoming_raw = ws.receive()
+            if incoming_raw is None:
+                break
+            try:
+                incoming = json.loads(incoming_raw)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(incoming, dict):
+                continue
+            if incoming.get("type") == "leave":
+                break
+            _relay_room_payload(room_code, client_id, incoming)
+
+    except Exception as exc:
+        print(f"Error in /ws/bomber-raid for client {client_id}: {exc}")
+    finally:
+        if room_code is not None:
+            _remove_ws_client(room_code, client_id)
 
 
 init_storage()
