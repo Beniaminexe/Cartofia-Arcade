@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Brick Blitz - Cartofia Arcade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 760px) minmax(250px, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .board-panel {
+      position: relative;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: radial-gradient(circle at 50% 0%, rgba(46, 168, 255, 0.1), rgba(5, 13, 20, 0.95) 62%);
+      padding: 12px;
+      overflow: hidden;
+    }
+
+    .board-frame {
+      position: relative;
+      border-radius: 10px;
+      border: 1px solid rgba(46, 168, 255, 0.25);
+      background: #04101a;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+    }
+
+    #game {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 3 / 2;
+      touch-action: none;
+    }
+
+    .board-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      background: rgba(2, 8, 13, 0.72);
+      color: #d8ecff;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+      padding: 22px;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .board-overlay.hidden {
+      opacity: 0;
+    }
+
+    .game-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    .stat-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(138, 160, 185, 0.16);
+      padding-bottom: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .stat-row b {
+      color: #cbe8ff;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+
+    .button-row {
+      margin-top: 2px;
+    }
+
+    .controls-list {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .controls-list b {
+      color: #90d4ff;
+      font-weight: 700;
+    }
+
+    .touch-controls {
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(7, 14, 22, 0.7);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .touch-controls p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pad-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .pad-btn {
+      min-height: 42px;
+      border-radius: 10px;
+      border: 1px solid rgba(46, 168, 255, 0.36);
+      background: rgba(8, 22, 34, 0.95);
+      color: #cbebff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .pad-btn:active {
+      transform: translateY(1px);
+      filter: brightness(1.08);
+    }
+
+    .game-note {
+      border-radius: 10px;
+      border: 1px dashed var(--line);
+      background: rgba(4, 10, 16, 0.66);
+      color: var(--muted);
+      font-size: 13px;
+      padding: 9px 10px;
+    }
+
+    @media (max-width: 980px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="app-header reveal">
+      <a class="brand" href="/">
+        <span class="brand-chip" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+          </svg>
+        </span>
+        <span class="brand-text">Cartofia</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a href="/archive/">Archive</a>
+        <a class="active" href="/arcade/">Arcade</a>
+        <a href="/minecraft/">Minecraft</a>
+      </nav>
+      <div class="account-menu" data-account-menu>
+        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+          <a class="account-item" href="/arcade/" role="menuitem">Back to Arcade</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-card reveal" data-delay="1">
+        <div class="hero-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3.5" y="4" width="17" height="14.5" rx="2.3" stroke="#57C2FF" stroke-width="1.5"></rect>
+            <path d="M8 10.5H16" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
+            <path d="M9 14H15" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
+            <circle cx="12" cy="8" r="1.2" fill="#57C2FF"></circle>
+          </svg>
+        </div>
+        <div class="hero-copy">
+          <p class="hero-kicker">Arcade Slot 3</p>
+          <h1 class="hero-title">Brick Blitz</h1>
+          <p class="hero-lead">
+            Break every brick with your paddle, keep the ball alive, and climb levels as speed increases.
+          </p>
+          <div class="pill-row">
+            <span class="pill"><strong>Mode</strong> Single player</span>
+            <span class="pill"><strong>Controls</strong> Arrow keys / A D / touch</span>
+            <span class="pill"><strong>Playable</strong> In browser</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card reveal" data-delay="2">
+        <div class="game-layout">
+          <div class="board-panel">
+            <div class="board-frame">
+              <canvas id="game" width="900" height="600" aria-label="Brick Blitz game board"></canvas>
+              <div id="overlay" class="board-overlay">Press Start to launch the ball.</div>
+            </div>
+          </div>
+
+          <aside class="game-panel">
+            <div>
+              <h2 class="card-title">Run Stats</h2>
+              <p class="card-subtitle">Best score is saved in this browser.</p>
+              <div class="stat-grid">
+                <div class="stat-row"><span>Score</span><b id="score">0</b></div>
+                <div class="stat-row"><span>Best</span><b id="best">0</b></div>
+                <div class="stat-row"><span>Lives</span><b id="lives">3</b></div>
+                <div class="stat-row"><span>Level</span><b id="level">1</b></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="button-row">
+                <button id="start-btn" class="btn btn-primary" type="button">Start</button>
+                <button id="pause-btn" class="btn btn-ghost" type="button">Pause</button>
+                <button id="restart-btn" class="btn btn-ghost" type="button">Restart</button>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="section-label">How To Play</h3>
+              <ul class="controls-list">
+                <li><b>Move:</b> Left / Right arrow keys or <b>A D</b></li>
+                <li><b>Goal:</b> Clear every brick to advance levels</li>
+                <li><b>Survive:</b> You lose a life if the ball falls below the paddle</li>
+              </ul>
+            </div>
+
+            <div class="touch-controls">
+              <p>Touch controls</p>
+              <div class="pad-row">
+                <button class="pad-btn" type="button" data-move="left">Move Left</button>
+                <button class="pad-btn" type="button" data-move="right">Move Right</button>
+              </div>
+            </div>
+
+            <div class="game-note">
+              Tip: drag on the game board to position the paddle quickly.
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Copyright <span id="year"></span> Cartofia. All rights reserved.</span>
+      <div class="footer-links">
+        <a href="/arcade/">Arcade</a>
+        <a href="/">Home</a>
+        <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/assets/site.js"></script>
+  <script>
+    (function () {
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const overlay = document.getElementById("overlay");
+
+      const scoreEl = document.getElementById("score");
+      const bestEl = document.getElementById("best");
+      const livesEl = document.getElementById("lives");
+      const levelEl = document.getElementById("level");
+      const yearEl = document.getElementById("year");
+
+      const startBtn = document.getElementById("start-btn");
+      const pauseBtn = document.getElementById("pause-btn");
+      const restartBtn = document.getElementById("restart-btn");
+      const touchButtons = document.querySelectorAll("[data-move]");
+
+      if (yearEl) {
+        yearEl.textContent = String(new Date().getFullYear());
+      }
+
+      const keyState = {
+        left: false,
+        right: false
+      };
+
+      const paddle = {
+        w: 130,
+        h: 14,
+        x: (canvas.width - 130) / 2,
+        y: canvas.height - 42,
+        speed: 8
+      };
+
+      const ball = {
+        x: canvas.width / 2,
+        y: canvas.height - 54,
+        r: 9,
+        vx: 0,
+        vy: 0,
+        stuck: true
+      };
+
+      const brickColors = ["#4ebdff", "#61d7ff", "#73ebb1", "#ffc857", "#ff7b7b"];
+      const brickLayout = {
+        rows: 5,
+        cols: 10,
+        gap: 8,
+        top: 58,
+        side: 18,
+        height: 22
+      };
+
+      let bricks = [];
+      let score = 0;
+      let best = 0;
+      let lives = 3;
+      let level = 1;
+      let running = false;
+      let paused = false;
+      let gameOver = false;
+      let lastFrameTime = 0;
+      let accumulator = 0;
+      const fixedStep = 1000 / 60;
+
+      function setOverlay(message) {
+        overlay.textContent = message;
+        overlay.classList.toggle("hidden", message.length === 0);
+      }
+
+      function loadBest() {
+        try {
+          const raw = window.localStorage.getItem("cartofia_brick_blitz_best");
+          const value = Number(raw);
+          if (Number.isFinite(value) && value > 0) {
+            best = value;
+          }
+        } catch (_error) {
+          best = 0;
+        }
+      }
+
+      function saveBest() {
+        try {
+          window.localStorage.setItem("cartofia_brick_blitz_best", String(best));
+        } catch (_error) {
+          // Ignore storage failures to avoid impacting gameplay.
+        }
+      }
+
+      function updateHud() {
+        scoreEl.textContent = String(score);
+        bestEl.textContent = String(best);
+        livesEl.textContent = String(lives);
+        levelEl.textContent = String(level);
+      }
+
+      function makeBricks() {
+        bricks = [];
+        const totalGap = brickLayout.gap * (brickLayout.cols - 1);
+        const width = (canvas.width - (brickLayout.side * 2) - totalGap) / brickLayout.cols;
+
+        for (let row = 0; row < brickLayout.rows; row += 1) {
+          for (let col = 0; col < brickLayout.cols; col += 1) {
+            bricks.push({
+              x: brickLayout.side + col * (width + brickLayout.gap),
+              y: brickLayout.top + row * (brickLayout.height + brickLayout.gap),
+              w: width,
+              h: brickLayout.height,
+              alive: true,
+              color: brickColors[row % brickColors.length]
+            });
+          }
+        }
+      }
+
+      function resetBall(stuck) {
+        ball.stuck = stuck;
+        ball.x = paddle.x + (paddle.w / 2);
+        ball.y = paddle.y - ball.r - 2;
+        ball.vx = (Math.random() > 0.5 ? 1 : -1) * (4 + (level * 0.15));
+        ball.vy = -(4.3 + (level * 0.2));
+      }
+
+      function resetRun() {
+        score = 0;
+        lives = 3;
+        level = 1;
+        running = false;
+        paused = false;
+        gameOver = false;
+        paddle.x = (canvas.width - paddle.w) / 2;
+        makeBricks();
+        resetBall(true);
+        setOverlay("Press Start to launch the ball.");
+        updateHud();
+      }
+
+      function beginRun() {
+        if (gameOver) {
+          resetRun();
+        }
+        running = true;
+        paused = false;
+        ball.stuck = false;
+        setOverlay("");
+      }
+
+      function togglePause() {
+        if (!running && !paused) {
+          return;
+        }
+        if (paused) {
+          paused = false;
+          running = true;
+          setOverlay("");
+        } else {
+          paused = true;
+          running = false;
+          setOverlay("Paused. Press Pause, P, or Space to resume.");
+        }
+      }
+
+      function clampPaddle() {
+        if (paddle.x < 0) {
+          paddle.x = 0;
+        } else if (paddle.x + paddle.w > canvas.width) {
+          paddle.x = canvas.width - paddle.w;
+        }
+      }
+
+      function loseLife() {
+        lives -= 1;
+        if (lives <= 0) {
+          running = false;
+          paused = false;
+          gameOver = true;
+          if (score > best) {
+            best = score;
+            saveBest();
+          }
+          setOverlay("Game Over. Press Restart to try again.");
+          updateHud();
+          return;
+        }
+        running = false;
+        paused = false;
+        resetBall(true);
+        setOverlay("Life lost. Press Start to launch again.");
+        updateHud();
+      }
+
+      function movePaddle() {
+        if (keyState.left && !keyState.right) {
+          paddle.x -= paddle.speed;
+        } else if (keyState.right && !keyState.left) {
+          paddle.x += paddle.speed;
+        }
+        clampPaddle();
+
+        if (ball.stuck) {
+          ball.x = paddle.x + (paddle.w / 2);
+          ball.y = paddle.y - ball.r - 2;
+        }
+      }
+
+      function ballHitsRect(rect) {
+        const nearestX = Math.max(rect.x, Math.min(ball.x, rect.x + rect.w));
+        const nearestY = Math.max(rect.y, Math.min(ball.y, rect.y + rect.h));
+        const dx = ball.x - nearestX;
+        const dy = ball.y - nearestY;
+        return (dx * dx + dy * dy) <= (ball.r * ball.r);
+      }
+
+      function handlePaddleCollision() {
+        const paddleRect = { x: paddle.x, y: paddle.y, w: paddle.w, h: paddle.h };
+        if (ball.vy > 0 && ballHitsRect(paddleRect)) {
+          ball.y = paddle.y - ball.r - 1;
+          const relative = ((ball.x - paddle.x) / paddle.w) - 0.5;
+          ball.vx = relative * 11;
+          ball.vy = -Math.abs(ball.vy);
+        }
+      }
+
+      function handleBrickCollision() {
+        for (let i = 0; i < bricks.length; i += 1) {
+          const brick = bricks[i];
+          if (!brick.alive) {
+            continue;
+          }
+          if (!ballHitsRect(brick)) {
+            continue;
+          }
+
+          brick.alive = false;
+          score += 10;
+          if (score > best) {
+            best = score;
+            saveBest();
+          }
+
+          const overlapLeft = (ball.x + ball.r) - brick.x;
+          const overlapRight = (brick.x + brick.w) - (ball.x - ball.r);
+          const overlapTop = (ball.y + ball.r) - brick.y;
+          const overlapBottom = (brick.y + brick.h) - (ball.y - ball.r);
+          const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+
+          if (minOverlap === overlapLeft || minOverlap === overlapRight) {
+            ball.vx *= -1;
+          } else {
+            ball.vy *= -1;
+          }
+
+          updateHud();
+          return;
+        }
+      }
+
+      function checkLevelClear() {
+        const remaining = bricks.some((brick) => brick.alive);
+        if (!remaining) {
+          level += 1;
+          makeBricks();
+          running = false;
+          paused = false;
+          resetBall(true);
+          setOverlay("Level cleared. Press Start for the next wave.");
+          updateHud();
+        }
+      }
+
+      function step() {
+        movePaddle();
+        if (ball.stuck || !running) {
+          return;
+        }
+
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        if (ball.x - ball.r <= 0) {
+          ball.x = ball.r;
+          ball.vx = Math.abs(ball.vx);
+        } else if (ball.x + ball.r >= canvas.width) {
+          ball.x = canvas.width - ball.r;
+          ball.vx = -Math.abs(ball.vx);
+        }
+
+        if (ball.y - ball.r <= 0) {
+          ball.y = ball.r;
+          ball.vy = Math.abs(ball.vy);
+        }
+
+        handlePaddleCollision();
+        handleBrickCollision();
+        checkLevelClear();
+
+        if (ball.y - ball.r > canvas.height) {
+          loseLife();
+        }
+      }
+
+      function drawBackground() {
+        ctx.fillStyle = "#05101a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function drawBricks() {
+        bricks.forEach((brick) => {
+          if (!brick.alive) {
+            return;
+          }
+          ctx.fillStyle = brick.color;
+          ctx.fillRect(brick.x, brick.y, brick.w, brick.h);
+          ctx.fillStyle = "rgba(0, 0, 0, 0.18)";
+          ctx.fillRect(brick.x, brick.y + brick.h - 5, brick.w, 5);
+        });
+      }
+
+      function drawPaddle() {
+        ctx.fillStyle = "#78d0ff";
+        ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+      }
+
+      function drawBall() {
+        ctx.fillStyle = "#ff5d7a";
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function draw() {
+        drawBackground();
+        drawBricks();
+        drawPaddle();
+        drawBall();
+      }
+
+      function frame(timestamp) {
+        if (!lastFrameTime) {
+          lastFrameTime = timestamp;
+        }
+        const delta = Math.min(32, timestamp - lastFrameTime);
+        lastFrameTime = timestamp;
+        accumulator += delta;
+
+        while (accumulator >= fixedStep) {
+          step();
+          accumulator -= fixedStep;
+        }
+
+        draw();
+        window.requestAnimationFrame(frame);
+      }
+
+      function setMoveState(direction, value) {
+        if (direction === "left") {
+          keyState.left = value;
+        } else if (direction === "right") {
+          keyState.right = value;
+        }
+      }
+
+      document.addEventListener("keydown", (event) => {
+        const key = event.key.toLowerCase();
+        if (key === "arrowleft" || key === "a") {
+          event.preventDefault();
+          setMoveState("left", true);
+          return;
+        }
+        if (key === "arrowright" || key === "d") {
+          event.preventDefault();
+          setMoveState("right", true);
+          return;
+        }
+        if (key === " " || key === "p") {
+          event.preventDefault();
+          togglePause();
+          return;
+        }
+        if (key === "enter") {
+          event.preventDefault();
+          beginRun();
+        }
+      });
+
+      document.addEventListener("keyup", (event) => {
+        const key = event.key.toLowerCase();
+        if (key === "arrowleft" || key === "a") {
+          setMoveState("left", false);
+          return;
+        }
+        if (key === "arrowright" || key === "d") {
+          setMoveState("right", false);
+        }
+      });
+
+      startBtn.addEventListener("click", () => {
+        beginRun();
+      });
+
+      pauseBtn.addEventListener("click", () => {
+        togglePause();
+      });
+
+      restartBtn.addEventListener("click", () => {
+        resetRun();
+        beginRun();
+      });
+
+      touchButtons.forEach((button) => {
+        const direction = button.dataset.move;
+        button.addEventListener("touchstart", (event) => {
+          event.preventDefault();
+          setMoveState(direction, true);
+        }, { passive: false });
+        button.addEventListener("touchend", (event) => {
+          event.preventDefault();
+          setMoveState(direction, false);
+        }, { passive: false });
+        button.addEventListener("mousedown", () => {
+          setMoveState(direction, true);
+        });
+        button.addEventListener("mouseup", () => {
+          setMoveState(direction, false);
+        });
+        button.addEventListener("mouseleave", () => {
+          setMoveState(direction, false);
+        });
+      });
+
+      canvas.addEventListener("pointermove", (event) => {
+        if (event.pointerType === "touch" || event.buttons === 1) {
+          const rect = canvas.getBoundingClientRect();
+          const x = ((event.clientX - rect.left) / rect.width) * canvas.width;
+          paddle.x = x - (paddle.w / 2);
+          clampPaddle();
+        }
+      });
+
+      loadBest();
+      resetRun();
+      draw();
+      window.requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>

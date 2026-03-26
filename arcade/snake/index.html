@@ -40,6 +40,7 @@
       height: auto;
       aspect-ratio: 1 / 1;
       image-rendering: pixelated;
+      touch-action: none;
     }
 
     .board-overlay {
@@ -689,12 +690,18 @@
       let startTouchY = 0;
 
       canvas.addEventListener("touchstart", (event) => {
+        event.preventDefault();
         const touch = event.changedTouches[0];
         startTouchX = touch.clientX;
         startTouchY = touch.clientY;
-      }, { passive: true });
+      }, { passive: false });
+
+      canvas.addEventListener("touchmove", (event) => {
+        event.preventDefault();
+      }, { passive: false });
 
       canvas.addEventListener("touchend", (event) => {
+        event.preventDefault();
         const touch = event.changedTouches[0];
         const dx = touch.clientX - startTouchX;
         const dy = touch.clientY - startTouchY;
@@ -710,7 +717,7 @@
         } else {
           onDirectionInput(dy > 0 ? "down" : "up");
         }
-      }, { passive: true });
+      }, { passive: false });
 
       loadBest();
       resetState();
