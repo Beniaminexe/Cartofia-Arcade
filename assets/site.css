@@ -861,6 +861,11 @@ tbody tr:hover {
     justify-self: start;
   }
 
+  .account-dropdown {
+    left: 0;
+    right: auto;
+  }
+
   .layout-grid {
     grid-template-columns: 1fr;
   }
