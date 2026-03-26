@@ -17,12 +17,99 @@
     .row { display: flex; flex-wrap: wrap; gap: 8px; }
     .ctl { border: 1px solid rgba(46,168,255,.36); border-radius: 10px; background: rgba(8,22,34,.95); color: #cbebff; min-height: 38px; min-width: 80px; padding: 8px 12px; font-weight: 700; cursor: pointer; touch-action: manipulation; }
     .bomb { border-color: rgba(255,171,76,.55); background: linear-gradient(145deg, rgba(255,182,92,.35), rgba(140,70,26,.45)); color: #ffe0be; }
+    .touch-controls { display: grid; grid-template-columns: minmax(180px, 220px) 1fr; gap: 12px; align-items: end; }
+    .joystick-wrap { display: grid; place-items: center; }
+    .joystick-base {
+      position: relative;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      border: 1px solid rgba(46,168,255,.36);
+      background:
+        radial-gradient(circle at 32% 28%, rgba(120,186,241,.22), rgba(15,32,48,.7) 58%),
+        linear-gradient(180deg, rgba(8,22,34,.95), rgba(6,15,24,.95));
+      box-shadow: inset 0 0 0 1px rgba(191,228,255,.08);
+      touch-action: none;
+      user-select: none;
+    }
+    .joystick-base::before,
+    .joystick-base::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(170,219,255,.15);
+      pointer-events: none;
+    }
+    .joystick-base::before { width: 2px; height: 74%; }
+    .joystick-base::after { width: 74%; height: 2px; }
+    .joystick-thumb {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(96,177,236,.68);
+      background:
+        radial-gradient(circle at 35% 32%, rgba(219,241,255,.62), rgba(62,134,192,.82) 64%),
+        linear-gradient(180deg, rgba(23,74,117,.92), rgba(14,47,74,.92));
+      box-shadow: 0 8px 20px rgba(0,0,0,.36);
+      transition: transform .08s ease;
+      pointer-events: none;
+    }
+    .joystick-base.active .joystick-thumb { transition: none; }
+    .touch-action-stack { display: grid; gap: 8px; }
+    .touch-session { display: grid; grid-template-columns: repeat(3, minmax(90px, 1fr)); gap: 8px; }
+    .touch-bomb { min-height: 56px; font-size: 16px; }
     .room-input { min-width: 140px; max-width: 220px; cursor: text; }
     .room-input::placeholder { color: #7aa0c3; }
     .net { display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--line); padding: 0 10px; min-height: 38px; color: #a7c2df; font-size: 12px; background: rgba(9,16,25,.75); }
     .net.ok { border-color: rgba(41,196,108,.5); color: #a7efc7; }
     .net.warn { border-color: rgba(246,183,60,.55); color: #ffd89b; }
+    .lobby { border: 1px solid var(--line); border-radius: 10px; background: rgba(8,14,21,.72); padding: 10px; display: grid; gap: 8px; }
+    .lobby-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+    .lobby-list { list-style: none; display: grid; gap: 6px; margin: 0; padding: 0; }
+    .lobby-list li { border: 1px solid rgba(46,168,255,.22); border-radius: 8px; padding: 7px 9px; display: flex; justify-content: space-between; gap: 8px; color: #d8ecff; font-size: 13px; background: rgba(7,18,30,.6); }
+    .lobby-ready { color: #9ad5b0; }
+    .lobby-not-ready { color: #ffcc98; }
+    .sync-opt { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+    .sync-opt input[type="number"] { min-width: 86px; max-width: 110px; min-height: 34px; padding: 6px 8px; }
+    .sync-opt input[type="checkbox"] { width: 16px; height: 16px; }
     .note { color: var(--muted); font-size: 14px; }
+    @media (max-width: 900px) {
+      .touch-controls {
+        grid-template-columns: 1fr;
+        position: sticky;
+        bottom: 8px;
+        z-index: 14;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(5, 12, 20, 0.86);
+        backdrop-filter: blur(6px);
+        padding: 10px;
+      }
+      .joystick-base {
+        width: min(52vw, 212px);
+        height: min(52vw, 212px);
+      }
+      .joystick-thumb {
+        width: min(20vw, 74px);
+        height: min(20vw, 74px);
+      }
+      .touch-bomb {
+        min-height: 60px;
+        font-size: 17px;
+      }
+      .touch-session {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .sync-opt {
+        font-size: 12px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -55,10 +142,6 @@
           <div>Best<b id="bs">0</b></div>
           <div>Enemies<b id="en">3</b></div>
           <div>Mode<b id="mode">Online</b></div>
-          <div>P1 Kit<b id="p1k">B1 R2 S1.0</b></div>
-          <div>P2 Kit<b id="p2k">B1 R2 S1.0</b></div>
-          <div>Powerups<b id="pu">0</b></div>
-          <div>Status<b id="st">Ready</b></div>
         </div>
         <div class="row">
           <button id="mode-single" class="btn btn-ghost" type="button">Singleplayer</button>
@@ -66,23 +149,44 @@
         </div>
         <div class="row">
           <input id="room-code" class="ctl room-input" type="text" maxlength="6" autocomplete="off" placeholder="ROOM" />
+          <input id="room-password" class="ctl room-input" type="password" maxlength="32" autocomplete="off" placeholder="Password (optional)" />
           <button id="create-room" class="btn btn-ghost" type="button">Create Room</button>
           <button id="join-room" class="btn btn-ghost" type="button">Join Room</button>
           <span id="net-status" class="net">Offline</span>
         </div>
         <div class="row">
-          <button id="start" class="btn btn-primary" type="button">Start</button>
-          <button id="pause" class="btn btn-ghost" type="button">Pause</button>
-          <button id="restart" class="btn btn-ghost" type="button">Restart</button>
-          <button id="bomb" class="ctl bomb" type="button">Place Bomb (P1)</button>
+          <input id="player-name" class="ctl room-input" type="text" maxlength="16" autocomplete="off" placeholder="Player name" />
+          <button id="save-name" class="btn btn-ghost" type="button">Save Name</button>
+          <button id="ready-toggle" class="btn btn-ghost" type="button">Ready: Off</button>
         </div>
+        <section id="lobby-panel" class="lobby hidden" aria-live="polite">
+          <div class="lobby-head">
+            <strong>Lobby</strong>
+            <span id="lobby-state" class="note">Connect to an online room.</span>
+          </div>
+          <ul id="lobby-list" class="lobby-list"></ul>
+        </section>
         <div class="row">
-          <button class="ctl" data-d="u" type="button">Up</button>
-          <button class="ctl" data-d="l" type="button">Left</button>
-          <button class="ctl" data-d="d" type="button">Down</button>
-          <button class="ctl" data-d="r" type="button">Right</button>
+          <label class="sync-opt"><input id="sync-interp" type="checkbox" checked />Smooth guest interpolation</label>
+          <label class="sync-opt">Interp ms <input id="interp-ms" class="ctl" type="number" min="40" max="240" step="10" value="110" /></label>
+          <label class="sync-opt">Guest input delay <input id="input-delay-ms" class="ctl" type="number" min="0" max="240" step="10" value="70" /></label>
         </div>
-        <p id="control-note" class="note">Singleplayer: WASD or Arrow keys + Space/Enter. Online mode: P1 host uses WASD + Space, guest uses Arrows + Enter. Powerups: +Bomb, +Range, +Speed, +Shield.</p>
+        <div class="touch-controls" aria-label="Touch controls">
+          <div class="joystick-wrap">
+            <div id="joy-base" class="joystick-base" aria-label="Movement joystick" role="application">
+              <div id="joy-thumb" class="joystick-thumb" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="touch-action-stack">
+            <button id="bomb" class="ctl bomb touch-bomb" type="button">Bomb</button>
+            <div class="touch-session">
+              <button id="start" class="btn btn-primary" type="button">Start</button>
+              <button id="pause" class="btn btn-ghost" type="button">Pause</button>
+              <button id="restart" class="btn btn-ghost" type="button">Restart</button>
+            </div>
+          </div>
+        </div>
+        <p id="control-note" class="note">Singleplayer: WASD/Arrows + Space/Enter, or use the touch joystick + Bomb. Online mode: set room + optional password, mark Ready in lobby, host uses WASD/touch, guest uses Arrows/touch. Powerups: +Bomb, +Range, +Speed, +Shield.</p>
       </section>
     </main>
   </div>
@@ -101,10 +205,21 @@
   const puEl = document.getElementById("pu");
   const stEl = document.getElementById("st");
   const noteEl = document.getElementById("control-note");
-  const directionButtons = document.querySelectorAll("[data-d]");
+  const joyBase = document.getElementById("joy-base");
+  const joyThumb = document.getElementById("joy-thumb");
   const modeSingleBtn = document.getElementById("mode-single");
   const modeMultiBtn = document.getElementById("mode-multi");
   const roomCodeInput = document.getElementById("room-code");
+  const roomPasswordInput = document.getElementById("room-password");
+  const playerNameInput = document.getElementById("player-name");
+  const saveNameBtn = document.getElementById("save-name");
+  const readyToggleBtn = document.getElementById("ready-toggle");
+  const lobbyPanel = document.getElementById("lobby-panel");
+  const lobbyStateEl = document.getElementById("lobby-state");
+  const lobbyListEl = document.getElementById("lobby-list");
+  const syncInterpInput = document.getElementById("sync-interp");
+  const interpMsInput = document.getElementById("interp-ms");
+  const inputDelayMsInput = document.getElementById("input-delay-ms");
   const createRoomBtn = document.getElementById("create-room");
   const joinRoomBtn = document.getElementById("join-room");
   const netStatusEl = document.getElementById("net-status");
@@ -120,6 +235,9 @@
   const D = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] };
   const R = { u: "d", d: "u", l: "r", r: "l" };
   const DIR_ORDER = ["u", "d", "l", "r"];
+  const DEFAULT_PLAYER_NAME = "Player";
+  const SNAPSHOT_INTERVAL_MS = 120;
+  const HEARTBEAT_INTERVAL_MS = 20000;
 
   let m = [];
   let players = [];
@@ -137,6 +255,8 @@
   let gameMode = "multi";
   let last = 0;
   let acc = 0;
+  let joyPointerId = null;
+  let joyHeldDir = null;
 
   const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   const wsFallbackUrl = wsProtocol + "://" + window.location.host + "/ws/bomber-raid";
@@ -144,17 +264,91 @@
   const online = {
     ws: null,
     room: "",
+    roomHasPassword: false,
     clientId: "",
     role: "",
+    staleSeconds: 0,
+    playerName: DEFAULT_PLAYER_NAME,
+    localReady: false,
+    canStart: false,
     connected: false,
     participants: [],
-    snapshotTimer: 0
+    snapshotTimer: 0,
+    snapshotSeq: 0,
+    lastSnapshotSeq: -1,
+    hostNow: 0,
+    remoteActionSeq: 0,
+    pendingRemoteActions: [],
+    interpolationEnabled: true,
+    interpolationMs: 110,
+    guestInputDelayMs: 70
+  };
+  const remoteRender = {
+    players: {},
+    enemies: []
   };
 
   function key(x1, y1) { return x1 + "," + y1; }
   function inb(x1, y1) { return x1 >= 0 && x1 < W && y1 >= 0 && y1 < H; }
   function tile(x1, y1) { return inb(x1, y1) ? m[y1][x1] : "wall"; }
   function setTile(x1, y1, v) { if (inb(x1, y1)) { m[y1][x1] = v; } }
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+  function normalizePlayerName(raw) {
+    const cleaned = String(raw || "").replace(/[^a-zA-Z0-9 _-]/g, "").trim();
+    if (!cleaned) {
+      return DEFAULT_PLAYER_NAME;
+    }
+    return cleaned.slice(0, 16);
+  }
+
+  function roomPasswordValue() {
+    return String(roomPasswordInput.value || "").trim().slice(0, 32);
+  }
+
+  function guestInputDelayValue() {
+    const n = Number(inputDelayMsInput.value);
+    return clamp(Number.isFinite(n) ? Math.round(n) : 0, 0, 240);
+  }
+
+  function interpolationMsValue() {
+    const n = Number(interpMsInput.value);
+    return clamp(Number.isFinite(n) ? Math.round(n) : 110, 40, 240);
+  }
+
+  function saveOnlinePrefs() {
+    try {
+      window.localStorage.setItem("cartofia_bomber_raid_name", online.playerName);
+      window.localStorage.setItem("cartofia_bomber_raid_interp_enabled", online.interpolationEnabled ? "1" : "0");
+      window.localStorage.setItem("cartofia_bomber_raid_interp_ms", String(online.interpolationMs));
+      window.localStorage.setItem("cartofia_bomber_raid_input_delay_ms", String(online.guestInputDelayMs));
+    } catch (_e) {
+      // ignore localStorage errors
+    }
+  }
+
+  function loadOnlinePrefs() {
+    try {
+      const name = normalizePlayerName(window.localStorage.getItem("cartofia_bomber_raid_name") || DEFAULT_PLAYER_NAME);
+      const interpEnabledRaw = window.localStorage.getItem("cartofia_bomber_raid_interp_enabled");
+      const interpMsRaw = Number(window.localStorage.getItem("cartofia_bomber_raid_interp_ms"));
+      const delayRaw = Number(window.localStorage.getItem("cartofia_bomber_raid_input_delay_ms"));
+      online.playerName = name;
+      online.interpolationEnabled = interpEnabledRaw !== "0";
+      online.interpolationMs = clamp(Number.isFinite(interpMsRaw) ? Math.round(interpMsRaw) : 110, 40, 240);
+      online.guestInputDelayMs = clamp(Number.isFinite(delayRaw) ? Math.round(delayRaw) : 70, 0, 240);
+    } catch (_e) {
+      online.playerName = DEFAULT_PLAYER_NAME;
+      online.interpolationEnabled = true;
+      online.interpolationMs = 110;
+      online.guestInputDelayMs = 70;
+    }
+
+    playerNameInput.value = online.playerName;
+    syncInterpInput.checked = online.interpolationEnabled;
+    interpMsInput.value = String(online.interpolationMs);
+    inputDelayMsInput.value = String(online.guestInputDelayMs);
+  }
 
   function bombAt(x1, y1) {
     for (let i = 0; i < bb.length; i += 1) {
@@ -222,7 +416,7 @@
     if (gameMode === "single") {
       return "Singleplayer: WASD or Arrow keys to move, Space/Enter to place bomb. Powerups: +Bomb, +Range, +Speed, +Shield.";
     }
-    return "Online multiplayer: host controls P1 with WASD + Space, guest controls P2 with Arrow keys + Enter. Connect to a room first.";
+    return "Online multiplayer: set room + optional password, choose a player name, then both players mark Ready in the lobby. Host controls P1 with WASD + Space, guest controls P2 with Arrow keys + Enter.";
   }
 
   function modeStartText() {
@@ -235,10 +429,84 @@
     if (online.participants.length < 2) {
       return "Connected to room " + online.room + ". Waiting for second player...";
     }
+    if (!online.canStart) {
+      return "Room " + online.room + " has both players connected. Mark both players Ready in the lobby.";
+    }
     if (online.role === "host") {
       return "Room " + online.room + " ready. You are host (P1). Press Start.";
     }
-    return "Room " + online.room + " ready. You are guest (P2). Host can start.";
+    return "Room " + online.room + " ready. You are guest (P2). Press Start to request host start.";
+  }
+
+  function participantsCanStart(list) {
+    return Array.isArray(list) && list.length === 2 && list.every((p) => !!(p && p.ready));
+  }
+
+  function isLobbyReady() {
+    return isOnlineMode() && online.connected && online.participants.length === 2 && online.canStart;
+  }
+
+  function applyPlayerName(newName) {
+    online.playerName = normalizePlayerName(newName);
+    playerNameInput.value = online.playerName;
+    saveOnlinePrefs();
+  }
+
+  function sendLobbyUpdate(payload) {
+    if (!isOnlineMode() || !online.connected) {
+      return;
+    }
+    sendOnline(Object.assign({ type: "lobby" }, payload || {}));
+  }
+
+  function updateReadyButton() {
+    readyToggleBtn.textContent = "Ready: " + (online.localReady ? "On" : "Off");
+    readyToggleBtn.classList.toggle("btn-primary", online.localReady);
+    readyToggleBtn.classList.toggle("btn-ghost", !online.localReady);
+  }
+
+  function renderLobby() {
+    const onlineMode = isOnlineMode();
+    lobbyPanel.classList.toggle("hidden", !onlineMode);
+    if (!onlineMode) {
+      lobbyStateEl.textContent = "Singleplayer mode.";
+      lobbyListEl.innerHTML = "";
+      return;
+    }
+
+    const list = Array.isArray(online.participants) ? online.participants : [];
+    lobbyListEl.innerHTML = "";
+    for (let i = 0; i < list.length; i += 1) {
+      const p = list[i];
+      const li = document.createElement("li");
+      const nameSpan = document.createElement("span");
+      const role = p && p.role === "host" ? "Host" : "Guest";
+      const name = normalizePlayerName((p && p.name) || ("P" + (i + 1)));
+      nameSpan.textContent = name + " (" + role + ")";
+      const readySpan = document.createElement("span");
+      readySpan.textContent = p && p.ready ? "Ready" : "Not Ready";
+      readySpan.className = p && p.ready ? "lobby-ready" : "lobby-not-ready";
+      li.appendChild(nameSpan);
+      li.appendChild(readySpan);
+      lobbyListEl.appendChild(li);
+    }
+    if (!list.length) {
+      const li = document.createElement("li");
+      li.textContent = "No players connected yet.";
+      lobbyListEl.appendChild(li);
+    }
+
+    if (!online.connected) {
+      lobbyStateEl.textContent = "Connect to a room.";
+    } else if (list.length < 2) {
+      lobbyStateEl.textContent = "Waiting for second player.";
+    } else if (!online.canStart) {
+      lobbyStateEl.textContent = "Both players must be Ready.";
+    } else if (online.role === "host") {
+      lobbyStateEl.textContent = "All set. Host can start.";
+    } else {
+      lobbyStateEl.textContent = "All set. Waiting for host start.";
+    }
   }
 
   function setNetStatus(text, variant) {
@@ -269,8 +537,12 @@
     modeMultiBtn.classList.toggle("btn-primary", !singleActive);
     modeMultiBtn.classList.toggle("btn-ghost", singleActive);
     roomCodeInput.disabled = singleActive;
+    roomPasswordInput.disabled = singleActive;
     createRoomBtn.disabled = singleActive;
     joinRoomBtn.disabled = singleActive;
+    playerNameInput.disabled = singleActive;
+    saveNameBtn.disabled = singleActive || !online.connected;
+    readyToggleBtn.disabled = singleActive || !online.connected;
     if (singleActive) {
       setNetStatus("Offline", "");
     } else if (!online.connected) {
@@ -286,6 +558,17 @@
     if (noteEl) {
       noteEl.textContent = modeHelpText();
     }
+    if (singleActive) {
+      startBtn.disabled = false;
+      pauseBtn.disabled = false;
+      restartBtn.disabled = false;
+    } else {
+      startBtn.disabled = !online.connected || !isLobbyReady();
+      pauseBtn.disabled = !online.connected;
+      restartBtn.disabled = !online.connected;
+    }
+    updateReadyButton();
+    renderLobby();
   }
 
   function kitText(p) {
@@ -297,14 +580,14 @@
   function hud() {
     const p1 = players[0];
     const p2 = players[1];
-    scEl.textContent = String(sc);
-    bsEl.textContent = String(bs);
-    enEl.textContent = String(aliveEnemies());
-    modeEl.textContent = modeLabel();
-    p1kEl.textContent = p1 ? kitText(p1) : "-";
-    p2kEl.textContent = p2 ? kitText(p2) : "-";
-    puEl.textContent = String(powerups.length);
-    stEl.textContent = statusText();
+    if (scEl) { scEl.textContent = String(sc); }
+    if (bsEl) { bsEl.textContent = String(bs); }
+    if (enEl) { enEl.textContent = String(aliveEnemies()); }
+    if (modeEl) { modeEl.textContent = modeLabel(); }
+    if (p1kEl) { p1kEl.textContent = p1 ? kitText(p1) : "-"; }
+    if (p2kEl) { p2kEl.textContent = p2 ? kitText(p2) : "-"; }
+    if (puEl) { puEl.textContent = String(powerups.length); }
+    if (stEl) { stEl.textContent = statusText(); }
   }
 
   function msg(t) {
@@ -356,10 +639,75 @@
     };
   }
 
-  function applyRemoteState(state) {
+  function syncGuestRenderTargets(forceSnap) {
+    if (!isOnlineGuest()) {
+      remoteRender.players = {};
+      remoteRender.enemies = [];
+      return;
+    }
+
+    const smooth = online.interpolationEnabled && !forceSnap;
+    const nextPlayers = {};
+    for (let i = 0; i < players.length; i += 1) {
+      const p = players[i];
+      const id = p.id || ("p" + i);
+      const prev = remoteRender.players[id];
+      if (!prev || !smooth) {
+        nextPlayers[id] = { x: p.x, y: p.y, tx: p.x, ty: p.y };
+      } else {
+        nextPlayers[id] = { x: prev.x, y: prev.y, tx: p.x, ty: p.y };
+      }
+    }
+    remoteRender.players = nextPlayers;
+
+    const nextEnemies = [];
+    for (let i = 0; i < en.length; i += 1) {
+      const o = en[i];
+      const prev = remoteRender.enemies[i];
+      if (!prev || !smooth) {
+        nextEnemies.push({ x: o.x, y: o.y, tx: o.x, ty: o.y });
+      } else {
+        nextEnemies.push({ x: prev.x, y: prev.y, tx: o.x, ty: o.y });
+      }
+    }
+    remoteRender.enemies = nextEnemies;
+  }
+
+  function updateGuestInterpolation(dt) {
+    if (!isOnlineGuest() || !online.interpolationEnabled) {
+      return;
+    }
+    const ms = Math.max(40, online.interpolationMs);
+    const blend = clamp(dt / ms, 0, 1);
+    const ids = Object.keys(remoteRender.players);
+    for (let i = 0; i < ids.length; i += 1) {
+      const entry = remoteRender.players[ids[i]];
+      entry.x += (entry.tx - entry.x) * blend;
+      entry.y += (entry.ty - entry.y) * blend;
+      if (Math.abs(entry.tx - entry.x) < 0.001) { entry.x = entry.tx; }
+      if (Math.abs(entry.ty - entry.y) < 0.001) { entry.y = entry.ty; }
+    }
+    for (let i = 0; i < remoteRender.enemies.length; i += 1) {
+      const entry = remoteRender.enemies[i];
+      entry.x += (entry.tx - entry.x) * blend;
+      entry.y += (entry.ty - entry.y) * blend;
+      if (Math.abs(entry.tx - entry.x) < 0.001) { entry.x = entry.tx; }
+      if (Math.abs(entry.ty - entry.y) < 0.001) { entry.y = entry.ty; }
+    }
+  }
+
+  function applyRemoteState(state, envelope) {
     if (!state || typeof state !== "object") {
       return;
     }
+    const seq = envelope && Number(envelope.seq);
+    if (Number.isFinite(seq)) {
+      if (seq <= online.lastSnapshotSeq) {
+        return;
+      }
+      online.lastSnapshotSeq = seq;
+    }
+    const shouldSnapRender = Object.keys(remoteRender.players).length === 0 && remoteRender.enemies.length === 0;
     if (Array.isArray(state.m)) {
       m = state.m.map((row) => Array.isArray(row) ? row.slice() : []);
     }
@@ -408,6 +756,7 @@
         ov.classList.remove("hide");
       }
     }
+    syncGuestRenderTargets(shouldSnapRender);
     hud();
   }
 
@@ -422,6 +771,17 @@
     }
   }
 
+  function sendGuestAction(payload) {
+    if (isOnlineGuest()) {
+      const delay = guestInputDelayValue();
+      online.guestInputDelayMs = delay;
+      saveOnlinePrefs();
+      sendOnline(Object.assign({}, payload, { delay_ms: delay }));
+      return;
+    }
+    sendOnline(payload);
+  }
+
   function maybeBroadcastState(force) {
     if (!isOnlineHost()) {
       return;
@@ -433,16 +793,31 @@
       online.snapshotTimer = 0;
     }
     if (online.snapshotTimer <= 0) {
-      sendOnline({ type: "state", kind: "state", state: serializeState() });
-      online.snapshotTimer = 120;
+      online.snapshotSeq += 1;
+      sendOnline({
+        type: "state",
+        kind: "state",
+        seq: online.snapshotSeq,
+        server_ts: Date.now(),
+        state: serializeState()
+      });
+      online.snapshotTimer = SNAPSHOT_INTERVAL_MS;
     }
   }
 
-  function updateRoomParticipants(participants) {
+  function updateRoomParticipants(participants, canStart, hasPassword) {
     if (!Array.isArray(participants)) {
       return;
     }
     online.participants = participants;
+    if (typeof canStart === "boolean") {
+      online.canStart = canStart;
+    } else {
+      online.canStart = participantsCanStart(participants);
+    }
+    if (typeof hasPassword === "boolean") {
+      online.roomHasPassword = hasPassword;
+    }
     const me = participants.find((p) => p.id === online.clientId);
     if (me && me.role && me.role !== online.role) {
       online.role = me.role;
@@ -450,18 +825,35 @@
         msg("You are now host in room " + online.room + ".");
       }
     }
+    online.localReady = !!(me && me.ready);
+    if (me && me.name) {
+      const normalized = normalizePlayerName(me.name);
+      if (online.playerName !== normalized) {
+        online.playerName = normalized;
+        saveOnlinePrefs();
+      }
+      if (playerNameInput.value !== normalized) {
+        playerNameInput.value = normalized;
+      }
+    }
     if (!online.connected) {
+      syncModeButtons();
       return;
     }
     if (participants.length < 2) {
       setNetStatus("Room " + online.room + " waiting", "warn");
+      online.pendingRemoteActions = [];
       if (run) {
         run = false;
         pau = false;
         msg(modeStartText());
       }
     } else {
-      setNetStatus("Room " + online.room + " ready", "ok");
+      if (online.canStart) {
+        setNetStatus("Room " + online.room + " ready", "ok");
+      } else {
+        setNetStatus("Room " + online.room + " lobby", "warn");
+      }
     }
     if (!run) {
       msg(modeStartText());
@@ -479,29 +871,44 @@
     }
     online.ws = null;
     online.connected = false;
+    online.roomHasPassword = false;
     online.clientId = "";
     online.role = "";
+    online.staleSeconds = 0;
+    online.localReady = false;
+    online.canStart = false;
     online.room = "";
     online.participants = [];
+    online.lastSnapshotSeq = -1;
+    online.pendingRemoteActions = [];
+    remoteRender.players = {};
+    remoteRender.enemies = [];
     if (reasonText) {
       setNetStatus(reasonText, "warn");
     }
+    endJoystickGesture();
+    syncModeButtons();
   }
 
-  function handleOnlineRelay(payload) {
+  function queueRemoteAction(payload, delayMs) {
+    online.remoteActionSeq += 1;
+    online.pendingRemoteActions.push({
+      due: online.hostNow + Math.max(0, delayMs),
+      seq: online.remoteActionSeq,
+      payload: payload
+    });
+    online.pendingRemoteActions.sort((a, b) => {
+      if (a.due !== b.due) {
+        return a.due - b.due;
+      }
+      return a.seq - b.seq;
+    });
+  }
+
+  function applyHostRelayPayload(payload) {
     if (!payload || typeof payload !== "object") {
       return;
     }
-
-    if (isOnlineGuest() && payload.kind === "state") {
-      applyRemoteState(payload.state);
-      return;
-    }
-
-    if (!isOnlineHost()) {
-      return;
-    }
-
     const p2 = players[1];
     if (!p2) {
       return;
@@ -531,6 +938,40 @@
     }
   }
 
+  function flushPendingRemoteActions() {
+    if (!isOnlineHost() || !online.pendingRemoteActions.length) {
+      return;
+    }
+    while (online.pendingRemoteActions.length && online.pendingRemoteActions[0].due <= online.hostNow) {
+      const next = online.pendingRemoteActions.shift();
+      applyHostRelayPayload(next.payload);
+    }
+  }
+
+  function handleOnlineRelay(payload) {
+    if (!payload || typeof payload !== "object") {
+      return;
+    }
+
+    if (isOnlineGuest() && payload.kind === "state") {
+      applyRemoteState(payload.state, payload);
+      return;
+    }
+
+    if (!isOnlineHost()) {
+      return;
+    }
+
+    if (payload.kind === "input" || payload.kind === "bomb") {
+      const delay = clamp(Number(payload.delay_ms) || 0, 0, 240);
+      if (delay > 0) {
+        queueRemoteAction(payload, delay);
+        return;
+      }
+    }
+    applyHostRelayPayload(payload);
+  }
+
   function connectOnlineRoom(roomCode) {
     const room = normalizeRoom(roomCode);
     if (!room || room.length < 4) {
@@ -557,7 +998,16 @@
       if (online.ws !== ws) {
         return;
       }
-      sendOnline({ type: "join", room: room });
+      const joinPayload = {
+        type: "join",
+        room: room,
+        name: normalizePlayerName(playerNameInput.value || online.playerName)
+      };
+      const password = roomPasswordValue();
+      if (password) {
+        joinPayload.password = password;
+      }
+      sendOnline(joinPayload);
     });
 
     ws.addEventListener("message", (event) => {
@@ -573,6 +1023,7 @@
 
       if (msgData.type === "error") {
         setNetStatus(String(msgData.message || "Socket error"), "warn");
+        msg(String(msgData.message || "Socket error"));
         return;
       }
 
@@ -580,9 +1031,17 @@
         online.connected = true;
         online.clientId = msgData.client_id || "";
         online.role = msgData.role || "";
+        online.roomHasPassword = !!msgData.has_password;
+        online.staleSeconds = Number.isFinite(msgData.stale_seconds) ? Number(msgData.stale_seconds) : 0;
+        online.lastSnapshotSeq = -1;
+        online.pendingRemoteActions = [];
+        online.hostNow = 0;
+        remoteRender.players = {};
+        remoteRender.enemies = [];
         online.snapshotTimer = 0;
-        updateRoomParticipants(msgData.participants || []);
-        setNetStatus("Room " + room + " connected", msgData.participants && msgData.participants.length > 1 ? "ok" : "warn");
+        updateRoomParticipants(msgData.participants || [], !!msgData.can_start, !!msgData.has_password);
+        setNetStatus("Room " + room + " connected", msgData.participants && msgData.participants.length > 1 ? (msgData.can_start ? "ok" : "warn") : "warn");
+        sendLobbyUpdate({ name: online.playerName, ready: false });
         syncModeButtons();
         if (online.role === "host") {
           reset();
@@ -601,10 +1060,14 @@
       }
 
       if (msgData.type === "room_state") {
-        updateRoomParticipants(msgData.participants || []);
+        updateRoomParticipants(msgData.participants || [], !!msgData.can_start, !!msgData.has_password);
         if (isOnlineHost()) {
           maybeBroadcastState(true);
         }
+        return;
+      }
+
+      if (msgData.type === "heartbeat_ack") {
         return;
       }
 
@@ -774,7 +1237,10 @@
       clearPlayerInput(players[i]);
       players[i].cd = 0;
     }
+    online.hostNow = 0;
+    online.pendingRemoteActions = [];
     online.snapshotTimer = 0;
+    syncGuestRenderTargets(true);
     msg(modeStartText());
     hud();
     maybeBroadcastState(true);
@@ -786,8 +1252,12 @@
         msg(modeStartText());
         return;
       }
+      if (!online.canStart) {
+        msg(modeStartText());
+        return;
+      }
       if (isOnlineGuest()) {
-        sendOnline({ type: "control", kind: "control", action: "start" });
+        sendGuestAction({ type: "control", kind: "control", action: "start" });
         return;
       }
     }
@@ -801,7 +1271,7 @@
 
   function pauseToggle() {
     if (isOnlineGuest()) {
-      sendOnline({ type: "control", kind: "control", action: "pause" });
+      sendGuestAction({ type: "control", kind: "control", action: "pause" });
       return;
     }
     if (over || win) { return; }
@@ -901,7 +1371,7 @@
       if (p.id !== "p2") {
         return;
       }
-      sendOnline({ type: "bomb", kind: "bomb" });
+      sendGuestAction({ type: "bomb", kind: "bomb" });
       return;
     }
     if (!run) { begin(); }
@@ -1155,6 +1625,9 @@
     if (isOnlineMode() && (!online.connected || online.participants.length < 2)) {
       return;
     }
+    if (isOnlineHost()) {
+      flushPendingRemoteActions();
+    }
     if (!run || pau || over || win) { return; }
 
     updatePlayers(dt);
@@ -1275,8 +1748,18 @@
       const p = players[i];
       if (!p.a) { continue; }
 
-      const px = p.x * T;
-      const py = p.y * T;
+      let drawX = p.x;
+      let drawY = p.y;
+      if (isOnlineGuest() && online.interpolationEnabled) {
+        const entry = remoteRender.players[p.id || ("p" + i)];
+        if (entry) {
+          drawX = entry.x;
+          drawY = entry.y;
+        }
+      }
+
+      const px = drawX * T;
+      const py = drawY * T;
       x.fillStyle = p.color;
       x.fillRect(px + 8, py + 8, T - 16, T - 16);
       x.fillStyle = p.eye;
@@ -1289,8 +1772,18 @@
     for (let i = 0; i < en.length; i += 1) {
       if (!en[i].a) { continue; }
 
-      const px = en[i].x * T;
-      const py = en[i].y * T;
+      let drawX = en[i].x;
+      let drawY = en[i].y;
+      if (isOnlineGuest() && online.interpolationEnabled) {
+        const entry = remoteRender.enemies[i];
+        if (entry) {
+          drawX = entry.x;
+          drawY = entry.y;
+        }
+      }
+
+      const px = drawX * T;
+      const py = drawY * T;
       x.fillStyle = "#ff7987";
       x.fillRect(px + 9, py + 9, T - 18, T - 18);
       x.fillStyle = "#4f1b22";
@@ -1314,6 +1807,13 @@
     const dt = Math.min(40, ts - last);
     last = ts;
 
+    if (isOnlineHost()) {
+      online.hostNow += dt;
+    }
+    if (isOnlineGuest()) {
+      updateGuestInterpolation(dt);
+    }
+
     acc += dt;
     while (acc >= STEP) {
       update(STEP);
@@ -1335,6 +1835,84 @@
     setDir(p, d, false);
   }
 
+  function movePress(d) {
+    if (isOnlineGuest()) {
+      sendGuestAction({ type: "input", kind: "input", key: d, pressed: true });
+      return;
+    }
+    if (players[0]) {
+      press(players[0], d);
+    }
+  }
+
+  function moveRelease(d) {
+    if (isOnlineGuest()) {
+      sendGuestAction({ type: "input", kind: "input", key: d, pressed: false });
+      return;
+    }
+    if (players[0]) {
+      release(players[0], d);
+    }
+  }
+
+  function setJoystickDirection(nextDir) {
+    if (nextDir === joyHeldDir) {
+      return;
+    }
+    const prev = joyHeldDir;
+    joyHeldDir = nextDir;
+    if (prev) {
+      moveRelease(prev);
+    }
+    if (nextDir) {
+      movePress(nextDir);
+    }
+  }
+
+  function resetJoystickVisual() {
+    if (joyThumb) {
+      joyThumb.style.transform = "translate(-50%, -50%)";
+    }
+  }
+
+  function endJoystickGesture() {
+    joyPointerId = null;
+    if (joyBase) {
+      joyBase.classList.remove("active");
+    }
+    setJoystickDirection(null);
+    resetJoystickVisual();
+  }
+
+  function updateJoystickFromPointer(event) {
+    if (!joyBase || !joyThumb) {
+      return;
+    }
+    const rect = joyBase.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    let dx = event.clientX - cx;
+    let dy = event.clientY - cy;
+    const maxOffset = rect.width * 0.32;
+    const len = Math.hypot(dx, dy);
+    if (len > maxOffset && len > 0) {
+      const scale = maxOffset / len;
+      dx *= scale;
+      dy *= scale;
+    }
+    joyThumb.style.transform = "translate(calc(-50% + " + dx.toFixed(2) + "px), calc(-50% + " + dy.toFixed(2) + "px))";
+
+    const deadZone = rect.width * 0.11;
+    if (Math.hypot(dx, dy) < deadZone) {
+      setJoystickDirection(null);
+      return;
+    }
+    const dir = Math.abs(dx) >= Math.abs(dy)
+      ? (dx > 0 ? "r" : "l")
+      : (dy > 0 ? "d" : "u");
+    setJoystickDirection(dir);
+  }
+
   function setGameMode(mode) {
     if (mode !== "single" && mode !== "multi") {
       return;
@@ -1345,6 +1923,7 @@
     if (mode === "single") {
       closeOnlineSocket("");
     }
+    endJoystickGesture();
     gameMode = mode;
     syncModeButtons();
     reset();
@@ -1379,10 +1958,10 @@
 
       if (isOnlineGuest() && (q === "arrowup" || q === "arrowdown" || q === "arrowleft" || q === "arrowright")) {
         e.preventDefault();
-        if (q === "arrowup") { sendOnline({ type: "input", kind: "input", key: "u", pressed: true }); return; }
-        if (q === "arrowdown") { sendOnline({ type: "input", kind: "input", key: "d", pressed: true }); return; }
-        if (q === "arrowleft") { sendOnline({ type: "input", kind: "input", key: "l", pressed: true }); return; }
-        if (q === "arrowright") { sendOnline({ type: "input", kind: "input", key: "r", pressed: true }); return; }
+        if (q === "arrowup") { sendGuestAction({ type: "input", kind: "input", key: "u", pressed: true }); return; }
+        if (q === "arrowdown") { sendGuestAction({ type: "input", kind: "input", key: "d", pressed: true }); return; }
+        if (q === "arrowleft") { sendGuestAction({ type: "input", kind: "input", key: "l", pressed: true }); return; }
+        if (q === "arrowright") { sendGuestAction({ type: "input", kind: "input", key: "r", pressed: true }); return; }
       }
 
       if (q === " " && isOnlineHost() && p1) {
@@ -1394,7 +1973,7 @@
       if (q === "enter") {
         e.preventDefault();
         if (isOnlineGuest()) {
-          sendOnline({ type: "bomb", kind: "bomb" });
+          sendGuestAction({ type: "bomb", kind: "bomb" });
         }
         return;
       }
@@ -1426,15 +2005,16 @@
         if (q === "d") { release(p1, "r"); return; }
       }
       if (isOnlineGuest()) {
-        if (q === "arrowup") { sendOnline({ type: "input", kind: "input", key: "u", pressed: false }); return; }
-        if (q === "arrowdown") { sendOnline({ type: "input", kind: "input", key: "d", pressed: false }); return; }
-        if (q === "arrowleft") { sendOnline({ type: "input", kind: "input", key: "l", pressed: false }); return; }
-        if (q === "arrowright") { sendOnline({ type: "input", kind: "input", key: "r", pressed: false }); return; }
+        if (q === "arrowup") { sendGuestAction({ type: "input", kind: "input", key: "u", pressed: false }); return; }
+        if (q === "arrowdown") { sendGuestAction({ type: "input", kind: "input", key: "d", pressed: false }); return; }
+        if (q === "arrowleft") { sendGuestAction({ type: "input", kind: "input", key: "l", pressed: false }); return; }
+        if (q === "arrowright") { sendGuestAction({ type: "input", kind: "input", key: "r", pressed: false }); return; }
       }
     }
   });
 
   window.addEventListener("blur", () => {
+    endJoystickGesture();
     for (let i = 0; i < players.length; i += 1) {
       clearPlayerInput(players[i]);
     }
@@ -1456,11 +2036,63 @@
       connectOnlineRoom(roomCodeInput.value);
     }
   });
+  roomPasswordInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      connectOnlineRoom(roomCodeInput.value);
+    }
+  });
+
+  playerNameInput.addEventListener("input", () => {
+    playerNameInput.value = normalizePlayerName(playerNameInput.value);
+  });
+  playerNameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const newName = normalizePlayerName(playerNameInput.value);
+      applyPlayerName(newName);
+      sendLobbyUpdate({ name: newName });
+    }
+  });
+  saveNameBtn.addEventListener("click", () => {
+    const newName = normalizePlayerName(playerNameInput.value);
+    applyPlayerName(newName);
+    sendLobbyUpdate({ name: newName });
+  });
+
+  readyToggleBtn.addEventListener("click", () => {
+    if (!isOnlineMode() || !online.connected) {
+      return;
+    }
+    const nextReady = !online.localReady;
+    online.localReady = nextReady;
+    updateReadyButton();
+    sendLobbyUpdate({ ready: nextReady });
+  });
+
+  syncInterpInput.addEventListener("change", () => {
+    online.interpolationEnabled = !!syncInterpInput.checked;
+    if (!online.interpolationEnabled) {
+      syncGuestRenderTargets(true);
+    }
+    saveOnlinePrefs();
+  });
+  interpMsInput.addEventListener("input", () => {
+    online.interpolationMs = interpolationMsValue();
+    interpMsInput.value = String(online.interpolationMs);
+    saveOnlinePrefs();
+  });
+  inputDelayMsInput.addEventListener("input", () => {
+    online.guestInputDelayMs = guestInputDelayValue();
+    inputDelayMsInput.value = String(online.guestInputDelayMs);
+    saveOnlinePrefs();
+  });
 
   createRoomBtn.addEventListener("click", () => {
     if (gameMode !== "multi") {
       setGameMode("multi");
     }
+    applyPlayerName(playerNameInput.value);
     const room = randomRoomCode();
     roomCodeInput.value = room;
     connectOnlineRoom(room);
@@ -1469,6 +2101,7 @@
     if (gameMode !== "multi") {
       setGameMode("multi");
     }
+    applyPlayerName(playerNameInput.value);
     connectOnlineRoom(roomCodeInput.value);
   });
 
@@ -1476,7 +2109,7 @@
   pauseBtn.addEventListener("click", pauseToggle);
   restartBtn.addEventListener("click", () => {
     if (isOnlineGuest()) {
-      sendOnline({ type: "control", kind: "control", action: "restart" });
+      sendGuestAction({ type: "control", kind: "control", action: "restart" });
       return;
     }
     reset();
@@ -1487,7 +2120,7 @@
     if (!isOnlineGuest() && players[0]) {
       placeBomb(players[0]);
     } else if (isOnlineGuest()) {
-      sendOnline({ type: "bomb", kind: "bomb" });
+      sendGuestAction({ type: "bomb", kind: "bomb" });
     }
   });
   bombBtn.addEventListener("touchstart", (e) => {
@@ -1495,42 +2128,47 @@
     if (!isOnlineGuest() && players[0]) {
       placeBomb(players[0]);
     } else if (isOnlineGuest()) {
-      sendOnline({ type: "bomb", kind: "bomb" });
+      sendGuestAction({ type: "bomb", kind: "bomb" });
     }
   }, { passive: false });
 
-  directionButtons.forEach((b) => {
-    const d = b.dataset.d;
-
-    b.addEventListener("mousedown", () => {
-      if (isOnlineGuest()) { return; }
-      if (players[0]) { press(players[0], d); }
+  if (joyBase) {
+    joyBase.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      joyPointerId = event.pointerId;
+      joyBase.classList.add("active");
+      try {
+        joyBase.setPointerCapture(event.pointerId);
+      } catch (_e) {
+        // ignore capture errors
+      }
+      updateJoystickFromPointer(event);
     });
-    b.addEventListener("mouseup", () => {
-      if (isOnlineGuest()) { return; }
-      if (players[0]) { release(players[0], d); }
+    joyBase.addEventListener("pointermove", (event) => {
+      if (joyPointerId !== event.pointerId) {
+        return;
+      }
+      event.preventDefault();
+      updateJoystickFromPointer(event);
     });
-    b.addEventListener("mouseleave", () => {
-      if (isOnlineGuest()) { return; }
-      if (players[0]) { release(players[0], d); }
+    joyBase.addEventListener("pointerup", (event) => {
+      if (joyPointerId !== null && joyPointerId !== event.pointerId) {
+        return;
+      }
+      event.preventDefault();
+      endJoystickGesture();
     });
-
-    b.addEventListener("touchstart", (e) => {
-      e.preventDefault();
-      if (isOnlineGuest()) { return; }
-      if (players[0]) { press(players[0], d); }
-    }, { passive: false });
-    b.addEventListener("touchend", (e) => {
-      e.preventDefault();
-      if (isOnlineGuest()) { return; }
-      if (players[0]) { release(players[0], d); }
-    }, { passive: false });
-    b.addEventListener("touchcancel", (e) => {
-      e.preventDefault();
-      if (isOnlineGuest()) { return; }
-      if (players[0]) { release(players[0], d); }
-    }, { passive: false });
-  });
+    joyBase.addEventListener("pointercancel", (event) => {
+      if (joyPointerId !== null && joyPointerId !== event.pointerId) {
+        return;
+      }
+      event.preventDefault();
+      endJoystickGesture();
+    });
+    joyBase.addEventListener("lostpointercapture", () => {
+      endJoystickGesture();
+    });
+  }
 
   ["touchstart", "touchmove", "touchend"].forEach((n) => {
     g.addEventListener(n, (e) => {
@@ -1538,6 +2176,13 @@
     }, { passive: false });
   });
 
+  window.setInterval(() => {
+    if (online.ws && online.ws.readyState === WebSocket.OPEN) {
+      sendOnline({ type: "heartbeat" });
+    }
+  }, HEARTBEAT_INTERVAL_MS);
+
+  loadOnlinePrefs();
   loadBest();
   syncModeButtons();
   reset();

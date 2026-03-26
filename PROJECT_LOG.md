@@ -202,4 +202,201 @@ Planned behaviour:
 - Once things are stable, mirror a shortened version of the Cartofia-game change summary into that repo’s own `PROJECT_LOG` for cross-project consistency.
 
 
+
+## 2025-12-09 - Web portal foundation and status pages
+
+**Summary**
+
+- Built out the first full web portal experience around Cartofia with dedicated pages for Home, Arcade, and Minecraft.
+- Added live infrastructure and server-status UI, plus shared visual polish across the site.
+
+**Details**
+
+- Added and iterated the main site entry pages:
+  - `index.html` (home dashboard and quick links)
+  - `arcade/index.html` (arcade catalog shell)
+  - `minecraft/index.html` (Minecraft status and join instructions)
+- Home page updates:
+  - Added live stat cards that poll the API and refresh automatically.
+  - Added dynamic status timestamp handling and fallback API candidate logic for local/dev usage.
+  - Added profile/community embed panel (TryHackMe badge).
+- Minecraft page updates:
+  - Added remote status polling flow for online/offline state and player count.
+  - Added clear startup/join instructions for players.
+- Global UI polish:
+  - Added richer footer with external links and dynamic current-year rendering.
+  - Refined shared layout/content structure for better readability and navigation.
+
+**Next steps**
+
+- Introduce account-aware navigation and protected areas for private features.
+- Add authenticated file archive capabilities.
+
+---
+
+## 2026-03-25 - Account, archive, and API backend rollout
+
+**Summary**
+
+- Added account and archive product flows to move the platform from static pages toward authenticated services.
+- Introduced a Flask backend for Proxmox stats and protected archive operations.
+
+**Details**
+
+- Account/auth frontend:
+  - Added `account/index.html` with OIDC login flow, callback handling, session display, and logout controls.
+  - Added PKCE-based auth flow handling in-browser (code challenge/verifier + token exchange).
+- Archive frontend:
+  - Added `archive/index.html` with:
+    - drag/drop + file picker upload
+    - searchable/filterable file table
+    - recent activity panel
+    - gated access UX based on account session/groups
+  - Added authenticated download flow using fetch + blob for Bearer-token protected endpoints.
+- Shared navigation/auth UX:
+  - Added `assets/site.js` account menu logic to fetch session info and render signed-in vs guest actions.
+  - Added account dropdown behaviors (open/close, outside-click close, escape handling, logout cleanup).
+- Backend/API service:
+  - Added `src/cartofia_bot/api_server.py` with:
+    - infrastructure endpoints (`/api/stats`, `/api/stats/containers`, `/api/stats/vms`, `/api/stats/node`)
+    - archive endpoints (`/api/archive/files`, `/api/archive/upload`, `/api/archive/download/<id>`)
+    - health endpoint (`/health`)
+  - Added SQLite-backed archive metadata storage plus filesystem-backed file storage.
+  - Added OIDC userinfo validation and group-based access checks for view/upload permissions.
+  - Added CORS configuration support and upload size limits via env config.
+- Bot/backend package consolidation:
+  - Mainline includes bot runtime/config modules under `src/cartofia_bot/`:
+    - command registration
+    - Proxmox status/start/stop command flow
+    - environment-driven configuration and logging setup
+
+**Next steps**
+
+- Add archive delete/retention policies and audit logging.
+- Add deployment/systemd notes for API daemon lifecycle.
+
+---
+
+## 2026-03-26 - Shared UI and auth integration polish
+
+**Summary**
+
+- Polished shared site chrome and auth integration details used across home/account/archive/arcade pages.
+
+**Details**
+
+- Updated OIDC client integration values to align with Cartofia account-provider configuration.
+- Refined shared `app-header` and account-menu layout for better responsiveness.
+- Added dropdown positioning/style improvements in shared CSS so account controls remain usable on smaller screens.
+- Performed general code-structure cleanup and readability refactors across the web layer.
+
+**Next steps**
+
+- Continue reducing duplicated page-level scripts by extracting reusable client helpers.
+
+---
+
+## 2026-03-26 - Arcade expansion and online Bomber Raid
+
+**Summary**
+
+- Expanded Cartofia Arcade from a single playable title to multiple browser games.
+- Added two new playable games (Snake Classic and Brick Blitz) and shipped a Bomberman-like game (Bomber Raid).
+- Upgraded Bomber Raid from local co-op to online room-based multiplayer over WebSockets.
+- Added powerups, mode selection (singleplayer vs multiplayer), and tuned enemy speed to improve gameplay feel.
+
+**Details**
+
+### Arcade catalog and pages
+
+- Updated `arcade/index.html` to reflect the expanded game lineup and slot usage:
+  - Current slots updated from `1 / 8` to `4 / 8`.
+  - Added launch cards and activity entries for:
+    - Snake Classic (`/arcade/snake/`)
+    - Brick Blitz (`/arcade/brick-blitz/`)
+    - Bomber Raid (`/arcade/bomber-raid/`)
+- Added new game page:
+  - `arcade/brick-blitz/index.html` (Breakout-style game, keyboard/touch controls, levels, lives, score + best score).
+- Added new game page:
+  - `arcade/bomber-raid/index.html` (Bomberman-like grid gameplay).
+
+### Snake Classic improvements
+
+- Replaced incomplete Snake page with a full implementation in `arcade/snake/index.html`:
+  - Movement, scoring, pause/restart, touch controls, local best-score persistence.
+- Changed wall behavior to wrap around map edges (no wall death).
+- Fixed mobile input UX issue where swipe-to-turn could scroll the page:
+  - Added canvas `touch-action: none` and non-passive touch handlers with `preventDefault()`.
+
+### Bomber Raid gameplay features
+
+- Built core Bomber Raid gameplay:
+  - Grid movement, bombs, blast propagation, chain reactions, crates, enemies, win/lose states.
+- Added powerups spawned from destroyed crates:
+  - `+Bomb`, `+Range`, `+Speed`, `+Shield`.
+- Added mode selection in Bomber Raid UI:
+  - `Singleplayer` and `Online Multiplayer`.
+- Added mode-specific controls and start/help prompts.
+
+### Online multiplayer (WebSocket rooms)
+
+- Frontend (`arcade/bomber-raid/index.html`):
+  - Added room UI (`room code`, `Create Room`, `Join Room`, network status pill).
+  - Added WebSocket client flow:
+    - room join/create
+    - role handling (`host`/`guest`)
+    - input relay
+    - host-authoritative state snapshots
+    - reconnect/disconnect handling
+- Backend (`src/cartofia_bot/api_server.py`):
+  - Added WebSocket endpoint: `/ws/bomber-raid`.
+  - Added in-memory room management (2 participants max), role assignment, relay and room-state broadcast.
+  - Added cleanup logic on disconnect.
+- Dependencies:
+  - Added `flask-sock` to `requirements.txt`.
+
+### Online multiplayer hardening + lobby flow
+
+- Added lightweight room security options:
+  - Optional room password input on the Bomber Raid page.
+  - Backend password validation for room joins (stored as hash for comparison).
+- Added stale-room timeout policy and cleanup logic in WebSocket room management.
+- Added room tunables in `.env.example`:
+  - `BOMBER_ROOM_STALE_SECONDS`
+  - `BOMBER_ROOM_PASSWORD_MAX_LENGTH`
+- Added pre-match lobby UX:
+  - Player names, ready state, and start-gating until both players are ready.
+  - Explicit host/guest readiness feedback and lobby status messaging.
+- Added heartbeat ping/ack between client and server to keep room activity fresh.
+
+### Deterministic sync + smoother guest rendering
+
+- Added host snapshot sequencing so guests ignore stale/out-of-order state packets.
+- Added guest interpolation controls with tunable interpolation window for smoother movement display.
+- Added optional guest input delay slider; host queues remote input actions for steadier online feel.
+
+### Enemy speed tuning
+
+- Reduced Bomber Raid NPC movement speed by increasing enemy cooldown values.
+- Result: enemies no longer move unnaturally fast; pacing is more playable.
+
+### Mobile control redesign (touch UX follow-up)
+
+- Removed extra Bomber Raid HUD cards that reduced mobile play area (`P1 Kit`, `P2 Kit`, `Powerups`, `Status`).
+- Replaced touch D-pad buttons with a drag joystick control (base + thumb) for directional input.
+- Kept Bomb + Start/Pause/Restart in a compact action stack beside the joystick.
+- Made mobile controls easier to keep in reach with sticky bottom positioning on smaller screens.
+- Updated touch input handling so online guests can reliably control movement via on-screen controls.
+
+### Validation performed
+
+- Ran JavaScript syntax checks for updated Bomber Raid logic (inline script extracted to JS and checked with `node --check`).
+- Ran Python compile validation (`python -m py_compile src/cartofia_bot/api_server.py`) after WebSocket server changes.
+
+**Next steps**
+
+- Add optional room lock indicator/icon in the lobby header before join attempts.
+- Add joystick sensitivity/deadzone controls for mobile tuning.
+- Add brief in-game reconnect hint flow when online sockets drop mid-match.
 *This log is updated as new milestones and design decisions are made.*
+
