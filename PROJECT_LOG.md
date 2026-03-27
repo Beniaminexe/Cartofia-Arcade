@@ -850,4 +850,34 @@ Planned behaviour:
     - `assets/site.js`
     - `assets/site.css`
 
+---
+
+## 2026-03-27 - Added Word Puzzle game to Arcade
+
+**Summary**
+
+- Added a new playable word puzzle game at `/arcade/word-puzzle/`.
+- Wired the new game into the Arcade lineup and activity feed.
+
+**Details**
+
+- Added new game page: `arcade/word-puzzle/index.html`
+  - 5-letter, 6-attempt word puzzle gameplay.
+  - Keyboard + touch input support.
+  - Correct/present/absent tile feedback and keyboard coloring.
+  - Local streak and best-streak tracking via `localStorage`.
+  - New puzzle reset action.
+- Updated `arcade/index.html`
+  - Added `Word Puzzle` lineup card linking to `/arcade/word-puzzle/`.
+  - Added activity item for word puzzle deployment.
+  - Normalized one hero metadata separator to ASCII (`|`) for consistency.
+
+**Validation performed**
+
+- Ran JS syntax validation:
+  - `node --check` on extracted inline scripts from:
+    - `arcade/word-puzzle/index.html`
+    - `arcade/index.html`
+- Confirmed no Archive UI surfacing was introduced in modified arcade files.
+
 *This log is updated as new milestones and design decisions are made.*
