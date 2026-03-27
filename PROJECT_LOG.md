@@ -1,10 +1,10 @@
-# Cartofia Platform – Project Log
+# Cartofia Platform Ã¢â‚¬â€œ Project Log
 
 Chronological log of design decisions and milestones for the Cartofia Platform.
 
 ---
 
-## 2025-11-30 – Initial Concept & Architecture
+## 2025-11-30 Ã¢â‚¬â€œ Initial Concept & Architecture
 
 - Decided to build a **self-hosted platform** using Proxmox, Discord, and web tech.
 - Core idea:
@@ -22,20 +22,20 @@ Chronological log of design decisions and milestones for the Cartofia Platform.
 ### Containers and IDs
 
 - Chosen numbering convention:
-  - **CT1000** – Bot / orchestration container.
-  - **CT2000** – Game container (initially Cartofia).
+  - **CT1000** Ã¢â‚¬â€œ Bot / orchestration container.
+  - **CT2000** Ã¢â‚¬â€œ Game container (initially Cartofia).
 - CT1000 runs Discord bots and automation.
 - CT2000 will host the web version of Cartofia.
 
 ---
 
-## 2025-11-30 – Network Design
+## 2025-11-30 Ã¢â‚¬â€œ Network Design
 
 - Existing setup:
-  - `vmbr0` – external/LAN access.
-  - `vmbr1` – unsafe / vulnerable lab.
+  - `vmbr0` Ã¢â‚¬â€œ external/LAN access.
+  - `vmbr1` Ã¢â‚¬â€œ unsafe / vulnerable lab.
 - New design:
-  - Add **`vmbr2`** for “games & services” network.
+  - Add **`vmbr2`** for Ã¢â‚¬Å“games & servicesÃ¢â‚¬Â network.
     - Example subnet: `10.22.0.1/24`.
 - Purpose of `vmbr2`:
   - Isolated network for CTs that serve games and websites.
@@ -43,9 +43,9 @@ Chronological log of design decisions and milestones for the Cartofia Platform.
 
 ---
 
-## 2025-11-30 – Role Definitions
+## 2025-11-30 Ã¢â‚¬â€œ Role Definitions
 
-### CT1000 – Bot / Orchestration
+### CT1000 Ã¢â‚¬â€œ Bot / Orchestration
 
 - Runs Discord bot(s).
 - Talks to Proxmox API to:
@@ -58,10 +58,10 @@ Planned behaviour:
 
 - `/play_cartofia`:
   - Start CT2000 (if stopped).
-  - Send a “loading” message while the container boots.
+  - Send a Ã¢â‚¬Å“loadingÃ¢â‚¬Â message while the container boots.
   - Post the public URL once the game is reachable.
 
-### CT1010 – Gateway
+### CT1010 Ã¢â‚¬â€œ Gateway
 
 - New container planned as the **only public-facing web entry point**.
 - Dual-homed:
@@ -71,7 +71,7 @@ Planned behaviour:
   - Terminate HTTPS.
   - Route subdomains to internal CTs (e.g., Cartofia, games portal, other apps).
 
-### CT2000 – Cartofia Web Game
+### CT2000 Ã¢â‚¬â€œ Cartofia Web Game
 
 - Connected only to `vmbr2`.
 - Will host:
@@ -80,15 +80,15 @@ Planned behaviour:
 
 ---
 
-## 2025-11-30 – Future Platform Direction
+## 2025-11-30 Ã¢â‚¬â€œ Future Platform Direction
 
 - The Cartofia CT (`CT2000`) is planned as the **first game CT**, but the architecture is designed for expansion:
-  - CT2100 – a future “games portal” website.
-  - Additional CTs (CT22xx) – more WASM games or web tools.
-  - Optional CT3000 – shared services (databases, metrics, logging).
+  - CT2100 Ã¢â‚¬â€œ a future Ã¢â‚¬Å“games portalÃ¢â‚¬Â website.
+  - Additional CTs (CT22xx) Ã¢â‚¬â€œ more WASM games or web tools.
+  - Optional CT3000 Ã¢â‚¬â€œ shared services (databases, metrics, logging).
 
 - Long-term goal:
-  - A small “home arcade” platform:
+  - A small Ã¢â‚¬Å“home arcadeÃ¢â‚¬Â platform:
     - Discord for control and notifications.
     - Proxmox for lifecycle management.
     - Web front-end for playing multiple games and using tools.
@@ -97,7 +97,7 @@ Planned behaviour:
 
 ---
 
-## 2025-12-01 – CT1000 bot + Proxmox integration
+## 2025-12-01 Ã¢â‚¬â€œ CT1000 bot + Proxmox integration
 
 **Summary**
 
@@ -126,7 +126,7 @@ Planned behaviour:
 
 ---
 
-## 2025-12-01 – Cloudflare tunnel + Cartofia web host container
+## 2025-12-01 Ã¢â‚¬â€œ Cloudflare tunnel + Cartofia web host container
 
 **Summary**
 
@@ -151,13 +151,13 @@ Planned behaviour:
 **Next steps**
 
 - Finish Cloudflare Tunnel configuration:
-  - Add DNS routing for `cartofia.com` → the tunnel.
+  - Add DNS routing for `cartofia.com` Ã¢â€ â€™ the tunnel.
   - Define ingress rules so `/` and `/game/` on `cartofia.com` are served by the Cartofia web host container.
 - Once the web build is stable, copy `build/web/*` from the Cartofia-game repo into `/var/www/cartofia/game/` and verify that `https://cartofia.com/game/` loads the game.
 
 ---
 
-## 2025-12-02 – Cartofia-game refactor & web build prep (cross-repo work)
+## 2025-12-02 Ã¢â‚¬â€œ Cartofia-game refactor & web build prep (cross-repo work)
 
 > This work is in the **Cartofia-game** repo but is directly relevant to Cartofia-Arcade, because CT2000 will serve this web build.
 
@@ -198,8 +198,8 @@ Planned behaviour:
 - Finish stabilising the pygbag/pygame-web build so CT2000 can serve a working `build/web` bundle.
 - Hook the successful web build into the Cartofia-Arcade architecture:
   - CT2000 = static host for Cartofia-game web bundle.
-  - CT1000 bot = start/stop CT2000 and post the game URL into Discord when it’s ready.
-- Once things are stable, mirror a shortened version of the Cartofia-game change summary into that repo’s own `PROJECT_LOG` for cross-project consistency.
+  - CT1000 bot = start/stop CT2000 and post the game URL into Discord when itÃ¢â‚¬â„¢s ready.
+- Once things are stable, mirror a shortened version of the Cartofia-game change summary into that repoÃ¢â‚¬â„¢s own `PROJECT_LOG` for cross-project consistency.
 
 
 
@@ -749,5 +749,105 @@ Planned behaviour:
   - `node --check assets\site.js`
   - `node --check` on extracted inline script from `archive/index.html`
 
-*This log is updated as new milestones and design decisions are made.*
+---
 
+## 2026-03-27 - B12-inspired visual theme refresh (structure-preserving)
+
+**Summary**
+
+- Refreshed the shared Cartofia visual language to a cleaner premium dark style inspired by the B12 staging look, while preserving existing routes, page purposes, and JS behavior.
+- Removed Archive links/teasers from shared and public-facing UI in this redesign scope.
+
+**Details**
+
+- Updated `assets/site.css` with a broad theme pass:
+  - Refined dark palette tokens, gradients, panel surfaces, and soft background glows.
+  - Polished shared header/nav, account dropdown, hero/card surfaces, buttons, badges, pills, form controls, tables, notices, and footer styling.
+  - Improved hover/focus states and mobile spacing/presentation.
+- Updated `assets/site.js`:
+  - Removed archive visibility/render logic and stopped rendering Archive from the account dropdown.
+  - Preserved session/account dropdown behavior for existing account, profile, minecraft, and logout flows.
+- Updated page templates with minimal class/style-level adjustments (no route or layout restructuring):
+  - `index.html`
+  - `arcade/index.html`
+  - `minecraft/index.html`
+  - `account/index.html`
+  - `account/profile/index.html`
+  - `arcade/brick-blitz/index.html`
+  - `arcade/snake/index.html`
+  - `arcade/minesweeper/index.html`
+  - `arcade/maze-chase/index.html`
+  - `archive/index.html` (removed dropdown archive shortcut from shared account menu markup)
+- Removed shared/public Archive UI surfacing:
+  - Removed `data-archive-link` and `data-archive-only` usage from redesigned public/shared templates.
+  - Removed Archive nav/footer/account quick-link entries where present in redesigned pages.
+- Fixed post-edit encoding regressions:
+  - Removed unintended UTF-8 BOM from edited HTML files.
+  - Normalized garbled characters in `account/index.html` comments and `arcade/snake/index.html` touch-pad labels.
+
+**Validation performed**
+
+- Ran frontend syntax validation:
+  - `node --check assets\site.js`
+  - `node --check` on extracted inline scripts from touched HTML pages
+- Ran content checks:
+  - Confirmed no `data-archive-link`/`data-archive-only` markers remain in redesigned public/shared pages.
+  - Confirmed no mojibake (`ÃƒÂ¢...`) artifacts remain in touched templates.
+
+
+---
+
+## 2026-03-27 - Full structural theme redesign (replacing dashboard-style pass)
+
+**Summary**
+
+- Replaced the earlier cosmetic refresh with a full presentation-layer redesign focused on a premium, consumer-facing platform feel.
+- Kept existing routes, core functionality, and OIDC/session behavior intact.
+- Preserved archive protection logic while keeping Archive visually hidden from redesigned shared/public UI.
+
+**Details**
+
+- Rebuilt shared design system in `assets/site.css`:
+  - Replaced old stacked panel language with a new spacing and typography system.
+  - Introduced larger section rhythm, softer cinematic layering, and reduced border-heavy styling.
+  - Redesigned shared header/nav, account dropdown, hero surfaces, cards, buttons, forms, tables, and footer treatment.
+  - Improved responsive behavior for mobile-first readability and touch usability.
+- Rebuilt homepage structure in `index.html`:
+  - New dominant hero with focused CTAs and branded platform statement.
+  - Replaced utility-style quick boxes with curated destination cards.
+  - Moved infrastructure stats into a secondary "signal" band with cleaner hierarchy.
+  - Kept existing stats API integration (`data-stat` fields and timestamp flow).
+- Rebuilt arcade page structure in `arcade/index.html`:
+  - Added dramatic hero + featured spotlight treatment for `Cartofia`.
+  - Added curated featured strip and redesigned lineup composition for all games.
+  - Reframed operational notes as secondary "behind the scenes" content.
+- Rebuilt minecraft page structure in `minecraft/index.html`:
+  - New destination-style hero and direct connect callout.
+  - Join instructions elevated as primary flow.
+  - Live status retained but visually subordinate.
+  - Operations context presented as supportive highlights rather than widget blocks.
+- Rebuilt account page structure in `account/index.html`:
+  - New branded account hero and identity/security callout.
+  - Reworked page into story + portal composition.
+  - Preserved all OIDC login/callback/logout/session JS IDs and behavior.
+- Cleaned shared script header comment in `assets/site.js` and retained current role-aware dropdown behavior without Archive surfacing.
+
+**Validation performed**
+
+- Ran JS syntax validation:
+  - `node --check assets\site.js`
+  - `node --check` on extracted inline scripts from:
+    - `index.html`
+    - `arcade/index.html`
+    - `minecraft/index.html`
+    - `account/index.html`
+- Ran archive surfacing check:
+  - Confirmed no `Archive`, `archive`, `data-archive-link`, or `data-archive-only` matches in redesigned shared/public files:
+    - `index.html`
+    - `arcade/index.html`
+    - `minecraft/index.html`
+    - `account/index.html`
+    - `assets/site.js`
+    - `assets/site.css`
+
+*This log is updated as new milestones and design decisions are made.*

@@ -31,8 +31,8 @@
       width: 144px;
       height: 144px;
       border-radius: 50%;
-      border: 2px solid rgba(46, 168, 255, 0.62);
-      background: linear-gradient(150deg, #52bcff, #1f98f5);
+      border: 2px solid rgba(105, 194, 255, 0.56);
+      background: linear-gradient(150deg, #9ddcff, #4ba8f1);
       color: #001827;
       display: inline-flex;
       align-items: center;
@@ -81,10 +81,12 @@
     }
 
     .profile-badge {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: rgba(6, 13, 20, 0.82);
-      padding: 12px;
+      border: 1px solid rgba(150, 173, 206, 0.24);
+      border-radius: 14px;
+      background:
+        radial-gradient(340px 120px at 0% 0%, rgba(105, 194, 255, 0.08), transparent 68%),
+        linear-gradient(180deg, rgba(11, 20, 33, 0.95), rgba(9, 16, 28, 0.97));
+      padding: 13px;
       display: grid;
       gap: 6px;
     }
@@ -139,7 +141,6 @@
       </a>
       <nav class="site-nav" aria-label="Primary">
         <a href="/">Home</a>
-        <a class="hidden" data-archive-link href="/archive/">Archive</a>
         <a href="/arcade/">Arcade</a>
         <a href="/account/" class="active">Account</a>
       </nav>
@@ -148,7 +149,6 @@
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/profile/" role="menuitem">Profile</a>
           <a class="account-item" href="/account/" role="menuitem">Account</a>
-          <a class="account-item hidden" data-archive-link href="/archive/" role="menuitem">Archive</a>
         </div>
       </div>
     </header>
@@ -205,7 +205,7 @@
               <span class="status-value" id="emailText">-</span>
             </div>
             <div class="status-row">
-              <span class="status-label">Archive uploads</span>
+              <span class="status-label">Uploads</span>
               <span class="status-value" id="uploadCountText">0</span>
             </div>
             <div class="status-row">
@@ -239,7 +239,6 @@
       <span>Profile badges unlock automatically as you use Cartofia services.</span>
       <div class="footer-links">
         <a href="/">Home</a>
-        <a class="hidden" data-archive-link href="/archive/">Archive</a>
         <a href="/arcade/">Arcade</a>
       </div>
     </footer>

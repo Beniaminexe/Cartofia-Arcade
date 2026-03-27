@@ -9,57 +9,181 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css" />
   <style>
-    .tile-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
+    .home-hero {
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: clamp(22px, 4.6vw, 58px);
+      align-items: end;
     }
 
-    .tile {
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: rgba(8, 15, 23, 0.72);
-      padding: 12px;
+    .home-hero-copy {
+      display: grid;
+      gap: 20px;
+      max-width: 60ch;
+      z-index: 1;
+    }
+
+    .home-hero-actions {
+      margin-top: 6px;
+    }
+
+    .hero-footnote {
+      color: #a9bbd4;
+      font-size: 14px;
+      max-width: 50ch;
+    }
+
+    .home-hero-aside {
+      display: grid;
+      gap: 14px;
+      border-radius: 24px;
+      padding: 24px;
+      background: linear-gradient(180deg, rgba(13, 22, 35, 0.64), rgba(8, 14, 24, 0.56));
+      box-shadow: 0 20px 40px rgba(2, 10, 20, 0.38);
+    }
+
+    .home-hero-aside h2 {
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 23px;
+      letter-spacing: -0.025em;
+    }
+
+    .home-hero-aside p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .home-hero-list {
+      display: grid;
+      gap: 11px;
+      list-style: none;
+    }
+
+    .home-hero-list li {
+      color: #d5e2f3;
+      font-size: 15px;
+      padding-left: 16px;
+      position: relative;
+    }
+
+    .home-hero-list li::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #8ad7ff, #6d9fff);
+      position: absolute;
+      left: 0;
+      top: 10px;
+    }
+
+    .destination-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .destination-card {
+      border-radius: 24px;
+      padding: clamp(20px, 3vw, 34px);
+      background:
+        radial-gradient(560px 220px at -10% -20%, rgba(120, 207, 255, 0.2), transparent 72%),
+        linear-gradient(150deg, rgba(15, 26, 42, 0.86), rgba(10, 17, 29, 0.68));
+      box-shadow: 0 24px 52px rgba(1, 9, 19, 0.38);
+      display: grid;
+      gap: 16px;
+    }
+
+    .destination-head {
+      display: grid;
+      gap: 8px;
+    }
+
+    .destination-label {
+      color: #9ec1e4;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .destination-card h3 {
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: clamp(22px, 2.4vw, 34px);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .destination-card p {
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 36ch;
+    }
+
+    .destination-meta {
+      color: #bfd0e6;
+      font-size: 13px;
+      opacity: 0.92;
+    }
+
+    .infra-band {
+      border-radius: 26px;
+      padding: clamp(18px, 3.2vw, 30px);
+      background: linear-gradient(180deg, rgba(13, 22, 35, 0.66), rgba(8, 14, 24, 0.56));
+      box-shadow: 0 20px 40px rgba(1, 8, 16, 0.36);
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .infra-item {
       display: grid;
       gap: 6px;
     }
 
-    .tile h3 {
-      font-size: 17px;
+    .infra-label {
+      color: #9eb2cc;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+    }
+
+    .infra-value {
       font-family: "Sora", "Segoe UI", sans-serif;
-      font-weight: 600;
-    }
-
-    .tile p {
-      font-size: 14px;
-      color: var(--muted);
-    }
-
-    .tile a {
-      color: #7ecfff;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .tile a:hover {
-      color: #a8dcff;
+      font-size: clamp(20px, 2.5vw, 34px);
+      letter-spacing: -0.03em;
+      line-height: 1.04;
     }
 
     .stats-note {
       color: var(--muted);
       font-size: 13px;
-      margin-top: 10px;
+    }
+
+    .learning-wrap {
+      border-radius: 24px;
+      padding: clamp(18px, 3.2vw, 30px);
+      background: linear-gradient(180deg, rgba(14, 24, 39, 0.64), rgba(8, 14, 24, 0.5));
+      box-shadow: 0 20px 40px rgba(1, 8, 16, 0.33);
+      display: grid;
+      grid-template-columns: 1.1fr auto;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .learning-copy p {
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 50ch;
     }
 
     .embed-wrap {
       display: inline-block;
       width: fit-content;
       max-width: 100%;
-      border-radius: 12px;
-      border: 1px solid var(--line);
+      border-radius: 16px;
+      border: 1px solid rgba(152, 184, 220, 0.24);
       overflow: hidden;
-      background: rgba(6, 12, 18, 0.8);
+      background: rgba(9, 15, 24, 0.74);
     }
 
     .embed-wrap iframe {
@@ -68,6 +192,31 @@
       border: 0;
       display: block;
       background: transparent;
+    }
+
+    @media (max-width: 1080px) {
+      .home-hero {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .destination-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .infra-band {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .learning-wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .infra-band {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -87,137 +236,157 @@
       </a>
       <nav class="site-nav" aria-label="Primary">
         <a class="active" href="/">Home</a>
-        <a class="hidden" data-archive-link href="/archive/">Archive</a>
         <a href="/arcade/">Arcade</a>
         <a href="/minecraft/">Minecraft</a>
+        <a href="/account/">Account</a>
       </nav>
       <div class="account-menu" data-account-menu>
         <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-          <a class="account-item hidden" data-archive-link href="/archive/" role="menuitem">Open Archive</a>
         </div>
       </div>
     </header>
 
     <main>
-      <section class="hero-card reveal" data-delay="1">
-        <div class="hero-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 4H10V10H4V4ZM14 4H20V10H14V4ZM4 14H10V20H4V14ZM14 14H20V20H14V14Z" fill="#4FC0FF"></path>
-          </svg>
-        </div>
-        <div class="hero-copy">
-          <p class="hero-kicker">Self Hosted Platform</p>
-          <h1 class="hero-title">Cartofia Home</h1>
+      <section class="page-hero home-hero reveal" data-delay="1">
+        <div class="home-hero-copy">
+          <p class="hero-kicker">Cartofia Platform</p>
+          <h1 class="hero-title">Play, build, and connect on one self-hosted world.</h1>
           <p class="hero-lead">
-            One place for games and private platform services running on the same Proxmox setup.
+            Cartofia brings your game hub, community spaces, and account services into a single premium home base.
           </p>
-          <div class="pill-row">
-            <span class="pill"><strong>Gateway</strong> Nginx + Cloudflare Tunnel</span>
-            <span class="pill"><strong>Automation</strong> Discord bot controls</span>
-            <span class="pill"><strong>Access</strong> Account gated private features</span>
+          <div class="button-row home-hero-actions">
+            <a class="btn btn-primary" href="/arcade/">Enter Arcade</a>
+            <a class="btn btn-ghost" href="/minecraft/">Open Minecraft</a>
           </div>
+          <p class="hero-footnote">Account login personalizes your navigation and unlocks role-based private features.</p>
+        </div>
+
+        <aside class="home-hero-aside">
+          <h2>Tonight on Cartofia</h2>
+          <p>Curated highlights from the platform this week.</p>
+          <ul class="home-hero-list">
+            <li>Arcade lineup now includes Snake, Bomber Raid, Minesweeper, and Maze Chase.</li>
+            <li>Minecraft server routing stays live through Discord-powered wake flow.</li>
+            <li>Account profiles support badges, avatars, and persistent progression.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="section-block reveal" data-delay="2">
+        <div class="section-head">
+          <p class="section-label">Destinations</p>
+          <h2 class="section-title">Choose your Cartofia lane</h2>
+          <p class="section-lead">Each destination keeps its own purpose and flow while sharing one design language.</p>
+        </div>
+
+        <div class="destination-grid">
+          <article class="destination-card">
+            <div class="destination-head">
+              <span class="destination-label">Play</span>
+              <h3>Arcade</h3>
+            </div>
+            <p>Launch browser-first games with curated presentation and touch-friendly controls.</p>
+            <div class="destination-meta">Featured: Cartofia, Bomber Raid, Minesweeper, Maze Chase</div>
+            <div class="button-row">
+              <a class="btn btn-primary" href="/arcade/">Browse Games</a>
+            </div>
+          </article>
+
+          <article class="destination-card">
+            <div class="destination-head">
+              <span class="destination-label">World</span>
+              <h3>Minecraft</h3>
+            </div>
+            <p>Get live server status, join instructions, and operations notes for the shared world.</p>
+            <div class="destination-meta">Vanilla survival node with Discord-assisted startup</div>
+            <div class="button-row">
+              <a class="btn btn-ghost" href="/minecraft/">View Server</a>
+            </div>
+          </article>
+
+          <article class="destination-card">
+            <div class="destination-head">
+              <span class="destination-label">Identity</span>
+              <h3>Account</h3>
+            </div>
+            <p>Sign in once, manage your profile, and keep your presence consistent across Cartofia.</p>
+            <div class="destination-meta">OIDC-based SSO with role-aware access</div>
+            <div class="button-row">
+              <a class="btn btn-ghost" href="/account/#login">Open Account</a>
+            </div>
+          </article>
+
+          <article class="destination-card">
+            <div class="destination-head">
+              <span class="destination-label">Community</span>
+              <h3>Discord + GitHub</h3>
+            </div>
+            <p>Follow updates, share feedback, and track development from the same community channels.</p>
+            <div class="destination-meta">Direct links to Discord and source activity</div>
+            <div class="button-row">
+              <a class="btn btn-ghost" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Join Discord</a>
+            </div>
+          </article>
         </div>
       </section>
 
-      <section class="layout-grid">
-        <article class="card reveal cta-panel" data-delay="2">
-          <div class="cta-head">
-            <div class="cta-text">
-              <p class="cta-kicker">Start here</p>
-              <h2 class="card-title">Choose where to go</h2>
-              <p class="card-subtitle">Launch a game, check Minecraft status, or open private sections if your role allows it.</p>
-            </div>
-            <div class="cta-badges" aria-hidden="true">
-              <span class="cta-badge ok hidden" data-archive-only>Archive</span>
-              <span class="cta-badge">Arcade</span>
-              <span class="cta-badge">Minecraft</span>
-            </div>
+      <section class="section-block reveal" data-delay="3">
+        <div class="section-head">
+          <p class="section-label">Infrastructure</p>
+          <h2 class="section-title">Live platform signal</h2>
+          <p class="section-lead">Operational metrics stay visible, but remain visually secondary to the platform experience.</p>
+        </div>
+
+        <div class="infra-band">
+          <div class="infra-item">
+            <span class="infra-label">Games Online</span>
+            <span class="infra-value" data-stat="games_online">--</span>
           </div>
-
-          <div class="cta-actions button-row">
-            <a class="btn btn-primary hidden" data-archive-link href="/archive/">Open Archive</a>
-            <a class="btn btn-ghost" href="/arcade/">Play Arcade</a>
-            <a class="btn btn-ghost" href="/minecraft/">Minecraft Status</a>
+          <div class="infra-item">
+            <span class="infra-label">Active Bots</span>
+            <span class="infra-value" data-stat="active_bots">--</span>
           </div>
-
-          <div class="cta-note">Private sections are only shown for authorized roles.</div>
-        </article>
-
-        <article class="card reveal" data-delay="3">
-          <h2 class="card-title">Live Infrastructure</h2>
-          <p class="card-subtitle">Values update every 30 seconds from the API.</p>
-          <div class="status-list">
-            <div class="status-row">
-              <span class="status-label">Games Online</span>
-              <span class="status-value" data-stat="games_online">--</span>
-            </div>
-            <div class="status-row">
-              <span class="status-label">Active Bots</span>
-              <span class="status-value" data-stat="active_bots">--</span>
-            </div>
-            <div class="status-row">
-              <span class="status-label">Containers</span>
-              <span class="status-value"><span data-stat="online_containers">--</span> / <span data-stat="total_containers">--</span></span>
-            </div>
-            <div class="status-row">
-              <span class="status-label">Node Uptime</span>
-              <span class="status-value" data-stat="uptime_display">--</span>
-            </div>
-            <div class="status-row">
-              <span class="status-label">Memory Usage</span>
-              <span class="status-value"><span data-stat="memory_used_gb">--</span> / <span data-stat="memory_total_gb">--</span> GB</span>
-            </div>
+          <div class="infra-item">
+            <span class="infra-label">Containers</span>
+            <span class="infra-value"><span data-stat="online_containers">--</span> / <span data-stat="total_containers">--</span></span>
           </div>
-          <p class="stats-note" id="statsTimestamp">Last update: waiting for first fetch.</p>
-        </article>
-
-        <article class="card col-span-2 reveal" data-delay="2">
-          <h2 class="card-title">Quick Access</h2>
-          <p class="card-subtitle">Jump directly to the main parts of the website.</p>
-          <div class="tile-grid">
-            <div class="tile hidden" data-archive-only>
-              <h3>Archive</h3>
-              <p>Upload and download files with account based access control.</p>
-              <a class="hidden" data-archive-link href="/archive/">Go to Archive</a>
-            </div>
-            <div class="tile">
-              <h3>Arcade</h3>
-              <p>Play Cartofia in the browser and track current slots.</p>
-              <a href="/arcade/">Go to Arcade</a>
-            </div>
-            <div class="tile">
-              <h3>Minecraft</h3>
-              <p>Live status page with server details and join instructions.</p>
-              <a href="/minecraft/">Go to Minecraft</a>
-            </div>
-            <div class="tile">
-              <h3>Community</h3>
-              <p>Join Discord and follow source repositories for updates.</p>
-              <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Open Discord</a>
-            </div>
-            <div class="tile">
-              <h3>Account</h3>
-              <p>Log in or create an account to access private role-based sections.</p>
-              <a href="/account/#login">Go to Account</a>
-            </div>
+          <div class="infra-item">
+            <span class="infra-label">Node Uptime</span>
+            <span class="infra-value" data-stat="uptime_display">--</span>
           </div>
-        </article>
+          <div class="infra-item">
+            <span class="infra-label">Memory</span>
+            <span class="infra-value"><span data-stat="memory_used_gb">--</span> / <span data-stat="memory_total_gb">--</span> GB</span>
+          </div>
+        </div>
+        <p class="stats-note" id="statsTimestamp">Last update: waiting for first fetch.</p>
+      </section>
 
-        <article class="card col-span-2 reveal" data-delay="3">
-          <h2 class="card-title">Learning Progress</h2>
-          <p class="card-subtitle">Live TryHackMe profile badge.</p>
+      <section class="section-block reveal" data-delay="3">
+        <div class="section-head">
+          <p class="section-label">Progress</p>
+          <h2 class="section-title">Security learning track</h2>
+          <p class="section-lead">TryHackMe progress badge connected to the current public profile.</p>
+        </div>
+        <div class="learning-wrap">
+          <div class="learning-copy">
+            <p>Cartofia continues to blend platform building with practical security learning and deployment operations.</p>
+          </div>
           <div class="embed-wrap">
             <iframe src="https://tryhackme.com/api/v2/badges/public-profile?userPublicId=5285070" title="TryHackMe progress" loading="lazy" scrolling="no" referrerpolicy="no-referrer"></iframe>
           </div>
-        </article>
+        </div>
       </section>
     </main>
 
     <footer class="footer">
       <span>Copyright <span id="year"></span> Cartofia. All rights reserved.</span>
       <div class="footer-links">
+        <a href="/arcade/">Arcade</a>
+        <a href="/minecraft/">Minecraft</a>
+        <a href="/account/">Account</a>
         <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
         <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
       </div>

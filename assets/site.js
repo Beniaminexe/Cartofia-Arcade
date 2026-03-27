@@ -1,29 +1,9 @@
 (function () {
-  /* ── OIDC configuration ──────────────────────────────────────────── */
+  /* OIDC configuration */
   var OIDC_USERINFO_URL = "/application/o/userinfo/";
   var OIDC_LOGOUT_URL   = "/application/o/cartofia/end-session/";
   var OIDC_LOGIN_URL    = "/account/#login";
   var PROFILE_ME_URL    = "/api/profile/me";
-  var ARCHIVE_ACCESS_GROUPS = ["archive_view", "archive_upload", "archive_admin"];
-  var ARCHIVE_UPLOAD_GROUPS = ["archive_upload", "archive_admin"];
-
-  function hasAnyGroup(groups, allowed) {
-    var userGroups = Array.isArray(groups) ? groups : [];
-    for (var i = 0; i < userGroups.length; i++) {
-      if (allowed.indexOf(userGroups[i]) !== -1) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function hasArchiveAccess(groups) {
-    return hasAnyGroup(groups, ARCHIVE_ACCESS_GROUPS);
-  }
-
-  function hasArchiveUploadAccess(groups) {
-    return hasAnyGroup(groups, ARCHIVE_UPLOAD_GROUPS);
-  }
 
   function initialsFrom(username) {
     var value = username ? String(username).trim() : "";
@@ -107,19 +87,6 @@
     return sessionPromise;
   }
 
-  function applyArchiveVisibility(session) {
-    var groups = session && session.user ? session.user.groups : [];
-    var canArchive = !!(session && session.authenticated && hasArchiveAccess(groups));
-    var archiveLinks = document.querySelectorAll('a[href="/archive/"], [data-archive-link]');
-    archiveLinks.forEach(function (element) {
-      element.classList.toggle("hidden", !canArchive);
-    });
-    var archiveOnlyBlocks = document.querySelectorAll("[data-archive-only]");
-    archiveOnlyBlocks.forEach(function (element) {
-      element.classList.toggle("hidden", !canArchive);
-    });
-  }
-
   function renderAccountDropdown(menu, session) {
     const button = menu.querySelector("[data-account-toggle]");
     const dropdown = menu.querySelector("[data-account-dropdown]");
@@ -130,8 +97,6 @@
     const username = session && session.user && session.user.username ? String(session.user.username) : null;
     const displayName = session && session.user && session.user.display_name ? String(session.user.display_name) : null;
     const email = session && session.user && session.user.email ? String(session.user.email) : null;
-    const groups = session && session.user && Array.isArray(session.user.groups) ? session.user.groups : [];
-    const canArchive = !!(session && session.authenticated && hasArchiveAccess(groups));
     const avatarUrl = session && session.user && session.user.avatar_url ? String(session.user.avatar_url) : "";
     const initials = initialsFrom(displayName || username);
     setAvatarVisual(button, initials, avatarUrl);
@@ -188,9 +153,6 @@
     if (session && session.authenticated && username) {
       addLink("Profile", "/account/profile/");
       addLink("Account", "/account/");
-      if (canArchive) {
-        addLink("Archive", "/archive/");
-      }
       addLink("Minecraft", "/minecraft/");
       addButton("Logout", { logout: "true" });
     } else {
@@ -247,12 +209,10 @@
 
     fetchSessionBundle().then(function (session) {
       renderAccountDropdown(menu, session);
-      applyArchiveVisibility(session);
     });
   }
 
   function init() {
-    applyArchiveVisibility({ authenticated: false, user: { groups: [] } });
     const menus = document.querySelectorAll("[data-account-menu]");
     menus.forEach(initAccountMenu);
   }

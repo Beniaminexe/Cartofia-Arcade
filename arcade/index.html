@@ -9,72 +9,202 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css" />
   <style>
-    .game-grid {
+    .arcade-hero {
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+      align-items: end;
+      gap: clamp(22px, 4.8vw, 60px);
+    }
+
+    .arcade-hero-copy {
+      display: grid;
+      gap: 20px;
+      max-width: 60ch;
+      z-index: 1;
+    }
+
+    .arcade-stage {
+      border-radius: 24px;
+      padding: clamp(22px, 3.4vw, 34px);
+      background:
+        radial-gradient(420px 240px at 90% -30%, rgba(143, 203, 255, 0.22), transparent 74%),
+        linear-gradient(180deg, rgba(14, 24, 39, 0.72), rgba(9, 15, 25, 0.58));
+      box-shadow: 0 24px 48px rgba(1, 9, 20, 0.38);
       display: grid;
       gap: 12px;
     }
 
-    .game-entry {
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: rgba(7, 13, 20, 0.76);
-      padding: 14px;
-      display: grid;
-      gap: 8px;
-    }
-
-    .game-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .game-name {
+    .arcade-stage h2 {
       font-family: "Sora", "Segoe UI", sans-serif;
-      font-size: 20px;
-      font-weight: 650;
-      letter-spacing: -0.02em;
+      font-size: clamp(22px, 2.5vw, 36px);
+      letter-spacing: -0.03em;
+      line-height: 1.08;
     }
 
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      padding: 5px 10px;
-      border: 1px solid var(--line-strong);
-      color: #8ad4ff;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      background: rgba(15, 42, 66, 0.5);
+    .arcade-stage p {
+      color: var(--muted);
+      font-size: 15px;
     }
 
-    .game-meta {
+    .arcade-stage .meta {
+      color: #bdd0e8;
+      font-size: 13px;
+    }
+
+    .featured-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .featured-card {
+      border-radius: 20px;
+      padding: 18px;
+      background: linear-gradient(165deg, rgba(15, 26, 42, 0.85), rgba(10, 18, 30, 0.64));
+      box-shadow: 0 18px 34px rgba(2, 10, 20, 0.34);
+      display: grid;
+      gap: 10px;
+    }
+
+    .featured-card h3 {
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: clamp(20px, 2vw, 28px);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+
+    .featured-card p {
       color: var(--muted);
       font-size: 14px;
     }
 
-    .meta-row {
+    .featured-tag {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      border-radius: 999px;
+      padding: 5px 10px;
+      border: 1px solid rgba(125, 199, 255, 0.38);
+      color: #d2ebff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(33, 63, 98, 0.52);
+    }
+
+    .lineup-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .lineup-card {
+      border-radius: 22px;
+      padding: clamp(18px, 2.6vw, 30px);
+      background:
+        radial-gradient(360px 120px at -10% -20%, rgba(119, 207, 255, 0.18), transparent 74%),
+        linear-gradient(180deg, rgba(14, 24, 39, 0.73), rgba(9, 15, 25, 0.58));
+      box-shadow: 0 18px 38px rgba(1, 8, 18, 0.34);
+      display: grid;
+      gap: 14px;
+    }
+
+    .lineup-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .lineup-head h3 {
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: clamp(22px, 2.2vw, 34px);
+      letter-spacing: -0.03em;
+    }
+
+    .lineup-tags {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
 
-    .meta-pill {
+    .lineup-tags span {
       border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(8, 14, 21, 0.72);
-      color: var(--muted);
-      padding: 4px 10px;
+      padding: 5px 9px;
+      background: rgba(14, 26, 41, 0.62);
+      color: #bdd0e8;
       font-size: 12px;
+      border: 1px solid rgba(143, 175, 209, 0.24);
     }
 
-    .activity-list b {
-      color: #74ccff;
-      font-weight: 700;
+    .lineup-card p {
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 44ch;
+    }
+
+    .arcade-detail-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+    }
+
+    .activity-list {
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .activity-list li {
+      color: #c6d5e8;
+      padding-left: 16px;
+      position: relative;
+      font-size: 14px;
+    }
+
+    .activity-list li::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #8ad7ff, #6c9eff);
+      position: absolute;
+      left: 0;
+      top: 10px;
+    }
+
+    .pipeline-list {
+      list-style: none;
+      display: grid;
+      gap: 12px;
+    }
+
+    .pipeline-list li {
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(10, 18, 31, 0.56);
+      color: #c0d0e4;
+      font-size: 14px;
+    }
+
+    .pipeline-list b {
+      display: block;
+      margin-bottom: 4px;
+      color: #eef4ff;
+      font-size: 15px;
+    }
+
+    @media (max-width: 1080px) {
+      .arcade-hero {
+        grid-template-columns: 1fr;
+      }
+
+      .featured-grid,
+      .lineup-grid,
+      .arcade-detail-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -94,180 +224,179 @@
       </a>
       <nav class="site-nav" aria-label="Primary">
         <a href="/">Home</a>
-        <a class="hidden" data-archive-link href="/archive/">Archive</a>
         <a class="active" href="/arcade/">Arcade</a>
         <a href="/minecraft/">Minecraft</a>
+        <a href="/account/">Account</a>
       </nav>
       <div class="account-menu" data-account-menu>
         <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-          <a class="account-item hidden" data-archive-link href="/archive/" role="menuitem">Open Archive</a>
         </div>
       </div>
     </header>
 
     <main>
-      <section class="hero-card reveal" data-delay="1">
-        <div class="hero-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M7 4H17L20 7V17L17 20H7L4 17V7L7 4Z" stroke="#57C2FF" stroke-width="1.5"></path>
-            <circle cx="9" cy="10" r="1.2" fill="#57C2FF"></circle>
-            <circle cx="15" cy="10" r="1.2" fill="#57C2FF"></circle>
-            <path d="M8.5 14.5H15.5" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div class="hero-copy">
-          <p class="hero-kicker">Web Games</p>
-          <h1 class="hero-title">Cartofia Arcade</h1>
+      <section class="page-hero arcade-hero reveal" data-delay="1">
+        <div class="arcade-hero-copy">
+          <p class="hero-kicker">Cartofia Arcade</p>
+          <h1 class="hero-title">A curated web arcade, built for quick sessions and repeat play.</h1>
           <p class="hero-lead">
-            Browser playable projects from the same private platform. Start with Cartofia and expand into more games over time.
+            The arcade is organized as a lineup, not a utility list. Start with flagship games, then branch into classics and experiments.
           </p>
-          <div class="pill-row">
-            <span class="pill"><strong>Build</strong> Pygame to WebAssembly</span>
-            <span class="pill"><strong>Delivery</strong> Served from your own infrastructure</span>
-            <span class="pill"><strong>Current Slots</strong> 6 / 8 online</span>
+          <div class="button-row">
+            <a class="btn btn-primary" href="/arcade/cartofia/">Play Cartofia</a>
+            <a class="btn btn-ghost" href="/arcade/bomber-raid/">Play Bomber Raid</a>
           </div>
+          <div class="pill-row">
+            <span class="pill"><strong>Runtime</strong> Browser-first deployment</span>
+            <span class="pill"><strong>Controls</strong> Keyboard and touch support</span>
+            <span class="pill"><strong>Direction</strong> Expanding curated lineup</span>
+          </div>
+        </div>
+
+        <aside class="arcade-stage">
+          <span class="featured-tag">Flagship</span>
+          <h2>Cartofia</h2>
+          <p>2D platform adventure ported from Pygame to WebAssembly, tuned for instant play from the browser.</p>
+          <div class="meta">Single player • Keyboard controls • No install needed</div>
+          <div class="button-row">
+            <a class="btn btn-primary" href="/arcade/cartofia/">Launch Now</a>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section-block reveal" data-delay="2">
+        <div class="section-head">
+          <p class="section-label">Featured</p>
+          <h2 class="section-title">Current spotlight picks</h2>
+          <p class="section-lead">Front-row games with strong replay value and polished control tuning.</p>
+        </div>
+
+        <div class="featured-grid">
+          <article class="featured-card">
+            <span class="featured-tag">Platform</span>
+            <h3>Cartofia</h3>
+            <p>Flagship platform adventure with polished movement and browser runtime.</p>
+            <div class="button-row">
+              <a class="btn btn-ghost" href="/arcade/cartofia/">Play</a>
+            </div>
+          </article>
+
+          <article class="featured-card">
+            <span class="featured-tag">Action</span>
+            <h3>Bomber Raid</h3>
+            <p>Bomberman-like match play with bots, powerups, and online room support.</p>
+            <div class="button-row">
+              <a class="btn btn-ghost" href="/arcade/bomber-raid/">Play</a>
+            </div>
+          </article>
+
+          <article class="featured-card">
+            <span class="featured-tag">Classic</span>
+            <h3>Maze Chase</h3>
+            <p>Pac-style chase gameplay tuned for touch and keyboard sessions.</p>
+            <div class="button-row">
+              <a class="btn btn-ghost" href="/arcade/maze-chase/">Play</a>
+            </div>
+          </article>
         </div>
       </section>
 
-      <section class="layout-grid">
-        <article class="card reveal" data-delay="2">
-          <h2 class="card-title">Available Games</h2>
-          <p class="card-subtitle">Launch from this page. No install required for browser titles.</p>
+      <section class="section-block reveal" data-delay="2">
+        <div class="section-head">
+          <p class="section-label">Lineup</p>
+          <h2 class="section-title">Full games lineup</h2>
+          <p class="section-lead">Every title stays launchable from this page with direct play links.</p>
+        </div>
 
-          <div class="game-grid">
-            <div class="game-entry">
-              <div class="game-head">
-                <div class="game-name">Cartofia</div>
-                <span class="tag">Now Playable</span>
-              </div>
-              <p class="game-meta">2D platform adventure built with Pygame, exported to WebAssembly.</p>
-              <div class="meta-row">
-                <span class="meta-pill">Single player</span>
-                <span class="meta-pill">Keyboard controls</span>
-                <span class="meta-pill">In browser</span>
-              </div>
-              <div class="button-row">
-                <a class="btn btn-primary" href="/arcade/cartofia/">Play Cartofia</a>
+        <div class="lineup-grid">
+          <article class="lineup-card">
+            <div class="lineup-head">
+              <h3>Snake Classic</h3>
+              <div class="lineup-tags">
+                <span>Single player</span>
+                <span>Touch + Keyboard</span>
               </div>
             </div>
+            <p>Arcade snake with persistent high score and mobile controls that avoid page scroll conflicts.</p>
+            <div class="button-row">
+              <a class="btn btn-primary" href="/arcade/snake/">Play Snake Classic</a>
+            </div>
+          </article>
 
-            <div class="game-entry">
-              <div class="game-head">
-                <div class="game-name">Snake Classic</div>
-                <span class="tag">Now Playable</span>
-              </div>
-              <p class="game-meta">Arcade snake with keyboard and touch controls, plus persistent high score.</p>
-              <div class="meta-row">
-                <span class="meta-pill">Single player</span>
-                <span class="meta-pill">Keyboard + touch</span>
-                <span class="meta-pill">In browser</span>
-              </div>
-              <div class="button-row">
-                <a class="btn btn-primary" href="/arcade/snake/">Play Snake Classic</a>
+          <article class="lineup-card">
+            <div class="lineup-head">
+              <h3>Brick Blitz</h3>
+              <div class="lineup-tags">
+                <span>Single player</span>
+                <span>Touch + Keyboard</span>
               </div>
             </div>
+            <p>Breakout-style paddle game with lives, level pacing, and persistent best score tracking.</p>
+            <div class="button-row">
+              <a class="btn btn-primary" href="/arcade/brick-blitz/">Play Brick Blitz</a>
+            </div>
+          </article>
 
-            <div class="game-entry">
-              <div class="game-head">
-                <div class="game-name">Brick Blitz</div>
-                <span class="tag">Now Playable</span>
-              </div>
-              <p class="game-meta">Breakout-style paddle game with levels, lives, and persistent best score.</p>
-              <div class="meta-row">
-                <span class="meta-pill">Single player</span>
-                <span class="meta-pill">Keyboard + touch</span>
-                <span class="meta-pill">In browser</span>
-              </div>
-              <div class="button-row">
-                <a class="btn btn-primary" href="/arcade/brick-blitz/">Play Brick Blitz</a>
+          <article class="lineup-card">
+            <div class="lineup-head">
+              <h3>Minesweeper Classic</h3>
+              <div class="lineup-tags">
+                <span>Single player</span>
+                <span>Mouse + Touch</span>
               </div>
             </div>
+            <p>Original-style minesweeper with beginner to expert presets and custom board options.</p>
+            <div class="button-row">
+              <a class="btn btn-primary" href="/arcade/minesweeper/">Play Minesweeper</a>
+            </div>
+          </article>
 
-            <div class="game-entry">
-              <div class="game-head">
-                <div class="game-name">Bomber Raid</div>
-                <span class="tag">Now Playable</span>
-              </div>
-              <p class="game-meta">Singleplayer or 2-player Bomberman-like play with powerups, bombs, destructible crates, and enemy bots.</p>
-              <div class="meta-row">
-                <span class="meta-pill">Single player</span>
-                <span class="meta-pill">Keyboard + touch</span>
-                <span class="meta-pill">In browser</span>
-              </div>
-              <div class="button-row">
-                <a class="btn btn-primary" href="/arcade/bomber-raid/">Play Bomber Raid</a>
+          <article class="lineup-card">
+            <div class="lineup-head">
+              <h3>Maze Chase</h3>
+              <div class="lineup-tags">
+                <span>Single player</span>
+                <span>Touch + Keyboard</span>
               </div>
             </div>
+            <p>Clear pellets, route around ghosts, and use power orbs to flip pressure into opportunity.</p>
+            <div class="button-row">
+              <a class="btn btn-primary" href="/arcade/maze-chase/">Play Maze Chase</a>
+            </div>
+          </article>
+        </div>
+      </section>
 
-            <div class="game-entry">
-              <div class="game-head">
-                <div class="game-name">Minesweeper Classic</div>
-                <span class="tag">Now Playable</span>
-              </div>
-              <p class="game-meta">Classic Minesweeper clone with Beginner, Intermediate, Expert, and Custom boards.</p>
-              <div class="meta-row">
-                <span class="meta-pill">Single player</span>
-                <span class="meta-pill">Mouse + touch</span>
-                <span class="meta-pill">In browser</span>
-              </div>
-              <div class="button-row">
-                <a class="btn btn-primary" href="/arcade/minesweeper/">Play Minesweeper Classic</a>
-              </div>
-            </div>
+      <section class="section-block reveal" data-delay="3">
+        <div class="section-head">
+          <p class="section-label">Behind The Scenes</p>
+          <h2 class="section-title">How this arcade is delivered</h2>
+          <p class="section-lead">Operational details presented as context, not as the page's main visual weight.</p>
+        </div>
 
-            <div class="game-entry">
-              <div class="game-head">
-                <div class="game-name">Maze Chase</div>
-                <span class="tag">Now Playable</span>
-              </div>
-              <p class="game-meta">Pac-Man style maze game: eat pellets, use power orbs, and evade ghost patrols.</p>
-              <div class="meta-row">
-                <span class="meta-pill">Single player</span>
-                <span class="meta-pill">Keyboard + touch</span>
-                <span class="meta-pill">In browser</span>
-              </div>
-              <div class="button-row">
-                <a class="btn btn-primary" href="/arcade/maze-chase/">Play Maze Chase</a>
-              </div>
-            </div>
-          </div>
-        </article>
+        <div class="arcade-detail-grid">
+          <article class="card">
+            <h3 style="font-family:'Sora','Segoe UI',sans-serif;font-size:28px;letter-spacing:-0.03em;">Recent Activity</h3>
+            <ul class="activity-list" style="margin-top:14px;">
+              <li>Maze Chase deployed to <b>/arcade/maze-chase/</b> and marked playable.</li>
+              <li>Minesweeper Classic deployed to <b>/arcade/minesweeper/</b> and marked playable.</li>
+              <li>Bomber Raid online mode and room flow updates published.</li>
+              <li>Snake and Brick Blitz control refinements shipped for mobile play.</li>
+              <li>Gateway routes for arcade endpoints passed health checks.</li>
+            </ul>
+          </article>
 
-        <article class="card reveal" data-delay="3">
-          <h2 class="card-title">Recent Activity</h2>
-          <p class="card-subtitle">Sample events from this arcade node.</p>
-          <ul class="list activity-list">
-            <li><b>Maze Chase</b> deployed to <b>/arcade/maze-chase/</b> and marked playable.</li>
-            <li><b>Minesweeper Classic</b> deployed to <b>/arcade/minesweeper/</b> and marked playable.</li>
-            <li><b>Bomber Raid</b> deployed to <b>/arcade/bomber-raid/</b> and marked playable.</li>
-            <li><b>Brick Blitz</b> deployed to <b>/arcade/brick-blitz/</b> and marked playable.</li>
-            <li><b>Snake Classic</b> deployed to <b>/arcade/snake/</b> and marked playable.</li>
-            <li><b>Cartofia</b> build deployed to web runtime 2h ago.</li>
-            <li>Gateway routed <b>/arcade/cartofia/</b> successfully 4h ago.</li>
-            <li>Cloudflare tunnel health check passed 1d ago.</li>
-          </ul>
-          <div class="notice">Game telemetry stays lightweight by design.</div>
-        </article>
-
-        <article class="card col-span-2 reveal" data-delay="2">
-          <h2 class="card-title">How This Arcade Works</h2>
-          <div class="tile-grid">
-            <div class="tile">
-              <h3>Build Step</h3>
-              <p>Projects are exported from Python game code into browser compatible bundles.</p>
-            </div>
-            <div class="tile">
-              <h3>Host Step</h3>
-              <p>Static outputs are hosted behind your gateway with secure routing.</p>
-            </div>
-            <div class="tile">
-              <h3>Scale Step</h3>
-              <p>New game pages can be added with separate containers when needed.</p>
-            </div>
-          </div>
-        </article>
+          <article class="card">
+            <h3 style="font-family:'Sora','Segoe UI',sans-serif;font-size:28px;letter-spacing:-0.03em;">Pipeline</h3>
+            <ul class="pipeline-list" style="margin-top:14px;">
+              <li><b>Build</b>Python game projects are exported to browser-ready bundles.</li>
+              <li><b>Serve</b>Outputs are hosted behind Cartofia routing with static delivery.</li>
+              <li><b>Scale</b>New game routes stay isolated so releases remain low-risk.</li>
+            </ul>
+          </article>
+        </div>
       </section>
     </main>
 
@@ -275,7 +404,8 @@
       <span>Copyright <span id="year"></span> Cartofia. All rights reserved.</span>
       <div class="footer-links">
         <a href="/">Home</a>
-        <a class="hidden" data-archive-link href="/archive/">Archive</a>
+        <a href="/minecraft/">Minecraft</a>
+        <a href="/account/">Account</a>
         <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
       </div>
     </footer>
