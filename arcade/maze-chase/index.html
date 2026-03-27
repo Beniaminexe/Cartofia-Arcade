@@ -359,7 +359,8 @@
       const BEST_KEY = "cartofia_maze_chase_best_v1";
       const TILE = 28;
       const PLAYER_STEP_MS = 108;
-      const GHOST_STEP_MS = 190;
+      // Slowed down to reduce ghost pressure (at least 50% slower than previous pacing).
+      const GHOST_STEP_MS = 400;
       const POWER_MS = 8000;
       const START_GRACE_MS = 1100;
       const DIRS = {

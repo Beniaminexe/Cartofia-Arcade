@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Zuma | Cartofia Arcade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .zuma-layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 780px) minmax(260px, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .board-panel {
+      position: relative;
+      border-radius: 14px;
+      border: 1px solid rgba(126, 183, 235, 0.32);
+      background:
+        radial-gradient(420px 180px at 20% 6%, rgba(98, 190, 255, 0.13), transparent 68%),
+        radial-gradient(520px 220px at 82% 0%, rgba(74, 129, 248, 0.14), transparent 70%),
+        linear-gradient(180deg, rgba(7, 16, 27, 0.92), rgba(4, 10, 18, 0.96));
+      padding: 12px;
+      overflow: hidden;
+      box-shadow:
+        0 18px 36px rgba(1, 8, 16, 0.46),
+        inset 0 0 0 1px rgba(174, 212, 255, 0.08);
+    }
+
+    .board-frame {
+      position: relative;
+      border-radius: 10px;
+      border: 1px solid rgba(100, 186, 255, 0.34);
+      background: #030912;
+      overflow: hidden;
+      box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+        inset 0 0 40px rgba(41, 122, 184, 0.08);
+    }
+
+    #game {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 10;
+      touch-action: none;
+      background: #020913;
+    }
+
+    #board-frame:fullscreen,
+    #board-frame:-webkit-full-screen {
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      border-radius: 0;
+      background: #01050d;
+      display: grid;
+      place-items: center;
+      box-shadow: none;
+      padding: 0;
+    }
+
+    #board-frame:fullscreen #game,
+    #board-frame:-webkit-full-screen #game {
+      width: min(100vw, calc(100vh * 1.6));
+      max-height: 100vh;
+      height: auto;
+      aspect-ratio: 16 / 10;
+    }
+
+    .board-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      background: rgba(2, 8, 13, 0.72);
+      color: #d8ecff;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+      padding: 22px;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .board-overlay.hidden {
+      opacity: 0;
+    }
+
+    .inframe-actions {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 6px;
+      z-index: 4;
+      transition: opacity .18s ease;
+    }
+
+    .inframe-actions .btn {
+      min-height: 32px;
+      padding: 6px 10px;
+      font-size: 12px;
+      backdrop-filter: blur(2px);
+    }
+
+    .inframe-actions .btn.btn-compact {
+      min-width: 106px;
+    }
+
+    .inframe-actions.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .game-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    .stat-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(138, 160, 185, 0.16);
+      padding-bottom: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .stat-row b {
+      color: #cbe8ff;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+
+    .controls-list {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .controls-list b {
+      color: #90d4ff;
+      font-weight: 700;
+    }
+
+    .game-note {
+      border-radius: 10px;
+      border: 1px dashed var(--line);
+      background: rgba(4, 10, 16, 0.66);
+      color: var(--muted);
+      font-size: 13px;
+      padding: 9px 10px;
+    }
+
+    .landscape-tip {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(113, 185, 255, 0.34);
+      background: rgba(8, 17, 29, 0.72);
+      color: #c8def8;
+      font-size: 13px;
+      padding: 8px 10px;
+    }
+
+    .landscape-tip.hidden {
+      display: none;
+    }
+
+    .landscape-tip .tip-action {
+      min-height: 30px;
+      min-width: 110px;
+      border-radius: 999px;
+      border: 1px solid rgba(117, 195, 255, 0.54);
+      background: rgba(18, 48, 79, 0.72);
+      color: #dff1ff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    @media (max-width: 980px) {
+      .zuma-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .inframe-actions {
+        left: 8px;
+        right: 8px;
+        top: 8px;
+        justify-content: space-between;
+      }
+
+      .inframe-actions .btn {
+        flex: 1;
+        min-height: 34px;
+        font-size: 12px;
+        padding: 6px 8px;
+      }
+
+      .inframe-actions .btn.btn-compact {
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="app-header reveal">
+      <a class="brand" href="/">
+        <span class="brand-chip" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+          </svg>
+        </span>
+        <span class="brand-text">Cartofia</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a class="active" href="/arcade/">Arcade</a>
+        <a href="/minecraft/">Minecraft</a>
+      </nav>
+      <div class="account-menu" data-account-menu>
+        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+          <a class="account-item" href="/arcade/" role="menuitem">Back to Arcade</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-card reveal" data-delay="1">
+        <div class="hero-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="7.5" stroke="#57C2FF" stroke-width="1.5"></circle>
+            <circle cx="12" cy="12" r="2" fill="#57C2FF"></circle>
+            <path d="M12 4V2M12 22V20M4 12H2M22 12H20" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div class="hero-copy">
+          <p class="hero-kicker">Arcade Slot 10</p>
+          <h1 class="hero-title">Zuma Temple</h1>
+          <p class="hero-lead">
+            Match-3 marble shooter inspired by classic Zuma flow. Clear every chain before it reaches the skull and advance through 10+ levels.
+          </p>
+          <div class="pill-row">
+            <span class="pill"><strong>Mode</strong> Single player</span>
+            <span class="pill"><strong>Controls</strong> Mouse / touch aim + shoot + fullscreen</span>
+            <span class="pill"><strong>Levels</strong> 12-stage progression</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card reveal" data-delay="2">
+        <div class="zuma-layout">
+          <div class="board-panel">
+            <div id="board-frame" class="board-frame">
+              <canvas id="game" width="900" height="560" aria-label="Zuma Temple board"></canvas>
+              <div id="overlay" class="board-overlay">Press Start to begin.</div>
+              <div id="action-bar" class="inframe-actions" aria-label="Game actions">
+                <button id="start-btn" class="btn btn-primary" type="button">Start</button>
+                <button id="pause-btn" class="btn btn-ghost" type="button">Pause</button>
+                <button id="restart-btn" class="btn btn-ghost" type="button">Restart</button>
+                <button id="fs-btn" class="btn btn-ghost btn-compact" type="button">Fullscreen</button>
+              </div>
+            </div>
+            <div id="landscape-tip" class="landscape-tip hidden" aria-live="polite">
+              <span>Phone mode: rotate to landscape for better visibility.</span>
+              <button id="landscape-btn" class="tip-action" type="button">Go Landscape</button>
+            </div>
+          </div>
+
+          <aside class="game-panel">
+            <div>
+              <h2 class="card-title">Run Stats</h2>
+              <p class="card-subtitle">Best score is saved in this browser.</p>
+              <div class="stat-grid">
+                <div class="stat-row"><span>Level</span><b id="level">1 / 12</b></div>
+                <div class="stat-row"><span>Score</span><b id="score">0</b></div>
+                <div class="stat-row"><span>Best</span><b id="best">0</b></div>
+                <div class="stat-row"><span>Remaining</span><b id="remaining">0</b></div>
+                <div class="stat-row"><span>State</span><b id="state">Ready</b></div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="section-label">How To Play</h3>
+              <ul class="controls-list">
+                <li><b>Aim:</b> Move mouse or drag touch over the board</li>
+                <li><b>Shoot:</b> Click / tap / press <b>Space</b></li>
+                <li><b>Swap Ball:</b> <b>X</b>, <b>Shift</b>, or right click</li>
+                <li><b>Screen:</b> <b>Fullscreen</b> button (tries to lock landscape on phones)</li>
+                <li><b>Goal:</b> Match 3+ marbles and clear the chain before the skull</li>
+              </ul>
+            </div>
+
+            <div class="game-note">Tip: break long mixed sections first so later shots have cleaner match angles.</div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Copyright <span id="year"></span> Cartofia. All rights reserved.</span>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/arcade/">Arcade</a>
+        <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/assets/site.js"></script>
+  <script src="/arcade/zuma/game.js?v=20260327-2"></script>
+  <script>
+    const year = document.getElementById("year");
+    if (year) {
+      year.textContent = String(new Date().getFullYear());
+    }
+  </script>
+</body>
+</html>

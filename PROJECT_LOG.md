@@ -1162,4 +1162,153 @@ Planned behaviour:
 - Verified packaged `assets/main.py` no longer contains `WEB frame`.
 - Verified packaged code includes `Deaths` HUD text and passes `python -m py_compile` checks on extracted `main.py`.
 
+---
+
+## 2026-03-27 - Zuma Temple game added (12-level classic-style marble shooter)
+
+**Summary**
+
+- Added a new arcade game: `Zuma Temple`, inspired by original Zuma match-3 chain shooter flow.
+- Implemented a full 12-level progression (minimum 10 levels exceeded).
+
+**Details**
+
+- Added `arcade/zuma/index.html`:
+  - New dedicated game page with Cartofia shared layout.
+  - In-frame game canvas with in-window controls (`Start`, `Pause`, `Restart`).
+  - Run stats panel for level, score, best score, remaining marbles, and state.
+  - Play instructions for keyboard, mouse, and touch controls.
+
+- Added `arcade/zuma/game.js`:
+  - Core Zuma-like mechanics:
+    - Moving marble chain along path routes.
+    - Frog shooter aiming and shooting.
+    - Match-3 removal with combo scoring.
+    - Color swap support (`X`/`Shift`/right click).
+    - Lose condition when chain reaches skull endpoint.
+    - Win condition per level after clearing all marbles.
+  - Multi-level progression system:
+    - 12 tuned levels with escalating speed, marble count, color count, and spawn tempo.
+    - Path variants cycled across levels for route variety.
+  - Browser persistence:
+    - Best score saved to `localStorage`.
+  - Mobile/touch support:
+    - Touch aim + tap shoot with `touch-action: none` handling to avoid accidental page interactions.
+
+- Updated `arcade/index.html`:
+  - Added `Zuma Temple` to the full lineup card grid with direct play link (`/arcade/zuma/`).
+  - Added Zuma deployment note in Arcade `Recent Activity`.
+
+- Updated `index.html`:
+  - Refreshed homepage arcade highlight text to include `Zuma Temple` in featured lineup copy.
+
+**Validation performed**
+
+- Ran JavaScript syntax validation:
+  - `node --check arcade/zuma/game.js`
+- Verified route references for `/arcade/zuma/` in arcade/home pages.
+
+---
+
+## 2026-03-27 - Maze Chase ghost speed balance reduction
+
+**Summary**
+
+- Slowed Maze Chase NPC ghost movement by more than half to reduce unfair early deaths.
+
+**Details**
+
+- Updated `arcade/maze-chase/index.html`:
+  - Increased ghost movement step interval from `190ms` to `400ms`.
+  - This makes ghost updates ~52.5% slower than the previous pacing.
+  - Added inline note on the constant for maintainability.
+
+**Validation performed**
+
+- Ran inline JavaScript syntax check on extracted scripts from:
+  - `arcade/maze-chase/index.html` (`node --check`)
+
+---
+
+## 2026-03-27 - Zuma graphics enhancement + fullscreen/landscape support
+
+**Summary**
+
+- Improved Zuma visual quality with richer background lighting, path styling, and marble FX.
+- Added in-game fullscreen toggle.
+- Added phone landscape option with orientation lock attempt for better mobile playability.
+
+**Details**
+
+- Updated `arcade/zuma/index.html`:
+  - Added fullscreen action button in the in-frame game control bar.
+  - Added mobile landscape hint panel with `Go Landscape` action.
+  - Added fullscreen CSS behavior for `#board-frame` to properly scale canvas in fullscreen mode.
+  - Refined board container styling for deeper, less flat visual presentation.
+
+- Updated `arcade/zuma/game.js`:
+  - Added fullscreen logic:
+    - `Fullscreen` toggle button (`Enter/Exit Full`)
+    - Keyboard shortcut (`F`)
+    - `fullscreenchange` UI sync
+  - Added mobile landscape logic:
+    - `Go Landscape` action that requests fullscreen and attempts `screen.orientation.lock("landscape")`
+    - Orientation/resize tip visibility updates for coarse pointer portrait devices
+  - Added rendering upgrades:
+    - Enhanced path glow + animated pulse
+    - Stronger marble shading/specular effects
+    - Shooter halo and polish
+    - Particle burst effects on match clears
+    - Atmospheric background layers and subtle animated line/detail depth
+
+**Validation performed**
+
+- Ran JavaScript syntax validation:
+  - `node --check arcade/zuma/game.js`
+- Ran inline script validation for:
+  - `arcade/zuma/index.html` (extracted script + `node --check`)
+
+---
+
+## 2026-03-27 - Zuma spawn origin fix (always from start hole)
+
+**Summary**
+
+- Fixed Zuma marble spawning so new balls consistently originate from the start hole instead of appearing near the current chain head after progression.
+
+**Details**
+
+- Updated `arcade/zuma/game.js`:
+  - Added `SPAWN_HOLE_OFFSET = 0` and anchored new spawns to this start-hole offset.
+  - Replaced previous head-relative spawn calculation with:
+    - `offset = min(start_hole_offset, head_offset - BALL_SPACING)`
+  - Removed head-distance gate in spawn timing so spawning cadence is interval-driven and no longer dependent on current front-marble position.
+  - Reset `spawnTimer` when the chain is empty and a seed spawn occurs.
+
+**Validation performed**
+
+- Ran JavaScript syntax validation:
+  - `node --check arcade/zuma/game.js`
+
+---
+
+## 2026-03-27 - Zuma PC cache-bust for spawn-fix rollout
+
+**Summary**
+
+- Added a versioned script URL for Zuma so browsers fetch the latest game logic instead of reusing cached `game.js`.
+
+**Details**
+
+- Updated `arcade/zuma/index.html`:
+  - Changed script include from:
+    - `/arcade/zuma/game.js`
+  - To:
+    - `/arcade/zuma/game.js?v=20260327-2`
+
+**Why**
+
+- Some PC clients were still running cached pre-fix code and showing old spawn behavior.
+- Versioned script URL forces fresh download of the updated spawn logic.
+
 *This log is updated as new milestones and design decisions are made.*
