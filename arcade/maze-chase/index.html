@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Maze Chase - Cartofia Arcade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 760px) minmax(250px, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .board-panel {
+      position: relative;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: radial-gradient(circle at 50% 0%, rgba(46, 168, 255, 0.1), rgba(5, 13, 20, 0.95) 62%);
+      padding: 12px;
+      overflow: hidden;
+    }
+
+    .board-frame {
+      position: relative;
+      border-radius: 10px;
+      border: 1px solid rgba(46, 168, 255, 0.25);
+      background: #030912;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+    }
+
+    #game {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 21 / 17;
+      touch-action: none;
+      background: #01060f;
+    }
+
+    .board-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      background: rgba(2, 8, 13, 0.72);
+      color: #d8ecff;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+      padding: 22px;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .board-overlay.hidden {
+      opacity: 0;
+    }
+
+    .game-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    .stat-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(138, 160, 185, 0.16);
+      padding-bottom: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .stat-row b {
+      color: #cbe8ff;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+
+    .button-row {
+      margin-top: 2px;
+    }
+
+    .controls-list {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .controls-list b {
+      color: #90d4ff;
+      font-weight: 700;
+    }
+
+    .touch-controls {
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(7, 14, 22, 0.7);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .touch-controls p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .joystick-wrap {
+      display: grid;
+      place-items: center;
+      margin-top: 2px;
+    }
+
+    .joystick-base {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 1px solid rgba(46, 168, 255, 0.36);
+      background:
+        radial-gradient(circle at 34% 30%, rgba(120,186,241,.22), rgba(15,32,48,.74) 58%),
+        linear-gradient(180deg, rgba(8,22,34,.95), rgba(6,15,24,.95));
+      box-shadow: inset 0 0 0 1px rgba(191,228,255,.08);
+      touch-action: none;
+      user-select: none;
+    }
+
+    .joystick-base::before,
+    .joystick-base::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(170,219,255,.15);
+      pointer-events: none;
+    }
+
+    .joystick-base::before { width: 2px; height: 74%; }
+    .joystick-base::after { width: 74%; height: 2px; }
+
+    .joystick-thumb {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(96,177,236,.68);
+      background:
+        radial-gradient(circle at 35% 32%, rgba(219,241,255,.62), rgba(62,134,192,.82) 64%),
+        linear-gradient(180deg, rgba(23,74,117,.92), rgba(14,47,74,.92));
+      box-shadow: 0 8px 20px rgba(0,0,0,.36);
+      transition: transform .08s ease;
+      pointer-events: none;
+    }
+
+    .joystick-base.active .joystick-thumb {
+      transition: none;
+    }
+
+    .game-note {
+      border-radius: 10px;
+      border: 1px dashed var(--line);
+      background: rgba(4, 10, 16, 0.66);
+      color: var(--muted);
+      font-size: 13px;
+      padding: 9px 10px;
+    }
+
+    @media (max-width: 980px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="app-header reveal">
+      <a class="brand" href="/">
+        <span class="brand-chip" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+          </svg>
+        </span>
+        <span class="brand-text">Cartofia</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a href="/archive/">Archive</a>
+        <a class="active" href="/arcade/">Arcade</a>
+        <a href="/minecraft/">Minecraft</a>
+      </nav>
+      <div class="account-menu" data-account-menu>
+        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+          <a class="account-item" href="/arcade/" role="menuitem">Back to Arcade</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-card reveal" data-delay="1">
+        <div class="hero-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 12H20" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
+            <path d="M12 4V20" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
+            <circle cx="12" cy="12" r="7" stroke="#57C2FF" stroke-width="1.5"></circle>
+          </svg>
+        </div>
+        <div class="hero-copy">
+          <p class="hero-kicker">Arcade Slot 6</p>
+          <h1 class="hero-title">Maze Chase</h1>
+          <p class="hero-lead">
+            Pac-Man style maze runner: collect pellets, grab power orbs, dodge ghosts, and clear the board.
+          </p>
+          <div class="pill-row">
+            <span class="pill"><strong>Mode</strong> Single player</span>
+            <span class="pill"><strong>Controls</strong> Arrows / WASD / touch pad</span>
+            <span class="pill"><strong>Playable</strong> In browser</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card reveal" data-delay="2">
+        <div class="game-layout">
+          <div class="board-panel">
+            <div class="board-frame">
+              <canvas id="game" width="588" height="476" aria-label="Maze Chase board"></canvas>
+              <div id="overlay" class="board-overlay">Press Start to begin.</div>
+            </div>
+          </div>
+
+          <aside class="game-panel">
+            <div>
+              <h2 class="card-title">Run Stats</h2>
+              <p class="card-subtitle">Best score is saved in this browser.</p>
+              <div class="stat-grid">
+                <div class="stat-row"><span>Score</span><b id="score">0</b></div>
+                <div class="stat-row"><span>Best</span><b id="best">0</b></div>
+                <div class="stat-row"><span>Lives</span><b id="lives">3</b></div>
+                <div class="stat-row"><span>Pellets Left</span><b id="pellets">0</b></div>
+                <div class="stat-row"><span>Status</span><b id="state">Ready</b></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="button-row">
+                <button id="start-btn" class="btn btn-primary" type="button">Start</button>
+                <button id="pause-btn" class="btn btn-ghost" type="button">Pause</button>
+                <button id="restart-btn" class="btn btn-ghost" type="button">Restart</button>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="section-label">How To Play</h3>
+              <ul class="controls-list">
+                <li><b>Move:</b> Arrow keys or <b>W A S D</b></li>
+                <li><b>Score:</b> Eat small pellets and power orbs</li>
+                <li><b>Power:</b> During blue mode, ghosts can be eaten</li>
+                <li><b>Goal:</b> Clear every pellet in the maze</li>
+              </ul>
+            </div>
+
+            <div class="touch-controls">
+              <p>Touch controls</p>
+              <div class="joystick-wrap">
+                <div id="joy-base" class="joystick-base" aria-label="Movement joystick" role="application">
+                  <div id="joy-thumb" class="joystick-thumb" aria-hidden="true"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="game-note">Tip: clear corners with power orbs first to create safer routes.</div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Copyright <span id="year"></span> Cartofia. All rights reserved.</span>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/archive/">Archive</a>
+        <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/assets/site.js"></script>
+  <script>
+    (() => {
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const overlay = document.getElementById("overlay");
+      const scoreEl = document.getElementById("score");
+      const bestEl = document.getElementById("best");
+      const livesEl = document.getElementById("lives");
+      const pelletsEl = document.getElementById("pellets");
+      const stateEl = document.getElementById("state");
+      const startBtn = document.getElementById("start-btn");
+      const pauseBtn = document.getElementById("pause-btn");
+      const restartBtn = document.getElementById("restart-btn");
+      const joyBase = document.getElementById("joy-base");
+      const joyThumb = document.getElementById("joy-thumb");
+
+      const BEST_KEY = "cartofia_maze_chase_best_v1";
+      const TILE = 28;
+      const PLAYER_STEP_MS = 108;
+      const GHOST_STEP_MS = 190;
+      const POWER_MS = 8000;
+      const START_GRACE_MS = 1100;
+      const DIRS = {
+        u: { x: 0, y: -1 },
+        d: { x: 0, y: 1 },
+        l: { x: -1, y: 0 },
+        r: { x: 1, y: 0 }
+      };
+      const OPP = { u: "d", d: "u", l: "r", r: "l" };
+
+      const mazeRows = [
+        "#####################",
+        "#o........#........o#",
+        "#.###.###.#.###.###.#",
+        "#...................#",
+        "#.###.#.#####.#.###.#",
+        "#.....#...#...#.....#",
+        "#####.###.#.###.#####",
+        "#   #.#.......#.#   #",
+        "#####.#.## ##.#.#####",
+        "#.........P.........#",
+        "#####.#.##G##.#.#####",
+        "#.....#...#...#.....#",
+        "#.###.#.#####.#.###.#",
+        "#o..#...........#..o#",
+        "###.#.#.#####.#.#.###",
+        "#.....#...#...#.....#",
+        "#####################"
+      ];
+
+      const mapH = mazeRows.length;
+      const mapW = mazeRows[0].length;
+      canvas.width = mapW * TILE;
+      canvas.height = mapH * TILE;
+
+      let map = [];
+      let pellets = new Map();
+      let initialPellets = new Map();
+      let playerSpawn = { x: 1, y: 1 };
+      let ghostCoreSpawn = { x: 10, y: 10 };
+      let ghostSpawns = [];
+
+      let player = { x: 1, y: 1, dir: "l", next: "l" };
+      let ghosts = [];
+
+      let score = 0;
+      let best = loadBest();
+      let lives = 3;
+      let running = false;
+      let paused = false;
+      let gameOver = false;
+      let won = false;
+      let frightMs = 0;
+      let graceMs = 0;
+
+      let playerAcc = 0;
+      let ghostAcc = 0;
+      let lastFrame = 0;
+      let joyPointerId = null;
+
+      function loadBest() {
+        const raw = Number(window.localStorage.getItem(BEST_KEY) || 0);
+        if (Number.isFinite(raw) && raw > 0) {
+          return Math.floor(raw);
+        }
+        return 0;
+      }
+
+      function saveBest() {
+        try {
+          window.localStorage.setItem(BEST_KEY, String(best));
+        } catch (_e) {
+          // ignore storage failures
+        }
+      }
+
+      function key(x, y) {
+        return x + "," + y;
+      }
+
+      function manhattan(x1, y1, x2, y2) {
+        return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+      }
+
+      function inBounds(x, y) {
+        return y >= 0 && y < mapH && x >= 0 && x < mapW;
+      }
+
+      function isWall(x, y) {
+        if (!inBounds(x, y)) { return true; }
+        return map[y][x] === "#";
+      }
+
+      function canWalk(x, y) {
+        return inBounds(x, y) && !isWall(x, y);
+      }
+
+      function setOverlay(text, show) {
+        overlay.textContent = text;
+        overlay.classList.toggle("hidden", !show);
+      }
+
+      function modeText() {
+        if (won) { return "Victory"; }
+        if (gameOver) { return "Game Over"; }
+        if (paused) { return "Paused"; }
+        if (running) { return frightMs > 0 ? "Power" : "Live"; }
+        return "Ready";
+      }
+
+      function updateHud() {
+        scoreEl.textContent = String(score);
+        bestEl.textContent = String(best);
+        livesEl.textContent = String(lives);
+        pelletsEl.textContent = String(pellets.size);
+        stateEl.textContent = modeText();
+      }
+
+      function parseMaze() {
+        map = [];
+        pellets = new Map();
+        initialPellets = new Map();
+        playerSpawn = { x: 1, y: 1 };
+        ghostCoreSpawn = { x: 10, y: 10 };
+
+        for (let y = 0; y < mapH; y += 1) {
+          const row = [];
+          for (let x = 0; x < mapW; x += 1) {
+            const ch = mazeRows[y][x];
+            if (ch === "P") {
+              playerSpawn = { x: x, y: y };
+              row.push(" ");
+            } else if (ch === "G") {
+              ghostCoreSpawn = { x: x, y: y };
+              row.push(" ");
+            } else {
+              row.push(ch);
+            }
+
+            if (ch === ".") {
+              pellets.set(key(x, y), "dot");
+            } else if (ch === "o") {
+              pellets.set(key(x, y), "power");
+            }
+          }
+          map.push(row);
+        }
+
+        initialPellets = new Map(pellets);
+
+        const pool = [];
+        for (let y = 0; y < mapH; y += 1) {
+          for (let x = 0; x < mapW; x += 1) {
+            if (!canWalk(x, y)) { continue; }
+            if (x === playerSpawn.x && y === playerSpawn.y) { continue; }
+            const dp = manhattan(x, y, playerSpawn.x, playerSpawn.y);
+            const dc = manhattan(x, y, ghostCoreSpawn.x, ghostCoreSpawn.y);
+            pool.push({ x: x, y: y, dp: dp, dc: dc });
+          }
+        }
+
+        // Prefer spawns near ghost house but at a safe distance from the player spawn.
+        const primary = pool.filter((p) => p.dp >= 4);
+        primary.sort((a, b) => a.dc - b.dc || b.dp - a.dp || a.y - b.y || a.x - b.x);
+        const fallback = pool.filter((p) => p.dp >= 3);
+        fallback.sort((a, b) => a.dc - b.dc || b.dp - a.dp || a.y - b.y || a.x - b.x);
+
+        ghostSpawns = [];
+        function pushFrom(list) {
+          for (let i = 0; i < list.length && ghostSpawns.length < 4; i += 1) {
+            const c = list[i];
+            let crowded = false;
+            for (let j = 0; j < ghostSpawns.length; j += 1) {
+              if (manhattan(c.x, c.y, ghostSpawns[j].x, ghostSpawns[j].y) <= 1) {
+                crowded = true;
+                break;
+              }
+            }
+            if (crowded) { continue; }
+            ghostSpawns.push({ x: c.x, y: c.y });
+          }
+        }
+
+        pushFrom(primary);
+        if (ghostSpawns.length < 4) {
+          pushFrom(fallback);
+        }
+        if (!ghostSpawns.length) {
+          ghostSpawns = [{ x: ghostCoreSpawn.x, y: ghostCoreSpawn.y }];
+        }
+      }
+
+      function resetActors() {
+        player = {
+          x: playerSpawn.x,
+          y: playerSpawn.y,
+          dir: "l",
+          next: "l"
+        };
+
+        const colors = ["#ff5d8b", "#57c2ff", "#ffb457", "#7fff93"];
+        ghosts = [];
+        for (let i = 0; i < colors.length; i += 1) {
+          const spawn = ghostSpawns[i % ghostSpawns.length];
+          ghosts.push({
+            x: spawn.x,
+            y: spawn.y,
+            dir: i % 2 === 0 ? "l" : "r",
+            color: colors[i],
+            home: { x: spawn.x, y: spawn.y }
+          });
+        }
+
+        playerAcc = 0;
+        ghostAcc = 0;
+        frightMs = 0;
+        graceMs = START_GRACE_MS;
+      }
+
+      function resetGame() {
+        parseMaze();
+        score = 0;
+        lives = 3;
+        running = false;
+        paused = false;
+        gameOver = false;
+        won = false;
+        pellets = new Map(initialPellets);
+        resetActors();
+        setOverlay("Press Start to begin.", true);
+        updateHud();
+      }
+
+      function restartRoundAfterHit() {
+        resetActors();
+        running = false;
+        paused = false;
+        setOverlay("Life lost. Press Start to continue.", true);
+        updateHud();
+      }
+
+      function setNextDirection(dir) {
+        if (DIRS[dir]) {
+          player.next = dir;
+        }
+      }
+
+      function resetJoystick() {
+        joyBase.classList.remove("active");
+        joyThumb.style.transform = "translate(-50%, -50%)";
+      }
+
+      function updateJoystick(clientX, clientY) {
+        const rect = joyBase.getBoundingClientRect();
+        const cx = rect.left + (rect.width / 2);
+        const cy = rect.top + (rect.height / 2);
+        let dx = clientX - cx;
+        let dy = clientY - cy;
+        const maxRadius = rect.width * 0.34;
+        const magnitude = Math.sqrt((dx * dx) + (dy * dy));
+        if (magnitude > maxRadius && magnitude > 0) {
+          const scale = maxRadius / magnitude;
+          dx *= scale;
+          dy *= scale;
+        }
+
+        joyThumb.style.transform = "translate(calc(-50% + " + dx.toFixed(2) + "px), calc(-50% + " + dy.toFixed(2) + "px))";
+
+        const deadZone = rect.width * 0.18;
+        if (magnitude < deadZone) {
+          return;
+        }
+
+        if (Math.abs(dx) >= Math.abs(dy)) {
+          setNextDirection(dx >= 0 ? "r" : "l");
+        } else {
+          setNextDirection(dy >= 0 ? "d" : "u");
+        }
+      }
+
+      function scorePoints(amount) {
+        score += amount;
+        if (score > best) {
+          best = score;
+          saveBest();
+        }
+      }
+
+      function handlePelletPickup() {
+        const k = key(player.x, player.y);
+        const type = pellets.get(k);
+        if (!type) {
+          return;
+        }
+
+        pellets.delete(k);
+        if (type === "power") {
+          scorePoints(50);
+          frightMs = POWER_MS;
+        } else {
+          scorePoints(10);
+        }
+
+        if (pellets.size === 0) {
+          won = true;
+          running = false;
+          setOverlay("You cleared the maze. Press Restart for another run.", true);
+        }
+      }
+
+      function loseLife() {
+        lives -= 1;
+        if (lives <= 0) {
+          lives = 0;
+          gameOver = true;
+          running = false;
+          setOverlay("Game over. Press Restart to play again.", true);
+          updateHud();
+          return;
+        }
+        restartRoundAfterHit();
+      }
+
+      function resolveGhostCollision(ghost) {
+        if (graceMs > 0) {
+          return;
+        }
+        if (ghost.x !== player.x || ghost.y !== player.y) {
+          return;
+        }
+
+        if (frightMs > 0) {
+          scorePoints(200);
+          ghost.x = ghost.home.x;
+          ghost.y = ghost.home.y;
+          ghost.dir = "u";
+          return;
+        }
+
+        loseLife();
+      }
+
+      function tryMove(entity, dir) {
+        const step = DIRS[dir];
+        if (!step) {
+          return false;
+        }
+        const nx = entity.x + step.x;
+        const ny = entity.y + step.y;
+        if (!canWalk(nx, ny)) {
+          return false;
+        }
+        entity.x = nx;
+        entity.y = ny;
+        return true;
+      }
+
+      function stepPlayer() {
+        if (!running || paused || gameOver || won) {
+          return;
+        }
+
+        if (player.next && player.next !== player.dir) {
+          const nd = DIRS[player.next];
+          if (canWalk(player.x + nd.x, player.y + nd.y)) {
+            player.dir = player.next;
+          }
+        }
+
+        if (player.dir) {
+          if (!tryMove(player, player.dir)) {
+            if (player.next && player.next !== player.dir) {
+              const nd = DIRS[player.next];
+              if (canWalk(player.x + nd.x, player.y + nd.y)) {
+                player.dir = player.next;
+                tryMove(player, player.dir);
+              }
+            }
+          }
+        }
+
+        handlePelletPickup();
+        for (let i = 0; i < ghosts.length; i += 1) {
+          resolveGhostCollision(ghosts[i]);
+          if (!running || gameOver) {
+            break;
+          }
+        }
+      }
+
+      function availableGhostDirs(ghost) {
+        const options = [];
+        const dirKeys = ["u", "d", "l", "r"];
+        for (let i = 0; i < dirKeys.length; i += 1) {
+          const d = dirKeys[i];
+          const step = DIRS[d];
+          const nx = ghost.x + step.x;
+          const ny = ghost.y + step.y;
+          if (!canWalk(nx, ny)) {
+            continue;
+          }
+          options.push(d);
+        }
+
+        if (options.length <= 1) {
+          return options;
+        }
+
+        const filtered = options.filter((d) => d !== OPP[ghost.dir]);
+        return filtered.length ? filtered : options;
+      }
+
+      function pickGhostDir(ghost, options) {
+        if (!options.length) {
+          return ghost.dir;
+        }
+
+        if (frightMs > 0) {
+          let bestDist = -1;
+          let pick = options[0];
+          for (let i = 0; i < options.length; i += 1) {
+            const d = options[i];
+            const step = DIRS[d];
+            const nx = ghost.x + step.x;
+            const ny = ghost.y + step.y;
+            const dist = Math.abs(nx - player.x) + Math.abs(ny - player.y) + (Math.random() * 0.8);
+            if (dist > bestDist) {
+              bestDist = dist;
+              pick = d;
+            }
+          }
+          return pick;
+        }
+
+        if (Math.random() < 0.2) {
+          return options[Math.floor(Math.random() * options.length)];
+        }
+
+        let bestDist = Infinity;
+        let pick = options[0];
+        for (let i = 0; i < options.length; i += 1) {
+          const d = options[i];
+          const step = DIRS[d];
+          const nx = ghost.x + step.x;
+          const ny = ghost.y + step.y;
+          const dist = Math.abs(nx - player.x) + Math.abs(ny - player.y) + (Math.random() * 0.2);
+          if (dist < bestDist) {
+            bestDist = dist;
+            pick = d;
+          }
+        }
+        return pick;
+      }
+
+      function stepGhosts() {
+        if (!running || paused || gameOver || won || graceMs > 0) {
+          return;
+        }
+
+        for (let i = 0; i < ghosts.length; i += 1) {
+          const g = ghosts[i];
+          const options = availableGhostDirs(g);
+          if (!options.length) {
+            continue;
+          }
+
+          if (options.indexOf(g.dir) < 0 || options.length > 2 || Math.random() < 0.25) {
+            g.dir = pickGhostDir(g, options);
+          }
+
+          if (!tryMove(g, g.dir)) {
+            g.dir = pickGhostDir(g, options);
+            tryMove(g, g.dir);
+          }
+
+          resolveGhostCollision(g);
+          if (!running || gameOver) {
+            break;
+          }
+        }
+      }
+
+      function drawWalls() {
+        for (let y = 0; y < mapH; y += 1) {
+          for (let x = 0; x < mapW; x += 1) {
+            const px = x * TILE;
+            const py = y * TILE;
+            if (map[y][x] === "#") {
+              ctx.fillStyle = "#113164";
+              ctx.fillRect(px, py, TILE, TILE);
+              ctx.fillStyle = "#1c4c8f";
+              ctx.fillRect(px + 4, py + 4, TILE - 8, TILE - 8);
+            } else {
+              ctx.fillStyle = "#02070f";
+              ctx.fillRect(px, py, TILE, TILE);
+            }
+          }
+        }
+      }
+
+      function drawPellets(now) {
+        pellets.forEach((type, k) => {
+          const parts = k.split(",");
+          const x = Number(parts[0]);
+          const y = Number(parts[1]);
+          const cx = (x * TILE) + (TILE / 2);
+          const cy = (y * TILE) + (TILE / 2);
+
+          if (type === "power") {
+            const pulse = 0.8 + (Math.sin(now / 160) * 0.2);
+            ctx.fillStyle = "#ffd388";
+            ctx.beginPath();
+            ctx.arc(cx, cy, 5.5 * pulse, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.fillStyle = "#f4f0bf";
+            ctx.beginPath();
+            ctx.arc(cx, cy, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      }
+
+      function drawPlayer(now) {
+        const cx = (player.x * TILE) + (TILE / 2);
+        const cy = (player.y * TILE) + (TILE / 2);
+        const base = (Math.sin(now / 90) + 1) * 0.18 + 0.12;
+
+        let angle = 0;
+        if (player.dir === "u") { angle = -Math.PI / 2; }
+        if (player.dir === "d") { angle = Math.PI / 2; }
+        if (player.dir === "l") { angle = Math.PI; }
+
+        ctx.fillStyle = "#ffd84c";
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, TILE * 0.42, angle + base, angle + (Math.PI * 2) - base);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function drawGhosts() {
+        for (let i = 0; i < ghosts.length; i += 1) {
+          const g = ghosts[i];
+          const cx = (g.x * TILE) + (TILE / 2);
+          const cy = (g.y * TILE) + (TILE / 2);
+          const color = frightMs > 0 ? "#4b7fff" : g.color;
+
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(cx, cy, TILE * 0.38, Math.PI, 0);
+          ctx.lineTo(cx + (TILE * 0.38), cy + (TILE * 0.36));
+          ctx.lineTo(cx + (TILE * 0.18), cy + (TILE * 0.24));
+          ctx.lineTo(cx, cy + (TILE * 0.36));
+          ctx.lineTo(cx - (TILE * 0.18), cy + (TILE * 0.24));
+          ctx.lineTo(cx - (TILE * 0.38), cy + (TILE * 0.36));
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(cx - 4.5, cy - 1, 3.5, 0, Math.PI * 2);
+          ctx.arc(cx + 4.5, cy - 1, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = "#0b1e3e";
+          ctx.beginPath();
+          ctx.arc(cx - 4, cy - 1, 1.6, 0, Math.PI * 2);
+          ctx.arc(cx + 4, cy - 1, 1.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function draw(now) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawWalls();
+        drawPellets(now);
+        drawGhosts();
+        drawPlayer(now);
+      }
+
+      function tick(now) {
+        if (!lastFrame) {
+          lastFrame = now;
+        }
+        const dt = Math.min(40, now - lastFrame);
+        lastFrame = now;
+
+        if (running && !paused && !gameOver && !won) {
+          graceMs = Math.max(0, graceMs - dt);
+          if (frightMs > 0) {
+            frightMs = Math.max(0, frightMs - dt);
+          }
+
+          playerAcc += dt;
+          while (playerAcc >= PLAYER_STEP_MS && running && !paused && !gameOver && !won) {
+            stepPlayer();
+            playerAcc -= PLAYER_STEP_MS;
+          }
+
+          ghostAcc += dt;
+          while (ghostAcc >= GHOST_STEP_MS && running && !paused && !gameOver && !won) {
+            stepGhosts();
+            ghostAcc -= GHOST_STEP_MS;
+          }
+        }
+
+        updateHud();
+        draw(now);
+        window.requestAnimationFrame(tick);
+      }
+
+      function beginRun() {
+        if (gameOver || won) {
+          resetGame();
+        }
+        running = true;
+        paused = false;
+        setOverlay("", false);
+        updateHud();
+      }
+
+      function togglePause() {
+        if (!running || gameOver || won) {
+          return;
+        }
+        paused = !paused;
+        if (paused) {
+          setOverlay("Paused", true);
+        } else {
+          setOverlay("", false);
+        }
+        updateHud();
+      }
+
+      document.addEventListener("keydown", (event) => {
+        const k = event.key.toLowerCase();
+
+        if (k === "arrowup" || k === "w") {
+          event.preventDefault();
+          setNextDirection("u");
+          return;
+        }
+        if (k === "arrowdown" || k === "s") {
+          event.preventDefault();
+          setNextDirection("d");
+          return;
+        }
+        if (k === "arrowleft" || k === "a") {
+          event.preventDefault();
+          setNextDirection("l");
+          return;
+        }
+        if (k === "arrowright" || k === "d") {
+          event.preventDefault();
+          setNextDirection("r");
+          return;
+        }
+        if (k === "enter") {
+          event.preventDefault();
+          beginRun();
+          return;
+        }
+        if (k === " " || k === "p") {
+          event.preventDefault();
+          togglePause();
+        }
+      });
+
+      startBtn.addEventListener("click", () => {
+        beginRun();
+      });
+
+      pauseBtn.addEventListener("click", () => {
+        togglePause();
+      });
+
+      restartBtn.addEventListener("click", () => {
+        resetGame();
+        beginRun();
+      });
+
+      joyBase.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        joyPointerId = event.pointerId;
+        joyBase.classList.add("active");
+        if (joyBase.setPointerCapture) {
+          joyBase.setPointerCapture(event.pointerId);
+        }
+        updateJoystick(event.clientX, event.clientY);
+      });
+
+      joyBase.addEventListener("pointermove", (event) => {
+        if (joyPointerId !== event.pointerId) {
+          return;
+        }
+        event.preventDefault();
+        updateJoystick(event.clientX, event.clientY);
+      });
+
+      function releaseJoystick(event) {
+        if (joyPointerId === null) {
+          return;
+        }
+        if (event && event.pointerId !== undefined && joyPointerId !== event.pointerId) {
+          return;
+        }
+        if (event && joyBase.releasePointerCapture) {
+          try { joyBase.releasePointerCapture(event.pointerId); } catch (_e) { /* ignore */ }
+        }
+        joyPointerId = null;
+        resetJoystick();
+      }
+
+      joyBase.addEventListener("pointerup", releaseJoystick);
+      joyBase.addEventListener("pointercancel", releaseJoystick);
+      joyBase.addEventListener("pointerleave", releaseJoystick);
+
+      const year = document.getElementById("year");
+      if (year) {
+        year.textContent = String(new Date().getFullYear());
+      }
+
+      resetJoystick();
+      resetGame();
+      bestEl.textContent = String(best);
+      window.requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>

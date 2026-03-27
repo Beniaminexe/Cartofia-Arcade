@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Cartofia Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .profile-layout {
+      display: grid;
+      grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .profile-card {
+      display: grid;
+      gap: 12px;
+    }
+
+    .profile-avatar-wrap {
+      display: grid;
+      justify-items: center;
+      gap: 10px;
+    }
+
+    .profile-avatar {
+      width: 144px;
+      height: 144px;
+      border-radius: 50%;
+      border: 2px solid rgba(46, 168, 255, 0.62);
+      background: linear-gradient(150deg, #52bcff, #1f98f5);
+      color: #001827;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      font-weight: 800;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .profile-avatar.has-image {
+      color: transparent;
+    }
+
+    .profile-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .profile-head {
+      display: grid;
+      gap: 4px;
+    }
+
+    .profile-name {
+      font-size: clamp(24px, 3.4vw, 34px);
+      font-family: "Sora", "Segoe UI", sans-serif;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+    }
+
+    .profile-meta {
+      color: var(--muted);
+      font-size: 14px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .profile-badge-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+    }
+
+    .profile-badge {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(6, 13, 20, 0.82);
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .profile-badge h3 {
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .profile-badge p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .profile-badge.locked {
+      opacity: 0.68;
+      filter: saturate(0.7);
+    }
+
+    .upload-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .upload-inline input[type="file"] {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .profile-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="app-header reveal">
+      <a class="brand" href="/">
+        <span class="brand-chip" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+          </svg>
+        </span>
+        <span class="brand-text">Cartofia</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a href="/archive/">Archive</a>
+        <a href="/arcade/">Arcade</a>
+        <a href="/account/" class="active">Account</a>
+      </nav>
+      <div class="account-menu" data-account-menu>
+        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/profile/" role="menuitem">Profile</a>
+          <a class="account-item" href="/account/" role="menuitem">Account</a>
+          <a class="account-item" href="/archive/" role="menuitem">Archive</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-card reveal" data-delay="1">
+        <div class="hero-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="7.5" r="3.8" stroke="#57C2FF" stroke-width="1.6"></circle>
+            <path d="M4.5 19.5C4.5 16.374 7.858 13.84 12 13.84C16.142 13.84 19.5 16.374 19.5 19.5" stroke="#57C2FF" stroke-width="1.6" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div class="hero-copy">
+          <p class="hero-kicker">Cartofia Profile</p>
+          <h1 class="hero-title">Identity and badges</h1>
+          <p class="hero-lead">
+            Every Cartofia account now has a profile page. Set your picture, customize your display name, and unlock badges as you use the platform.
+          </p>
+          <div class="pill-row">
+            <span class="pill"><strong>Profile</strong> persistent account card</span>
+            <span class="pill"><strong>Badges</strong> activity milestones</span>
+            <span class="pill"><strong>Avatar</strong> upload your own image</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-layout">
+        <article class="card profile-card reveal" data-delay="2">
+          <div class="section-label">Avatar</div>
+          <div class="profile-avatar-wrap">
+            <div id="profileAvatar" class="profile-avatar" aria-label="Profile avatar">CA</div>
+            <label class="btn btn-ghost upload-inline hidden" id="avatarUploadLabel">
+              <span>Upload Picture</span>
+              <input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+            </label>
+            <div id="avatarHint" class="card-subtitle" style="margin-bottom:0;">PNG, JPG, GIF, WEBP up to 4MB.</div>
+          </div>
+          <div id="avatarNotice" class="notice hidden"></div>
+        </article>
+
+        <article class="card profile-card reveal" data-delay="2">
+          <div class="profile-head">
+            <div class="section-label">Profile</div>
+            <h2 class="profile-name" id="displayNameText">Loading...</h2>
+            <div class="profile-meta">
+              <span class="badge" id="ownerBadge">Checking...</span>
+              <span id="usernameText">@-</span>
+            </div>
+          </div>
+
+          <div class="status-list">
+            <div class="status-row">
+              <span class="status-label">Email</span>
+              <span class="status-value" id="emailText">-</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Archive uploads</span>
+              <span class="status-value" id="uploadCountText">0</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Earned badges</span>
+              <span class="status-value" id="badgeCountText">0</span>
+            </div>
+          </div>
+
+          <form id="profileForm" class="form-grid hidden">
+            <div class="profile-field">
+              <label for="displayNameInput">Display Name</label>
+              <input id="displayNameInput" class="input" type="text" maxlength="40" placeholder="Display name" />
+            </div>
+            <div class="button-row">
+              <button class="btn btn-primary" type="submit" id="saveProfileButton">Save Profile</button>
+            </div>
+          </form>
+          <div id="profileNotice" class="notice hidden"></div>
+        </article>
+
+        <article class="card col-span-2 reveal" data-delay="3">
+          <div class="section-label">Badges</div>
+          <h2 class="card-title">Milestones</h2>
+          <p class="card-subtitle">Complete actions around Cartofia to unlock each badge.</p>
+          <div id="badgeGrid" class="profile-badge-grid"></div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Profile badges unlock automatically as you use Cartofia services.</span>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/archive/">Archive</a>
+        <a href="/arcade/">Arcade</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/assets/site.js"></script>
+  <script>
+    (function () {
+      var refs = {
+        profileAvatar: document.getElementById("profileAvatar"),
+        avatarUploadLabel: document.getElementById("avatarUploadLabel"),
+        avatarInput: document.getElementById("avatarInput"),
+        avatarHint: document.getElementById("avatarHint"),
+        avatarNotice: document.getElementById("avatarNotice"),
+        ownerBadge: document.getElementById("ownerBadge"),
+        displayNameText: document.getElementById("displayNameText"),
+        usernameText: document.getElementById("usernameText"),
+        emailText: document.getElementById("emailText"),
+        uploadCountText: document.getElementById("uploadCountText"),
+        badgeCountText: document.getElementById("badgeCountText"),
+        profileForm: document.getElementById("profileForm"),
+        displayNameInput: document.getElementById("displayNameInput"),
+        saveProfileButton: document.getElementById("saveProfileButton"),
+        profileNotice: document.getElementById("profileNotice"),
+        badgeGrid: document.getElementById("badgeGrid"),
+      };
+
+      var state = {
+        token: "",
+        me: null,
+        profile: null,
+      };
+
+      function getToken() {
+        return (typeof localStorage !== "undefined" && localStorage.getItem("oidc_access_token")) || "";
+      }
+
+      function getInitials(value) {
+        var raw = String(value || "").trim();
+        return raw ? raw.slice(0, 2).toUpperCase() : "CA";
+      }
+
+      function setNotice(element, message, type) {
+        if (!element) return;
+        if (!message) {
+          element.className = "notice hidden";
+          element.textContent = "";
+          return;
+        }
+        element.className = "notice";
+        if (type) element.classList.add(type);
+        element.textContent = message;
+      }
+
+      function setAvatar(element, initials, avatarUrl) {
+        if (!element) return;
+        if (avatarUrl) {
+          element.classList.add("has-image");
+          element.style.backgroundImage = "url('" + String(avatarUrl).replace(/'/g, "%27") + "')";
+          element.textContent = "";
+          return;
+        }
+        element.classList.remove("has-image");
+        element.style.backgroundImage = "";
+        element.textContent = initials || "CA";
+      }
+
+      function targetUsernameFromUrl() {
+        var params = new URLSearchParams(window.location.search);
+        var raw = (params.get("u") || params.get("user") || "").trim();
+        return raw;
+      }
+
+      async function apiFetch(path, options) {
+        var opts = options || {};
+        var headers = Object.assign({}, opts.headers || {});
+        if (state.token) {
+          headers["Authorization"] = "Bearer " + state.token;
+        }
+        var response = await fetch(path, Object.assign({}, opts, { headers: headers, credentials: "include" }));
+        if (response.status === 401) {
+          var next = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = "/account/?next=" + next;
+          throw new Error("Authentication required.");
+        }
+        var body = await response.json().catch(function () { return {}; });
+        if (!response.ok) {
+          throw new Error(body.error || "Request failed.");
+        }
+        return body;
+      }
+
+      function renderBadges(profile) {
+        refs.badgeGrid.innerHTML = "";
+        var badges = Array.isArray(profile.badge_catalog) ? profile.badge_catalog : [];
+        if (!badges.length) {
+          var fallback = document.createElement("div");
+          fallback.className = "notice warn";
+          fallback.textContent = "No badge definitions available.";
+          refs.badgeGrid.appendChild(fallback);
+          return;
+        }
+
+        badges.forEach(function (badge) {
+          var card = document.createElement("article");
+          card.className = "profile-badge";
+          if (!badge.earned) {
+            card.classList.add("locked");
+          }
+
+          var status = document.createElement("span");
+          status.className = "badge";
+          status.textContent = badge.earned ? "Unlocked" : "Locked";
+
+          var title = document.createElement("h3");
+          title.textContent = badge.name || badge.key;
+
+          var description = document.createElement("p");
+          description.textContent = badge.description || "";
+
+          card.appendChild(status);
+          card.appendChild(title);
+          card.appendChild(description);
+
+          if (badge.earned && badge.awarded_at) {
+            var awardedAt = document.createElement("p");
+            awardedAt.textContent = "Awarded: " + new Date(badge.awarded_at).toLocaleString();
+            card.appendChild(awardedAt);
+          }
+
+          refs.badgeGrid.appendChild(card);
+        });
+      }
+
+      function renderProfile(profile) {
+        state.profile = profile;
+        var isMe = !!profile.is_me;
+        var displayName = profile.display_name || profile.username || "Profile";
+        var username = profile.username || "";
+
+        refs.ownerBadge.textContent = isMe ? "Your profile" : "Viewing profile";
+        refs.displayNameText.textContent = displayName;
+        refs.usernameText.textContent = username ? "@" + username : "-";
+        refs.emailText.textContent = profile.email || (isMe ? "-" : "Hidden");
+        refs.uploadCountText.textContent = String((profile.stats && profile.stats.upload_count) || 0);
+        refs.badgeCountText.textContent = String((profile.stats && profile.stats.badge_count) || 0);
+        refs.displayNameInput.value = displayName;
+
+        setAvatar(refs.profileAvatar, getInitials(displayName || username), profile.avatar_url || "");
+        refs.profileForm.classList.toggle("hidden", !isMe);
+        refs.avatarUploadLabel.classList.toggle("hidden", !isMe);
+        refs.avatarHint.textContent = isMe
+          ? "PNG, JPG, GIF, WEBP up to 4MB."
+          : "Only this user can change their profile picture.";
+        renderBadges(profile);
+      }
+
+      async function loadProfile() {
+        state.me = await apiFetch("/api/profile/me");
+        var requestedUsername = targetUsernameFromUrl();
+        if (!requestedUsername || requestedUsername === state.me.username) {
+          renderProfile(state.me);
+          return;
+        }
+        var otherProfile = await apiFetch("/api/profile/" + encodeURIComponent(requestedUsername));
+        renderProfile(otherProfile);
+      }
+
+      async function handleProfileSave(event) {
+        event.preventDefault();
+        var displayName = refs.displayNameInput.value.trim();
+        refs.saveProfileButton.disabled = true;
+        setNotice(refs.profileNotice, "Saving profile...", "warn");
+        try {
+          var updated = await apiFetch("/api/profile/me", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ display_name: displayName }),
+          });
+          setNotice(refs.profileNotice, "Profile updated.", "ok");
+          renderProfile(updated);
+        } catch (error) {
+          setNotice(refs.profileNotice, error.message, "error");
+        } finally {
+          refs.saveProfileButton.disabled = false;
+        }
+      }
+
+      async function handleAvatarUpload() {
+        var file = refs.avatarInput.files && refs.avatarInput.files[0];
+        if (!file) return;
+
+        var data = new FormData();
+        data.append("avatar", file);
+        setNotice(refs.avatarNotice, "Uploading avatar...", "warn");
+        refs.avatarUploadLabel.classList.add("hidden");
+        try {
+          var updated = await apiFetch("/api/profile/me/avatar", {
+            method: "POST",
+            body: data,
+          });
+          setNotice(refs.avatarNotice, "Avatar updated.", "ok");
+          renderProfile(updated);
+        } catch (error) {
+          setNotice(refs.avatarNotice, error.message, "error");
+        } finally {
+          refs.avatarInput.value = "";
+          if (state.profile && state.profile.is_me) {
+            refs.avatarUploadLabel.classList.remove("hidden");
+          }
+        }
+      }
+
+      async function init() {
+        state.token = getToken();
+        if (!state.token) {
+          var next = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = "/account/?next=" + next;
+          return;
+        }
+
+        refs.profileForm.addEventListener("submit", handleProfileSave);
+        refs.avatarInput.addEventListener("change", handleAvatarUpload);
+
+        try {
+          await loadProfile();
+          setNotice(refs.profileNotice, "", "");
+        } catch (error) {
+          setNotice(refs.profileNotice, error.message, "error");
+        }
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

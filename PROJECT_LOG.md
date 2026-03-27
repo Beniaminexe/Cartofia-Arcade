@@ -494,5 +494,207 @@ Planned behaviour:
   - with: `refs.registerLink.addEventListener("click", function(e) { e.preventDefault(); startLogin(); });`
 - Result: clicking `Create one` now runs the same OIDC login-start flow as the sign-in button.
 
+---
+
+## 2026-03-26 - Bomber Raid NPC anti-suicide tuning
+
+**Summary**
+
+- Further improved Bomber Raid NPC bomb AI to reduce self-eliminations.
+
+**Details**
+
+- Updated `arcade/bomber-raid/index.html` enemy logic:
+  - Added owner-specific blast threat tracking so NPCs recognize danger from their own active bombs.
+  - Added post-bomb flee window (`fv`) so NPCs prioritize escape movement immediately after placing bombs.
+  - Made bomb-placement escape validation more conservative with realistic movement timing assumptions.
+  - Increased NPC bomb fuse slightly and nudged NPC movement cooldown right after bomb drop to start escaping sooner.
+  - Updated movement scoring to heavily avoid own-blast lanes while fleeing.
+- Extended enemy snapshot fields with `fv` for online host/guest state consistency.
+
+**Validation performed**
+
+- Ran inline Bomber Raid JavaScript syntax validation via `node --check` after tuning changes.
+
+---
+
+## 2026-03-27 - Arcade expansion: Minesweeper Classic and Maze Chase
+
+**Summary**
+
+- Added two new playable browser games to Cartofia Arcade:
+  - `Minesweeper Classic` (classic desktop-style rules and UI behavior)
+  - `Maze Chase` (Pac-Man style pellet maze with ghost pursuit)
+- Updated arcade catalog listing and slot counters to include both games.
+
+**Details**
+
+- Added new game page: `arcade/minesweeper/index.html`
+  - Implemented classic Minesweeper gameplay:
+    - Beginner / Intermediate / Expert presets (`9x9/10`, `16x16/40`, `30x16/99`)
+    - Custom board sizing and mine count
+    - Mine counter, timer, and reset face control
+    - Left reveal, right-click mark cycle (flag/question/clear), and number chording
+    - First-click safe mine placement with opening-area protection
+  - Added mobile-friendly input support via toggled flag mode.
+  - Added local best-time persistence per board profile.
+- Added new game page: `arcade/maze-chase/index.html`
+  - Implemented Pac-Man-like maze runner:
+    - pellet and power-orb collection
+    - ghost patrol/chase behavior with frightened mode
+    - score/lives tracking and win/lose conditions
+    - keyboard and touch-pad controls
+  - Added local best-score persistence.
+- Updated arcade catalog in `arcade/index.html`:
+  - Increased slot count from `4 / 8` to `6 / 8`.
+  - Added launch cards for:
+    - `/arcade/minesweeper/`
+    - `/arcade/maze-chase/`
+  - Added recent activity feed entries for both deployments.
+
+**Validation performed**
+
+- Ran inline JavaScript syntax checks with `node --check` for:
+  - `arcade/minesweeper/index.html`
+  - `arcade/maze-chase/index.html`
+
+---
+
+## 2026-03-27 - Maze Chase spawn/speed playability hotfix
+
+**Summary**
+
+- Fixed Maze Chase opening-playability issue where ghost spawning could overlap player spawn and cause immediate death.
+- Slowed ghost movement pacing for fairer starts.
+
+**Details**
+
+- Updated `arcade/maze-chase/index.html`:
+  - Ghost spawn candidate selection now excludes the player spawn tile.
+  - Adjusted ghost spawn candidates so one no longer defaults onto the player lane.
+  - Increased ghost step interval (`GHOST_STEP_MS`) to reduce ghost speed.
+  - Added short start-of-round collision grace window (`START_GRACE_MS`) to prevent instant unavoidable deaths.
+
+**Validation performed**
+
+- Ran inline JavaScript syntax validation via `node --check` after Maze Chase hotfix changes.
+
+---
+
+## 2026-03-27 - Maze Chase spawn safety follow-up
+
+**Summary**
+
+- Applied a stricter Maze Chase ghost spawn safety fix after reports of continued spawn-overlap behavior.
+
+**Details**
+
+- Updated `arcade/maze-chase/index.html`:
+  - Replaced fixed ghost spawn candidates with a safe spawn-pool selection across walkable maze tiles.
+  - Added player-distance constraints so ghost spawns avoid the player spawn area.
+  - Added anti-crowding logic when selecting multiple ghost spawn points.
+  - Disabled ghost movement during the start grace window so they cannot rush the player immediately after round start.
+
+**Validation performed**
+
+- Ran inline JavaScript syntax validation via `node --check` after spawn safety follow-up changes.
+
+---
+
+## 2026-03-27 - Archive upload progress bar
+
+**Summary**
+
+- Added a live upload progress bar to the archive upload flow.
+
+**Details**
+
+- Updated `archive/index.html` upload card UI:
+  - Added progress bar track/fill and upload progress status text.
+  - Added percent display and ARIA progressbar attributes for accessibility.
+- Updated upload request flow:
+  - Replaced upload path in `handleUpload` with an `XMLHttpRequest`-based uploader that emits upload progress events.
+  - Progress text now shows transferred size and total size while uploading.
+  - Added upload state handling to prevent changing selected files mid-upload.
+  - Progress bar auto-hides shortly after completion/error.
+
+**Validation performed**
+
+- Ran inline JavaScript syntax validation via `node --check` after upload progress changes.
+
+---
+
+## 2026-03-27 - Maze Chase joystick touch controls
+
+**Summary**
+
+- Replaced Maze Chase mobile D-pad controls with a drag joystick control.
+
+**Details**
+
+- Updated `arcade/maze-chase/index.html`:
+  - Removed on-screen U/L/D/R touch pad buttons.
+  - Added joystick UI (base + thumb) with touch-friendly styling.
+  - Added pointer-driven joystick input handling:
+    - directional selection from drag vector
+    - dead-zone handling near center
+    - thumb reset on release/cancel
+- Keyboard controls and gameplay loop remain unchanged.
+
+**Validation performed**
+
+- Ran inline JavaScript syntax validation via `node --check` after joystick control changes.
+
+---
+
+## 2026-03-27 - Account profiles with badges and avatar uploads
+
+**Summary**
+
+- Added account profile support with persistent profile metadata, badge unlocks, and profile-picture uploads.
+- Added a dedicated profile page and wired profile/avatar links into shared account navigation.
+
+**Details**
+
+- Updated backend API in `src/cartofia_bot/api_server.py`:
+  - Added profile storage schema:
+    - `user_profiles`
+    - `user_badges`
+  - Added profile avatar storage directory under `archive_data/profiles/avatars`.
+  - Added authenticated profile APIs:
+    - `GET /api/profile/me`
+    - `GET /api/profile/<username>`
+    - `PATCH /api/profile/me`
+    - `POST /api/profile/me/avatar`
+  - Added avatar delivery endpoint:
+    - `GET /api/profile/avatar/<username>`
+  - Added automatic badge sync/awarding:
+    - `first_login`
+    - `archive_uploader` (first archive upload)
+    - `archive_veteran` (10 archive uploads)
+    - `avatar_ready` (profile picture set)
+  - Archive uploads now ensure/sync uploader profiles and badge progress.
+- Updated shared navigation in `assets/site.js`:
+  - Added `Profile` action to authenticated account dropdown.
+  - Added profile enrichment call to `/api/profile/me` for dropdown avatar/display-name support.
+  - Added avatar image rendering for navbar account button + dropdown header avatar.
+- Updated shared styling in `assets/site.css`:
+  - Added avatar-image display handling for `.avatar-btn` and `.account-avatar` when profile pictures exist.
+- Added new page `account/profile/index.html`:
+  - Shows profile header, avatar, account stats, and badge grid.
+  - Supports editing display name (self profile).
+  - Supports avatar upload (self profile).
+  - Supports viewing another user profile via query (`?u=<username>`).
+- Updated `account/index.html`:
+  - Added `Open Profile` actions in authenticated session controls.
+
+**Validation performed**
+
+- Ran backend syntax validation:
+  - `python -m py_compile src\cartofia_bot\api_server.py`
+- Ran frontend syntax validation:
+  - `node --check assets\site.js`
+  - `node --check` on extracted inline script from `account/profile/index.html`
+
 *This log is updated as new milestones and design decisions are made.*
 

@@ -634,7 +634,8 @@
         t: o.t,
         cd: o.cd,
         mb: o.mb,
-        rg: o.rg
+        rg: o.rg,
+        fv: o.fv
       })),
       bombs: bb.map((b) => ({ x: b.x, y: b.y, t: b.t, r: b.r, owner: b.owner })),
       explosions: ex.map((e) => ({ x: e.x, y: e.y, t: e.t })),
@@ -749,7 +750,8 @@
         t: Number.isFinite(o.t) ? o.t : 320,
         cd: Number.isFinite(o.cd) ? o.cd : 1100,
         mb: clamp(Number.isFinite(o.mb) ? Math.round(o.mb) : 1, 1, 3),
-        rg: clamp(Number.isFinite(o.rg) ? Math.round(o.rg) : 2, 1, 5)
+        rg: clamp(Number.isFinite(o.rg) ? Math.round(o.rg) : 2, 1, 5),
+        fv: Number.isFinite(o.fv) ? Math.max(0, o.fv) : 0
       }));
     }
     if (Array.isArray(state.bombs)) {
@@ -1304,7 +1306,8 @@
       t: 320 + i * 140,
       cd: 1000 + i * 260,
       mb: 1,
-      rg: 2
+      rg: 2,
+      fv: 0
     }));
   }
 
@@ -1671,6 +1674,21 @@
     return soonest;
   }
 
+  function earliestBlastMsAtByOwner(owner, x1, y1) {
+    if (!owner) {
+      return Infinity;
+    }
+    let soonest = Infinity;
+    for (let i = 0; i < bb.length; i += 1) {
+      const b = bb[i];
+      if (b.owner !== owner) { continue; }
+      if (bombHitsCell(b, x1, y1)) {
+        soonest = Math.min(soonest, b.t);
+      }
+    }
+    return soonest;
+  }
+
   function hasActiveExplosionAt(x1, y1) {
     for (let i = 0; i < ex.length; i += 1) {
       if (ex[i].x === x1 && ex[i].y === y1) {
@@ -1709,17 +1727,18 @@
     const queue = [{ x: o.x, y: o.y, d: 0 }];
     const seen = new Set([key(o.x, o.y)]);
     const maxDepth = 4;
-    const stepMs = 320;
+    const stepMs = 430;
+    const initialDelay = clamp(Number.isFinite(o.t) ? o.t : 320, 120, 520);
 
     while (queue.length) {
       const cur = queue.shift();
       if (cur.d > 0) {
         const k = key(cur.x, cur.y);
         const threat = earliestBlastMsAt(cur.x, cur.y);
-        const arrival = cur.d * stepMs;
+        const arrival = initialDelay + cur.d * stepMs;
         if (!blastSet.has(k) &&
             !hasActiveExplosionAt(cur.x, cur.y) &&
-            (!Number.isFinite(threat) || threat > arrival + 280)) {
+            (!Number.isFinite(threat) || threat > arrival + 380)) {
           return true;
         }
       }
@@ -1758,6 +1777,7 @@
         y: ny,
         hot: hasActiveExplosionAt(nx, ny),
         threat: earliestBlastMsAt(nx, ny),
+        ownThreat: earliestBlastMsAtByOwner(o.id, nx, ny),
         dist: nearestAlivePlayerDistance(nx, ny)
       });
     }
@@ -1768,10 +1788,22 @@
     }
 
     const hereThreat = earliestBlastMsAt(o.x, o.y);
+    const ownHereThreat = earliestBlastMsAtByOwner(o.id, o.x, o.y);
     const urgent = hasActiveExplosionAt(o.x, o.y) || hereThreat <= 520;
+    const fleeMode = (o.fv || 0) > 0 || Number.isFinite(ownHereThreat);
 
     let pool = opts.slice();
-    if (urgent) {
+    if (fleeMode) {
+      const safeOwnerOpts = opts.filter((c) => !c.hot && !Number.isFinite(c.ownThreat));
+      if (safeOwnerOpts.length) {
+        pool = safeOwnerOpts;
+      } else {
+        const delayedOwnerOpts = opts.filter((c) => !c.hot && (!Number.isFinite(c.ownThreat) || c.ownThreat > 900));
+        if (delayedOwnerOpts.length) {
+          pool = delayedOwnerOpts;
+        }
+      }
+    } else if (urgent) {
       const escapeOpts = opts.filter((c) => !c.hot && (!Number.isFinite(c.threat) || c.threat > 520));
       if (escapeOpts.length) {
         pool = escapeOpts;
@@ -1790,13 +1822,18 @@
       if (c.dir === o.d) { score += 3; }
       if (c.dir === R[o.d]) { score -= 4; }
       if (c.hot) { score -= 80; }
-      if (Number.isFinite(c.dist)) {
+      if (Number.isFinite(c.dist) && !fleeMode) {
         score += Math.max(0, 10 - c.dist) * 1.2;
       }
       if (Number.isFinite(c.threat)) {
-        score -= Math.max(0, 900 - c.threat) * 0.02;
+        score -= Math.max(0, 1400 - c.threat) * 0.04;
       } else {
         score += 2;
+      }
+      if (Number.isFinite(c.ownThreat)) {
+        score -= Math.max(0, 2400 - c.ownThreat) * 0.06;
+      } else {
+        score += 5;
       }
       c.score = score;
       best = Math.max(best, score);
@@ -1831,6 +1868,9 @@
   }
 
   function enemyWantsBomb(o) {
+    if ((o.fv || 0) > 0) {
+      return false;
+    }
     const localThreat = earliestBlastMsAt(o.x, o.y);
     if (hasActiveExplosionAt(o.x, o.y) || localThreat <= 680) {
       return false;
@@ -1869,13 +1909,16 @@
     if (!o.id) { return false; }
     if (activeBombsFor(o.id) >= Math.max(1, o.mb || 1)) { return false; }
     if (bombAt(o.x, o.y)) { return false; }
+    const fuse = 1850 + Math.floor(Math.random() * 450);
     bb.push({
       x: o.x,
       y: o.y,
-      t: 1650 + Math.floor(Math.random() * 250),
+      t: fuse,
       r: clamp(Number.isFinite(o.rg) ? o.rg : 2, 1, 6),
       owner: o.id
     });
+    o.fv = Math.max(o.fv || 0, fuse + 180);
+    o.t = Math.min(o.t, 220);
     return true;
   }
 
@@ -1886,6 +1929,7 @@
 
       o.t -= dt;
       o.cd -= dt;
+      o.fv = Math.max(0, (o.fv || 0) - dt);
       if (o.t <= 0) {
         moveEnemy(o);
       }

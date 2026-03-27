@@ -3,6 +3,25 @@
   var OIDC_USERINFO_URL = "/application/o/userinfo/";
   var OIDC_LOGOUT_URL   = "/application/o/cartofia/end-session/";
   var OIDC_LOGIN_URL    = "/account/#login";
+  var PROFILE_ME_URL    = "/api/profile/me";
+
+  function initialsFrom(username) {
+    var value = username ? String(username).trim() : "";
+    return value ? value.slice(0, 2).toUpperCase() : "CA";
+  }
+
+  function setAvatarVisual(target, initials, avatarUrl) {
+    if (!target) return;
+    if (avatarUrl) {
+      target.classList.add("has-image");
+      target.style.backgroundImage = "url('" + String(avatarUrl).replace(/'/g, "%27") + "')";
+      target.textContent = "";
+      return;
+    }
+    target.classList.remove("has-image");
+    target.style.backgroundImage = "";
+    target.textContent = initials || "CA";
+  }
 
   function setExpanded(button, dropdown, expanded) {
     button.setAttribute("aria-expanded", expanded ? "true" : "false");
@@ -34,6 +53,40 @@
     }
   }
 
+  async function fetchProfile() {
+    try {
+      var token = typeof localStorage !== "undefined" ? localStorage.getItem("oidc_access_token") : null;
+      if (!token) return null;
+      var response = await fetch(PROFILE_ME_URL, {
+        credentials: "include",
+        headers: { "Authorization": "Bearer " + token },
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  var sessionPromise = null;
+  function fetchSessionBundle() {
+    if (!sessionPromise) {
+      sessionPromise = (async function () {
+        var session = await fetchSession();
+        if (!session || !session.authenticated || !session.user) {
+          return { authenticated: false };
+        }
+        var profile = await fetchProfile();
+        if (profile) {
+          session.user.avatar_url = profile.avatar_url || "";
+          session.user.display_name = profile.display_name || session.user.username;
+        }
+        return session;
+      })();
+    }
+    return sessionPromise;
+  }
+
   function renderAccountDropdown(menu, session) {
     const button = menu.querySelector("[data-account-toggle]");
     const dropdown = menu.querySelector("[data-account-dropdown]");
@@ -42,9 +95,11 @@
     }
 
     const username = session && session.user && session.user.username ? String(session.user.username) : null;
+    const displayName = session && session.user && session.user.display_name ? String(session.user.display_name) : null;
     const email = session && session.user && session.user.email ? String(session.user.email) : null;
-    const initials = username ? username.slice(0, 2).toUpperCase() : "CA";
-    button.textContent = initials;
+    const avatarUrl = session && session.user && session.user.avatar_url ? String(session.user.avatar_url) : "";
+    const initials = initialsFrom(displayName || username);
+    setAvatarVisual(button, initials, avatarUrl);
 
     dropdown.innerHTML = "";
     const frag = document.createDocumentFragment();
@@ -54,14 +109,14 @@
 
     const avatar = document.createElement("div");
     avatar.className = "account-avatar";
-    avatar.textContent = initials;
+    setAvatarVisual(avatar, initials, avatarUrl);
     head.appendChild(avatar);
 
     const identity = document.createElement("div");
     identity.className = "account-identity";
     const nameEl = document.createElement("div");
     nameEl.className = "account-name";
-    nameEl.textContent = username || "Guest";
+    nameEl.textContent = displayName || username || "Guest";
     const emailEl = document.createElement("div");
     emailEl.className = "account-email";
     emailEl.textContent = email || "Not signed in";
@@ -96,6 +151,7 @@
     };
 
     if (session && session.authenticated && username) {
+      addLink("Profile", "/account/profile/");
       addLink("Account", "/account/");
       addLink("Archive", "/archive/");
       addLink("Minecraft", "/minecraft/");
@@ -153,7 +209,7 @@
       }
     });
 
-    fetchSession().then(function (session) {
+    fetchSessionBundle().then(function (session) {
       renderAccountDropdown(menu, session);
     });
   }

@@ -13,6 +13,7 @@ import hmac
 from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
+from urllib.parse import quote
 
 import requests
 from flask import Flask, g, jsonify, request, send_file
@@ -30,7 +31,13 @@ ARCHIVE_DB_PATH = Path(
     os.getenv("ARCHIVE_DB_PATH", str(ARCHIVE_DATA_DIR / "archive.db"))
 ).resolve()
 ARCHIVE_FILES_DIR = (ARCHIVE_DATA_DIR / "files").resolve()
+PROFILE_DATA_DIR = (ARCHIVE_DATA_DIR / "profiles").resolve()
+PROFILE_AVATAR_DIR = (PROFILE_DATA_DIR / "avatars").resolve()
 MAX_UPLOAD_MB = int(os.getenv("ARCHIVE_MAX_UPLOAD_MB", "50"))
+MAX_PROFILE_AVATAR_MB = max(1, int(os.getenv("PROFILE_AVATAR_MAX_MB", "4")))
+MAX_PROFILE_AVATAR_BYTES = MAX_PROFILE_AVATAR_MB * 1024 * 1024
+PROFILE_USERNAME_MAX_LENGTH = 128
+PROFILE_DISPLAY_NAME_MAX_LENGTH = 40
 
 # OIDC / Authentik configuration
 OIDC_USERINFO_URL = os.getenv("OIDC_USERINFO_URL")
@@ -63,6 +70,25 @@ if allowed_origins:
 else:
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
+PROFILE_BADGE_CATALOG: dict[str, dict[str, str]] = {
+    "first_login": {
+        "name": "Welcome",
+        "description": "Signed in to Cartofia.",
+    },
+    "archive_uploader": {
+        "name": "Archivist",
+        "description": "Uploaded your first file to the archive.",
+    },
+    "archive_veteran": {
+        "name": "Vault Keeper",
+        "description": "Uploaded 10 files to the archive.",
+    },
+    "avatar_ready": {
+        "name": "Face of Cartofia",
+        "description": "Added a profile picture.",
+    },
+}
+
 ROOM_CODE_LENGTH = 6
 ROOM_CAPACITY = 2
 ROOM_STALE_SECONDS = max(60, int(os.getenv("BOMBER_ROOM_STALE_SECONDS", "900")))
@@ -78,8 +104,9 @@ proxmox = ProxmoxStats()
 
 
 def init_storage() -> None:
-    """Create folders and database tables for archive data."""
+    """Create folders and database tables for archive and profile data."""
     ARCHIVE_FILES_DIR.mkdir(parents=True, exist_ok=True)
+    PROFILE_AVATAR_DIR.mkdir(parents=True, exist_ok=True)
     ARCHIVE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(ARCHIVE_DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -92,6 +119,31 @@ def init_storage() -> None:
             size_bytes INTEGER NOT NULL,
             uploaded_by TEXT NOT NULL,
             uploaded_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_profiles (
+            username TEXT PRIMARY KEY,
+            email TEXT NOT NULL DEFAULT '',
+            display_name TEXT NOT NULL DEFAULT '',
+            picture_filename TEXT NOT NULL DEFAULT '',
+            picture_updated_at TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_badges (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            badge_key TEXT NOT NULL,
+            source TEXT NOT NULL DEFAULT 'auto',
+            awarded_at TEXT NOT NULL,
+            UNIQUE(username, badge_key)
         )
         """
     )
@@ -112,6 +164,203 @@ def close_db(_error: Exception | None) -> None:
     db = g.pop("db", None)
     if db is not None:
         db.close()
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _clean_profile_username(raw: object) -> str:
+    return str(raw or "").strip()[:PROFILE_USERNAME_MAX_LENGTH]
+
+
+def _detect_avatar_extension(data: bytes) -> str | None:
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "jpg"
+    if data.startswith(b"GIF87a") or data.startswith(b"GIF89a"):
+        return "gif"
+    if len(data) > 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
+def _profile_avatar_url(username: str, picture_filename: str, picture_updated_at: str) -> str | None:
+    if not picture_filename:
+        return None
+    cache_param = f"?v={quote(picture_updated_at, safe='')}" if picture_updated_at else ""
+    return f"/api/profile/avatar/{quote(username, safe='')}{cache_param}"
+
+
+def _fetch_profile_row(db: sqlite3.Connection, username: str) -> sqlite3.Row | None:
+    return db.execute(
+        """
+        SELECT username, email, display_name, picture_filename, picture_updated_at, created_at, updated_at
+        FROM user_profiles
+        WHERE username = ?
+        """,
+        (username,),
+    ).fetchone()
+
+
+def _ensure_profile_row(db: sqlite3.Connection, username: str, email: str = "") -> sqlite3.Row:
+    clean_username = _clean_profile_username(username)
+    now = _utc_now_iso()
+    row = _fetch_profile_row(db, clean_username)
+    if row is None:
+        db.execute(
+            """
+            INSERT INTO user_profiles (
+                username, email, display_name, picture_filename, picture_updated_at, created_at, updated_at
+            )
+            VALUES (?, ?, ?, '', '', ?, ?)
+            """,
+            (clean_username, str(email or "").strip(), clean_username, now, now),
+        )
+    else:
+        changed = False
+        new_email = str(email or "").strip()
+        if new_email and row["email"] != new_email:
+            db.execute(
+                """
+                UPDATE user_profiles
+                SET email = ?, updated_at = ?
+                WHERE username = ?
+                """,
+                (new_email, now, clean_username),
+            )
+            changed = True
+        if (not row["display_name"]) and row["display_name"] != clean_username:
+            db.execute(
+                """
+                UPDATE user_profiles
+                SET display_name = ?, updated_at = ?
+                WHERE username = ?
+                """,
+                (clean_username, now, clean_username),
+            )
+            changed = True
+        if not changed:
+            return row
+    db.commit()
+    return _fetch_profile_row(db, clean_username)
+
+
+def _archive_upload_count(db: sqlite3.Connection, username: str) -> int:
+    row = db.execute(
+        """
+        SELECT COUNT(*) AS count
+        FROM archive_files
+        WHERE uploaded_by = ?
+        """,
+        (username,),
+    ).fetchone()
+    if row is None:
+        return 0
+    return int(row["count"] or 0)
+
+
+def _award_badge(
+    db: sqlite3.Connection,
+    username: str,
+    badge_key: str,
+    source: str = "auto",
+) -> bool:
+    if badge_key not in PROFILE_BADGE_CATALOG:
+        return False
+    now = _utc_now_iso()
+    cursor = db.execute(
+        """
+        INSERT OR IGNORE INTO user_badges (username, badge_key, source, awarded_at)
+        VALUES (?, ?, ?, ?)
+        """,
+        (username, badge_key, source, now),
+    )
+    return cursor.rowcount > 0
+
+
+def _sync_profile_badges(db: sqlite3.Connection, username: str) -> bool:
+    clean_username = _clean_profile_username(username)
+    row = _fetch_profile_row(db, clean_username)
+    if row is None:
+        return False
+
+    changed = False
+    changed = _award_badge(db, clean_username, "first_login") or changed
+
+    upload_count = _archive_upload_count(db, clean_username)
+    if upload_count >= 1:
+        changed = _award_badge(db, clean_username, "archive_uploader") or changed
+    if upload_count >= 10:
+        changed = _award_badge(db, clean_username, "archive_veteran") or changed
+
+    if row["picture_filename"]:
+        changed = _award_badge(db, clean_username, "avatar_ready") or changed
+
+    return changed
+
+
+def _profile_badge_payload(
+    db: sqlite3.Connection,
+    username: str,
+) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    rows = db.execute(
+        """
+        SELECT badge_key, source, awarded_at
+        FROM user_badges
+        WHERE username = ?
+        ORDER BY awarded_at ASC
+        """,
+        (username,),
+    ).fetchall()
+    by_key: dict[str, sqlite3.Row] = {str(row["badge_key"]): row for row in rows}
+
+    catalog: list[dict[str, object]] = []
+    earned: list[dict[str, object]] = []
+    for badge_key, meta in PROFILE_BADGE_CATALOG.items():
+        award = by_key.get(badge_key)
+        entry = {
+            "key": badge_key,
+            "name": meta["name"],
+            "description": meta["description"],
+            "earned": bool(award),
+            "awarded_at": award["awarded_at"] if award else None,
+            "source": award["source"] if award else None,
+        }
+        catalog.append(entry)
+        if award:
+            earned.append(entry)
+    return catalog, earned
+
+
+def _profile_payload(
+    db: sqlite3.Connection,
+    row: sqlite3.Row,
+    include_email: bool = False,
+) -> dict[str, object]:
+    username = str(row["username"])
+    badge_catalog, earned_badges = _profile_badge_payload(db, username)
+    payload: dict[str, object] = {
+        "username": username,
+        "display_name": row["display_name"] or username,
+        "avatar_url": _profile_avatar_url(
+            username,
+            str(row["picture_filename"] or ""),
+            str(row["picture_updated_at"] or ""),
+        ),
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+        "stats": {
+            "upload_count": _archive_upload_count(db, username),
+            "badge_count": len(earned_badges),
+        },
+        "badges": earned_badges,
+        "badge_catalog": badge_catalog,
+    }
+    if include_email:
+        payload["email"] = row["email"] or ""
+    return payload
 
 
 def _resolve_oidc_user() -> dict | None:
@@ -148,11 +397,26 @@ def _resolve_oidc_user() -> dict | None:
         return None
 
     g.user = {
-        "username": claims.get("preferred_username", claims.get("sub", "")),
+        "username": _clean_profile_username(
+            claims.get("preferred_username", claims.get("sub", ""))
+        ),
         "email": claims.get("email", ""),
         "groups": claims.get("groups", []),
     }
     return g.user
+
+
+def auth_required(handler):
+    """Require a valid OIDC token."""
+
+    @wraps(handler)
+    def wrapped(*args, **kwargs):
+        user = _resolve_oidc_user()
+        if user is None:
+            return jsonify({"error": "Authentication required"}), 401
+        return handler(*args, **kwargs)
+
+    return wrapped
 
 
 def login_required(handler):
@@ -221,6 +485,7 @@ def upload_archive_file():
 
     now = datetime.now(timezone.utc).isoformat()
     db = get_db()
+    _ensure_profile_row(db, g.user["username"], g.user.get("email", ""))
     cursor = db.execute(
         """
         INSERT INTO archive_files (original_name, stored_name, size_bytes, uploaded_by, uploaded_at)
@@ -228,6 +493,7 @@ def upload_archive_file():
         """,
         (original_name, stored_name, size_bytes, g.user["username"], now),
     )
+    _sync_profile_badges(db, g.user["username"])
     db.commit()
     return jsonify(
         {
@@ -267,6 +533,169 @@ def download_archive_file(file_id: int):
         download_name=row["original_name"],
         max_age=0,
     )
+
+
+@app.route("/api/profile/me", methods=["GET"])
+@auth_required
+def get_my_profile():
+    db = get_db()
+    username = _clean_profile_username(g.user.get("username", ""))
+    if not username:
+        return jsonify({"error": "Missing username in token claims."}), 400
+
+    row = _ensure_profile_row(db, username, g.user.get("email", ""))
+    if _sync_profile_badges(db, username):
+        db.commit()
+        row = _fetch_profile_row(db, username)
+    payload = _profile_payload(db, row, include_email=True)
+    payload["is_me"] = True
+    return jsonify(payload), 200
+
+
+@app.route("/api/profile/<username>", methods=["GET"])
+@auth_required
+def get_profile_by_username(username: str):
+    db = get_db()
+    target_username = _clean_profile_username(username)
+    if not target_username:
+        return jsonify({"error": "Invalid username."}), 400
+
+    viewer_username = _clean_profile_username(g.user.get("username", ""))
+    include_email = target_username == viewer_username
+
+    if include_email:
+        row = _ensure_profile_row(db, target_username, g.user.get("email", ""))
+    else:
+        row = _fetch_profile_row(db, target_username)
+        if row is None:
+            return jsonify({"error": "Profile not found."}), 404
+
+    if _sync_profile_badges(db, target_username):
+        db.commit()
+        row = _fetch_profile_row(db, target_username)
+    payload = _profile_payload(db, row, include_email=include_email)
+    payload["is_me"] = include_email
+    return jsonify(payload), 200
+
+
+@app.route("/api/profile/me", methods=["PATCH"])
+@auth_required
+def update_my_profile():
+    data = request.get_json(silent=True) or {}
+    display_name = str(data.get("display_name", "")).strip()
+    if len(display_name) > PROFILE_DISPLAY_NAME_MAX_LENGTH:
+        return (
+            jsonify(
+                {
+                    "error": (
+                        f"Display name too long. Max {PROFILE_DISPLAY_NAME_MAX_LENGTH} characters."
+                    )
+                }
+            ),
+            400,
+        )
+
+    db = get_db()
+    username = _clean_profile_username(g.user.get("username", ""))
+    if not username:
+        return jsonify({"error": "Missing username in token claims."}), 400
+    row = _ensure_profile_row(db, username, g.user.get("email", ""))
+
+    now = _utc_now_iso()
+    next_display_name = display_name or username
+    db.execute(
+        """
+        UPDATE user_profiles
+        SET display_name = ?, email = ?, updated_at = ?
+        WHERE username = ?
+        """,
+        (next_display_name, g.user.get("email", ""), now, username),
+    )
+    db.commit()
+    row = _fetch_profile_row(db, username)
+    payload = _profile_payload(db, row, include_email=True)
+    payload["is_me"] = True
+    return jsonify(payload), 200
+
+
+@app.route("/api/profile/me/avatar", methods=["POST"])
+@auth_required
+def upload_my_profile_avatar():
+    incoming_file = request.files.get("avatar") or request.files.get("file")
+    if incoming_file is None:
+        return jsonify({"error": "Missing file field 'avatar'."}), 400
+
+    raw_data = incoming_file.stream.read(MAX_PROFILE_AVATAR_BYTES + 1)
+    if not raw_data:
+        return jsonify({"error": "Uploaded image is empty."}), 400
+    if len(raw_data) > MAX_PROFILE_AVATAR_BYTES:
+        return jsonify({"error": f"Avatar too large. Max size is {MAX_PROFILE_AVATAR_MB}MB."}), 413
+
+    extension = _detect_avatar_extension(raw_data)
+    if extension is None:
+        return jsonify({"error": "Unsupported image format. Use PNG, JPG, GIF, or WEBP."}), 400
+
+    db = get_db()
+    username = _clean_profile_username(g.user.get("username", ""))
+    if not username:
+        return jsonify({"error": "Missing username in token claims."}), 400
+    row = _ensure_profile_row(db, username, g.user.get("email", ""))
+
+    old_filename = str(row["picture_filename"] or "")
+    file_key = hashlib.sha256(f"{username}:{uuid.uuid4().hex}".encode("utf-8")).hexdigest()[:24]
+    new_filename = f"{file_key}.{extension}"
+    output_path = (PROFILE_AVATAR_DIR / new_filename).resolve()
+    if output_path.parent != PROFILE_AVATAR_DIR:
+        return jsonify({"error": "Invalid avatar destination path."}), 500
+
+    output_path.write_bytes(raw_data)
+    now = _utc_now_iso()
+    db.execute(
+        """
+        UPDATE user_profiles
+        SET picture_filename = ?, picture_updated_at = ?, email = ?, updated_at = ?
+        WHERE username = ?
+        """,
+        (new_filename, now, g.user.get("email", ""), now, username),
+    )
+    _sync_profile_badges(db, username)
+    db.commit()
+
+    if old_filename and old_filename != new_filename:
+        old_path = (PROFILE_AVATAR_DIR / old_filename).resolve()
+        if old_path.parent == PROFILE_AVATAR_DIR and old_path.exists():
+            try:
+                old_path.unlink()
+            except OSError:
+                pass
+
+    row = _fetch_profile_row(db, username)
+    payload = _profile_payload(db, row, include_email=True)
+    payload["is_me"] = True
+    return jsonify(payload), 200
+
+
+@app.route("/api/profile/avatar/<username>", methods=["GET"])
+def get_profile_avatar(username: str):
+    clean_username = _clean_profile_username(username)
+    if not clean_username:
+        return jsonify({"error": "Invalid username."}), 400
+
+    row = get_db().execute(
+        """
+        SELECT picture_filename
+        FROM user_profiles
+        WHERE username = ?
+        """,
+        (clean_username,),
+    ).fetchone()
+    if row is None or not row["picture_filename"]:
+        return jsonify({"error": "Avatar not found."}), 404
+
+    avatar_path = (PROFILE_AVATAR_DIR / str(row["picture_filename"])).resolve()
+    if avatar_path.parent != PROFILE_AVATAR_DIR or (not avatar_path.exists()):
+        return jsonify({"error": "Avatar file is missing."}), 404
+    return send_file(avatar_path, max_age=3600, conditional=True)
 
 
 @app.errorhandler(413)

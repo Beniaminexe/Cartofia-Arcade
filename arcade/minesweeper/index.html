@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Minesweeper Classic - Cartofia Arcade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 760px) minmax(260px, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .board-panel {
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: radial-gradient(circle at 50% 0%, rgba(46, 168, 255, 0.12), rgba(5, 13, 20, 0.96) 62%);
+      padding: 12px;
+      overflow: hidden;
+    }
+
+    .classic-shell {
+      border: 3px solid #8a8a8a;
+      border-right-color: #ececec;
+      border-bottom-color: #ececec;
+      border-radius: 4px;
+      background: #c0c0c0;
+      padding: 10px;
+      user-select: none;
+    }
+
+    .classic-top {
+      border: 2px solid #ececec;
+      border-right-color: #8a8a8a;
+      border-bottom-color: #8a8a8a;
+      background: #bdbdbd;
+      min-height: 52px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      margin-bottom: 10px;
+    }
+
+    .digit {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 66px;
+      min-height: 38px;
+      padding: 0 8px;
+      border: 2px solid #8a8a8a;
+      border-right-color: #ececec;
+      border-bottom-color: #ececec;
+      background: #0f0000;
+      color: #ff3434;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 28px;
+      letter-spacing: 1px;
+      font-weight: 700;
+      line-height: 1;
+      text-shadow: 0 0 2px rgba(255, 0, 0, 0.4);
+    }
+
+    .face-btn {
+      min-width: 42px;
+      min-height: 42px;
+      border: 2px solid #ececec;
+      border-right-color: #8a8a8a;
+      border-bottom-color: #8a8a8a;
+      background: #cfcfcf;
+      color: #1d1d1d;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .face-btn:active,
+    .face-btn.pressed {
+      border: 2px solid #8a8a8a;
+      border-right-color: #ececec;
+      border-bottom-color: #ececec;
+      transform: translateY(1px);
+    }
+
+    .board-wrap {
+      border: 2px solid #ececec;
+      border-right-color: #8a8a8a;
+      border-bottom-color: #8a8a8a;
+      background: #bdbdbd;
+      padding: 8px;
+      overflow: auto;
+      max-height: min(72vh, 760px);
+      touch-action: none;
+    }
+
+    .board-grid {
+      display: grid;
+      width: max-content;
+      gap: 0;
+      --cell-size: 28px;
+    }
+
+    .cell {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      border: 2px solid #ececec;
+      border-right-color: #8a8a8a;
+      border-bottom-color: #8a8a8a;
+      background: #c8c8c8;
+      color: #101010;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: calc(var(--cell-size) * 0.58);
+      font-weight: 800;
+      line-height: 1;
+      padding: 0;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .cell.revealed {
+      border: 1px solid #8a8a8a;
+      background: #c0c0c0;
+      cursor: default;
+      font-weight: 700;
+      font-size: calc(var(--cell-size) * 0.56);
+    }
+
+    .cell.flagged {
+      color: #c61717;
+      font-size: calc(var(--cell-size) * 0.56);
+    }
+
+    .cell.question {
+      color: #1f1f1f;
+      font-size: calc(var(--cell-size) * 0.54);
+      font-weight: 600;
+    }
+
+    .cell.mine {
+      color: #080808;
+      font-size: calc(var(--cell-size) * 0.54);
+    }
+
+    .cell.exploded {
+      background: #e25a5a;
+    }
+
+    .cell.wrong {
+      color: #a10000;
+      font-size: calc(var(--cell-size) * 0.52);
+    }
+
+    .cell.num1 { color: #1f51cb; }
+    .cell.num2 { color: #0f7e24; }
+    .cell.num3 { color: #b10f18; }
+    .cell.num4 { color: #162180; }
+    .cell.num5 { color: #7a1711; }
+    .cell.num6 { color: #107f7f; }
+    .cell.num7 { color: #111111; }
+    .cell.num8 { color: #555555; }
+
+    .game-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    .stat-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(138, 160, 185, 0.16);
+      padding-bottom: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .stat-row b {
+      color: #cbe8ff;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .custom-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .custom-grid label {
+      display: grid;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .custom-grid input {
+      min-height: 36px;
+      border: 1px solid rgba(46, 168, 255, 0.36);
+      border-radius: 9px;
+      background: rgba(8, 22, 34, 0.95);
+      color: #cbebff;
+      padding: 6px 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .button-row {
+      margin-top: 2px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .controls-list {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .controls-list b {
+      color: #90d4ff;
+      font-weight: 700;
+    }
+
+    .game-note {
+      border-radius: 10px;
+      border: 1px dashed var(--line);
+      background: rgba(4, 10, 16, 0.66);
+      color: var(--muted);
+      font-size: 13px;
+      padding: 9px 10px;
+    }
+
+    @media (max-width: 980px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .mode-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .custom-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .face-btn {
+        min-width: 46px;
+        min-height: 46px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="app-header reveal">
+      <a class="brand" href="/">
+        <span class="brand-chip" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+          </svg>
+        </span>
+        <span class="brand-text">Cartofia</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a href="/archive/">Archive</a>
+        <a class="active" href="/arcade/">Arcade</a>
+        <a href="/minecraft/">Minecraft</a>
+      </nav>
+      <div class="account-menu" data-account-menu>
+        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+          <a class="account-item" href="/arcade/" role="menuitem">Back to Arcade</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-card reveal" data-delay="1">
+        <div class="hero-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="4" width="16" height="16" rx="2" stroke="#57C2FF" stroke-width="1.5"></rect>
+            <path d="M8 8H16" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
+            <path d="M8 12H16" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
+            <path d="M8 16H12" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div class="hero-copy">
+          <p class="hero-kicker">Arcade Slot 5</p>
+          <h1 class="hero-title">Minesweeper Classic</h1>
+          <p class="hero-lead">
+            Classic Minesweeper rules with Beginner, Intermediate, Expert, and Custom boards. Left reveal, right mark, and chord open like the original desktop game.
+          </p>
+          <div class="pill-row">
+            <span class="pill"><strong>Mode</strong> Single player</span>
+            <span class="pill"><strong>Rules</strong> Classic Minesweeper</span>
+            <span class="pill"><strong>Playable</strong> In browser</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card reveal" data-delay="2">
+        <div class="game-layout">
+          <div class="board-panel">
+            <div class="classic-shell" aria-label="Minesweeper board">
+              <div class="classic-top">
+                <div id="mine-counter" class="digit" aria-live="polite">010</div>
+                <button id="face-btn" class="face-btn" type="button" title="New game">:)</button>
+                <div id="time-counter" class="digit" aria-live="polite">000</div>
+              </div>
+              <div class="board-wrap">
+                <div id="board" class="board-grid" role="grid" aria-label="Minesweeper grid"></div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="game-panel">
+            <div>
+              <h2 class="card-title">Run Stats</h2>
+              <p class="card-subtitle">Best times are saved per difficulty in this browser.</p>
+              <div class="stat-grid">
+                <div class="stat-row"><span>Difficulty</span><b id="diff-label">Beginner</b></div>
+                <div class="stat-row"><span>Mines</span><b id="mines-total">10</b></div>
+                <div class="stat-row"><span>Flags Left</span><b id="flags-left">10</b></div>
+                <div class="stat-row"><span>Time</span><b id="time-seconds">0</b></div>
+                <div class="stat-row"><span>Best</span><b id="best-time">--</b></div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="section-label">Difficulty</h3>
+              <div class="mode-grid">
+                <button class="btn btn-primary" type="button" data-preset="beginner">Beginner</button>
+                <button class="btn btn-ghost" type="button" data-preset="intermediate">Intermediate</button>
+                <button class="btn btn-ghost" type="button" data-preset="expert">Expert</button>
+                <button class="btn btn-ghost" type="button" data-preset="custom">Custom</button>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="section-label">Custom Board</h3>
+              <div class="custom-grid">
+                <label>Width<input id="custom-width" type="number" min="8" max="40" step="1" value="20" /></label>
+                <label>Height<input id="custom-height" type="number" min="8" max="24" step="1" value="14" /></label>
+                <label>Mines<input id="custom-mines" type="number" min="10" max="400" step="1" value="60" /></label>
+              </div>
+              <div class="button-row">
+                <button id="apply-custom" class="btn btn-ghost" type="button">Apply Custom</button>
+                <button id="new-board" class="btn btn-ghost" type="button">New Board</button>
+                <button id="flag-mode" class="btn btn-ghost" type="button">Flag Mode: Off</button>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="section-label">How To Play</h3>
+              <ul class="controls-list">
+                <li><b>Reveal:</b> Left click a covered tile</li>
+                <li><b>Mark:</b> Right click cycles flag, question, empty</li>
+                <li><b>Chord:</b> Click a revealed number when adjacent flags match it</li>
+                <li><b>Touch:</b> Toggle <b>Flag Mode</b> for marking on mobile</li>
+              </ul>
+            </div>
+
+            <div id="status-note" class="game-note">Clear all safe tiles without opening a mine.</div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Copyright <span id="year"></span> Cartofia. All rights reserved.</span>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/archive/">Archive</a>
+        <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/assets/site.js"></script>
+  <script>
+    (() => {
+      const presets = {
+        beginner: { w: 9, h: 9, m: 10, label: "Beginner" },
+        intermediate: { w: 16, h: 16, m: 40, label: "Intermediate" },
+        expert: { w: 30, h: 16, m: 99, label: "Expert" }
+      };
+
+      const boardEl = document.getElementById("board");
+      const mineCounterEl = document.getElementById("mine-counter");
+      const timeCounterEl = document.getElementById("time-counter");
+      const faceBtn = document.getElementById("face-btn");
+      const diffLabelEl = document.getElementById("diff-label");
+      const minesTotalEl = document.getElementById("mines-total");
+      const flagsLeftEl = document.getElementById("flags-left");
+      const timeSecondsEl = document.getElementById("time-seconds");
+      const bestTimeEl = document.getElementById("best-time");
+      const statusNoteEl = document.getElementById("status-note");
+      const customWidthEl = document.getElementById("custom-width");
+      const customHeightEl = document.getElementById("custom-height");
+      const customMinesEl = document.getElementById("custom-mines");
+      const applyCustomBtn = document.getElementById("apply-custom");
+      const newBoardBtn = document.getElementById("new-board");
+      const flagModeBtn = document.getElementById("flag-mode");
+      const presetButtons = Array.from(document.querySelectorAll("[data-preset]"));
+
+      const BEST_KEY = "cartofia_minesweeper_best_v1";
+      const DIRS = [-1, 0, 1];
+
+      let cfg = { ...presets.beginner, key: "beginner", preset: "beginner" };
+      let grid = [];
+      let firstMove = true;
+      let finished = false;
+      let won = false;
+      let revealedCount = 0;
+      let flagsPlaced = 0;
+      let seconds = 0;
+      let timerId = null;
+      let faceHold = false;
+      let flagMode = false;
+      let bestTimes = loadBestTimes();
+
+      function loadBestTimes() {
+        try {
+          const raw = window.localStorage.getItem(BEST_KEY);
+          if (!raw) { return {}; }
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== "object") { return {}; }
+          return parsed;
+        } catch (_e) {
+          return {};
+        }
+      }
+
+      function saveBestTimes() {
+        try {
+          window.localStorage.setItem(BEST_KEY, JSON.stringify(bestTimes));
+        } catch (_e) {
+          // ignore storage failures
+        }
+      }
+
+      function key(x, y) {
+        return x + "," + y;
+      }
+
+      function inBounds(x, y) {
+        return x >= 0 && x < cfg.w && y >= 0 && y < cfg.h;
+      }
+
+      function clamp(n, min, max) {
+        return Math.min(max, Math.max(min, n));
+      }
+
+      function toInt(value, fallback) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) {
+          return fallback;
+        }
+        return Math.round(n);
+      }
+
+      function counterText(value) {
+        let n = Math.round(value);
+        n = clamp(n, -99, 999);
+        if (n < 0) {
+          return "-" + String(Math.abs(n)).padStart(2, "0");
+        }
+        return String(n).padStart(3, "0");
+      }
+
+      function setFace(mode) {
+        let text = ":)";
+        if (mode === "wow") {
+          text = ":o";
+        } else if (mode === "dead") {
+          text = ":(";
+        } else if (mode === "cool") {
+          text = "B)";
+        }
+        faceBtn.textContent = text;
+      }
+
+      function setStatus(text) {
+        statusNoteEl.textContent = text;
+      }
+
+      function updatePresetButtons() {
+        presetButtons.forEach((btn) => {
+          const isActive = btn.dataset.preset === cfg.preset;
+          btn.classList.toggle("btn-primary", isActive);
+          btn.classList.toggle("btn-ghost", !isActive);
+        });
+      }
+
+      function updateHud() {
+        mineCounterEl.textContent = counterText(cfg.m - flagsPlaced);
+        timeCounterEl.textContent = counterText(seconds);
+        diffLabelEl.textContent = cfg.label;
+        minesTotalEl.textContent = String(cfg.m);
+        flagsLeftEl.textContent = String(cfg.m - flagsPlaced);
+        timeSecondsEl.textContent = String(seconds);
+
+        const best = bestTimes[cfg.key];
+        bestTimeEl.textContent = Number.isFinite(best) ? (best + "s") : "--";
+
+        flagModeBtn.textContent = "Flag Mode: " + (flagMode ? "On" : "Off");
+        flagModeBtn.classList.toggle("btn-primary", flagMode);
+        flagModeBtn.classList.toggle("btn-ghost", !flagMode);
+      }
+
+      function stopTimer() {
+        if (timerId) {
+          window.clearInterval(timerId);
+          timerId = null;
+        }
+      }
+
+      function startTimer() {
+        if (timerId || finished) {
+          return;
+        }
+        timerId = window.setInterval(() => {
+          seconds = clamp(seconds + 1, 0, 999);
+          updateHud();
+        }, 1000);
+      }
+
+      function neighbors(x, y) {
+        const out = [];
+        for (let dy = 0; dy < DIRS.length; dy += 1) {
+          for (let dx = 0; dx < DIRS.length; dx += 1) {
+            const ox = DIRS[dx];
+            const oy = DIRS[dy];
+            if (ox === 0 && oy === 0) { continue; }
+            const nx = x + ox;
+            const ny = y + oy;
+            if (inBounds(nx, ny)) {
+              out.push({ x: nx, y: ny });
+            }
+          }
+        }
+        return out;
+      }
+
+      function createGrid() {
+        grid = [];
+        for (let y = 0; y < cfg.h; y += 1) {
+          const row = [];
+          for (let x = 0; x < cfg.w; x += 1) {
+            row.push({ mine: false, adj: 0, revealed: false, mark: 0, exploded: false, wrong: false });
+          }
+          grid.push(row);
+        }
+      }
+
+      function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const t = arr[i];
+          arr[i] = arr[j];
+          arr[j] = t;
+        }
+      }
+
+      function placeMines(safeX, safeY) {
+        const banned = new Set();
+        banned.add(key(safeX, safeY));
+        const around = neighbors(safeX, safeY);
+        for (let i = 0; i < around.length; i += 1) {
+          banned.add(key(around[i].x, around[i].y));
+        }
+
+        const spots = [];
+        for (let y = 0; y < cfg.h; y += 1) {
+          for (let x = 0; x < cfg.w; x += 1) {
+            if (!banned.has(key(x, y))) {
+              spots.push({ x: x, y: y });
+            }
+          }
+        }
+
+        shuffle(spots);
+        const limit = Math.min(cfg.m, spots.length);
+        for (let i = 0; i < limit; i += 1) {
+          const s = spots[i];
+          grid[s.y][s.x].mine = true;
+        }
+
+        for (let y = 0; y < cfg.h; y += 1) {
+          for (let x = 0; x < cfg.w; x += 1) {
+            const cell = grid[y][x];
+            if (cell.mine) { continue; }
+            const near = neighbors(x, y);
+            let count = 0;
+            for (let i = 0; i < near.length; i += 1) {
+              if (grid[near[i].y][near[i].x].mine) {
+                count += 1;
+              }
+            }
+            cell.adj = count;
+          }
+        }
+      }
+
+      function revealFlood(startX, startY) {
+        const stack = [{ x: startX, y: startY }];
+        while (stack.length) {
+          const cur = stack.pop();
+          const c = grid[cur.y][cur.x];
+          if (c.revealed || c.mark === 1) { continue; }
+          c.revealed = true;
+          revealedCount += 1;
+
+          if (c.adj !== 0) {
+            continue;
+          }
+
+          const near = neighbors(cur.x, cur.y);
+          for (let i = 0; i < near.length; i += 1) {
+            const n = near[i];
+            const nc = grid[n.y][n.x];
+            if (!nc.revealed && !nc.mine && nc.mark !== 1) {
+              stack.push(n);
+            }
+          }
+        }
+      }
+
+      function loseAt(x, y) {
+        finished = true;
+        won = false;
+        stopTimer();
+
+        for (let yy = 0; yy < cfg.h; yy += 1) {
+          for (let xx = 0; xx < cfg.w; xx += 1) {
+            const c = grid[yy][xx];
+            if (c.mine) {
+              c.revealed = true;
+            }
+            if (c.mark === 1 && !c.mine) {
+              c.wrong = true;
+            }
+          }
+        }
+
+        grid[y][x].exploded = true;
+        setFace("dead");
+        setStatus("Boom. You hit a mine. Press the face button to try again.");
+      }
+
+      function tryWin() {
+        if (finished) { return; }
+        const safeCells = (cfg.w * cfg.h) - cfg.m;
+        if (revealedCount !== safeCells) { return; }
+
+        finished = true;
+        won = true;
+        stopTimer();
+
+        for (let y = 0; y < cfg.h; y += 1) {
+          for (let x = 0; x < cfg.w; x += 1) {
+            const c = grid[y][x];
+            if (c.mine) {
+              c.mark = 1;
+            }
+          }
+        }
+        flagsPlaced = cfg.m;
+
+        const bestNow = bestTimes[cfg.key];
+        if (!Number.isFinite(bestNow) || seconds < bestNow) {
+          bestTimes[cfg.key] = seconds;
+          saveBestTimes();
+        }
+
+        setFace("cool");
+        setStatus("Board cleared. Nice run.");
+      }
+
+      function chordOpen(x, y) {
+        const c = grid[y][x];
+        if (!c.revealed || c.adj <= 0 || finished) {
+          return;
+        }
+
+        const near = neighbors(x, y);
+        let marked = 0;
+        for (let i = 0; i < near.length; i += 1) {
+          const n = near[i];
+          if (grid[n.y][n.x].mark === 1) {
+            marked += 1;
+          }
+        }
+        if (marked !== c.adj) {
+          return;
+        }
+
+        for (let i = 0; i < near.length; i += 1) {
+          const n = near[i];
+          const nc = grid[n.y][n.x];
+          if (nc.mark === 1 || nc.revealed) {
+            continue;
+          }
+          openCell(n.x, n.y, true);
+          if (finished && !won) {
+            break;
+          }
+        }
+      }
+
+      function openCell(x, y, fromChord) {
+        if (finished || !inBounds(x, y)) {
+          return;
+        }
+
+        const c = grid[y][x];
+
+        if (c.revealed) {
+          if (!fromChord) {
+            chordOpen(x, y);
+          }
+          return;
+        }
+
+        if (c.mark === 1) {
+          return;
+        }
+
+        if (firstMove) {
+          firstMove = false;
+          placeMines(x, y);
+          startTimer();
+        }
+
+        if (c.mine) {
+          loseAt(x, y);
+          renderBoard();
+          updateHud();
+          return;
+        }
+
+        revealFlood(x, y);
+        tryWin();
+        renderBoard();
+        updateHud();
+      }
+
+      function toggleMark(x, y) {
+        if (finished || !inBounds(x, y)) {
+          return;
+        }
+
+        const c = grid[y][x];
+        if (c.revealed) {
+          return;
+        }
+
+        if (c.mark === 0) {
+          c.mark = 1;
+          flagsPlaced += 1;
+        } else if (c.mark === 1) {
+          c.mark = 2;
+          flagsPlaced -= 1;
+        } else {
+          c.mark = 0;
+        }
+
+        renderBoard();
+        updateHud();
+      }
+
+      function renderBoard() {
+        boardEl.innerHTML = "";
+
+        let cellSize = 28;
+        if (cfg.w >= 30) {
+          cellSize = 22;
+        } else if (cfg.w >= 16) {
+          cellSize = 24;
+        }
+        boardEl.style.setProperty("--cell-size", cellSize + "px");
+        boardEl.style.gridTemplateColumns = "repeat(" + cfg.w + ", var(--cell-size))";
+
+        for (let y = 0; y < cfg.h; y += 1) {
+          for (let x = 0; x < cfg.w; x += 1) {
+            const c = grid[y][x];
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "cell";
+            btn.dataset.x = String(x);
+            btn.dataset.y = String(y);
+
+            if (c.revealed) {
+              btn.classList.add("revealed");
+              if (c.mine) {
+                btn.classList.add("mine");
+                btn.textContent = "*";
+                if (c.exploded) {
+                  btn.classList.add("exploded");
+                }
+              } else if (c.adj > 0) {
+                btn.classList.add("num" + c.adj);
+                btn.textContent = String(c.adj);
+              }
+            } else if (c.mark === 1) {
+              btn.classList.add("flagged");
+              btn.textContent = "F";
+            } else if (c.mark === 2) {
+              btn.classList.add("question");
+              btn.textContent = "?";
+            }
+
+            if (c.wrong) {
+              btn.classList.add("wrong");
+              btn.textContent = "X";
+            }
+
+            boardEl.appendChild(btn);
+          }
+        }
+      }
+
+      function applyConfig(nextCfg) {
+        stopTimer();
+
+        const nextW = clamp(toInt(nextCfg.w, presets.beginner.w), 8, 40);
+        const nextH = clamp(toInt(nextCfg.h, presets.beginner.h), 8, 24);
+        const requestedMines = toInt(nextCfg.m, presets.beginner.m);
+        const maxMines = Math.max(1, (nextW * nextH) - 9);
+
+        cfg = {
+          w: nextW,
+          h: nextH,
+          m: clamp(requestedMines, 1, maxMines),
+          label: String(nextCfg.label || "Custom"),
+          key: String(nextCfg.key || "custom"),
+          preset: String(nextCfg.preset || "custom")
+        };
+
+        firstMove = true;
+        finished = false;
+        won = false;
+        revealedCount = 0;
+        flagsPlaced = 0;
+        seconds = 0;
+        faceHold = false;
+        flagMode = false;
+
+        createGrid();
+        setFace("normal");
+        setStatus("Clear all safe tiles without opening a mine.");
+        updatePresetButtons();
+        updateHud();
+        renderBoard();
+      }
+
+      function setPreset(name) {
+        if (name === "custom") {
+          const w = toInt(customWidthEl.value, 20);
+          const h = toInt(customHeightEl.value, 14);
+          const m = toInt(customMinesEl.value, 60);
+          const label = "Custom";
+          const keyName = "custom-" + clamp(w, 8, 40) + "x" + clamp(h, 8, 24) + "-" + Math.max(1, m);
+          applyConfig({ w: w, h: h, m: m, label: label, key: keyName, preset: "custom" });
+          return;
+        }
+
+        const p = presets[name] || presets.beginner;
+        applyConfig({ w: p.w, h: p.h, m: p.m, label: p.label, key: name, preset: name });
+      }
+
+      boardEl.addEventListener("click", (event) => {
+        const cellEl = event.target.closest(".cell");
+        if (!cellEl) { return; }
+
+        const x = Number(cellEl.dataset.x);
+        const y = Number(cellEl.dataset.y);
+
+        if (flagMode && !grid[y][x].revealed) {
+          toggleMark(x, y);
+          return;
+        }
+
+        openCell(x, y, false);
+      });
+
+      boardEl.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        const cellEl = event.target.closest(".cell");
+        if (!cellEl) { return; }
+        const x = Number(cellEl.dataset.x);
+        const y = Number(cellEl.dataset.y);
+        toggleMark(x, y);
+      });
+
+      boardEl.addEventListener("auxclick", (event) => {
+        if (event.button !== 1) { return; }
+        const cellEl = event.target.closest(".cell");
+        if (!cellEl) { return; }
+        const x = Number(cellEl.dataset.x);
+        const y = Number(cellEl.dataset.y);
+        chordOpen(x, y);
+        renderBoard();
+        updateHud();
+      });
+
+      boardEl.addEventListener("pointerdown", (event) => {
+        if (finished || event.button !== 0) { return; }
+        faceHold = true;
+        setFace("wow");
+      });
+
+      window.addEventListener("pointerup", () => {
+        if (!faceHold) { return; }
+        faceHold = false;
+        if (finished) {
+          setFace(won ? "cool" : "dead");
+        } else {
+          setFace("normal");
+        }
+      });
+
+      faceBtn.addEventListener("click", () => {
+        applyConfig(cfg);
+      });
+
+      newBoardBtn.addEventListener("click", () => {
+        applyConfig(cfg);
+      });
+
+      applyCustomBtn.addEventListener("click", () => {
+        setPreset("custom");
+      });
+
+      flagModeBtn.addEventListener("click", () => {
+        flagMode = !flagMode;
+        updateHud();
+      });
+
+      presetButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          setPreset(btn.dataset.preset);
+        });
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "r" || event.key === "R") {
+          event.preventDefault();
+          applyConfig(cfg);
+          return;
+        }
+        if (event.key === "f" || event.key === "F") {
+          event.preventDefault();
+          flagMode = !flagMode;
+          updateHud();
+        }
+      });
+
+      const year = document.getElementById("year");
+      if (year) {
+        year.textContent = String(new Date().getFullYear());
+      }
+
+      setPreset("beginner");
+    })();
+  </script>
+</body>
+</html>

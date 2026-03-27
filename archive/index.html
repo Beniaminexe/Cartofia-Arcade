@@ -54,6 +54,42 @@
       width: 28px;
       height: 28px;
     }
+
+    .upload-progress {
+      margin-top: 8px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .upload-progress-track {
+      height: 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(6, 12, 18, 0.88);
+      overflow: hidden;
+    }
+
+    .upload-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #2ea8ff, #67d0ff);
+      transition: width 0.16s linear;
+    }
+
+    .upload-progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .upload-progress-meta b {
+      color: #9ad9ff;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
   </style>
 </head>
 <body>
@@ -133,6 +169,16 @@
             <button id="uploadButton" class="btn btn-primary" type="button" disabled>Upload File</button>
           </div>
 
+          <div id="uploadProgress" class="upload-progress hidden" aria-live="polite">
+            <div id="uploadProgressTrack" class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div id="uploadProgressFill" class="upload-progress-fill"></div>
+            </div>
+            <div class="upload-progress-meta">
+              <span id="uploadProgressLabel">Preparing upload...</span>
+              <b id="uploadProgressPercent">0%</b>
+            </div>
+          </div>
+
           <div class="notice" id="uploadNotice">Checking access...</div>
         </article>
 
@@ -201,7 +247,8 @@
       canView: false,
       canUpload: false,
       files: [],
-      selectedFile: null
+      selectedFile: null,
+      uploading: false
     };
 
     /* ── DOM refs ──────────────────────────────────────────────────── */
@@ -215,6 +262,11 @@
       fileInput:         document.getElementById("fileInput"),
       uploadButton:      document.getElementById("uploadButton"),
       selectedFileLabel: document.getElementById("selectedFileLabel"),
+      uploadProgress:    document.getElementById("uploadProgress"),
+      uploadProgressTrack: document.getElementById("uploadProgressTrack"),
+      uploadProgressFill:  document.getElementById("uploadProgressFill"),
+      uploadProgressLabel: document.getElementById("uploadProgressLabel"),
+      uploadProgressPercent: document.getElementById("uploadProgressPercent"),
       uploadNotice:      document.getElementById("uploadNotice"),
       searchInput:       document.getElementById("searchInput"),
       typeFilter:        document.getElementById("typeFilter"),
@@ -242,6 +294,24 @@
       el.textContent = message;
       el.className = "notice";
       if (type) el.classList.add(type);
+    }
+
+    function setUploadProgressUI(percent, label) {
+      var clamped = Math.max(0, Math.min(100, Number(percent) || 0));
+      refs.uploadProgressFill.style.width = clamped.toFixed(2) + "%";
+      refs.uploadProgressTrack.setAttribute("aria-valuenow", String(Math.round(clamped)));
+      refs.uploadProgressPercent.textContent = Math.round(clamped) + "%";
+      refs.uploadProgressLabel.textContent = label || "Uploading...";
+    }
+
+    function showUploadProgress(label) {
+      refs.uploadProgress.classList.remove("hidden");
+      setUploadProgressUI(0, label || "Preparing upload...");
+    }
+
+    function hideUploadProgress() {
+      refs.uploadProgress.classList.add("hidden");
+      setUploadProgressUI(0, "Preparing upload...");
     }
 
     function formatBytes(bytes) {
@@ -290,6 +360,51 @@
         throw new Error(message);
       }
       return payload;
+    }
+
+    function uploadWithProgress(path, formData) {
+      return new Promise(function (resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", path, true);
+        xhr.withCredentials = true;
+
+        var headers = authHeaders();
+        Object.keys(headers).forEach(function (name) {
+          xhr.setRequestHeader(name, headers[name]);
+        });
+
+        xhr.upload.addEventListener("progress", function (event) {
+          if (event.lengthComputable) {
+            var pct = (event.loaded / event.total) * 100;
+            setUploadProgressUI(pct, "Uploading " + formatBytes(event.loaded) + " / " + formatBytes(event.total));
+          } else {
+            setUploadProgressUI(0, "Uploading " + formatBytes(event.loaded) + "...");
+            refs.uploadProgressPercent.textContent = "--";
+            refs.uploadProgressTrack.setAttribute("aria-valuenow", "0");
+          }
+        });
+
+        xhr.addEventListener("error", function () {
+          reject(new Error("Upload failed due to a network error."));
+        });
+
+        xhr.addEventListener("abort", function () {
+          reject(new Error("Upload was aborted."));
+        });
+
+        xhr.addEventListener("load", function () {
+          var payload = null;
+          try { payload = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (_e) { payload = null; }
+          if (xhr.status < 200 || xhr.status >= 300) {
+            var message = payload && payload.error ? payload.error : "Request failed (" + xhr.status + ")";
+            reject(new Error(message));
+            return;
+          }
+          resolve(payload || {});
+        });
+
+        xhr.send(formData);
+      });
     }
 
     /* ── Download via fetch + blob (sends Bearer token) ────────────── */
@@ -591,6 +706,10 @@
 
     /* ── Upload handler ────────────────────────────────────────────── */
     async function handleUpload() {
+      if (state.uploading) {
+        return;
+      }
+
       if (!state.user || !state.canUpload) {
         setNotice(refs.uploadNotice, "You do not have upload permission.", "warn");
         return;
@@ -601,17 +720,19 @@
         return;
       }
 
+      state.uploading = true;
       refs.uploadButton.disabled = true;
       refs.uploadButton.textContent = "Uploading...";
+      refs.fileInput.disabled = true;
+      showUploadProgress("Starting upload...");
+      setNotice(refs.uploadNotice, "Uploading " + state.selectedFile.name + "...", "warn");
 
       var data = new FormData();
       data.append("file", state.selectedFile);
 
       try {
-        var result = await apiRequest("/api/archive/upload", {
-          method: "POST",
-          body: data
-        });
+        var result = await uploadWithProgress("/api/archive/upload", data);
+        setUploadProgressUI(100, "Upload complete");
 
         setSelectedFile(null);
         refs.fileInput.value = "";
@@ -620,13 +741,17 @@
       } catch (error) {
         setNotice(refs.uploadNotice, error.message, "error");
       } finally {
+        state.uploading = false;
+        refs.fileInput.disabled = !state.canUpload;
         refs.uploadButton.textContent = "Upload File";
         refs.uploadButton.disabled = !state.canUpload || !state.selectedFile;
+        window.setTimeout(hideUploadProgress, 900);
       }
     }
 
     /* ── Drag/drop + file input ────────────────────────────────────── */
     function onDropZoneClick() {
+      if (state.uploading) return;
       if (!state.canUpload) return;
       refs.fileInput.click();
     }
@@ -634,12 +759,14 @@
     function onDropZoneKey(event) {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
+        if (state.uploading) return;
         if (!state.canUpload) return;
         refs.fileInput.click();
       }
     }
 
     function onFileInputChange() {
+      if (state.uploading) return;
       var file = refs.fileInput.files && refs.fileInput.files[0] ? refs.fileInput.files[0] : null;
       setSelectedFile(file);
       refs.uploadButton.disabled = !state.canUpload || !state.selectedFile;
@@ -647,6 +774,7 @@
 
     function onDragOver(event) {
       event.preventDefault();
+      if (state.uploading) return;
       if (state.canUpload) refs.dropZone.classList.add("dragover");
     }
 
@@ -658,6 +786,7 @@
     function onDrop(event) {
       event.preventDefault();
       refs.dropZone.classList.remove("dragover");
+      if (state.uploading) return;
       if (!state.canUpload) return;
       var files = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files : null;
       var file = files && files[0] ? files[0] : null;
@@ -693,6 +822,7 @@
     /* ── Boot ──────────────────────────────────────────────────────── */
     async function boot() {
       bindEvents();
+      hideUploadProgress();
       await loadSession();
       await refreshFiles();
       refs.uploadButton.disabled = !state.canUpload || !state.selectedFile;

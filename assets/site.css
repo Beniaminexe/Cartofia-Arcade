@@ -134,8 +134,15 @@ a {
   font-weight: 700;
   color: #001827;
   background: linear-gradient(150deg, #52bcff, #1f98f5);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   cursor: pointer;
   transition: transform 0.12s ease, filter 0.2s ease;
+}
+
+.avatar-btn.has-image {
+  color: transparent;
 }
 
 .avatar-btn:hover {
@@ -182,6 +189,13 @@ a {
   color: #001827;
   background: linear-gradient(150deg, #52bcff, #1f98f5);
   border: 1px solid rgba(46, 168, 255, 0.8);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.account-avatar.has-image {
+  color: transparent;
 }
 
 .account-identity {
