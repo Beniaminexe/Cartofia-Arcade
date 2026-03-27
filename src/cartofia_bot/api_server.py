@@ -92,14 +92,50 @@ PROFILE_BADGE_CATALOG: dict[str, dict[str, str]] = {
 }
 
 ROOM_CODE_LENGTH = 6
-ROOM_CAPACITY = 2
-ROOM_STALE_SECONDS = max(60, int(os.getenv("BOMBER_ROOM_STALE_SECONDS", "900")))
-ROOM_PASSWORD_MAX_LENGTH = max(
-    4, int(os.getenv("BOMBER_ROOM_PASSWORD_MAX_LENGTH", "32"))
-)
 PLAYER_NAME_MAX_LENGTH = 16
+
+WS_GAME_CONFIG: dict[str, dict[str, object]] = {
+    "bomber-raid": {
+        "capacity": 2,
+        "stale_seconds": max(
+            60, int(os.getenv("BOMBER_ROOM_STALE_SECONDS", "900"))
+        ),
+        "password_max_length": max(
+            4, int(os.getenv("BOMBER_ROOM_PASSWORD_MAX_LENGTH", "32"))
+        ),
+        "can_start_min_ready": 2,
+        "can_start_require_full": True,
+    },
+    "chess": {
+        "capacity": 2,
+        "stale_seconds": max(
+            60, int(os.getenv("CHESS_ROOM_STALE_SECONDS", "900"))
+        ),
+        "password_max_length": max(
+            4, int(os.getenv("CHESS_ROOM_PASSWORD_MAX_LENGTH", "32"))
+        ),
+        "can_start_min_ready": 2,
+        "can_start_require_full": True,
+    },
+    "blackjack": {
+        "capacity": max(2, int(os.getenv("BLACKJACK_ROOM_CAPACITY", "6"))),
+        "stale_seconds": max(
+            60, int(os.getenv("BLACKJACK_ROOM_STALE_SECONDS", "900"))
+        ),
+        "password_max_length": max(
+            4, int(os.getenv("BLACKJACK_ROOM_PASSWORD_MAX_LENGTH", "32"))
+        ),
+        "can_start_min_ready": max(
+            2, int(os.getenv("BLACKJACK_ROOM_MIN_READY", "2"))
+        ),
+        "can_start_require_full": False,
+    },
+}
+
 ws_rooms_lock = threading.Lock()
-ws_rooms: dict[str, dict[str, object]] = {}
+ws_rooms_by_game: dict[str, dict[str, dict[str, object]]] = {
+    game_key: {} for game_key in WS_GAME_CONFIG.keys()
+}
 
 # Initialize Proxmox stats fetcher
 proxmox = ProxmoxStats()
@@ -797,9 +833,21 @@ def _normalize_room_code(raw: str) -> str:
     return code[:ROOM_CODE_LENGTH]
 
 
-def _normalize_room_password(raw: object) -> str:
+def _game_config(game_key: str) -> dict[str, object]:
+    return WS_GAME_CONFIG.get(game_key, WS_GAME_CONFIG["bomber-raid"])
+
+
+def _game_rooms(game_key: str) -> dict[str, dict[str, object]]:
+    rooms = ws_rooms_by_game.get(game_key)
+    if rooms is None:
+        rooms = {}
+        ws_rooms_by_game[game_key] = rooms
+    return rooms
+
+
+def _normalize_room_password(raw: object, max_length: int) -> str:
     password = str(raw or "").strip()
-    return password[:ROOM_PASSWORD_MAX_LENGTH]
+    return password[: max(1, max_length)]
 
 
 def _password_hash(password: str) -> str:
@@ -822,11 +870,14 @@ def _touch_room(room: dict[str, object]) -> None:
     room["updated_at"] = _now_seconds()
 
 
-def _cleanup_stale_rooms() -> None:
+def _cleanup_stale_rooms(game_key: str) -> None:
+    config = _game_config(game_key)
+    stale_seconds = int(config.get("stale_seconds", 900))
+    rooms = _game_rooms(game_key)
     now = _now_seconds()
     stale_codes: list[str] = []
     with ws_rooms_lock:
-        for code, room in list(ws_rooms.items()):
+        for code, room in list(rooms.items()):
             order = room.get("order", [])
             clients = room.get("clients", {})
             updated_at = room.get("updated_at", now)
@@ -839,21 +890,30 @@ def _cleanup_stale_rooms() -> None:
             try:
                 age = now - float(updated_at)
             except (TypeError, ValueError):
-                age = ROOM_STALE_SECONDS + 1
-            if (not has_clients) or age > ROOM_STALE_SECONDS:
+                age = stale_seconds + 1
+            if (not has_clients) or age > stale_seconds:
                 stale_codes.append(code)
-                ws_rooms.pop(code, None)
+                rooms.pop(code, None)
     if stale_codes:
         print(
-            "Bomber Raid: cleaned stale rooms:",
+            f"{game_key}: cleaned stale rooms:",
             ", ".join(sorted(stale_codes)),
         )
 
 
-def _room_can_start(participants: list[dict[str, object]]) -> bool:
-    if len(participants) != ROOM_CAPACITY:
+def _room_can_start(
+    participants: list[dict[str, object]],
+    *,
+    capacity: int,
+    min_ready: int,
+    require_full: bool,
+) -> bool:
+    if require_full and len(participants) != capacity:
         return False
-    return all(bool(p.get("ready")) for p in participants)
+    if len(participants) < min_ready:
+        return False
+    ready_count = sum(1 for p in participants if bool(p.get("ready")))
+    return ready_count >= min_ready
 
 
 def _ws_send_json(ws, payload: dict) -> bool:
@@ -889,18 +949,29 @@ def _room_participants(room: dict[str, object]) -> list[dict[str, object]]:
     return participants
 
 
-def _broadcast_room_state(room_code: str) -> None:
+def _broadcast_room_state(game_key: str, room_code: str) -> None:
+    config = _game_config(game_key)
+    capacity = int(config.get("capacity", 2))
+    min_ready = int(config.get("can_start_min_ready", capacity))
+    require_full = bool(config.get("can_start_require_full", True))
+    rooms = _game_rooms(game_key)
     with ws_rooms_lock:
-        room = ws_rooms.get(room_code)
+        room = rooms.get(room_code)
         if room is None:
             return
         sockets = list(room.get("clients", {}).values())
         participants = _room_participants(room)
         has_password = bool(room.get("password_hash"))
-        can_start = _room_can_start(participants)
+        can_start = _room_can_start(
+            participants,
+            capacity=capacity,
+            min_ready=min_ready,
+            require_full=require_full,
+        )
 
     message = {
         "type": "room_state",
+        "game": game_key,
         "room": room_code,
         "participants": participants,
         "can_start": can_start,
@@ -910,9 +981,12 @@ def _broadcast_room_state(room_code: str) -> None:
         _ws_send_json(ws, message)
 
 
-def _relay_room_payload(room_code: str, sender_id: str, payload: dict) -> None:
+def _relay_room_payload(
+    game_key: str, room_code: str, sender_id: str, payload: dict
+) -> None:
+    rooms = _game_rooms(game_key)
     with ws_rooms_lock:
-        room = ws_rooms.get(room_code)
+        room = rooms.get(room_code)
         if room is None:
             return
         _touch_room(room)
@@ -927,6 +1001,7 @@ def _relay_room_payload(room_code: str, sender_id: str, payload: dict) -> None:
 
     relay_message = {
         "type": "relay",
+        "game": game_key,
         "room": room_code,
         "from": sender_id,
         "payload": payload,
@@ -935,9 +1010,10 @@ def _relay_room_payload(room_code: str, sender_id: str, payload: dict) -> None:
         _ws_send_json(ws, relay_message)
 
 
-def _remove_ws_client(room_code: str, client_id: str) -> None:
+def _remove_ws_client(game_key: str, room_code: str, client_id: str) -> None:
+    rooms = _game_rooms(game_key)
     with ws_rooms_lock:
-        room = ws_rooms.get(room_code)
+        room = rooms.get(room_code)
         if room is None:
             return
 
@@ -954,17 +1030,20 @@ def _remove_ws_client(room_code: str, client_id: str) -> None:
 
         has_clients = isinstance(order, list) and len(order) > 0
         if not has_clients:
-            ws_rooms.pop(room_code, None)
+            rooms.pop(room_code, None)
             return
         _touch_room(room)
 
-    _broadcast_room_state(room_code)
+    _broadcast_room_state(game_key, room_code)
 
 
-def _update_lobby_client(room_code: str, client_id: str, payload: dict) -> None:
+def _update_lobby_client(
+    game_key: str, room_code: str, client_id: str, payload: dict
+) -> None:
+    rooms = _game_rooms(game_key)
     changed = False
     with ws_rooms_lock:
-        room = ws_rooms.get(room_code)
+        room = rooms.get(room_code)
         if room is None:
             return
         meta = room.get("meta", {})
@@ -997,17 +1076,23 @@ def _update_lobby_client(room_code: str, client_id: str, payload: dict) -> None:
             _touch_room(room)
 
     if changed:
-        _broadcast_room_state(room_code)
+        _broadcast_room_state(game_key, room_code)
 
 
-@sock.route("/ws/bomber-raid")
-def bomber_raid_socket(ws):
-    """WebSocket room relay for Bomber Raid online multiplayer."""
+def _ws_room_socket(ws, game_key: str) -> None:
+    config = _game_config(game_key)
+    capacity = max(1, int(config.get("capacity", 2)))
+    stale_seconds = max(60, int(config.get("stale_seconds", 900)))
+    password_max_length = max(1, int(config.get("password_max_length", 32)))
+    min_ready = max(1, int(config.get("can_start_min_ready", capacity)))
+    require_full = bool(config.get("can_start_require_full", True))
+    rooms = _game_rooms(game_key)
+
     client_id = uuid.uuid4().hex
     room_code: str | None = None
 
     try:
-        _cleanup_stale_rooms()
+        _cleanup_stale_rooms(game_key)
         join_raw = ws.receive()
         if join_raw is None:
             return
@@ -1036,7 +1121,10 @@ def bomber_raid_socket(ws):
             )
             return
 
-        join_password = _normalize_room_password(join_data.get("password", ""))
+        join_password = _normalize_room_password(
+            join_data.get("password", ""),
+            password_max_length,
+        )
         join_name = _normalize_player_name(join_data.get("name", ""), "Player")
 
         room_full = False
@@ -1047,14 +1135,14 @@ def bomber_raid_socket(ws):
         can_start = False
         with ws_rooms_lock:
             now = _now_seconds()
-            room = ws_rooms.get(room_code)
+            room = rooms.get(room_code)
             if room is not None:
                 try:
                     age = now - float(room.get("updated_at", now))
                 except (TypeError, ValueError):
-                    age = ROOM_STALE_SECONDS + 1
-                if age > ROOM_STALE_SECONDS:
-                    ws_rooms.pop(room_code, None)
+                    age = stale_seconds + 1
+                if age > stale_seconds:
+                    rooms.pop(room_code, None)
                     room = None
             if room is None:
                 room = {
@@ -1065,7 +1153,7 @@ def bomber_raid_socket(ws):
                     "created_at": now,
                     "updated_at": now,
                 }
-                ws_rooms[room_code] = room
+                rooms[room_code] = room
 
             clients = room.get("clients", {})
             order = room.get("order", [])
@@ -1077,7 +1165,7 @@ def bomber_raid_socket(ws):
                 or not isinstance(meta, dict)
                 or not isinstance(password_hash, str)
             ):
-                ws_rooms[room_code] = {
+                rooms[room_code] = {
                     "clients": {},
                     "order": [],
                     "meta": {},
@@ -1085,7 +1173,7 @@ def bomber_raid_socket(ws):
                     "created_at": room.get("created_at", now),
                     "updated_at": now,
                 }
-                room = ws_rooms[room_code]
+                room = rooms[room_code]
                 clients = room["clients"]
                 order = room["order"]
                 meta = room["meta"]
@@ -1098,7 +1186,7 @@ def bomber_raid_socket(ws):
                     password_invalid = True
             if password_invalid:
                 pass
-            elif len(order) >= ROOM_CAPACITY:
+            elif len(order) >= capacity:
                 room_full = True
             else:
                 clients[client_id] = ws
@@ -1111,7 +1199,12 @@ def bomber_raid_socket(ws):
                 _touch_room(room)
                 participants = _room_participants(room)
                 role = "host" if participants and participants[0]["id"] == client_id else "guest"
-                can_start = _room_can_start(participants)
+                can_start = _room_can_start(
+                    participants,
+                    capacity=capacity,
+                    min_ready=min_ready,
+                    require_full=require_full,
+                )
                 has_password = bool(room.get("password_hash"))
 
         if password_invalid:
@@ -1125,16 +1218,17 @@ def bomber_raid_socket(ws):
             ws,
             {
                 "type": "joined",
+                "game": game_key,
                 "room": room_code,
                 "client_id": client_id,
                 "role": role,
                 "participants": participants,
                 "can_start": can_start,
                 "has_password": has_password,
-                "stale_seconds": ROOM_STALE_SECONDS,
+                "stale_seconds": stale_seconds,
             },
         )
-        _broadcast_room_state(room_code)
+        _broadcast_room_state(game_key, room_code)
 
         while True:
             incoming_raw = ws.receive()
@@ -1150,22 +1244,43 @@ def bomber_raid_socket(ws):
                 break
             if incoming.get("type") == "heartbeat":
                 with ws_rooms_lock:
-                    room = ws_rooms.get(room_code)
+                    room = rooms.get(room_code)
                     if room is not None:
                         _touch_room(room)
-                _ws_send_json(ws, {"type": "heartbeat_ack", "room": room_code})
+                _ws_send_json(
+                    ws,
+                    {"type": "heartbeat_ack", "game": game_key, "room": room_code},
+                )
                 continue
             if incoming.get("type") == "lobby":
-                _update_lobby_client(room_code, client_id, incoming)
+                _update_lobby_client(game_key, room_code, client_id, incoming)
                 continue
-            _relay_room_payload(room_code, client_id, incoming)
-            _cleanup_stale_rooms()
+            _relay_room_payload(game_key, room_code, client_id, incoming)
+            _cleanup_stale_rooms(game_key)
 
     except Exception as exc:
-        print(f"Error in /ws/bomber-raid for client {client_id}: {exc}")
+        print(f"Error in /ws/{game_key} for client {client_id}: {exc}")
     finally:
         if room_code is not None:
-            _remove_ws_client(room_code, client_id)
+            _remove_ws_client(game_key, room_code, client_id)
+
+
+@sock.route("/ws/bomber-raid")
+def bomber_raid_socket(ws):
+    """WebSocket room relay for Bomber Raid online multiplayer."""
+    _ws_room_socket(ws, "bomber-raid")
+
+
+@sock.route("/ws/chess")
+def chess_socket(ws):
+    """WebSocket room relay for Chess online multiplayer."""
+    _ws_room_socket(ws, "chess")
+
+
+@sock.route("/ws/blackjack")
+def blackjack_socket(ws):
+    """WebSocket room relay for Blackjack room multiplayer."""
+    _ws_room_socket(ws, "blackjack")
 
 
 init_storage()

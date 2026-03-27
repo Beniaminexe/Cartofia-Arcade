@@ -1,10 +1,10 @@
-# Cartofia Platform Ã¢â‚¬â€œ Project Log
+# Cartofia Platform ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Project Log
 
 Chronological log of design decisions and milestones for the Cartofia Platform.
 
 ---
 
-## 2025-11-30 Ã¢â‚¬â€œ Initial Concept & Architecture
+## 2025-11-30 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Initial Concept & Architecture
 
 - Decided to build a **self-hosted platform** using Proxmox, Discord, and web tech.
 - Core idea:
@@ -22,20 +22,20 @@ Chronological log of design decisions and milestones for the Cartofia Platform.
 ### Containers and IDs
 
 - Chosen numbering convention:
-  - **CT1000** Ã¢â‚¬â€œ Bot / orchestration container.
-  - **CT2000** Ã¢â‚¬â€œ Game container (initially Cartofia).
+  - **CT1000** ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Bot / orchestration container.
+  - **CT2000** ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Game container (initially Cartofia).
 - CT1000 runs Discord bots and automation.
 - CT2000 will host the web version of Cartofia.
 
 ---
 
-## 2025-11-30 Ã¢â‚¬â€œ Network Design
+## 2025-11-30 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Network Design
 
 - Existing setup:
-  - `vmbr0` Ã¢â‚¬â€œ external/LAN access.
-  - `vmbr1` Ã¢â‚¬â€œ unsafe / vulnerable lab.
+  - `vmbr0` ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ external/LAN access.
+  - `vmbr1` ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ unsafe / vulnerable lab.
 - New design:
-  - Add **`vmbr2`** for Ã¢â‚¬Å“games & servicesÃ¢â‚¬Â network.
+  - Add **`vmbr2`** for ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œgames & servicesÃƒÂ¢Ã¢â€šÂ¬Ã‚Â network.
     - Example subnet: `10.22.0.1/24`.
 - Purpose of `vmbr2`:
   - Isolated network for CTs that serve games and websites.
@@ -43,9 +43,9 @@ Chronological log of design decisions and milestones for the Cartofia Platform.
 
 ---
 
-## 2025-11-30 Ã¢â‚¬â€œ Role Definitions
+## 2025-11-30 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Role Definitions
 
-### CT1000 Ã¢â‚¬â€œ Bot / Orchestration
+### CT1000 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Bot / Orchestration
 
 - Runs Discord bot(s).
 - Talks to Proxmox API to:
@@ -58,10 +58,10 @@ Planned behaviour:
 
 - `/play_cartofia`:
   - Start CT2000 (if stopped).
-  - Send a Ã¢â‚¬Å“loadingÃ¢â‚¬Â message while the container boots.
+  - Send a ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œloadingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â message while the container boots.
   - Post the public URL once the game is reachable.
 
-### CT1010 Ã¢â‚¬â€œ Gateway
+### CT1010 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Gateway
 
 - New container planned as the **only public-facing web entry point**.
 - Dual-homed:
@@ -71,7 +71,7 @@ Planned behaviour:
   - Terminate HTTPS.
   - Route subdomains to internal CTs (e.g., Cartofia, games portal, other apps).
 
-### CT2000 Ã¢â‚¬â€œ Cartofia Web Game
+### CT2000 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Cartofia Web Game
 
 - Connected only to `vmbr2`.
 - Will host:
@@ -80,15 +80,15 @@ Planned behaviour:
 
 ---
 
-## 2025-11-30 Ã¢â‚¬â€œ Future Platform Direction
+## 2025-11-30 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Future Platform Direction
 
 - The Cartofia CT (`CT2000`) is planned as the **first game CT**, but the architecture is designed for expansion:
-  - CT2100 Ã¢â‚¬â€œ a future Ã¢â‚¬Å“games portalÃ¢â‚¬Â website.
-  - Additional CTs (CT22xx) Ã¢â‚¬â€œ more WASM games or web tools.
-  - Optional CT3000 Ã¢â‚¬â€œ shared services (databases, metrics, logging).
+  - CT2100 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ a future ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œgames portalÃƒÂ¢Ã¢â€šÂ¬Ã‚Â website.
+  - Additional CTs (CT22xx) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ more WASM games or web tools.
+  - Optional CT3000 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ shared services (databases, metrics, logging).
 
 - Long-term goal:
-  - A small Ã¢â‚¬Å“home arcadeÃ¢â‚¬Â platform:
+  - A small ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œhome arcadeÃƒÂ¢Ã¢â€šÂ¬Ã‚Â platform:
     - Discord for control and notifications.
     - Proxmox for lifecycle management.
     - Web front-end for playing multiple games and using tools.
@@ -97,7 +97,7 @@ Planned behaviour:
 
 ---
 
-## 2025-12-01 Ã¢â‚¬â€œ CT1000 bot + Proxmox integration
+## 2025-12-01 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ CT1000 bot + Proxmox integration
 
 **Summary**
 
@@ -126,7 +126,7 @@ Planned behaviour:
 
 ---
 
-## 2025-12-01 Ã¢â‚¬â€œ Cloudflare tunnel + Cartofia web host container
+## 2025-12-01 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Cloudflare tunnel + Cartofia web host container
 
 **Summary**
 
@@ -151,13 +151,13 @@ Planned behaviour:
 **Next steps**
 
 - Finish Cloudflare Tunnel configuration:
-  - Add DNS routing for `cartofia.com` Ã¢â€ â€™ the tunnel.
+  - Add DNS routing for `cartofia.com` ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ the tunnel.
   - Define ingress rules so `/` and `/game/` on `cartofia.com` are served by the Cartofia web host container.
 - Once the web build is stable, copy `build/web/*` from the Cartofia-game repo into `/var/www/cartofia/game/` and verify that `https://cartofia.com/game/` loads the game.
 
 ---
 
-## 2025-12-02 Ã¢â‚¬â€œ Cartofia-game refactor & web build prep (cross-repo work)
+## 2025-12-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Cartofia-game refactor & web build prep (cross-repo work)
 
 > This work is in the **Cartofia-game** repo but is directly relevant to Cartofia-Arcade, because CT2000 will serve this web build.
 
@@ -198,8 +198,8 @@ Planned behaviour:
 - Finish stabilising the pygbag/pygame-web build so CT2000 can serve a working `build/web` bundle.
 - Hook the successful web build into the Cartofia-Arcade architecture:
   - CT2000 = static host for Cartofia-game web bundle.
-  - CT1000 bot = start/stop CT2000 and post the game URL into Discord when itÃ¢â‚¬â„¢s ready.
-- Once things are stable, mirror a shortened version of the Cartofia-game change summary into that repoÃ¢â‚¬â„¢s own `PROJECT_LOG` for cross-project consistency.
+  - CT1000 bot = start/stop CT2000 and post the game URL into Discord when itÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s ready.
+- Once things are stable, mirror a shortened version of the Cartofia-game change summary into that repoÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s own `PROJECT_LOG` for cross-project consistency.
 
 
 
@@ -792,7 +792,7 @@ Planned behaviour:
   - `node --check` on extracted inline scripts from touched HTML pages
 - Ran content checks:
   - Confirmed no `data-archive-link`/`data-archive-only` markers remain in redesigned public/shared pages.
-  - Confirmed no mojibake (`ÃƒÂ¢...`) artifacts remain in touched templates.
+  - Confirmed no mojibake (`ÃƒÆ’Ã‚Â¢...`) artifacts remain in touched templates.
 
 
 ---
@@ -879,5 +879,110 @@ Planned behaviour:
     - `arcade/word-puzzle/index.html`
     - `arcade/index.html`
 - Confirmed no Archive UI surfacing was introduced in modified arcade files.
+
+
+---
+
+## 2026-03-27 - Added Chess game (multiplayer + bot difficulties)
+
+**Summary**
+
+- Added a new playable Chess game at `/arcade/chess/`.
+- Supports same-device multiplayer and vs-bot play with three difficulty levels.
+- Added Chess to the Arcade lineup and activity feed.
+
+**Details**
+
+- Added new page: `arcade/chess/index.html`
+  - Mode options:
+    - `Multiplayer (same device)`
+    - `Vs Bot`
+  - Bot difficulty options:
+    - `Easy` (random legal move)
+    - `Medium` (greedy one-ply evaluation)
+    - `Hard` (minimax search)
+  - Chess rules handled in-browser:
+    - Legal move generation
+    - Check/checkmate/stalemate
+    - Castling
+    - En passant
+    - Auto-queen promotion
+  - UI includes:
+    - Interactive board with move highlighting
+    - Match setup controls
+    - Move log
+    - Captured pieces display
+- Updated `arcade/index.html`:
+  - Added Chess lineup card linking to `/arcade/chess/`.
+  - Added recent activity line for the Chess deployment.
+
+**Validation performed**
+
+- Ran JS syntax validation:
+  - `node --check` on extracted inline scripts from:
+    - `arcade/chess/index.html`
+    - `arcade/index.html`
+- Confirmed no Archive UI surfacing was introduced in modified files.
+
+---
+
+## 2026-03-27 - Chess online multiplayer + Blackjack room multiplayer
+
+**Summary**
+
+- Upgraded Chess to support both multiplayer types in one page:
+  - same-device multiplayer remains
+  - online room multiplayer added
+  - bot mode with 3 difficulties preserved
+- Added a new multiplayer Blackjack game with room-based flow for multiple players.
+- Updated Arcade lineup/activity to include Blackjack and the Chess online upgrade.
+
+**Details**
+
+- Updated Chess in:
+  - `arcade/chess/index.html`
+  - `arcade/chess/game.js`
+  - Added new mode: `Multiplayer (online room)` alongside:
+    - `Multiplayer (same device)`
+    - `Vs Bot`
+  - Added online room controls:
+    - room code / optional password
+    - create/join/leave
+    - player name
+    - ready toggle
+    - lobby participant + ready-state list
+  - Integrated WebSocket flow via `/ws/chess` using:
+    - `join`
+    - `room_state`
+    - `lobby`
+    - `relay`
+    - `heartbeat`
+  - Added host-authoritative online sync:
+    - host = White, guest = Black
+    - guest sends move requests
+    - host validates/legal-applies moves and relays state updates
+    - guest sync requests supported (`request_sync` / `state_sync`)
+
+- Added Blackjack multiplayer in:
+  - `arcade/blackjack/index.html`
+  - `arcade/blackjack/game.js`
+  - New room-based multiplayer blackjack flow using `/ws/blackjack`:
+    - lobby connection + ready state
+    - host start-round control
+    - multi-player round support from room participants
+    - turn-based hit/stand actions
+    - dealer resolution and per-player results (win/lose/push/bust)
+    - host-authoritative state snapshots relayed to guests
+
+- Updated arcade catalog in `arcade/index.html`:
+  - Chess listing now calls out same-device + online + bot support.
+  - Added `Blackjack Rooms` lineup card linking to `/arcade/blackjack/`.
+  - Added recent activity entries for Blackjack deployment and Chess online upgrade.
+
+**Validation performed**
+
+- Ran JS syntax validation:
+  - `node --check arcade/chess/game.js`
+  - `node --check arcade/blackjack/game.js`
 
 *This log is updated as new milestones and design decisions are made.*
