@@ -55,6 +55,8 @@ OIDC_UPLOAD_GROUPS = [
     ).split(",")
     if grp.strip()
 ]
+ARCHIVE_ACCESS_GROUPS = list(OIDC_REQUIRED_GROUPS)
+ARCHIVE_UPLOAD_GROUPS = list(OIDC_UPLOAD_GROUPS)
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
@@ -419,6 +421,43 @@ def auth_required(handler):
     return wrapped
 
 
+def _has_any_group(user_groups: object, allowed_groups: list[str]) -> bool:
+    if not isinstance(user_groups, list):
+        return False
+    return any(str(group) in allowed_groups for group in user_groups)
+
+
+def _has_archive_access(user: dict | None) -> bool:
+    if not isinstance(user, dict):
+        return False
+    return _has_any_group(user.get("groups"), ARCHIVE_ACCESS_GROUPS)
+
+
+def _has_archive_upload_access(user: dict | None) -> bool:
+    if not isinstance(user, dict):
+        return False
+    return _has_any_group(user.get("groups"), ARCHIVE_UPLOAD_GROUPS)
+
+
+def _archive_not_found_response():
+    return jsonify({"error": "Not found."}), 404
+
+
+def archive_access_required(handler):
+    """Require a valid OIDC token plus archive visibility rights."""
+
+    @wraps(handler)
+    def wrapped(*args, **kwargs):
+        user = _resolve_oidc_user()
+        if user is None:
+            return jsonify({"error": "Authentication required"}), 401
+        if not _has_archive_access(user):
+            return _archive_not_found_response()
+        return handler(*args, **kwargs)
+
+    return wrapped
+
+
 def login_required(handler):
     """Require a valid OIDC token with appropriate group membership."""
 
@@ -427,7 +466,7 @@ def login_required(handler):
         user = _resolve_oidc_user()
         if user is None:
             return jsonify({"error": "Authentication required"}), 401
-        if not any(grp in OIDC_REQUIRED_GROUPS for grp in user["groups"]):
+        if not _has_any_group(user.get("groups"), OIDC_REQUIRED_GROUPS):
             return jsonify({"error": "Insufficient group membership"}), 403
         return handler(*args, **kwargs)
 
@@ -435,7 +474,7 @@ def login_required(handler):
 
 
 @app.route("/api/archive/files", methods=["GET"])
-@login_required
+@archive_access_required
 def list_archive_files():
     """Return list of files in the archive."""
     rows = get_db().execute(
@@ -459,11 +498,11 @@ def list_archive_files():
 
 
 @app.route("/api/archive/upload", methods=["POST"])
-@login_required
+@archive_access_required
 def upload_archive_file():
     """Upload a file to the archive."""
-    if not any(grp in OIDC_UPLOAD_GROUPS for grp in g.user["groups"]):
-        return jsonify({"error": "Upload permission required"}), 403
+    if not _has_archive_upload_access(g.user):
+        return _archive_not_found_response()
 
     incoming_file = request.files.get("file")
     if incoming_file is None:
@@ -507,7 +546,7 @@ def upload_archive_file():
 
 
 @app.route("/api/archive/download/<int:file_id>", methods=["GET"])
-@login_required
+@archive_access_required
 def download_archive_file(file_id: int):
     """Download a file from the archive."""
     row = get_db().execute(

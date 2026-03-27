@@ -87,7 +87,7 @@
       </a>
       <nav class="site-nav" aria-label="Primary">
         <a class="active" href="/">Home</a>
-        <a href="/archive/">Archive</a>
+        <a class="hidden" data-archive-link href="/archive/">Archive</a>
         <a href="/arcade/">Arcade</a>
         <a href="/minecraft/">Minecraft</a>
       </nav>
@@ -95,7 +95,7 @@
         <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-          <a class="account-item" href="/archive/" role="menuitem">Open Archive</a>
+          <a class="account-item hidden" data-archive-link href="/archive/" role="menuitem">Open Archive</a>
         </div>
       </div>
     </header>
@@ -111,12 +111,12 @@
           <p class="hero-kicker">Self Hosted Platform</p>
           <h1 class="hero-title">Cartofia Home</h1>
           <p class="hero-lead">
-            One place for games, private file archive access, and lab services running on the same Proxmox setup.
+            One place for games and private platform services running on the same Proxmox setup.
           </p>
           <div class="pill-row">
             <span class="pill"><strong>Gateway</strong> Nginx + Cloudflare Tunnel</span>
             <span class="pill"><strong>Automation</strong> Discord bot controls</span>
-            <span class="pill"><strong>Storage</strong> Account gated archive files</span>
+            <span class="pill"><strong>Access</strong> Account gated private features</span>
           </div>
         </div>
       </section>
@@ -127,22 +127,22 @@
             <div class="cta-text">
               <p class="cta-kicker">Start here</p>
               <h2 class="card-title">Choose where to go</h2>
-              <p class="card-subtitle">Jump into the archive, launch a game, or check the Minecraft node without hunting around.</p>
+              <p class="card-subtitle">Launch a game, check Minecraft status, or open private sections if your role allows it.</p>
             </div>
             <div class="cta-badges" aria-hidden="true">
-              <span class="cta-badge ok">Archive</span>
+              <span class="cta-badge ok hidden" data-archive-only>Archive</span>
               <span class="cta-badge">Arcade</span>
               <span class="cta-badge">Minecraft</span>
             </div>
           </div>
 
           <div class="cta-actions button-row">
-            <a class="btn btn-primary" href="/archive/">Open Archive</a>
+            <a class="btn btn-primary hidden" data-archive-link href="/archive/">Open Archive</a>
             <a class="btn btn-ghost" href="/arcade/">Play Arcade</a>
             <a class="btn btn-ghost" href="/minecraft/">Minecraft Status</a>
           </div>
 
-          <div class="cta-note">Authentication is required to access archive uploads and downloads.</div>
+          <div class="cta-note">Private sections are only shown for authorized roles.</div>
         </article>
 
         <article class="card reveal" data-delay="3">
@@ -177,10 +177,10 @@
           <h2 class="card-title">Quick Access</h2>
           <p class="card-subtitle">Jump directly to the main parts of the website.</p>
           <div class="tile-grid">
-            <div class="tile">
+            <div class="tile hidden" data-archive-only>
               <h3>Archive</h3>
               <p>Upload and download files with account based access control.</p>
-              <a href="/archive/">Go to Archive</a>
+              <a class="hidden" data-archive-link href="/archive/">Go to Archive</a>
             </div>
             <div class="tile">
               <h3>Arcade</h3>
@@ -199,7 +199,7 @@
             </div>
             <div class="tile">
               <h3>Account</h3>
-              <p>Log in or create an account to reach the private archive.</p>
+              <p>Log in or create an account to access private role-based sections.</p>
               <a href="/account/#login">Go to Account</a>
             </div>
           </div>

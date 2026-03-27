@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Not Found | Cartofia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css" />
+</head>
+<body>
+  <div class="site-shell">
+    <header class="app-header reveal">
+      <a class="brand" href="/">
+        <span class="brand-chip" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+          </svg>
+        </span>
+        <span class="brand-text">Cartofia</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a class="active" href="/">Home</a>
+        <a href="/arcade/">Arcade</a>
+        <a href="/minecraft/">Minecraft</a>
+        <a href="/account/">Account</a>
+      </nav>
+      <div class="account-menu" data-account-menu>
+        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-card reveal" data-delay="1">
+        <div class="hero-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" stroke="#57C2FF" stroke-width="1.6"></circle>
+            <path d="M12 7V13" stroke="#57C2FF" stroke-width="1.8" stroke-linecap="round"></path>
+            <circle cx="12" cy="16.5" r="1" fill="#57C2FF"></circle>
+          </svg>
+        </div>
+        <div class="hero-copy">
+          <p class="hero-kicker">404</p>
+          <h1 class="hero-title">Page Not Found</h1>
+          <p class="hero-lead">The requested page is unavailable.</p>
+          <div class="button-row">
+            <a class="btn btn-primary" href="/">Back Home</a>
+            <a class="btn btn-ghost" href="/account/">Account</a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/assets/site.js"></script>
+</body>
+</html>

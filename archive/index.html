@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -92,7 +92,7 @@
     }
   </style>
 </head>
-<body>
+<body class="hidden">
   <div class="site-shell">
     <header class="app-header reveal">
       <a class="brand" href="/">
@@ -116,7 +116,7 @@
         <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-          <a class="account-item" href="/archive/" role="menuitem">Open Archive</a>
+          <a class="account-item hidden" data-archive-link href="/archive/" role="menuitem">Open Archive</a>
         </div>
       </div>
     </header>
@@ -142,12 +142,7 @@
         </div>
       </section>
 
-      <section class="card hidden" id="gateCard">
-        <div class="notice warn" id="gateNotice">Checking access...</div>
-        <div class="button-row" id="gateActions" style="margin-top:12px;"></div>
-      </section>
-
-      <section class="layout-grid" id="archiveContent">
+      <section class="layout-grid hidden" id="archiveContent">
         <article class="card reveal" data-delay="2" id="upload">
           <h2 class="card-title">Upload Files</h2>
           <p class="card-subtitle">Drag a file into the area or click to browse from your device.</p>
@@ -234,14 +229,14 @@
 
   <script src="/assets/site.js"></script>
   <script>
-    /* ── OIDC / access configuration ───────────────────────────────── */
+    /* â”€â”€ OIDC / access configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     var OIDC_USERINFO_URL = "/application/o/userinfo/";
-    var OIDC_LOGIN_URL    = "/account/";
+    var NOT_FOUND_URL     = "/404.html";
 
     var ARCHIVE_VIEW_GROUPS   = ["archive_view", "archive_upload", "archive_admin"];
     var ARCHIVE_UPLOAD_GROUPS = ["archive_upload", "archive_admin"];
 
-    /* ── State ─────────────────────────────────────────────────────── */
+    /* â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     var state = {
       user: null,
       canView: false,
@@ -251,11 +246,8 @@
       uploading: false
     };
 
-    /* ── DOM refs ──────────────────────────────────────────────────── */
+    /* â”€â”€ DOM refs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     var refs = {
-      gateCard:          document.getElementById("gateCard"),
-      gateNotice:        document.getElementById("gateNotice"),
-      gateActions:       document.getElementById("gateActions"),
       archiveContent:    document.getElementById("archiveContent"),
       uploadSection:     document.getElementById("upload"),
       dropZone:          document.getElementById("dropZone"),
@@ -275,7 +267,7 @@
       activityList:      document.getElementById("activityList")
     };
 
-    /* ── Helpers ───────────────────────────────────────────────────── */
+    /* â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     function getToken() {
       /* Reads the access token stored by the account page after OIDC callback. */
       return typeof localStorage !== "undefined"
@@ -288,6 +280,10 @@
         if (allowed.indexOf(userGroups[i]) !== -1) return true;
       }
       return false;
+    }
+
+    function redirectNotFound() {
+      window.location.replace(NOT_FOUND_URL);
     }
 
     function setNotice(el, message, type) {
@@ -339,7 +335,7 @@
       return name.slice(idx + 1).toLowerCase();
     }
 
-    /* ── Authenticated fetch wrapper ───────────────────────────────── */
+    /* â”€â”€ Authenticated fetch wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     function authHeaders() {
       var token = getToken();
       return token ? { "Authorization": "Bearer " + token } : {};
@@ -351,6 +347,10 @@
       opts.headers = Object.assign({}, authHeaders(), opts.headers || {});
 
       var response = await fetch(path, opts);
+      if (response.status === 401 || response.status === 404) {
+        redirectNotFound();
+        throw new Error("Not found.");
+      }
 
       var payload = null;
       try { payload = await response.json(); } catch (_e) { payload = null; }
@@ -395,6 +395,11 @@
         xhr.addEventListener("load", function () {
           var payload = null;
           try { payload = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (_e) { payload = null; }
+          if (xhr.status === 401 || xhr.status === 404) {
+            redirectNotFound();
+            reject(new Error("Not found."));
+            return;
+          }
           if (xhr.status < 200 || xhr.status >= 300) {
             var message = payload && payload.error ? payload.error : "Request failed (" + xhr.status + ")";
             reject(new Error(message));
@@ -407,13 +412,17 @@
       });
     }
 
-    /* ── Download via fetch + blob (sends Bearer token) ────────────── */
+    /* â”€â”€ Download via fetch + blob (sends Bearer token) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     async function downloadFile(fileId, fileName) {
       try {
         var resp = await fetch("/api/archive/download/" + fileId, {
           credentials: "include",
           headers: authHeaders(),
         });
+        if (resp.status === 401 || resp.status === 404) {
+          redirectNotFound();
+          return;
+        }
         if (!resp.ok) {
           var err = null;
           try { err = await resp.json(); } catch (_e) { /* ignore */ }
@@ -433,7 +442,7 @@
       }
     }
 
-    /* ── File selection ─────────────────────────────────────────────── */
+    /* â”€â”€ File selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     function setSelectedFile(file) {
       state.selectedFile = file || null;
       if (state.selectedFile) {
@@ -443,37 +452,12 @@
       }
     }
 
-    /* ── Gate / access UI ──────────────────────────────────────────── */
-    function showGate(message, type, showSignIn) {
-      refs.gateCard.classList.remove("hidden");
-      refs.archiveContent.classList.add("hidden");
-      refs.gateNotice.textContent = message;
-      refs.gateNotice.className = "notice";
-      if (type) refs.gateNotice.classList.add(type);
-
-      refs.gateActions.innerHTML = "";
-      if (showSignIn) {
-        var btn = document.createElement("a");
-        btn.className = "btn btn-primary";
-        btn.href = OIDC_LOGIN_URL;
-        btn.textContent = "Sign In to access the archive";
-        refs.gateActions.appendChild(btn);
-      }
-    }
-
-    function hideGate() {
-      refs.gateCard.classList.add("hidden");
-      refs.archiveContent.classList.remove("hidden");
-    }
-
-    /* ── User / permission state ───────────────────────────────────── */
+    /* â”€â”€ User / permission state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     function setUser(user) {
       state.user = user || null;
 
       if (!state.user) {
-        state.canView = false;
-        state.canUpload = false;
-        showGate("Sign in with your Cartofia account to access the archive.", "warn", true);
+        redirectNotFound();
         return;
       }
 
@@ -482,45 +466,41 @@
       state.canUpload = hasAnyGroup(groups, ARCHIVE_UPLOAD_GROUPS);
 
       if (!state.canView) {
-        showGate(
-          "Access not granted. Your account does not have an archive group. Contact an admin to request access.",
-          "error",
-          false
-        );
+        redirectNotFound();
         return;
       }
 
-      /* User can at least view — show the archive UI */
-      hideGate();
+      refs.archiveContent.classList.remove("hidden");
+      document.body.classList.remove("hidden");
 
       if (state.canUpload) {
         refs.uploadSection.classList.remove("hidden");
         refs.dropZone.style.pointerEvents = "";
         refs.dropZone.style.opacity = "";
+        refs.fileInput.disabled = false;
         refs.uploadButton.disabled = !state.selectedFile;
         setNotice(refs.uploadNotice, "Ready to upload files as " + state.user.username + ".", "ok");
       } else {
-        /* View-only: disable upload interactions */
-        refs.dropZone.style.pointerEvents = "none";
-        refs.dropZone.style.opacity = "0.45";
+        refs.uploadSection.classList.add("hidden");
+        refs.dropZone.style.pointerEvents = "";
+        refs.dropZone.style.opacity = "";
         refs.uploadButton.disabled = true;
         refs.fileInput.disabled = true;
-        setNotice(refs.uploadNotice, "Upload access requires a higher role. You can browse and download files.", "warn");
       }
     }
 
-    /* ── Session check via OIDC userinfo ───────────────────────────── */
     async function loadSession() {
       try {
         var token = getToken();
         var headers = token ? { "Authorization": "Bearer " + token } : {};
+
         var response = await fetch(OIDC_USERINFO_URL, {
           credentials: "include",
           headers: headers,
         });
 
         if (response.status === 401 || !response.ok) {
-          setUser(null);
+          redirectNotFound();
           return;
         }
 
@@ -531,11 +511,10 @@
           groups: claims.groups || [],
         });
       } catch (_error) {
-        setUser(null);
+        redirectNotFound();
       }
     }
 
-    /* ── Type filter ───────────────────────────────────────────────── */
     function updateTypeFilterOptions() {
       var previous = refs.typeFilter.value;
       var seen = {};
@@ -569,14 +548,11 @@
       refs.typeFilter.value = found ? previous : "all";
     }
 
-    /* ── Activity panel ────────────────────────────────────────────── */
+    /* â”€â”€ Activity panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     function renderActivity(files) {
       refs.activityList.innerHTML = "";
 
       if (!state.user || !state.canView) {
-        var li = document.createElement("li");
-        li.textContent = "Sign in to view archive activity.";
-        refs.activityList.appendChild(li);
         return;
       }
 
@@ -607,12 +583,12 @@
       });
     }
 
-    /* ── File table ────────────────────────────────────────────────── */
+    /* â”€â”€ File table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     function renderFiles() {
       refs.filesBody.innerHTML = "";
 
       if (!state.user || !state.canView) {
-        refs.emptyMessage.textContent = "Sign in to view archive files.";
+        refs.emptyMessage.textContent = "No files available.";
         refs.emptyMessage.style.display = "block";
         renderActivity([]);
         return;
@@ -682,7 +658,7 @@
       renderActivity(state.files);
     }
 
-    /* ── Load files ────────────────────────────────────────────────── */
+    /* â”€â”€ Load files â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     async function refreshFiles() {
       if (!state.user || !state.canView) {
         state.files = [];
@@ -704,7 +680,7 @@
       }
     }
 
-    /* ── Upload handler ────────────────────────────────────────────── */
+    /* â”€â”€ Upload handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     async function handleUpload() {
       if (state.uploading) {
         return;
@@ -749,7 +725,7 @@
       }
     }
 
-    /* ── Drag/drop + file input ────────────────────────────────────── */
+    /* â”€â”€ Drag/drop + file input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     function onDropZoneClick() {
       if (state.uploading) return;
       if (!state.canUpload) return;
@@ -794,7 +770,7 @@
       refs.uploadButton.disabled = !state.canUpload || !state.selectedFile;
     }
 
-    /* ── Download delegation ───────────────────────────────────────── */
+    /* â”€â”€ Download delegation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     function onTableClick(event) {
       var btn = event.target.closest("[data-file-id]");
       if (!btn) return;
@@ -802,7 +778,7 @@
       downloadFile(Number(btn.getAttribute("data-file-id")), btn.getAttribute("data-file-name"));
     }
 
-    /* ── Wire up events ────────────────────────────────────────────── */
+    /* â”€â”€ Wire up events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     function bindEvents() {
       refs.uploadButton.addEventListener("click", handleUpload);
       refs.fileInput.addEventListener("change", onFileInputChange);
@@ -819,7 +795,7 @@
       refs.filesBody.addEventListener("click", onTableClick);
     }
 
-    /* ── Boot ──────────────────────────────────────────────────────── */
+    /* â”€â”€ Boot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     async function boot() {
       bindEvents();
       hideUploadProgress();
@@ -832,3 +808,6 @@
   </script>
 </body>
 </html>
+
+
+

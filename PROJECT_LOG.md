@@ -696,5 +696,58 @@ Planned behaviour:
   - `node --check assets\site.js`
   - `node --check` on extracted inline script from `account/profile/index.html`
 
+---
+
+## 2026-03-27 - Archive invisibility hardening by role
+
+**Summary**
+
+- Switched archive access model from "visible but denied" to "invisible unless authorized".
+- Guests and non-archive members now receive a not-found experience for archive UI and API paths.
+
+**Details**
+
+- Updated shared visibility logic in `assets/site.js`:
+  - Added centralized archive-role helpers:
+    - `hasArchiveAccess(groups)`
+    - `hasArchiveUploadAccess(groups)`
+  - Account dropdown now only renders `Archive` for authenticated users in archive roles.
+  - Guests no longer get archive links in dropdown.
+  - Added global archive element toggling via:
+    - `a[href="/archive/"]` and `[data-archive-link]`
+    - `[data-archive-only]`
+- Updated public and account-facing templates to avoid archive teaser leakage:
+  - Archive links in nav/dropdowns/footers are hidden by default and role-revealed only for authorized users.
+  - Homepage archive CTA/tile elements are now `data-archive-only` and hidden for unauthorized users.
+  - Account page text was generalized to role-based access and archive CTA buttons are hidden by default.
+- Updated `archive/index.html`:
+  - Page now starts hidden and only renders after successful archive-role authorization.
+  - Unauthenticated or unauthorized users are redirected to `/404.html` immediately.
+  - Removed "sign in to access archive" / "access not granted" gate flow.
+  - View-only users (`archive_view`) now have upload section hidden instead of disabled controls.
+  - Added redirect handling for 401/404 archive API responses.
+- Added neutral not-found page: `404.html`.
+- Updated backend archive authorization in `src/cartofia_bot/api_server.py`:
+  - Added archive group helpers:
+    - `_has_archive_access(...)`
+    - `_has_archive_upload_access(...)`
+  - Added archive-specific decorator:
+    - `@archive_access_required`
+  - `/api/archive/files` and `/api/archive/download/<id>` now return:
+    - `401` for missing/invalid auth
+    - `404` for authenticated users without archive access
+  - `/api/archive/upload` now returns:
+    - `401` for missing/invalid auth
+    - `404` for authenticated users without upload rights
+  - Unauthorized archive responses no longer expose role/permission details.
+
+**Validation performed**
+
+- Ran backend syntax validation:
+  - `python -m py_compile src\cartofia_bot\api_server.py`
+- Ran frontend syntax validation:
+  - `node --check assets\site.js`
+  - `node --check` on extracted inline script from `archive/index.html`
+
 *This log is updated as new milestones and design decisions are made.*
 

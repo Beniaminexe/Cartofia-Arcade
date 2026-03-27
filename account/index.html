@@ -25,7 +25,7 @@
       </a>
       <nav class="site-nav" aria-label="Primary">
         <a href="/">Home</a>
-        <a href="/archive/">Archive</a>
+        <a class="hidden" data-archive-link href="/archive/">Archive</a>
         <a href="/arcade/">Arcade</a>
         <a href="/minecraft/">Minecraft</a>
       </nav>
@@ -33,7 +33,7 @@
         <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-          <a class="account-item" href="/archive/" role="menuitem">Open Archive</a>
+          <a class="account-item hidden" data-archive-link href="/archive/" role="menuitem">Open Archive</a>
         </div>
       </div>
     </header>
@@ -50,7 +50,7 @@
           <p class="hero-kicker">Cartofia Accounts</p>
           <h1 class="hero-title">Single Sign-On</h1>
           <p class="hero-lead">
-            Sign in with your Cartofia account to access the private archive and manage your identity across all Cartofia services.
+            Sign in with your Cartofia account to manage your identity and unlock role-based services across Cartofia.
           </p>
           <div class="pill-row">
             <span class="pill"><strong>SSO</strong> one account everywhere</span>
@@ -63,11 +63,11 @@
       <section class="auth-layout">
         <article class="card reveal" data-delay="2">
           <div class="section-label">Why sign in</div>
-          <h2 class="card-title" style="margin-bottom: 6px;">Private archive access</h2>
-          <p class="card-subtitle">Your Cartofia account unlocks uploads, downloads, and personalized navigation across the site.</p>
+          <h2 class="card-title" style="margin-bottom: 6px;">Role-based access</h2>
+          <p class="card-subtitle">Your Cartofia account unlocks private services and personalized navigation across the site.</p>
           <ul class="list">
             <li><b>Single sign-on</b>: one account for all Cartofia services.</li>
-            <li><b>File access</b>: required for archive uploads and downloads.</li>
+            <li><b>Access control</b>: private sections are available only to authorized groups.</li>
             <li><b>Groups</b>: your permissions are managed through Cartofia account groups.</li>
           </ul>
 
@@ -90,7 +90,7 @@
             </div>
             <div class="button-row hidden" id="sessionActions">
               <a class="btn btn-ghost" href="/account/profile/">Open Profile</a>
-              <a class="btn btn-primary" href="/archive/">Open Archive</a>
+              <a class="btn btn-primary hidden" data-archive-link href="/archive/">Open Archive</a>
               <button class="btn btn-ghost" type="button" id="logoutButton">Logout</button>
             </div>
           </div>
@@ -111,7 +111,7 @@
             <div class="notice ok" id="authSuccessNotice">Signed in.</div>
             <div class="button-row">
               <a class="btn btn-ghost" href="/account/profile/">Open Profile</a>
-              <a class="btn btn-primary" href="/archive/">Open Archive</a>
+              <a class="btn btn-primary hidden" data-archive-link href="/archive/">Open Archive</a>
               <a class="btn btn-ghost" href="/">Back Home</a>
             </div>
           </div>
@@ -122,7 +122,7 @@
     <footer class="footer">
       <span>Cartofia account management powered by single sign-on.</span>
       <div class="footer-links">
-        <a href="/archive/">Archive</a>
+        <a class="hidden" data-archive-link href="/archive/">Archive</a>
         <a href="/arcade/">Arcade</a>
         <a href="/minecraft/">Minecraft</a>
       </div>
@@ -227,7 +227,7 @@
 
       if (ok) {
         setNotice("Signed in as " + user.username, "ok");
-        refs.authSuccessNotice.textContent = "Signed in. You can open the archive or go back home.";
+        refs.authSuccessNotice.textContent = "Signed in. Open your profile or return home.";
         var next = new URLSearchParams(window.location.search).get("next");
         if (next) window.location.href = next;
       } else {
