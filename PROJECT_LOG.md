@@ -985,4 +985,97 @@ Planned behaviour:
   - `node --check arcade/chess/game.js`
   - `node --check arcade/blackjack/game.js`
 
+---
+
+## 2026-03-27 - Mobile playability fix + in-frame Start/Restart controls
+
+**Summary**
+
+- Fixed Maze Chase mobile usability issue where players could not reliably see gameplay and controls together.
+- Moved `Start` / `Restart` game controls into the game window for the active arcade action titles.
+
+**Details**
+
+- Updated `arcade/maze-chase/index.html`:
+  - Moved `Start`, `Pause`, and `Restart` buttons into an in-frame action bar inside the board window.
+  - Moved the touch joystick into an in-frame mobile overlay so controls stay visible with the game.
+  - Added responsive mobile sizing/placement for in-frame action buttons and joystick.
+  - Updated controls pill text to call out in-game touch joystick controls.
+
+- Updated `arcade/snake/index.html`:
+  - Moved `Start`, `Pause`, and `Restart` into in-frame controls inside the board window.
+
+- Updated `arcade/brick-blitz/index.html`:
+  - Moved `Start`, `Pause`, and `Restart` into in-frame controls inside the board window.
+
+- Updated `arcade/bomber-raid/index.html`:
+  - Moved `Start`, `Pause`, and `Restart` into in-frame controls inside the canvas window.
+  - Simplified external touch action stack to focus on movement joystick + bomb action.
+
+**Validation performed**
+
+- Ran inline JavaScript syntax checks (extracted scripts + `node --check`) for:
+  - `arcade/maze-chase/index.html`
+  - `arcade/snake/index.html`
+  - `arcade/brick-blitz/index.html`
+  - `arcade/bomber-raid/index.html`
+
+---
+
+## 2026-03-27 - Minecraft version label update
+
+**Summary**
+
+- Updated Cartofia Minecraft page version display from `1.20.1` to `1.21.10`.
+
+**Details**
+
+- Updated `minecraft/index.html`:
+  - Hero pill version label now shows `1.21.10`.
+  - Status panel version row now shows `1.21.10`.
+
+---
+
+## 2026-03-27 - Cartofia in-game back navigation button
+
+**Summary**
+
+- Added a persistent `Back to Arcade` button inside the Cartofia game wrapper page.
+
+**Details**
+
+- Updated `arcade/cartofia/index.html`:
+  - Added a fixed-position `Back to Arcade` anchor that stays visible above the game canvas.
+  - Styled the button for readability over gameplay (pill surface, high z-index, hover/focus states).
+  - Included safe-area offset support for mobile notch/inset devices.
+
+---
+
+## 2026-03-27 - Floating joystick refinement (smaller + transparent + touch-position spawn)
+
+**Summary**
+
+- Refined joystick UX for touch games to be less intrusive and more mobile-friendly.
+- Joystick is now smaller, more transparent, and spawns at the finger touch location.
+
+**Details**
+
+- Updated `arcade/maze-chase/index.html`:
+  - Converted fixed-position mobile joystick into a floating joystick overlay.
+  - Joystick now appears where touch starts on the game canvas.
+  - Reduced joystick size and increased transparency for better visibility of gameplay.
+  - Updated control copy to indicate floating joystick behavior.
+
+- Updated `arcade/bomber-raid/index.html`:
+  - Converted joystick to floating in-canvas joystick with touch-position spawn.
+  - Reduced joystick size and opacity to avoid blocking view.
+  - Kept bomb action external while movement joystick is now in-game and contextual.
+  - Updated control note text to reflect floating joystick behavior.
+
+**Validation performed**
+
+- Ran inline JavaScript syntax checks (extracted scripts + `node --check`) for:
+  - `arcade/maze-chase/index.html`
+  - `arcade/bomber-raid/index.html`
+
 *This log is updated as new milestones and design decisions are made.*

@@ -11,26 +11,32 @@
     #g { width: 100%; height: auto; aspect-ratio: 13/11; display: block; background: #071322; image-rendering: pixelated; touch-action: none; }
     #ov { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; background: rgba(2,8,13,.72); color: #d8ecff; font-family: "Sora","Segoe UI",sans-serif; pointer-events: none; transition: opacity .2s ease; }
     #ov.hide { opacity: 0; }
+    .joy-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+    .inframe-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 4; }
+    .inframe-actions .btn { min-height: 32px; padding: 6px 10px; font-size: 12px; }
     .hud { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
     .hud div { border: 1px solid var(--line); border-radius: 10px; padding: 8px; background: rgba(8,14,21,.72); color: var(--muted); font-size: 12px; }
     .hud b { display: block; color: #cbe8ff; font-size: 16px; font-family: "Sora","Segoe UI",sans-serif; }
     .row { display: flex; flex-wrap: wrap; gap: 8px; }
     .ctl { border: 1px solid rgba(46,168,255,.36); border-radius: 10px; background: rgba(8,22,34,.95); color: #cbebff; min-height: 38px; min-width: 80px; padding: 8px 12px; font-weight: 700; cursor: pointer; touch-action: manipulation; }
     .bomb { border-color: rgba(255,171,76,.55); background: linear-gradient(145deg, rgba(255,182,92,.35), rgba(140,70,26,.45)); color: #ffe0be; }
-    .touch-controls { display: grid; grid-template-columns: minmax(180px, 220px) 1fr; gap: 12px; align-items: end; }
-    .joystick-wrap { display: grid; place-items: center; }
+    .touch-controls { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: end; }
     .joystick-base {
-      position: relative;
-      width: 170px;
-      height: 170px;
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      width: 112px;
+      height: 112px;
       border-radius: 50%;
-      border: 1px solid rgba(46,168,255,.36);
+      border: 1px solid rgba(93,183,255,.42);
       background:
-        radial-gradient(circle at 32% 28%, rgba(120,186,241,.22), rgba(15,32,48,.7) 58%),
-        linear-gradient(180deg, rgba(8,22,34,.95), rgba(6,15,24,.95));
-      box-shadow: inset 0 0 0 1px rgba(191,228,255,.08);
-      touch-action: none;
-      user-select: none;
+        radial-gradient(circle at 32% 28%, rgba(130,196,244,.2), rgba(12,28,43,.46) 58%),
+        linear-gradient(180deg, rgba(8,22,34,.4), rgba(6,15,24,.34));
+      box-shadow: inset 0 0 0 1px rgba(191,228,255,.06);
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(.9);
+      transition: opacity .12s ease, transform .12s ease;
+      pointer-events: none;
     }
     .joystick-base::before,
     .joystick-base::after {
@@ -42,27 +48,27 @@
       background: rgba(170,219,255,.15);
       pointer-events: none;
     }
-    .joystick-base::before { width: 2px; height: 74%; }
-    .joystick-base::after { width: 74%; height: 2px; }
+    .joystick-base::before { width: 2px; height: 66%; }
+    .joystick-base::after { width: 66%; height: 2px; }
     .joystick-thumb {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 68px;
-      height: 68px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      border: 1px solid rgba(96,177,236,.68);
+      border: 1px solid rgba(117,198,255,.68);
       background:
-        radial-gradient(circle at 35% 32%, rgba(219,241,255,.62), rgba(62,134,192,.82) 64%),
-        linear-gradient(180deg, rgba(23,74,117,.92), rgba(14,47,74,.92));
-      box-shadow: 0 8px 20px rgba(0,0,0,.36);
+        radial-gradient(circle at 35% 32%, rgba(223,243,255,.5), rgba(77,146,201,.62) 64%),
+        linear-gradient(180deg, rgba(24,76,119,.58), rgba(14,47,74,.54));
+      box-shadow: 0 5px 12px rgba(0,0,0,.24);
       transition: transform .08s ease;
       pointer-events: none;
     }
+    .joystick-base.active { opacity: .58; transform: translate(-50%, -50%) scale(1); }
     .joystick-base.active .joystick-thumb { transition: none; }
-    .touch-action-stack { display: grid; gap: 8px; }
-    .touch-session { display: grid; grid-template-columns: repeat(3, minmax(90px, 1fr)); gap: 8px; }
+    .touch-action-stack { display: grid; gap: 8px; align-content: end; }
     .touch-bomb { min-height: 56px; font-size: 16px; }
     .room-input { min-width: 140px; max-width: 220px; cursor: text; }
     .room-input::placeholder { color: #7aa0c3; }
@@ -80,6 +86,18 @@
     .sync-opt input[type="checkbox"] { width: 16px; height: 16px; }
     .note { color: var(--muted); font-size: 14px; }
     @media (max-width: 900px) {
+      .inframe-actions {
+        left: 8px;
+        right: 8px;
+        top: 8px;
+        justify-content: space-between;
+      }
+      .inframe-actions .btn {
+        flex: 1;
+        min-height: 34px;
+        font-size: 12px;
+        padding: 6px 8px;
+      }
       .touch-controls {
         grid-template-columns: 1fr;
         position: sticky;
@@ -91,20 +109,9 @@
         backdrop-filter: blur(6px);
         padding: 10px;
       }
-      .joystick-base {
-        width: min(52vw, 212px);
-        height: min(52vw, 212px);
-      }
-      .joystick-thumb {
-        width: min(20vw, 74px);
-        height: min(20vw, 74px);
-      }
       .touch-bomb {
         min-height: 60px;
         font-size: 17px;
-      }
-      .touch-session {
-        grid-template-columns: repeat(3, 1fr);
       }
       .sync-opt {
         font-size: 12px;
@@ -136,6 +143,16 @@
         <div class="board">
           <canvas id="g" width="624" height="528" aria-label="Bomber Raid game board"></canvas>
           <div id="ov">Choose a mode, then press Start.</div>
+          <div class="joy-layer" aria-hidden="true">
+            <div id="joy-base" class="joystick-base" aria-label="Movement joystick" role="application">
+              <div id="joy-thumb" class="joystick-thumb" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="inframe-actions" aria-label="Game actions">
+            <button id="start" class="btn btn-primary" type="button">Start</button>
+            <button id="pause" class="btn btn-ghost" type="button">Pause</button>
+            <button id="restart" class="btn btn-ghost" type="button">Restart</button>
+          </div>
         </div>
         <div class="hud">
           <div>Score<b id="sc">0</b></div>
@@ -172,21 +189,11 @@
           <label class="sync-opt">Guest input delay <input id="input-delay-ms" class="ctl" type="number" min="0" max="240" step="10" value="70" /></label>
         </div>
         <div class="touch-controls" aria-label="Touch controls">
-          <div class="joystick-wrap">
-            <div id="joy-base" class="joystick-base" aria-label="Movement joystick" role="application">
-              <div id="joy-thumb" class="joystick-thumb" aria-hidden="true"></div>
-            </div>
-          </div>
           <div class="touch-action-stack">
             <button id="bomb" class="ctl bomb touch-bomb" type="button">Bomb</button>
-            <div class="touch-session">
-              <button id="start" class="btn btn-primary" type="button">Start</button>
-              <button id="pause" class="btn btn-ghost" type="button">Pause</button>
-              <button id="restart" class="btn btn-ghost" type="button">Restart</button>
-            </div>
           </div>
         </div>
-        <p id="control-note" class="note">Singleplayer: WASD/Arrows + Space/Enter, or use the touch joystick + Bomb. Online mode: set room + optional password, mark Ready in lobby, host uses WASD/touch, guest uses Arrows/touch. Powerups: +Bomb, +Range, +Speed, +Shield.</p>
+        <p id="control-note" class="note">Singleplayer: WASD/Arrows + Space/Enter, or use the floating touch joystick + Bomb. Online mode: set room + optional password, mark Ready in lobby, host uses WASD/touch, guest uses Arrows/touch. Powerups: +Bomb, +Range, +Speed, +Shield.</p>
       </section>
     </main>
   </div>
@@ -257,6 +264,7 @@
   let acc = 0;
   let joyPointerId = null;
   let joyHeldDir = null;
+  let joyCenter = { x: 0, y: 0 };
 
   const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   const wsFallbackUrl = wsProtocol + "://" + window.location.host + "/ws/bomber-raid";
@@ -2197,6 +2205,10 @@
   }
 
   function resetJoystickVisual() {
+    if (joyBase) {
+      joyBase.style.left = "-9999px";
+      joyBase.style.top = "-9999px";
+    }
     if (joyThumb) {
       joyThumb.style.transform = "translate(-50%, -50%)";
     }
@@ -2215,12 +2227,10 @@
     if (!joyBase || !joyThumb) {
       return;
     }
-    const rect = joyBase.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    let dx = event.clientX - cx;
-    let dy = event.clientY - cy;
-    const maxOffset = rect.width * 0.32;
+    const rect = g.getBoundingClientRect();
+    let dx = (event.clientX - rect.left) - joyCenter.x;
+    let dy = (event.clientY - rect.top) - joyCenter.y;
+    const maxOffset = joyBase.clientWidth * 0.32;
     const len = Math.hypot(dx, dy);
     if (len > maxOffset && len > 0) {
       const scale = maxOffset / len;
@@ -2229,7 +2239,7 @@
     }
     joyThumb.style.transform = "translate(calc(-50% + " + dx.toFixed(2) + "px), calc(-50% + " + dy.toFixed(2) + "px))";
 
-    const deadZone = rect.width * 0.11;
+    const deadZone = joyBase.clientWidth * 0.12;
     if (Math.hypot(dx, dy) < deadZone) {
       setJoystickDirection(null);
       return;
@@ -2238,6 +2248,19 @@
       ? (dx > 0 ? "r" : "l")
       : (dy > 0 ? "d" : "u");
     setJoystickDirection(dir);
+  }
+
+  function setJoystickCenterFromPointer(event) {
+    if (!joyBase) {
+      return;
+    }
+    const rect = g.getBoundingClientRect();
+    const localX = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+    const localY = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
+    joyCenter.x = localX;
+    joyCenter.y = localY;
+    joyBase.style.left = localX.toFixed(2) + "px";
+    joyBase.style.top = localY.toFixed(2) + "px";
   }
 
   function setGameMode(mode) {
@@ -2459,43 +2482,50 @@
     }
   }, { passive: false });
 
-  if (joyBase) {
-    joyBase.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      joyPointerId = event.pointerId;
-      joyBase.classList.add("active");
-      try {
-        joyBase.setPointerCapture(event.pointerId);
-      } catch (_e) {
-        // ignore capture errors
-      }
-      updateJoystickFromPointer(event);
-    });
-    joyBase.addEventListener("pointermove", (event) => {
-      if (joyPointerId !== event.pointerId) {
-        return;
-      }
-      event.preventDefault();
-      updateJoystickFromPointer(event);
-    });
-    joyBase.addEventListener("pointerup", (event) => {
-      if (joyPointerId !== null && joyPointerId !== event.pointerId) {
-        return;
-      }
-      event.preventDefault();
-      endJoystickGesture();
-    });
-    joyBase.addEventListener("pointercancel", (event) => {
-      if (joyPointerId !== null && joyPointerId !== event.pointerId) {
-        return;
-      }
-      event.preventDefault();
-      endJoystickGesture();
-    });
-    joyBase.addEventListener("lostpointercapture", () => {
-      endJoystickGesture();
-    });
+  function usesTouchJoystick(event) {
+    const type = String(event.pointerType || "");
+    return type === "touch" || type === "pen";
   }
+
+  g.addEventListener("pointerdown", (event) => {
+    if (!usesTouchJoystick(event) || !joyBase) {
+      return;
+    }
+    event.preventDefault();
+    joyPointerId = event.pointerId;
+    setJoystickCenterFromPointer(event);
+    joyBase.classList.add("active");
+    try {
+      g.setPointerCapture(event.pointerId);
+    } catch (_e) {
+      // ignore capture errors
+    }
+    updateJoystickFromPointer(event);
+  });
+  g.addEventListener("pointermove", (event) => {
+    if (joyPointerId !== event.pointerId) {
+      return;
+    }
+    event.preventDefault();
+    updateJoystickFromPointer(event);
+  });
+
+  function releaseJoystickGesture(event) {
+    if (joyPointerId === null) {
+      return;
+    }
+    if (event && event.pointerId !== undefined && joyPointerId !== event.pointerId) {
+      return;
+    }
+    if (event && g.releasePointerCapture) {
+      try { g.releasePointerCapture(event.pointerId); } catch (_e) { /* ignore */ }
+    }
+    endJoystickGesture();
+  }
+
+  g.addEventListener("pointerup", releaseJoystickGesture);
+  g.addEventListener("pointercancel", releaseJoystickGesture);
+  g.addEventListener("lostpointercapture", releaseJoystickGesture);
 
   ["touchstart", "touchmove", "touchend"].forEach((n) => {
     g.addEventListener(n, (e) => {

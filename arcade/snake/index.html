@@ -97,8 +97,19 @@
       letter-spacing: -0.01em;
     }
 
-    .button-row {
-      margin-top: 2px;
+    .inframe-actions {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 6px;
+      z-index: 4;
+    }
+
+    .inframe-actions .btn {
+      min-height: 32px;
+      padding: 6px 10px;
+      font-size: 12px;
     }
 
     .controls-list {
@@ -175,6 +186,20 @@
         grid-template-columns: 1fr;
       }
 
+      .inframe-actions {
+        left: 8px;
+        right: 8px;
+        top: 8px;
+        justify-content: space-between;
+      }
+
+      .inframe-actions .btn {
+        flex: 1;
+        min-height: 34px;
+        font-size: 12px;
+        padding: 6px 8px;
+      }
+
       .pad-grid {
         width: 210px;
       }
@@ -238,6 +263,11 @@
             <div class="board-frame">
               <canvas id="game" width="576" height="576" aria-label="Snake game board"></canvas>
               <div id="overlay" class="board-overlay">Press Start or any direction key to begin.</div>
+              <div class="inframe-actions" aria-label="Game actions">
+                <button id="start-btn" class="btn btn-primary" type="button">Start</button>
+                <button id="pause-btn" class="btn btn-ghost" type="button">Pause</button>
+                <button id="restart-btn" class="btn btn-ghost" type="button">Restart</button>
+              </div>
             </div>
           </div>
 
@@ -250,14 +280,6 @@
                 <div class="stat-row"><span>Best</span><b id="best">0</b></div>
                 <div class="stat-row"><span>Length</span><b id="length">3</b></div>
                 <div class="stat-row"><span>Speed</span><b id="speed">7.1</b></div>
-              </div>
-            </div>
-
-            <div>
-              <div class="button-row">
-                <button id="start-btn" class="btn btn-primary" type="button">Start</button>
-                <button id="pause-btn" class="btn btn-ghost" type="button">Pause</button>
-                <button id="restart-btn" class="btn btn-ghost" type="button">Restart</button>
               </div>
             </div>
 

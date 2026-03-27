@@ -97,8 +97,19 @@
       letter-spacing: -0.01em;
     }
 
-    .button-row {
-      margin-top: 2px;
+    .inframe-actions {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 6px;
+      z-index: 4;
+    }
+
+    .inframe-actions .btn {
+      min-height: 32px;
+      padding: 6px 10px;
+      font-size: 12px;
     }
 
     .controls-list {
@@ -115,38 +126,30 @@
       font-weight: 700;
     }
 
-    .touch-controls {
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: rgba(7, 14, 22, 0.7);
-      padding: 10px;
-      display: grid;
-      gap: 8px;
-    }
-
-    .touch-controls p {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .joystick-wrap {
-      display: grid;
-      place-items: center;
-      margin-top: 2px;
+    .inframe-joystick {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      display: none;
     }
 
     .joystick-base {
-      position: relative;
-      width: 180px;
-      height: 180px;
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      width: 112px;
+      height: 112px;
       border-radius: 50%;
-      border: 1px solid rgba(46, 168, 255, 0.36);
+      border: 1px solid rgba(93, 183, 255, 0.42);
       background:
-        radial-gradient(circle at 34% 30%, rgba(120,186,241,.22), rgba(15,32,48,.74) 58%),
-        linear-gradient(180deg, rgba(8,22,34,.95), rgba(6,15,24,.95));
-      box-shadow: inset 0 0 0 1px rgba(191,228,255,.08);
-      touch-action: none;
-      user-select: none;
+        radial-gradient(circle at 34% 30%, rgba(130,196,244,.20), rgba(12,28,43,.46) 58%),
+        linear-gradient(180deg, rgba(8,22,34,.40), rgba(6,15,24,.34));
+      box-shadow: inset 0 0 0 1px rgba(191,228,255,.06);
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(.9);
+      transition: opacity .12s ease, transform .12s ease;
+      pointer-events: none;
     }
 
     .joystick-base::before,
@@ -160,24 +163,29 @@
       pointer-events: none;
     }
 
-    .joystick-base::before { width: 2px; height: 74%; }
-    .joystick-base::after { width: 74%; height: 2px; }
+    .joystick-base::before { width: 2px; height: 66%; }
+    .joystick-base::after { width: 66%; height: 2px; }
 
     .joystick-thumb {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 72px;
-      height: 72px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      border: 1px solid rgba(96,177,236,.68);
+      border: 1px solid rgba(117, 198, 255, .68);
       background:
-        radial-gradient(circle at 35% 32%, rgba(219,241,255,.62), rgba(62,134,192,.82) 64%),
-        linear-gradient(180deg, rgba(23,74,117,.92), rgba(14,47,74,.92));
-      box-shadow: 0 8px 20px rgba(0,0,0,.36);
+        radial-gradient(circle at 35% 32%, rgba(223,243,255,.50), rgba(77,146,201,.62) 64%),
+        linear-gradient(180deg, rgba(24,76,119,.58), rgba(14,47,74,.54));
+      box-shadow: 0 5px 12px rgba(0,0,0,.24);
       transition: transform .08s ease;
       pointer-events: none;
+    }
+
+    .joystick-base.active {
+      opacity: .6;
+      transform: translate(-50%, -50%) scale(1);
     }
 
     .joystick-base.active .joystick-thumb {
@@ -197,6 +205,22 @@
       .game-layout {
         grid-template-columns: 1fr;
       }
+
+      .inframe-actions {
+        left: 8px;
+        right: 8px;
+        top: 8px;
+        justify-content: space-between;
+      }
+
+      .inframe-actions .btn {
+        flex: 1;
+        min-height: 34px;
+        font-size: 12px;
+        padding: 6px 8px;
+      }
+
+      .inframe-joystick { display: block; }
     }
   </style>
 </head>
@@ -245,7 +269,7 @@
           </p>
           <div class="pill-row">
             <span class="pill"><strong>Mode</strong> Single player</span>
-            <span class="pill"><strong>Controls</strong> Arrows / WASD / touch pad</span>
+            <span class="pill"><strong>Controls</strong> Arrows / WASD / floating touch joystick</span>
             <span class="pill"><strong>Playable</strong> In browser</span>
           </div>
         </div>
@@ -257,6 +281,16 @@
             <div class="board-frame">
               <canvas id="game" width="588" height="476" aria-label="Maze Chase board"></canvas>
               <div id="overlay" class="board-overlay">Press Start to begin.</div>
+              <div class="inframe-actions" aria-label="Game actions">
+                <button id="start-btn" class="btn btn-primary" type="button">Start</button>
+                <button id="pause-btn" class="btn btn-ghost" type="button">Pause</button>
+                <button id="restart-btn" class="btn btn-ghost" type="button">Restart</button>
+              </div>
+              <div class="inframe-joystick" aria-label="Touch controls">
+                <div id="joy-base" class="joystick-base" aria-label="Movement joystick" role="application">
+                  <div id="joy-thumb" class="joystick-thumb" aria-hidden="true"></div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -274,14 +308,6 @@
             </div>
 
             <div>
-              <div class="button-row">
-                <button id="start-btn" class="btn btn-primary" type="button">Start</button>
-                <button id="pause-btn" class="btn btn-ghost" type="button">Pause</button>
-                <button id="restart-btn" class="btn btn-ghost" type="button">Restart</button>
-              </div>
-            </div>
-
-            <div>
               <h3 class="section-label">How To Play</h3>
               <ul class="controls-list">
                 <li><b>Move:</b> Arrow keys or <b>W A S D</b></li>
@@ -289,15 +315,6 @@
                 <li><b>Power:</b> During blue mode, ghosts can be eaten</li>
                 <li><b>Goal:</b> Clear every pellet in the maze</li>
               </ul>
-            </div>
-
-            <div class="touch-controls">
-              <p>Touch controls</p>
-              <div class="joystick-wrap">
-                <div id="joy-base" class="joystick-base" aria-label="Movement joystick" role="application">
-                  <div id="joy-thumb" class="joystick-thumb" aria-hidden="true"></div>
-                </div>
-              </div>
             </div>
 
             <div class="game-note">Tip: clear corners with power orbs first to create safer routes.</div>
@@ -395,6 +412,7 @@
       let ghostAcc = 0;
       let lastFrame = 0;
       let joyPointerId = null;
+      let joyCenter = { x: 0, y: 0 };
 
       function loadBest() {
         const raw = Number(window.localStorage.getItem(BEST_KEY) || 0);
@@ -584,17 +602,27 @@
       }
 
       function resetJoystick() {
+        joyBase.style.left = "-9999px";
+        joyBase.style.top = "-9999px";
         joyBase.classList.remove("active");
         joyThumb.style.transform = "translate(-50%, -50%)";
       }
 
+      function setJoystickCenter(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        const localX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+        const localY = Math.max(0, Math.min(rect.height, clientY - rect.top));
+        joyCenter.x = localX;
+        joyCenter.y = localY;
+        joyBase.style.left = localX.toFixed(2) + "px";
+        joyBase.style.top = localY.toFixed(2) + "px";
+      }
+
       function updateJoystick(clientX, clientY) {
-        const rect = joyBase.getBoundingClientRect();
-        const cx = rect.left + (rect.width / 2);
-        const cy = rect.top + (rect.height / 2);
-        let dx = clientX - cx;
-        let dy = clientY - cy;
-        const maxRadius = rect.width * 0.34;
+        const rect = canvas.getBoundingClientRect();
+        let dx = (clientX - rect.left) - joyCenter.x;
+        let dy = (clientY - rect.top) - joyCenter.y;
+        const maxRadius = joyBase.clientWidth * 0.34;
         const magnitude = Math.sqrt((dx * dx) + (dy * dy));
         if (magnitude > maxRadius && magnitude > 0) {
           const scale = maxRadius / magnitude;
@@ -604,7 +632,7 @@
 
         joyThumb.style.transform = "translate(calc(-50% + " + dx.toFixed(2) + "px), calc(-50% + " + dy.toFixed(2) + "px))";
 
-        const deadZone = rect.width * 0.18;
+        const deadZone = joyBase.clientWidth * 0.18;
         if (magnitude < deadZone) {
           return;
         }
@@ -1018,17 +1046,26 @@
         beginRun();
       });
 
-      joyBase.addEventListener("pointerdown", (event) => {
+      function usesTouchJoystick(event) {
+        const type = String(event.pointerType || "");
+        return type === "touch" || type === "pen";
+      }
+
+      canvas.addEventListener("pointerdown", (event) => {
+        if (!usesTouchJoystick(event)) {
+          return;
+        }
         event.preventDefault();
         joyPointerId = event.pointerId;
+        setJoystickCenter(event.clientX, event.clientY);
         joyBase.classList.add("active");
-        if (joyBase.setPointerCapture) {
-          joyBase.setPointerCapture(event.pointerId);
+        if (canvas.setPointerCapture) {
+          canvas.setPointerCapture(event.pointerId);
         }
         updateJoystick(event.clientX, event.clientY);
       });
 
-      joyBase.addEventListener("pointermove", (event) => {
+      canvas.addEventListener("pointermove", (event) => {
         if (joyPointerId !== event.pointerId) {
           return;
         }
@@ -1043,16 +1080,16 @@
         if (event && event.pointerId !== undefined && joyPointerId !== event.pointerId) {
           return;
         }
-        if (event && joyBase.releasePointerCapture) {
-          try { joyBase.releasePointerCapture(event.pointerId); } catch (_e) { /* ignore */ }
+        if (event && canvas.releasePointerCapture) {
+          try { canvas.releasePointerCapture(event.pointerId); } catch (_e) { /* ignore */ }
         }
         joyPointerId = null;
         resetJoystick();
       }
 
-      joyBase.addEventListener("pointerup", releaseJoystick);
-      joyBase.addEventListener("pointercancel", releaseJoystick);
-      joyBase.addEventListener("pointerleave", releaseJoystick);
+      canvas.addEventListener("pointerup", releaseJoystick);
+      canvas.addEventListener("pointercancel", releaseJoystick);
+      canvas.addEventListener("lostpointercapture", releaseJoystick);
 
       const year = document.getElementById("year");
       if (year) {

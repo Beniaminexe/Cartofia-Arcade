@@ -339,6 +339,34 @@ config = {
            right:10px;
            border: 1px solid black;
         }
+
+        .back-to-arcade {
+            position: fixed;
+            top: calc(10px + env(safe-area-inset-top, 0px));
+            left: calc(10px + env(safe-area-inset-left, 0px));
+            z-index: 40;
+            display: inline-flex;
+            align-items: center;
+            min-height: 36px;
+            padding: 0 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(114, 178, 255, 0.62);
+            background: rgba(6, 14, 24, 0.86);
+            color: #e7f3ff;
+            text-decoration: none;
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            backdrop-filter: blur(3px);
+        }
+
+        .back-to-arcade:hover,
+        .back-to-arcade:focus-visible {
+            background: rgba(13, 28, 44, 0.92);
+            border-color: rgba(146, 202, 255, 0.8);
+            outline: none;
+        }
     </style>
 
     <script src="https://pygame-web.github.io/archives/0.9//browserfs.min.js"></script>
@@ -346,6 +374,8 @@ config = {
 </head>
 
 <body>
+
+    <a href="/arcade/" class="back-to-arcade" aria-label="Back to Arcade">Back to Arcade</a>
 
     <div id="transfer" align=center>
 <!--        <div class="spinner" id='spinner'></div> -->
