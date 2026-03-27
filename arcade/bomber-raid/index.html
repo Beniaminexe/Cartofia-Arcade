@@ -12,8 +12,9 @@
     #ov { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; background: rgba(2,8,13,.72); color: #d8ecff; font-family: "Sora","Segoe UI",sans-serif; pointer-events: none; transition: opacity .2s ease; }
     #ov.hide { opacity: 0; }
     .joy-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
-    .inframe-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 4; }
+    .inframe-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 4; transition: opacity .18s ease; }
     .inframe-actions .btn { min-height: 32px; padding: 6px 10px; font-size: 12px; }
+    .inframe-actions.hidden { opacity: 0; pointer-events: none; }
     .hud { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
     .hud div { border: 1px solid var(--line); border-radius: 10px; padding: 8px; background: rgba(8,14,21,.72); color: var(--muted); font-size: 12px; }
     .hud b { display: block; color: #cbe8ff; font-size: 16px; font-family: "Sora","Segoe UI",sans-serif; }
@@ -148,7 +149,7 @@
               <div id="joy-thumb" class="joystick-thumb" aria-hidden="true"></div>
             </div>
           </div>
-          <div class="inframe-actions" aria-label="Game actions">
+          <div id="action-bar" class="inframe-actions" aria-label="Game actions">
             <button id="start" class="btn btn-primary" type="button">Start</button>
             <button id="pause" class="btn btn-ghost" type="button">Pause</button>
             <button id="restart" class="btn btn-ghost" type="button">Restart</button>
@@ -230,6 +231,7 @@
   const createRoomBtn = document.getElementById("create-room");
   const joinRoomBtn = document.getElementById("join-room");
   const netStatusEl = document.getElementById("net-status");
+  const actionBar = document.getElementById("action-bar");
   const startBtn = document.getElementById("start");
   const pauseBtn = document.getElementById("pause");
   const restartBtn = document.getElementById("restart");
@@ -596,6 +598,43 @@
     if (p2kEl) { p2kEl.textContent = p2 ? kitText(p2) : "-"; }
     if (puEl) { puEl.textContent = String(powerups.length); }
     if (stEl) { stEl.textContent = statusText(); }
+    syncActionBar();
+  }
+
+  function syncActionBar() {
+    if (!actionBar) {
+      return;
+    }
+    const live = run && !pau && !over && !win;
+    const ended = over || win;
+    actionBar.classList.toggle("hidden", live);
+
+    if (ended) {
+      startBtn.style.display = "none";
+      pauseBtn.style.display = "none";
+      restartBtn.style.display = "";
+      return;
+    }
+
+    if (pau) {
+      startBtn.style.display = "";
+      startBtn.textContent = "Resume";
+      pauseBtn.style.display = "none";
+      restartBtn.style.display = "";
+      return;
+    }
+
+    if (!run) {
+      startBtn.style.display = "";
+      startBtn.textContent = "Start";
+      pauseBtn.style.display = "none";
+      restartBtn.style.display = "";
+      return;
+    }
+
+    startBtn.style.display = "none";
+    pauseBtn.style.display = "";
+    restartBtn.style.display = "none";
   }
 
   function msg(t) {

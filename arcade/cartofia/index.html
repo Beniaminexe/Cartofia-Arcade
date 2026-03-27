@@ -367,6 +367,88 @@ config = {
             border-color: rgba(146, 202, 255, 0.8);
             outline: none;
         }
+
+        .mobile-controls {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+            z-index: 45;
+            display: none;
+            justify-content: space-between;
+            align-items: end;
+            gap: 12px;
+            padding: 0 12px;
+            pointer-events: none;
+        }
+
+        .mc-cluster {
+            pointer-events: auto;
+        }
+
+        .mc-dpad {
+            width: 154px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .mc-empty {
+            visibility: hidden;
+        }
+
+        .mc-actions {
+            display: grid;
+            gap: 8px;
+        }
+
+        .mc-btn {
+            min-height: 46px;
+            min-width: 46px;
+            border-radius: 12px;
+            border: 1px solid rgba(142, 198, 255, 0.46);
+            background: rgba(7, 18, 29, 0.45);
+            color: #e7f4ff;
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            backdrop-filter: blur(2px);
+        }
+
+        .mc-btn:active,
+        .mc-btn.active {
+            background: rgba(40, 108, 179, 0.5);
+            border-color: rgba(177, 220, 255, 0.78);
+            transform: translateY(1px);
+        }
+
+        .mc-btn.jump {
+            min-width: 84px;
+            min-height: 54px;
+            border-radius: 999px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .mc-btn.confirm {
+            min-width: 84px;
+            min-height: 44px;
+            border-radius: 999px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @media (hover: none), (pointer: coarse) {
+            .mobile-controls {
+                display: flex;
+            }
+        }
     </style>
 
     <script src="https://pygame-web.github.io/archives/0.9//browserfs.min.js"></script>
@@ -376,6 +458,24 @@ config = {
 <body>
 
     <a href="/arcade/" class="back-to-arcade" aria-label="Back to Arcade">Back to Arcade</a>
+
+    <div id="mobile-controls" class="mobile-controls" aria-label="Mobile controls">
+        <div class="mc-cluster mc-dpad">
+            <div class="mc-empty"></div>
+            <button class="mc-btn" data-control="up" type="button" aria-label="Up">U</button>
+            <div class="mc-empty"></div>
+            <button class="mc-btn" data-control="left" type="button" aria-label="Left">L</button>
+            <div class="mc-empty"></div>
+            <button class="mc-btn" data-control="right" type="button" aria-label="Right">R</button>
+            <div class="mc-empty"></div>
+            <button class="mc-btn" data-control="down" type="button" aria-label="Down">D</button>
+            <div class="mc-empty"></div>
+        </div>
+        <div class="mc-cluster mc-actions">
+            <button class="mc-btn jump" data-control="jump" type="button" aria-label="Jump">Jump</button>
+            <button class="mc-btn confirm" data-control="confirm" type="button" aria-label="Confirm">Select</button>
+        </div>
+    </div>
 
     <div id="transfer" align=center>
 <!--        <div class="spinner" id='spinner'></div> -->
@@ -513,6 +613,134 @@ frameborder="1"
         window.frames["iframe"].location = url;
     }
 
+    </script>
+
+    <script type="application/javascript">
+    (() => {
+        const canvas = document.getElementById("canvas");
+        const controls = document.querySelectorAll("[data-control]");
+        if (!canvas || !controls.length) {
+            return;
+        }
+
+        const KEY_BINDINGS = {
+            left: [{ key: "ArrowLeft", code: "ArrowLeft" }],
+            right: [{ key: "ArrowRight", code: "ArrowRight" }],
+            up: [{ key: "ArrowUp", code: "ArrowUp" }],
+            down: [{ key: "ArrowDown", code: "ArrowDown" }],
+            jump: [{ key: " ", code: "Space" }],
+            confirm: [{ key: "Enter", code: "Enter" }]
+        };
+
+        const keyCounts = Object.create(null);
+        const activePointers = new Map();
+
+        function dispatchKeyboard(type, key, code) {
+            const event = new KeyboardEvent(type, {
+                key: key,
+                code: code,
+                bubbles: true,
+                cancelable: true
+            });
+            canvas.dispatchEvent(event);
+            document.dispatchEvent(event);
+            window.dispatchEvent(event);
+        }
+
+        function setLogicalControl(control, isDown) {
+            const bindings = KEY_BINDINGS[control];
+            if (!bindings) {
+                return;
+            }
+            for (const binding of bindings) {
+                const k = binding.code;
+                const prev = Number(keyCounts[k] || 0);
+                const next = isDown ? (prev + 1) : Math.max(0, prev - 1);
+                keyCounts[k] = next;
+                if (isDown && prev === 0) {
+                    dispatchKeyboard("keydown", binding.key, binding.code);
+                } else if (!isDown && prev > 0 && next === 0) {
+                    dispatchKeyboard("keyup", binding.key, binding.code);
+                }
+            }
+        }
+
+        function buttonControl(btn) {
+            return String(btn && btn.dataset && btn.dataset.control || "");
+        }
+
+        function activateButton(btn) {
+            const control = buttonControl(btn);
+            if (!control) {
+                return;
+            }
+            btn.classList.add("active");
+            setLogicalControl(control, true);
+        }
+
+        function deactivateButton(btn) {
+            const control = buttonControl(btn);
+            if (!control) {
+                return;
+            }
+            btn.classList.remove("active");
+            setLogicalControl(control, false);
+        }
+
+        function focusCanvas() {
+            try {
+                canvas.focus();
+            } catch (_e) {
+                // ignore focus errors
+            }
+        }
+
+        controls.forEach((btn) => {
+            btn.addEventListener("pointerdown", (event) => {
+                event.preventDefault();
+                focusCanvas();
+                const id = String(event.pointerId);
+                if (!activePointers.has(id)) {
+                    activePointers.set(id, btn);
+                    activateButton(btn);
+                }
+                if (btn.setPointerCapture) {
+                    try {
+                        btn.setPointerCapture(event.pointerId);
+                    } catch (_e) {
+                        // ignore capture errors
+                    }
+                }
+            }, { passive: false });
+
+            const release = (event) => {
+                const id = String(event.pointerId);
+                const target = activePointers.get(id);
+                if (!target) {
+                    return;
+                }
+                if (btn.releasePointerCapture) {
+                    try {
+                        btn.releasePointerCapture(event.pointerId);
+                    } catch (_e) {
+                        // ignore release errors
+                    }
+                }
+                activePointers.delete(id);
+                deactivateButton(target);
+            };
+
+            btn.addEventListener("pointerup", release);
+            btn.addEventListener("pointercancel", release);
+            btn.addEventListener("lostpointercapture", release);
+            btn.addEventListener("contextmenu", (event) => event.preventDefault());
+        });
+
+        window.addEventListener("blur", () => {
+            activePointers.forEach((btn) => deactivateButton(btn));
+            activePointers.clear();
+        });
+    })();
     </script>
 
 </body>

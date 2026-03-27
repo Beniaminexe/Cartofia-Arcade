@@ -103,12 +103,18 @@
       display: flex;
       gap: 6px;
       z-index: 4;
+      transition: opacity .18s ease;
     }
 
     .inframe-actions .btn {
       min-height: 32px;
       padding: 6px 10px;
       font-size: 12px;
+    }
+
+    .inframe-actions.hidden {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .controls-list {
@@ -251,7 +257,7 @@
             <div class="board-frame">
               <canvas id="game" width="900" height="600" aria-label="Brick Blitz game board"></canvas>
               <div id="overlay" class="board-overlay">Press Start to launch the ball.</div>
-              <div class="inframe-actions" aria-label="Game actions">
+              <div id="action-bar" class="inframe-actions" aria-label="Game actions">
                 <button id="start-btn" class="btn btn-primary" type="button">Start</button>
                 <button id="pause-btn" class="btn btn-ghost" type="button">Pause</button>
                 <button id="restart-btn" class="btn btn-ghost" type="button">Restart</button>
@@ -318,6 +324,7 @@
       const livesEl = document.getElementById("lives");
       const levelEl = document.getElementById("level");
       const yearEl = document.getElementById("year");
+      const actionBar = document.getElementById("action-bar");
 
       const startBtn = document.getElementById("start-btn");
       const pauseBtn = document.getElementById("pause-btn");
@@ -402,6 +409,42 @@
         bestEl.textContent = String(best);
         livesEl.textContent = String(lives);
         levelEl.textContent = String(level);
+        syncActionBar();
+      }
+
+      function syncActionBar() {
+        if (!actionBar) {
+          return;
+        }
+        const live = running && !paused && !gameOver;
+        actionBar.classList.toggle("hidden", live);
+
+        if (gameOver) {
+          startBtn.style.display = "none";
+          pauseBtn.style.display = "none";
+          restartBtn.style.display = "";
+          return;
+        }
+
+        if (paused) {
+          startBtn.style.display = "";
+          startBtn.textContent = "Resume";
+          pauseBtn.style.display = "none";
+          restartBtn.style.display = "";
+          return;
+        }
+
+        if (!running) {
+          startBtn.style.display = "";
+          startBtn.textContent = "Start";
+          pauseBtn.style.display = "none";
+          restartBtn.style.display = "";
+          return;
+        }
+
+        startBtn.style.display = "none";
+        pauseBtn.style.display = "";
+        restartBtn.style.display = "none";
       }
 
       function makeBricks() {

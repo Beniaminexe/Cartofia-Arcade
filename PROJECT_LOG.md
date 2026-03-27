@@ -1078,4 +1078,88 @@ Planned behaviour:
   - `arcade/maze-chase/index.html`
   - `arcade/bomber-raid/index.html`
 
+---
+
+## 2026-03-27 - Cartofia mobile touch controls
+
+**Summary**
+
+- Added dedicated on-screen controls for phone gameplay on the Cartofia web wrapper.
+
+**Details**
+
+- Updated `arcade/cartofia/index.html`:
+  - Added a mobile control overlay with:
+    - D-pad (`U`, `D`, `L`, `R`)
+    - `Jump` button
+    - `Select` button
+  - Controls are touch-first and visible on coarse/mobile pointer devices.
+  - Added active pressed-state feedback and translucent styling to avoid obscuring gameplay.
+  - Wired control presses to keyboard event dispatch targeting canvas/document/window for game compatibility:
+    - `Left/Right/Up/Down` -> arrow keys
+    - `Jump` -> `Space`
+    - `Select` -> `Enter`
+  - Added pointer capture/release handling and blur cleanup to avoid stuck inputs.
+
+**Validation performed**
+
+- Ran inline JavaScript syntax checks on `arcade/cartofia/index.html` scripts via extracted `node --check`.
+
+---
+
+## 2026-03-27 - In-frame action buttons auto-hide refinement
+
+**Summary**
+
+- Updated in-frame game action buttons to disappear when not needed so they no longer cover active gameplay content.
+
+**Details**
+
+- Updated in-frame action behavior in:
+  - `arcade/maze-chase/index.html`
+  - `arcade/snake/index.html`
+  - `arcade/brick-blitz/index.html`
+  - `arcade/bomber-raid/index.html`
+- Added state-aware action bar visibility logic:
+  - During live gameplay: action bar hidden.
+  - During ready/paused states: action bar shown.
+  - During game-over/victory states: only essential restart action shown.
+- Added smooth fade handling for hide/show and ensured button labels reflect context (e.g., `Resume` while paused).
+
+**Validation performed**
+
+- Ran inline JavaScript syntax checks (extracted scripts + `node --check`) for:
+  - `arcade/maze-chase/index.html`
+  - `arcade/snake/index.html`
+  - `arcade/brick-blitz/index.html`
+  - `arcade/bomber-raid/index.html`
+
+---
+
+## 2026-03-27 - Cartofia web HUD cleanup + death counter
+
+**Summary**
+
+- Removed the temporary red `WEB frame ...` debug overlay from Cartofia gameplay.
+- Added an in-game `Deaths` counter that increments on each player death.
+
+**Details**
+
+- Updated `arcade/cartofia/cartofia-game.apk`:
+  - Patched `assets/main.py` inside the packaged web build.
+  - Removed web-only overlay drawing code that rendered:
+    - red rectangle in the top-left corner
+    - `WEB frame <n> lvl <n> go <state>` text
+  - Added a session death counter:
+    - `deaths = 0` global game variable
+    - increments only on state transition into death (`game_over` changes to `-1`)
+    - drawn in HUD as `Deaths: <count>`
+  - Kept existing level/restart behavior unchanged.
+
+**Validation performed**
+
+- Rebuilt `cartofia-game.apk` from source with corrected archive paths.
+- Verified packaged `assets/main.py` no longer contains `WEB frame`.
+- Verified packaged code includes `Deaths` HUD text and passes `python -m py_compile` checks on extracted `main.py`.
+
 *This log is updated as new milestones and design decisions are made.*
