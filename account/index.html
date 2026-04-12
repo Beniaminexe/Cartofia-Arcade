@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css" />
   <style>
     .account-hero {
@@ -34,14 +33,13 @@
     }
 
     .identity-panel h2 {
-      font-family: "Sora", "Segoe UI", sans-serif;
       font-size: clamp(22px, 2.4vw, 36px);
       letter-spacing: -0.03em;
       line-height: 1.08;
     }
 
     .identity-panel p {
-      color: var(--muted);
+      color: var(--text-secondary);
       font-size: 15px;
     }
 
@@ -61,14 +59,13 @@
     }
 
     .account-story h2 {
-      font-family: "Sora", "Segoe UI", sans-serif;
       font-size: clamp(28px, 3vw, 46px);
       letter-spacing: -0.03em;
       line-height: 1.07;
     }
 
     .account-story p {
-      color: var(--muted);
+      color: var(--text-secondary);
       font-size: 16px;
       max-width: 58ch;
     }
@@ -83,12 +80,12 @@
       border-radius: 14px;
       padding: 12px 14px;
       background: rgba(11, 19, 31, 0.58);
-      color: #c7d6e8;
+      color: var(--text-secondary);
       font-size: 14px;
     }
 
     .benefit-list b {
-      color: #f2f6ff;
+      color: var(--text-primary);
       font-weight: 700;
     }
 
@@ -104,14 +101,13 @@
     }
 
     .portal-head h2 {
-      font-family: "Sora", "Segoe UI", sans-serif;
       font-size: clamp(24px, 2.6vw, 36px);
       letter-spacing: -0.03em;
       line-height: 1.08;
     }
 
     .portal-head p {
-      color: var(--muted);
+      color: var(--text-secondary);
       font-size: 15px;
       margin-top: 8px;
     }
@@ -125,14 +121,14 @@
       align-items: center;
       gap: 8px;
       font-size: 14px;
-      color: var(--muted);
+      color: var(--text-secondary);
     }
 
     .remember-row input[type="checkbox"] {
       width: 15px;
       height: 15px;
       cursor: pointer;
-      accent-color: #40B5FF;
+      accent-color: var(--accent);
     }
 
     .remember-row label {
@@ -149,33 +145,33 @@
   </style>
 </head>
 <body>
-  <div class="site-shell">
-    <header class="app-header reveal">
-      <a class="brand" href="/">
-        <span class="brand-chip" aria-hidden="true">
-          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
-            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
-            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
-            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
-          </svg>
-        </span>
-        <span class="brand-text">Cartofia</span>
-      </a>
-      <nav class="site-nav" aria-label="Primary">
-        <a href="/">Home</a>
-        <a href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-        <a class="active" href="/account/">Account</a>
-      </nav>
-      <div class="account-menu" data-account-menu>
-        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
-        <div class="account-dropdown hidden" data-account-dropdown role="menu">
-          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-        </div>
+  <header class="app-header reveal">
+    <a class="brand" href="/">
+      <span class="brand-chip" aria-hidden="true">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+          <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+          <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+          <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+        </svg>
+      </span>
+      <span class="brand-text">Cartofia</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a class="active" href="/account/">Account</a>
+    </nav>
+    <div class="account-menu" data-account-menu>
+      <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+      <div class="account-dropdown hidden" data-account-dropdown role="menu">
+        <a class="account-item" href="/account/" role="menuitem">Open Account</a>
       </div>
-    </header>
+    </div>
+  </header>
 
+  <div class="site-shell">
     <main>
       <section class="page-hero account-hero reveal" data-delay="1">
         <div class="account-hero-copy">
@@ -229,7 +225,7 @@
                 <input type="checkbox" id="rememberMe" checked />
                 <label for="rememberMe">Remember me on this device</label>
               </div>
-              <p style="text-align:center;color:var(--muted);font-size:14px;">
+              <p style="text-align:center;color:var(--text-secondary);font-size:14px;">
                 Don't have an account?
                 <a class="inline-link" id="registerLink" href="#">Create one</a>
               </p>

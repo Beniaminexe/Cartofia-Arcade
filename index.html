@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css" />
   <style>
     .home-hero {
@@ -27,7 +26,7 @@
     }
 
     .hero-footnote {
-      color: #a9bbd4;
+      color: var(--text-secondary);
       font-size: 14px;
       max-width: 50ch;
     }
@@ -42,13 +41,12 @@
     }
 
     .home-hero-aside h2 {
-      font-family: "Sora", "Segoe UI", sans-serif;
       font-size: 23px;
       letter-spacing: -0.025em;
     }
 
     .home-hero-aside p {
-      color: var(--muted);
+      color: var(--text-secondary);
       font-size: 14px;
     }
 
@@ -59,7 +57,7 @@
     }
 
     .home-hero-list li {
-      color: #d5e2f3;
+      color: var(--text-primary);
       font-size: 15px;
       padding-left: 16px;
       position: relative;
@@ -70,7 +68,7 @@
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: linear-gradient(145deg, #8ad7ff, #6d9fff);
+      background: linear-gradient(145deg, var(--accent-2), var(--accent));
       position: absolute;
       left: 0;
       top: 10px;
@@ -99,7 +97,7 @@
     }
 
     .destination-label {
-      color: #9ec1e4;
+      color: var(--text-accent);
       text-transform: uppercase;
       letter-spacing: 0.13em;
       font-size: 11px;
@@ -107,20 +105,19 @@
     }
 
     .destination-card h3 {
-      font-family: "Sora", "Segoe UI", sans-serif;
       font-size: clamp(22px, 2.4vw, 34px);
       line-height: 1.1;
       letter-spacing: -0.03em;
     }
 
     .destination-card p {
-      color: var(--muted);
+      color: var(--text-secondary);
       font-size: 16px;
       max-width: 36ch;
     }
 
     .destination-meta {
-      color: #bfd0e6;
+      color: var(--text-secondary);
       font-size: 13px;
       opacity: 0.92;
     }
@@ -141,21 +138,21 @@
     }
 
     .infra-label {
-      color: #9eb2cc;
+      color: var(--text-muted);
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.11em;
     }
 
     .infra-value {
-      font-family: "Sora", "Segoe UI", sans-serif;
+      font-family: var(--font-mono);
       font-size: clamp(20px, 2.5vw, 34px);
       letter-spacing: -0.03em;
       line-height: 1.04;
     }
 
     .stats-note {
-      color: var(--muted);
+      color: var(--text-secondary);
       font-size: 13px;
     }
 
@@ -171,7 +168,7 @@
     }
 
     .learning-copy p {
-      color: var(--muted);
+      color: var(--text-secondary);
       font-size: 16px;
       max-width: 50ch;
     }
@@ -221,33 +218,33 @@
   </style>
 </head>
 <body>
-  <div class="site-shell">
-    <header class="app-header reveal">
-      <a class="brand" href="/">
-        <span class="brand-chip" aria-hidden="true">
-          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
-            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
-            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
-            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
-          </svg>
-        </span>
-        <span class="brand-text">Cartofia</span>
-      </a>
-      <nav class="site-nav" aria-label="Primary">
-        <a class="active" href="/">Home</a>
-        <a href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-        <a href="/account/">Account</a>
-      </nav>
-      <div class="account-menu" data-account-menu>
-        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
-        <div class="account-dropdown hidden" data-account-dropdown role="menu">
-          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-        </div>
+  <header class="app-header reveal">
+    <a class="brand" href="/">
+      <span class="brand-chip" aria-hidden="true">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+          <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+          <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+          <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+        </svg>
+      </span>
+      <span class="brand-text">Cartofia</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a class="active" href="/">Home</a>
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/account/">Account</a>
+    </nav>
+    <div class="account-menu" data-account-menu>
+      <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+      <div class="account-dropdown hidden" data-account-dropdown role="menu">
+        <a class="account-item" href="/account/" role="menuitem">Open Account</a>
       </div>
-    </header>
+    </div>
+  </header>
 
+  <div class="site-shell">
     <main>
       <section class="page-hero home-hero reveal" data-delay="1">
         <div class="home-hero-copy">

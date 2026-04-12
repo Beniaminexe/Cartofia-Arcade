@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css" />
   <style>
     .arcade-hero {
@@ -34,19 +33,18 @@
     }
 
     .arcade-stage h2 {
-      font-family: "Sora", "Segoe UI", sans-serif;
       font-size: clamp(22px, 2.5vw, 36px);
       letter-spacing: -0.03em;
       line-height: 1.08;
     }
 
     .arcade-stage p {
-      color: var(--muted);
+      color: var(--text-secondary);
       font-size: 15px;
     }
 
     .arcade-stage .meta {
-      color: #bdd0e8;
+      color: var(--text-secondary);
       font-size: 13px;
     }
 
@@ -66,30 +64,14 @@
     }
 
     .featured-card h3 {
-      font-family: "Sora", "Segoe UI", sans-serif;
       font-size: clamp(20px, 2vw, 28px);
       letter-spacing: -0.03em;
       line-height: 1.1;
     }
 
     .featured-card p {
-      color: var(--muted);
+      color: var(--text-secondary);
       font-size: 14px;
-    }
-
-    .featured-tag {
-      display: inline-flex;
-      align-items: center;
-      width: fit-content;
-      border-radius: 999px;
-      padding: 5px 10px;
-      border: 1px solid rgba(125, 199, 255, 0.38);
-      color: #d2ebff;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      background: rgba(33, 63, 98, 0.52);
     }
 
     .lineup-grid {
@@ -118,7 +100,6 @@
     }
 
     .lineup-head h3 {
-      font-family: "Sora", "Segoe UI", sans-serif;
       font-size: clamp(22px, 2.2vw, 34px);
       letter-spacing: -0.03em;
     }
@@ -133,13 +114,13 @@
       border-radius: 999px;
       padding: 5px 9px;
       background: rgba(14, 26, 41, 0.62);
-      color: #bdd0e8;
+      color: var(--text-secondary);
       font-size: 12px;
       border: 1px solid rgba(143, 175, 209, 0.24);
     }
 
     .lineup-card p {
-      color: var(--muted);
+      color: var(--text-secondary);
       font-size: 15px;
       max-width: 44ch;
     }
@@ -157,7 +138,7 @@
     }
 
     .activity-list li {
-      color: #c6d5e8;
+      color: var(--text-secondary);
       padding-left: 16px;
       position: relative;
       font-size: 14px;
@@ -168,7 +149,7 @@
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: linear-gradient(145deg, #8ad7ff, #6c9eff);
+      background: linear-gradient(145deg, var(--accent-2), var(--accent));
       position: absolute;
       left: 0;
       top: 10px;
@@ -184,14 +165,14 @@
       border-radius: 14px;
       padding: 12px;
       background: rgba(10, 18, 31, 0.56);
-      color: #c0d0e4;
+      color: var(--text-secondary);
       font-size: 14px;
     }
 
     .pipeline-list b {
       display: block;
       margin-bottom: 4px;
-      color: #eef4ff;
+      color: var(--text-primary);
       font-size: 15px;
     }
 
@@ -209,33 +190,33 @@
   </style>
 </head>
 <body>
-  <div class="site-shell">
-    <header class="app-header reveal">
-      <a class="brand" href="/">
-        <span class="brand-chip" aria-hidden="true">
-          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
-            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
-            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
-            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
-          </svg>
-        </span>
-        <span class="brand-text">Cartofia</span>
-      </a>
-      <nav class="site-nav" aria-label="Primary">
-        <a href="/">Home</a>
-        <a class="active" href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-        <a href="/account/">Account</a>
-      </nav>
-      <div class="account-menu" data-account-menu>
-        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
-        <div class="account-dropdown hidden" data-account-dropdown role="menu">
-          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-        </div>
+  <header class="app-header reveal">
+    <a class="brand" href="/">
+      <span class="brand-chip" aria-hidden="true">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
+          <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
+          <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
+          <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
+        </svg>
+      </span>
+      <span class="brand-text">Cartofia</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="/">Home</a>
+      <a class="active" href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/account/">Account</a>
+    </nav>
+    <div class="account-menu" data-account-menu>
+      <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+      <div class="account-dropdown hidden" data-account-dropdown role="menu">
+        <a class="account-item" href="/account/" role="menuitem">Open Account</a>
       </div>
-    </header>
+    </div>
+  </header>
 
+  <div class="site-shell">
     <main>
       <section class="page-hero arcade-hero reveal" data-delay="1">
         <div class="arcade-hero-copy">
@@ -434,7 +415,7 @@
 
         <div class="arcade-detail-grid">
           <article class="card">
-            <h3 style="font-family:'Sora','Segoe UI',sans-serif;font-size:28px;letter-spacing:-0.03em;">Recent Activity</h3>
+            <h3 style="font-size:28px;letter-spacing:-0.03em;">Recent Activity</h3>
             <ul class="activity-list" style="margin-top:14px;">
               <li>Zuma Temple deployed to <b>/arcade/zuma/</b> with a 12-level progression run.</li>
               <li>Blackjack Rooms deployed to <b>/arcade/blackjack/</b> with room-based multiplayer rounds.</li>
@@ -449,7 +430,7 @@
           </article>
 
           <article class="card">
-            <h3 style="font-family:'Sora','Segoe UI',sans-serif;font-size:28px;letter-spacing:-0.03em;">Pipeline</h3>
+            <h3 style="font-size:28px;letter-spacing:-0.03em;">Pipeline</h3>
             <ul class="pipeline-list" style="margin-top:14px;">
               <li><b>Build</b>Python game projects are exported to browser-ready bundles.</li>
               <li><b>Serve</b>Outputs are hosted behind Cartofia routing with static delivery.</li>

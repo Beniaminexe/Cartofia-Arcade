@@ -92,16 +92,26 @@
     return value ? value.slice(0, 2).toUpperCase() : "CA";
   }
 
+  /* Render avatar: uses <img> when a URL is available, initials text otherwise. */
   function setAvatarVisual(target, initials, avatarUrl) {
     if (!target) return;
+    /* Remove any previously injected avatar img */
+    var existingImg = target.querySelector("img.avatar-img");
+    if (existingImg) existingImg.remove();
+
+    target.style.backgroundImage = "";
+
     if (avatarUrl) {
       target.classList.add("has-image");
-      target.style.backgroundImage = "url('" + String(avatarUrl).replace(/'/g, "%27") + "')";
       target.textContent = "";
+      var img = document.createElement("img");
+      img.className = "avatar-img";
+      img.src = String(avatarUrl);
+      img.alt = initials || "Avatar";
+      target.appendChild(img);
       return;
     }
     target.classList.remove("has-image");
-    target.style.backgroundImage = "";
     target.textContent = initials || "CA";
   }
 
@@ -179,10 +189,11 @@
         if (!session || !session.authenticated || !session.user) {
           return { authenticated: false };
         }
-        var profile = await fetchProfile();
-        if (profile) {
-          session.user.avatar_url = profile.avatar_url || "";
-          session.user.display_name = profile.display_name || session.user.username;
+        /* fetchProfile() returns { profile: {...}, showcases, stats, activity } */
+        var data = await fetchProfile();
+        if (data && data.profile) {
+          session.user.avatar_url   = data.profile.avatar_url   || "";
+          session.user.display_name = data.profile.display_name || session.user.username;
         }
         return session;
       })();
