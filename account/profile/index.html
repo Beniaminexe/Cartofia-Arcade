@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -101,7 +101,11 @@ body {
   font-size: 13px;
   font-weight: 600;
   color: white;
+  overflow: hidden;
+  cursor: pointer;
 }
+
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
 /* ── BANNER / HERO ── */
 .profile-banner {
@@ -110,6 +114,7 @@ body {
   height: 320px;
   margin-top: 56px;
   overflow: hidden;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
 }
 
 .banner-img {
@@ -117,7 +122,10 @@ body {
   height: 100%;
   object-fit: cover;
   filter: brightness(0.6);
+  display: none;
 }
+
+.banner-img.loaded { display: block; }
 
 .banner-gradient {
   position: absolute;
@@ -178,6 +186,7 @@ body {
   position: relative;
   flex-shrink: 0;
   margin-bottom: -8px;
+  cursor: pointer;
 }
 
 .avatar-ring {
@@ -207,7 +216,34 @@ body {
   font-size: 42px;
   font-weight: 700;
   color: var(--accent);
+  overflow: hidden;
 }
+
+.avatar-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 17px;
+}
+
+.avatar-upload-hint {
+  position: absolute;
+  inset: 4px;
+  border-radius: 17px;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-size: 11px;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+
+.avatar-frame:hover .avatar-upload-hint { opacity: 1; }
 
 .level-badge {
   position: absolute;
@@ -242,6 +278,14 @@ body {
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--text-primary);
+  outline: none;
+}
+
+.display-name[contenteditable="true"] {
+  outline: 1px dashed var(--border-bright);
+  outline-offset: 4px;
+  border-radius: 4px;
+  min-width: 60px;
 }
 
 .username {
@@ -282,6 +326,15 @@ body {
   color: var(--text-secondary);
   margin-top: 6px;
   font-style: italic;
+  outline: none;
+  min-height: 20px;
+}
+
+.tagline[contenteditable="true"] {
+  outline: 1px dashed var(--border-bright);
+  outline-offset: 4px;
+  border-radius: 4px;
+  min-width: 120px;
 }
 
 .identity-actions {
@@ -317,6 +370,12 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-secondary {
   background: var(--bg-hover);
   color: var(--text-secondary);
@@ -347,9 +406,7 @@ body {
   transition: border-color 0.3s;
 }
 
-.card:hover {
-  border-color: var(--border-bright);
-}
+.card:hover { border-color: var(--border-bright); }
 
 .card-label {
   font-size: 10px;
@@ -372,9 +429,16 @@ body {
   font-size: 14px;
   line-height: 1.7;
   color: var(--text-secondary);
+  outline: none;
+  min-height: 40px;
+  white-space: pre-wrap;
 }
 
-.bio-text strong { color: var(--text-primary); font-weight: 500; }
+.bio-text[contenteditable="true"] {
+  outline: 1px dashed var(--border-bright);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
 
 .bio-meta {
   margin-top: 16px;
@@ -408,16 +472,6 @@ body {
 }
 
 .showcase-header .card-label { margin-bottom: 0; }
-
-.showcase-customize {
-  font-size: 11px;
-  color: var(--text-muted);
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.showcase-customize:hover { color: var(--text-accent); }
 
 /* Game showcase */
 .game-grid {
@@ -461,24 +515,11 @@ body {
   padding: 12px;
 }
 
-.game-card-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: white;
-}
-
-.game-card-hours {
-  font-size: 10px;
-  color: rgba(255,255,255,0.6);
-  font-family: var(--font-mono);
-}
+.game-card-name { font-size: 12px; font-weight: 600; color: white; }
+.game-card-hours { font-size: 10px; color: rgba(255,255,255,0.6); font-family: var(--font-mono); }
 
 /* Achievement showcase */
-.achievement-row {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+.achievement-row { display: flex; gap: 12px; flex-wrap: wrap; }
 
 .achievement-item {
   width: 56px;
@@ -530,6 +571,31 @@ body {
 
 .achievement-item:hover .achievement-tooltip { display: block; }
 
+/* Arcade records */
+.record-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.record-row:last-child { margin-bottom: 0; }
+.record-game { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.record-label { font-size: 11px; color: var(--text-muted); }
+.record-value { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent); }
+
+/* Showcase empty state */
+.showcase-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 /* ── ACTIVITY FEED ── */
 .activity-list { display: flex; flex-direction: column; gap: 0; }
 
@@ -558,6 +624,7 @@ body {
 .activity-icon.badge { background: rgba(234, 179, 8, 0.15); }
 .activity-icon.upload { background: rgba(34, 197, 94, 0.15); }
 .activity-icon.level { background: rgba(139, 92, 246, 0.15); }
+.activity-icon.avatar { background: rgba(59, 130, 246, 0.1); }
 
 .activity-text {
   font-size: 13px;
@@ -565,15 +632,8 @@ body {
   line-height: 1.5;
 }
 
-.activity-text strong {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.activity-text .highlight {
-  color: var(--text-accent);
-  font-weight: 500;
-}
+.activity-text strong { color: var(--text-primary); font-weight: 500; }
+.activity-text .highlight { color: var(--text-accent); font-weight: 500; }
 
 .activity-time {
   font-size: 11px;
@@ -636,11 +696,7 @@ body {
   transform: rotate(-90deg);
 }
 
-.level-ring-bg {
-  fill: none;
-  stroke: var(--bg-hover);
-  stroke-width: 4;
-}
+.level-ring-bg { fill: none; stroke: var(--bg-hover); stroke-width: 4; }
 
 .level-ring-fill {
   fill: none;
@@ -648,7 +704,7 @@ body {
   stroke-width: 4;
   stroke-linecap: round;
   stroke-dasharray: 226;
-  stroke-dashoffset: 72;
+  stroke-dashoffset: 226;
   transition: stroke-dashoffset 1s ease;
 }
 
@@ -663,18 +719,10 @@ body {
   color: var(--text-primary);
 }
 
-.level-xp {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-}
+.level-xp { font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); }
 
 /* Badge case */
-.badge-case {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+.badge-case { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .badge-item {
   width: 44px;
@@ -688,7 +736,6 @@ body {
   font-size: 20px;
   cursor: pointer;
   transition: all 0.2s;
-  position: relative;
 }
 
 .badge-item.featured {
@@ -697,17 +744,10 @@ body {
   box-shadow: 0 0 12px var(--accent-glow);
 }
 
-.badge-item:hover {
-  transform: scale(1.1);
-  border-color: var(--accent);
-}
+.badge-item:hover { transform: scale(1.1); border-color: var(--accent); }
 
 /* Profile meta */
-.meta-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+.meta-list { display: flex; flex-direction: column; gap: 10px; }
 
 .meta-row {
   display: flex;
@@ -717,13 +757,9 @@ body {
 }
 
 .meta-key { color: var(--text-muted); }
-.meta-value {
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
+.meta-value { color: var(--text-secondary); font-family: var(--font-mono); font-size: 12px; }
 
-/* ── THEME SELECTOR (edit mode) ── */
+/* ── THEME SELECTOR ── */
 .theme-bar {
   position: fixed;
   bottom: 20px;
@@ -767,17 +803,36 @@ body {
 .theme-dot:hover { transform: scale(1.2); }
 .theme-dot.active { border-color: white; box-shadow: 0 0 12px rgba(255,255,255,0.3); }
 
+/* ── LOADING / TOAST ── */
+.toast {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  padding: 12px 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-primary);
+  z-index: 200;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.3s;
+  pointer-events: none;
+}
+
+.toast.show { opacity: 1; transform: translateX(0); }
+.toast.ok { border-color: rgba(34,197,94,0.4); color: var(--success); }
+.toast.err { border-color: rgba(239,68,68,0.4); color: #f87171; }
+
 /* ── ANIMATIONS ── */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-in {
-  animation: fadeInUp 0.5s ease forwards;
-  opacity: 0;
-}
-
+.animate-in { animation: fadeInUp 0.5s ease forwards; opacity: 0; }
 .delay-1 { animation-delay: 0.1s; }
 .delay-2 { animation-delay: 0.2s; }
 .delay-3 { animation-delay: 0.3s; }
@@ -787,17 +842,9 @@ body {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 860px) {
-  .profile-content {
-    grid-template-columns: 1fr;
-  }
-  .identity-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .identity-actions {
-    align-self: flex-start;
-    margin-top: 12px;
-  }
+  .profile-content { grid-template-columns: 1fr; }
+  .identity-card { flex-direction: column; align-items: flex-start; }
+  .identity-actions { align-self: flex-start; margin-top: 12px; }
   .avatar-ring { width: 96px; height: 96px; }
   .display-name { font-size: 22px; }
   .game-grid { grid-template-columns: repeat(3, 1fr); }
@@ -820,58 +867,65 @@ body {
 </head>
 <body>
 
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
 <!-- NAV -->
 <nav class="nav">
-  <a href="#" class="nav-brand">
+  <a href="/" class="nav-brand">
     <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
     Cartofia
   </a>
   <ul class="nav-links">
-    <li><a href="#">Home</a></li>
-    <li><a href="#">Arcade</a></li>
-    <li><a href="#" class="active">Account</a></li>
+    <li><a href="/">Home</a></li>
+    <li><a href="/arcade/">Arcade</a></li>
+    <li><a href="/account/" class="active">Account</a></li>
   </ul>
-  <div class="nav-avatar">AJ</div>
+  <div class="nav-avatar" id="navAvatar">–</div>
 </nav>
 
 <!-- BANNER -->
 <div class="profile-banner">
-  <img class="banner-img" src="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1400&h=400&fit=crop&crop=center" alt="Profile banner" onerror="this.style.background='linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)';this.style.height='100%'">
+  <img class="banner-img" id="bannerImg" alt="Profile banner">
   <div class="banner-gradient"></div>
-  <button class="banner-edit-btn" onclick="document.getElementById('bannerUpload').click()">
+  <button class="banner-edit-btn" id="bannerEditBtn">
     <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5l3 3-9 9H2.5v-3l9-9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
     Edit Banner
   </button>
-  <input type="file" id="bannerUpload" hidden accept="image/*">
+  <input type="file" id="bannerUpload" hidden accept="image/png,image/jpeg,image/gif,image/webp">
 </div>
 
 <!-- IDENTITY HEADER -->
 <div class="identity-section animate-in">
   <div class="identity-card">
-    <div class="avatar-frame">
+    <div class="avatar-frame" id="avatarFrame">
       <div class="avatar-ring">
-        <div class="avatar-img" id="avatarDisplay">AJ</div>
+        <div class="avatar-img" id="avatarDisplay">–</div>
       </div>
-      <div class="level-badge">12</div>
+      <div class="level-badge" id="levelBadge">1</div>
+      <div class="avatar-upload-hint">📷 Change</div>
     </div>
+    <input type="file" id="avatarUpload" hidden accept="image/png,image/jpeg,image/gif,image/webp">
+
     <div class="identity-info">
       <div class="identity-top">
-        <span class="display-name" id="displayName">ArcadeJockey</span>
-        <span class="username">@arcadejockey</span>
+        <span class="display-name" id="displayName">Loading…</span>
+        <span class="username" id="usernameDisplay">@—</span>
         <div class="status-badges">
           <span class="status-badge badge-online">● Online</span>
-          <span class="status-badge badge-role">Member</span>
+          <span class="status-badge badge-role" id="roleBadge">Member</span>
         </div>
       </div>
-      <div class="tagline" id="tagline">Dropping pixels and raising scores since day one.</div>
+      <div class="tagline" id="tagline">—</div>
     </div>
+
     <div class="identity-actions">
-      <button class="btn btn-primary" onclick="toggleEditMode()">
+      <button class="btn btn-primary" id="editBtn">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5l3 3-9 9H2.5v-3l9-9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
         Edit Profile
       </button>
-      <button class="btn btn-secondary">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 4l6 5 6-5M2 12h12V4H2v8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      <button class="btn btn-secondary" id="shareBtn">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="12" cy="3" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 9l4 3M10 4L6 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         Share
       </button>
     </div>
@@ -887,179 +941,29 @@ body {
     <!-- BIO -->
     <div class="card animate-in delay-1">
       <div class="card-label">About Me</div>
-      <div class="bio-text" id="bioText">
-        <strong>Welcome to my corner of Cartofia.</strong> I'm a retro gaming enthusiast who found a home in the arcade. When I'm not grinding leaderboards in Bomber Raid, you'll find me exploring the archive or testing out whatever new game just dropped. Always down for a match — challenge me anytime.
-      </div>
+      <div class="bio-text" id="bioText">Loading…</div>
       <div class="bio-meta">
         <div class="bio-meta-item">
-          <svg viewBox="0 0 16 16" fill="none"><path d="M8 14s-5.5-3.5-5.5-7.5a5.5 5.5 0 0111 0C13.5 10.5 8 14 8 14z" stroke="currentColor" stroke-width="1.5"/></svg>
-          United Kingdom
-        </div>
-        <div class="bio-meta-item">
           <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 4v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          Joined March 2025
+          Joined <span id="joinedDate">—</span>
         </div>
         <div class="bio-meta-item">
           <svg viewBox="0 0 16 16" fill="none"><path d="M2 13V3h12v10H2zM5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          143 profile views
+          <span id="profileViewsCount">0</span> profile views
         </div>
       </div>
     </div>
 
     <!-- SHOWCASES -->
-    <div class="showcases">
-
-      <!-- Favorite Games Showcase -->
-      <div class="card animate-in delay-2">
-        <div class="showcase-header">
-          <div class="card-label">★ Favorite Games</div>
-          <span class="showcase-customize">Customize ›</span>
-        </div>
-        <div class="game-grid">
-          <div class="game-card">
-            <div class="game-card-bg" style="background: linear-gradient(135deg, #b91c1c, #dc2626, #ef4444);"></div>
-            <div class="game-card-overlay">
-              <div class="game-card-name">Bomber Raid</div>
-              <div class="game-card-hours">42.5 hrs</div>
-            </div>
-          </div>
-          <div class="game-card">
-            <div class="game-card-bg" style="background: linear-gradient(135deg, #0f766e, #14b8a6, #2dd4bf);"></div>
-            <div class="game-card-overlay">
-              <div class="game-card-name">Blackjack</div>
-              <div class="game-card-hours">28.1 hrs</div>
-            </div>
-          </div>
-          <div class="game-card">
-            <div class="game-card-bg" style="background: linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa);"></div>
-            <div class="game-card-overlay">
-              <div class="game-card-name">Chess</div>
-              <div class="game-card-hours">15.8 hrs</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Achievement Showcase -->
-      <div class="card animate-in delay-3">
-        <div class="showcase-header">
-          <div class="card-label">🏆 Achievement Showcase</div>
-          <span class="showcase-customize">View all 24 ›</span>
-        </div>
-        <div class="achievement-row">
-          <div class="achievement-item rare">
-            🔥
-            <div class="achievement-tooltip">Inferno — Survived 50 rounds in Bomber Raid</div>
-          </div>
-          <div class="achievement-item">
-            ♠️
-            <div class="achievement-tooltip">Card Shark — Won 10 Blackjack games in a row</div>
-          </div>
-          <div class="achievement-item">
-            ♟️
-            <div class="achievement-tooltip">Checkmate King — Won 25 Chess matches</div>
-          </div>
-          <div class="achievement-item rare">
-            ⚡
-            <div class="achievement-tooltip">Speed Demon — Completed a round under 30 seconds</div>
-          </div>
-          <div class="achievement-item">
-            🎯
-            <div class="achievement-tooltip">Sharpshooter — 95% accuracy in one game</div>
-          </div>
-          <div class="achievement-item">
-            🌟
-            <div class="achievement-tooltip">Rising Star — Reached Level 10</div>
-          </div>
-          <div class="achievement-item">
-            🎮
-            <div class="achievement-tooltip">Arcade Rat — Played every available game</div>
-          </div>
-          <div class="achievement-item rare">
-            👑
-            <div class="achievement-tooltip">Top Dog — #1 on any leaderboard</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Arcade Records Showcase -->
-      <div class="card animate-in delay-4">
-        <div class="showcase-header">
-          <div class="card-label">🎯 Arcade Records</div>
-          <span class="showcase-customize">Customize ›</span>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--border);">
-            <div>
-              <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Bomber Raid</div>
-              <div style="font-size: 11px; color: var(--text-muted);">Personal Best</div>
-            </div>
-            <div style="font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent);">48,720</div>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--border);">
-            <div>
-              <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Blackjack</div>
-              <div style="font-size: 11px; color: var(--text-muted);">Win Streak</div>
-            </div>
-            <div style="font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--warning);">14 🔥</div>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--border);">
-            <div>
-              <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Chess</div>
-              <div style="font-size: 11px; color: var(--text-muted);">Rating</div>
-            </div>
-            <div style="font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--success);">1,247</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
+    <div class="showcases" id="showcasesContainer"></div>
 
     <!-- ACTIVITY FEED -->
     <div class="card animate-in delay-5">
       <div class="card-label">Recent Activity</div>
-      <div class="activity-list">
+      <div class="activity-list" id="activityList">
         <div class="activity-item">
-          <div class="activity-icon play">🎮</div>
-          <div>
-            <div class="activity-text">Played <span class="highlight">Bomber Raid</span> for 1h 23m</div>
-            <div class="activity-time">2 hours ago</div>
-          </div>
-        </div>
-        <div class="activity-item">
-          <div class="activity-icon badge">🏆</div>
-          <div>
-            <div class="activity-text">Unlocked <strong>Speed Demon</strong> in Bomber Raid</div>
-            <div class="activity-time">3 hours ago</div>
-          </div>
-        </div>
-        <div class="activity-item">
-          <div class="activity-icon level">⬆️</div>
-          <div>
-            <div class="activity-text">Reached <span class="highlight">Level 12</span></div>
-            <div class="activity-time">Yesterday</div>
-          </div>
-        </div>
-        <div class="activity-item">
-          <div class="activity-icon play">🎮</div>
-          <div>
-            <div class="activity-text">Played <span class="highlight">Chess</span> — won 3 of 4 matches</div>
-            <div class="activity-time">Yesterday</div>
-          </div>
-        </div>
-        <div class="activity-item">
-          <div class="activity-icon upload">📁</div>
-          <div>
-            <div class="activity-text">Uploaded <strong>2 files</strong> to the Archive</div>
-            <div class="activity-time">3 days ago</div>
-          </div>
-        </div>
-        <div class="activity-item">
-          <div class="activity-icon badge">🌟</div>
-          <div>
-            <div class="activity-text">Earned the <strong>Archive Contributor</strong> badge</div>
-            <div class="activity-time">4 days ago</div>
-          </div>
+          <div class="activity-icon play">⏳</div>
+          <div><div class="activity-text">Loading activity…</div></div>
         </div>
       </div>
     </div>
@@ -1082,11 +986,11 @@ body {
               </linearGradient>
             </defs>
             <circle class="level-ring-bg" cx="40" cy="40" r="36"/>
-            <circle class="level-ring-fill" cx="40" cy="40" r="36"/>
+            <circle class="level-ring-fill" id="levelRingFill" cx="40" cy="40" r="36"/>
           </svg>
-          <div class="level-number">12</div>
+          <div class="level-number" id="levelNumber">1</div>
         </div>
-        <div class="level-xp">1,840 / 2,500 XP</div>
+        <div class="level-xp" id="levelXp">0 XP</div>
       </div>
     </div>
 
@@ -1095,27 +999,27 @@ body {
       <div class="card-label">Stats</div>
       <div class="stats-grid">
         <div class="stat-cell">
-          <div class="stat-value">4</div>
+          <div class="stat-value" id="statGamesPlayed">0</div>
           <div class="stat-label">Games Played</div>
         </div>
         <div class="stat-cell">
-          <div class="stat-value">86h</div>
+          <div class="stat-value" id="statPlaytime">0h</div>
           <div class="stat-label">Playtime</div>
         </div>
         <div class="stat-cell">
-          <div class="stat-value">24</div>
+          <div class="stat-value" id="statAchievements">0</div>
           <div class="stat-label">Achievements</div>
         </div>
         <div class="stat-cell">
-          <div class="stat-value">7</div>
+          <div class="stat-value" id="statUploads">0</div>
           <div class="stat-label">Uploads</div>
         </div>
         <div class="stat-cell">
-          <div class="stat-value">5</div>
+          <div class="stat-value" id="statBadges">0</div>
           <div class="stat-label">Badges</div>
         </div>
         <div class="stat-cell">
-          <div class="stat-value">143</div>
+          <div class="stat-value" id="statViews">0</div>
           <div class="stat-label">Profile Views</div>
         </div>
       </div>
@@ -1124,12 +1028,8 @@ body {
     <!-- Badge Case -->
     <div class="card animate-in delay-4">
       <div class="card-label">Badge Case</div>
-      <div class="badge-case">
-        <div class="badge-item featured" title="Early Adopter">🚀</div>
-        <div class="badge-item" title="Archive Contributor">📦</div>
-        <div class="badge-item" title="First Win">🏅</div>
-        <div class="badge-item" title="Multiplayer Maven">🤝</div>
-        <div class="badge-item" title="Night Owl">🦉</div>
+      <div class="badge-case" id="badgeCase">
+        <div style="font-size:13px;color:var(--text-muted);">No badges yet</div>
       </div>
     </div>
 
@@ -1139,23 +1039,23 @@ body {
       <div class="meta-list">
         <div class="meta-row">
           <span class="meta-key">Account Age</span>
-          <span class="meta-value">1y 2mo</span>
+          <span class="meta-value" id="metaAccountAge">—</span>
         </div>
         <div class="meta-row">
           <span class="meta-key">Visibility</span>
-          <span class="meta-value">Public</span>
+          <span class="meta-value" id="metaVisibility">Public</span>
         </div>
         <div class="meta-row">
           <span class="meta-key">Theme</span>
-          <span class="meta-value">Deep Ocean</span>
+          <span class="meta-value" id="metaTheme">Ocean</span>
         </div>
         <div class="meta-row">
           <span class="meta-key">Featured Badge</span>
-          <span class="meta-value">🚀 Early Adopter</span>
+          <span class="meta-value" id="metaFeaturedBadge">None</span>
         </div>
         <div class="meta-row">
           <span class="meta-key">Showcases</span>
-          <span class="meta-value">3 / 3</span>
+          <span class="meta-value" id="metaShowcases">0 / 3</span>
         </div>
       </div>
     </div>
@@ -1166,129 +1066,530 @@ body {
 <!-- THEME BAR -->
 <div class="theme-bar" id="themeBar">
   <span class="theme-bar-label">Theme</span>
-  <div class="theme-dot active" style="background: linear-gradient(135deg, #3b82f6, #06b6d4);" onclick="setTheme('ocean')" title="Deep Ocean"></div>
-  <div class="theme-dot" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);" onclick="setTheme('neon')" title="Neon Night"></div>
-  <div class="theme-dot" style="background: linear-gradient(135deg, #f59e0b, #ef4444);" onclick="setTheme('ember')" title="Ember"></div>
-  <div class="theme-dot" style="background: linear-gradient(135deg, #22c55e, #06b6d4);" onclick="setTheme('matrix')" title="Matrix"></div>
-  <div class="theme-dot" style="background: linear-gradient(135deg, #e11d48, #9333ea);" onclick="setTheme('synthwave')" title="Synthwave"></div>
+  <div class="theme-dot active" style="background:linear-gradient(135deg,#3b82f6,#06b6d4);" data-theme="ocean" title="Deep Ocean"></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#8b5cf6,#ec4899);" data-theme="neon" title="Neon Night"></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#f59e0b,#ef4444);" data-theme="ember" title="Ember"></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#22c55e,#06b6d4);" data-theme="matrix" title="Matrix"></div>
+  <div class="theme-dot" style="background:linear-gradient(135deg,#e11d48,#9333ea);" data-theme="synthwave" title="Synthwave"></div>
 </div>
 
+<script src="/assets/site.js"></script>
 <script>
-  // Theme system
-  const themes = {
-    ocean: {
-      accent: '#3b82f6',
-      accentGlow: 'rgba(59, 130, 246, 0.4)',
-      accentSoft: 'rgba(59, 130, 246, 0.15)',
-      accent2: '#06b6d4',
-      accent3: '#8b5cf6',
-      textAccent: '#7cb3ff',
-    },
-    neon: {
-      accent: '#a855f7',
-      accentGlow: 'rgba(168, 85, 247, 0.4)',
-      accentSoft: 'rgba(168, 85, 247, 0.15)',
-      accent2: '#ec4899',
-      accent3: '#f472b6',
-      textAccent: '#d8b4fe',
-    },
-    ember: {
-      accent: '#f59e0b',
-      accentGlow: 'rgba(245, 158, 11, 0.4)',
-      accentSoft: 'rgba(245, 158, 11, 0.15)',
-      accent2: '#ef4444',
-      accent3: '#f97316',
-      textAccent: '#fcd34d',
-    },
-    matrix: {
-      accent: '#22c55e',
-      accentGlow: 'rgba(34, 197, 94, 0.4)',
-      accentSoft: 'rgba(34, 197, 94, 0.15)',
-      accent2: '#06b6d4',
-      accent3: '#10b981',
-      textAccent: '#86efac',
-    },
-    synthwave: {
-      accent: '#e11d48',
-      accentGlow: 'rgba(225, 29, 72, 0.4)',
-      accentSoft: 'rgba(225, 29, 72, 0.15)',
-      accent2: '#9333ea',
-      accent3: '#ec4899',
-      textAccent: '#fda4af',
-    },
-  };
+/* ─────────────────────────────────────────────
+   Token helpers — same storage site.js uses
+───────────────────────────────────────────── */
+function getToken() {
+  return sessionStorage.getItem('oidc_access_token') ||
+         localStorage.getItem('oidc_access_token') || '';
+}
 
-  function setTheme(name) {
-    const t = themes[name];
-    const root = document.documentElement;
-    root.style.setProperty('--accent', t.accent);
-    root.style.setProperty('--accent-glow', t.accentGlow);
-    root.style.setProperty('--accent-soft', t.accentSoft);
-    root.style.setProperty('--accent-2', t.accent2);
-    root.style.setProperty('--accent-3', t.accent3);
-    root.style.setProperty('--text-accent', t.textAccent);
+/* ─────────────────────────────────────────────
+   Toast
+───────────────────────────────────────────── */
+let _toastTimer = null;
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.classList.remove('show'); }, 3000);
+}
 
-    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
-    event.target.classList.add('active');
+/* ─────────────────────────────────────────────
+   API helpers
+───────────────────────────────────────────── */
+async function apiGet(url) {
+  const r = await fetch(url, {
+    headers: { 'Authorization': 'Bearer ' + getToken() },
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  return r.json();
+}
 
-    // Update meta
-    document.querySelector('.meta-value:last-child')
-    const metaRows = document.querySelectorAll('.meta-value');
-    const themeNames = { ocean: 'Deep Ocean', neon: 'Neon Night', ember: 'Ember', matrix: 'Matrix', synthwave: 'Synthwave' };
-    metaRows[2].textContent = themeNames[name];
-  }
+async function apiPut(url, body) {
+  const r = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Authorization': 'Bearer ' + getToken(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  return r.json();
+}
 
-  // Banner upload preview
-  document.getElementById('bannerUpload').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        document.querySelector('.banner-img').src = ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
+async function apiUpload(url, file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + getToken() },
+    body: fd,
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  return r.json();
+}
+
+/* ─────────────────────────────────────────────
+   Theme system
+───────────────────────────────────────────── */
+const THEMES = {
+  ocean:     { accent:'#3b82f6', accentGlow:'rgba(59,130,246,0.4)',  accentSoft:'rgba(59,130,246,0.15)',  accent2:'#06b6d4', accent3:'#8b5cf6', textAccent:'#7cb3ff' },
+  neon:      { accent:'#a855f7', accentGlow:'rgba(168,85,247,0.4)',  accentSoft:'rgba(168,85,247,0.15)',  accent2:'#ec4899', accent3:'#f472b6', textAccent:'#d8b4fe' },
+  ember:     { accent:'#f59e0b', accentGlow:'rgba(245,158,11,0.4)',  accentSoft:'rgba(245,158,11,0.15)',  accent2:'#ef4444', accent3:'#f97316', textAccent:'#fcd34d' },
+  matrix:    { accent:'#22c55e', accentGlow:'rgba(34,197,94,0.4)',   accentSoft:'rgba(34,197,94,0.15)',   accent2:'#06b6d4', accent3:'#10b981', textAccent:'#86efac' },
+  synthwave: { accent:'#e11d48', accentGlow:'rgba(225,29,72,0.4)',   accentSoft:'rgba(225,29,72,0.15)',   accent2:'#9333ea', accent3:'#ec4899', textAccent:'#fda4af' },
+};
+
+const THEME_NAMES = { ocean:'Deep Ocean', neon:'Neon Night', ember:'Ember', matrix:'Matrix', synthwave:'Synthwave' };
+
+function applyTheme(name, save) {
+  const t = THEMES[name] || THEMES.ocean;
+  const r = document.documentElement;
+  r.style.setProperty('--accent', t.accent);
+  r.style.setProperty('--accent-glow', t.accentGlow);
+  r.style.setProperty('--accent-soft', t.accentSoft);
+  r.style.setProperty('--accent-2', t.accent2);
+  r.style.setProperty('--accent-3', t.accent3);
+  r.style.setProperty('--text-accent', t.textAccent);
+
+  document.querySelectorAll('.theme-dot').forEach(d => {
+    d.classList.toggle('active', d.dataset.theme === name);
   });
 
-  // Edit mode toggle (demo)
-  let editMode = false;
-  function toggleEditMode() {
-    editMode = !editMode;
-    const btn = document.querySelector('.btn-primary');
-    if (editMode) {
-      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8l4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Save Profile';
+  document.getElementById('metaTheme').textContent = THEME_NAMES[name] || name;
 
-      // Make fields editable
-      const name = document.getElementById('displayName');
-      const tagline = document.getElementById('tagline');
-      const bio = document.getElementById('bioText');
+  if (save) {
+    apiPut('/api/profile/me', { theme: name }).catch(() => {});
+  }
+}
 
-      [name, tagline, bio].forEach(el => {
-        el.contentEditable = true;
-        el.style.outline = '1px dashed var(--border-bright)';
-        el.style.outlineOffset = '4px';
-        el.style.borderRadius = '4px';
-      });
+document.querySelectorAll('.theme-dot').forEach(dot => {
+  dot.addEventListener('click', () => applyTheme(dot.dataset.theme, true));
+});
+
+/* ─────────────────────────────────────────────
+   Avatar rendering
+───────────────────────────────────────────── */
+function setAvatar(url, initials) {
+  const el = document.getElementById('avatarDisplay');
+  if (url) {
+    el.innerHTML = `<img src="${url}" alt="avatar" onerror="this.parentElement.textContent='${initials}'">`;
+  } else {
+    el.textContent = initials;
+  }
+  // Nav avatar
+  const nav = document.getElementById('navAvatar');
+  if (url) {
+    nav.innerHTML = `<img src="${url}" alt="avatar">`;
+    nav.style.background = 'none';
+  } else {
+    nav.textContent = initials;
+    nav.style.background = '';
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Level calculation (synthetic from stats)
+───────────────────────────────────────────── */
+function calcLevel(stats) {
+  const xp = (stats.games_played || 0) * 50
+           + (stats.achievements_unlocked || 0) * 100
+           + (stats.uploads || 0) * 25
+           + (stats.badges_earned || 0) * 75;
+  const level = Math.max(1, Math.floor(Math.sqrt(xp / 100)) + 1);
+  const xpForLevel = Math.pow(level - 1, 2) * 100;
+  const xpForNext  = Math.pow(level, 2) * 100;
+  const progress = xpForNext > xpForLevel
+    ? (xp - xpForLevel) / (xpForNext - xpForLevel)
+    : 1;
+  return { level, xp, xpForNext, progress };
+}
+
+function renderLevel(stats) {
+  const { level, xp, xpForNext, progress } = calcLevel(stats);
+  const circumference = 226;
+  document.getElementById('levelNumber').textContent = level;
+  document.getElementById('levelBadge').textContent = level;
+  document.getElementById('levelXp').textContent = xp.toLocaleString() + ' / ' + xpForNext.toLocaleString() + ' XP';
+  document.getElementById('levelRingFill').style.strokeDashoffset =
+    circumference * (1 - progress);
+}
+
+/* ─────────────────────────────────────────────
+   Relative time
+───────────────────────────────────────────── */
+function relTime(iso) {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  if (diff < 86400 * 7) return Math.floor(diff / 86400) + 'd ago';
+  return new Date(iso).toLocaleDateString();
+}
+
+function accountAge(iso) {
+  const months = Math.floor((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+  if (months < 1) return '< 1 month';
+  if (months < 12) return months + ' month' + (months > 1 ? 's' : '');
+  const y = Math.floor(months / 12), m = months % 12;
+  return y + 'y' + (m ? ' ' + m + 'mo' : '');
+}
+
+function fmtPlaytime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  if (h < 1) return Math.floor(seconds / 60) + 'm';
+  return h + 'h';
+}
+
+function joinedFmt(iso) {
+  return new Date(iso).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+}
+
+/* ─────────────────────────────────────────────
+   Activity rendering
+───────────────────────────────────────────── */
+const ACTIVITY_MAP = {
+  played_game:         { icon: '🎮', cls: 'play',   text: m => `Played <span class="highlight">${m.game || 'a game'}</span>` },
+  earned_badge:        { icon: '🏆', cls: 'badge',  text: m => `Earned badge <strong>${m.badge || ''}</strong>` },
+  unlocked_achievement:{ icon: '🎖️', cls: 'badge',  text: m => `Unlocked achievement <strong>${m.achievement || ''}</strong>` },
+  uploaded_file:       { icon: '📁', cls: 'upload', text: m => `Uploaded <strong>${m.filename ? '1 file' : 'a file'}</strong> to Archive` },
+  reached_level:       { icon: '⬆️', cls: 'level',  text: m => `Reached <span class="highlight">Level ${m.level || '?'}</span>` },
+  changed_avatar:      { icon: '🖼️', cls: 'avatar', text: () => 'Updated profile avatar' },
+  changed_banner:      { icon: '🖼️', cls: 'avatar', text: () => 'Updated profile banner' },
+};
+
+function renderActivity(items) {
+  const list = document.getElementById('activityList');
+  if (!items || items.length === 0) {
+    list.innerHTML = '<div class="activity-item"><div class="activity-icon play">💤</div><div><div class="activity-text">No activity yet</div></div></div>';
+    return;
+  }
+  list.innerHTML = items.map(item => {
+    const def = ACTIVITY_MAP[item.event_type] || { icon: '●', cls: 'play', text: () => item.event_type };
+    return `<div class="activity-item">
+      <div class="activity-icon ${def.cls}">${def.icon}</div>
+      <div>
+        <div class="activity-text">${def.text(item.metadata || {})}</div>
+        <div class="activity-time">${relTime(item.created_at)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ─────────────────────────────────────────────
+   Showcase rendering
+───────────────────────────────────────────── */
+const GAME_COLORS = [
+  'linear-gradient(135deg,#b91c1c,#ef4444)',
+  'linear-gradient(135deg,#0f766e,#2dd4bf)',
+  'linear-gradient(135deg,#7c3aed,#a78bfa)',
+  'linear-gradient(135deg,#1d4ed8,#60a5fa)',
+  'linear-gradient(135deg,#b45309,#fcd34d)',
+];
+
+function renderShowcase(s) {
+  const cfg = s.config || {};
+  const label = {
+    favorite_games: '★ Favorite Games',
+    achievements: '🏆 Achievement Showcase',
+    arcade_records: '🎯 Arcade Records',
+    badge_case: '🎖️ Badge Case',
+  }[s.showcase_type] || s.showcase_type;
+
+  let body = '';
+
+  if (s.showcase_type === 'favorite_games') {
+    const games = cfg.games || [];
+    if (!games.length) {
+      body = '<div class="showcase-empty">No favorite games set yet.</div>';
     } else {
-      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5l3 3-9 9H2.5v-3l9-9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg> Edit Profile';
-
-      document.querySelectorAll('[contenteditable]').forEach(el => {
-        el.contentEditable = false;
-        el.style.outline = 'none';
-      });
+      body = '<div class="game-grid">' + games.slice(0, 3).map((g, i) => `
+        <div class="game-card">
+          <div class="game-card-bg" style="background:${GAME_COLORS[i % GAME_COLORS.length]};"></div>
+          <div class="game-card-overlay">
+            <div class="game-card-name">${escHtml(g.name || 'Game')}</div>
+            <div class="game-card-hours">${g.hours || 0} hrs</div>
+          </div>
+        </div>`).join('') + '</div>';
+    }
+  } else if (s.showcase_type === 'achievements') {
+    const items = cfg.achievements || [];
+    if (!items.length) {
+      body = '<div class="showcase-empty">No achievements showcased yet.</div>';
+    } else {
+      body = '<div class="achievement-row">' + items.map(a => `
+        <div class="achievement-item ${a.rare ? 'rare' : ''}">
+          ${escHtml(a.emoji || '🏅')}
+          <div class="achievement-tooltip">${escHtml(a.label || '')}</div>
+        </div>`).join('') + '</div>';
+    }
+  } else if (s.showcase_type === 'arcade_records') {
+    const records = cfg.records || [];
+    if (!records.length) {
+      body = '<div class="showcase-empty">No records set yet.</div>';
+    } else {
+      body = '<div>' + records.map(r => `
+        <div class="record-row">
+          <div>
+            <div class="record-game">${escHtml(r.game || '')}</div>
+            <div class="record-label">${escHtml(r.label || 'Personal Best')}</div>
+          </div>
+          <div class="record-value">${escHtml(String(r.value || '—'))}</div>
+        </div>`).join('') + '</div>';
+    }
+  } else if (s.showcase_type === 'badge_case') {
+    const badges = cfg.badges || [];
+    if (!badges.length) {
+      body = '<div class="showcase-empty">No badges in showcase.</div>';
+    } else {
+      body = '<div class="badge-case">' + badges.map(b => `
+        <div class="badge-item" title="${escHtml(b.label || '')}">${escHtml(b.emoji || '🏅')}</div>`
+      ).join('') + '</div>';
     }
   }
 
-  // Intersection observer for scroll animations
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.style.animationPlayState = 'running';
-      }
-    });
-  }, { threshold: 0.1 });
+  return `<div class="card animate-in">
+    <div class="showcase-header">
+      <div class="card-label">${label}</div>
+    </div>
+    ${body}
+  </div>`;
+}
 
-  document.querySelectorAll('.animate-in').forEach(el => observer.observe(el));
+function renderShowcases(showcases) {
+  const container = document.getElementById('showcasesContainer');
+  if (!showcases || !showcases.length) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = showcases.map(renderShowcase).join('');
+}
+
+/* ─────────────────────────────────────────────
+   Stats rendering
+───────────────────────────────────────────── */
+function renderStats(stats) {
+  document.getElementById('statGamesPlayed').textContent  = (stats.games_played || 0).toLocaleString();
+  document.getElementById('statPlaytime').textContent     = fmtPlaytime(stats.total_playtime_seconds || 0);
+  document.getElementById('statAchievements').textContent = (stats.achievements_unlocked || 0).toLocaleString();
+  document.getElementById('statUploads').textContent      = (stats.uploads || 0).toLocaleString();
+  document.getElementById('statBadges').textContent       = (stats.badges_earned || 0).toLocaleString();
+  document.getElementById('statViews').textContent        = (stats.profile_views || 0).toLocaleString();
+  document.getElementById('profileViewsCount').textContent = (stats.profile_views || 0).toLocaleString();
+}
+
+/* ─────────────────────────────────────────────
+   Full profile render
+───────────────────────────────────────────── */
+function renderProfile(data) {
+  const { profile, showcases, stats, activity } = data;
+
+  // Banner
+  if (profile.banner_url) {
+    const img = document.getElementById('bannerImg');
+    img.src = profile.banner_url;
+    img.onload = () => img.classList.add('loaded');
+    img.onerror = () => {};
+  }
+
+  // Avatar + nav avatar
+  const initials = (profile.display_name || profile.username_slug || '?').slice(0, 2).toUpperCase();
+  setAvatar(profile.avatar_url, initials);
+
+  // Identity
+  document.getElementById('displayName').textContent = profile.display_name || profile.username_slug || '—';
+  document.getElementById('usernameDisplay').textContent = '@' + (profile.username_slug || '—');
+  document.getElementById('tagline').textContent = profile.tagline || 'No tagline set.';
+  document.getElementById('bioText').textContent = profile.bio || 'No bio yet.';
+
+  // Role badge from groups
+  const groups = (window._profileGroups || []);
+  document.getElementById('roleBadge').textContent =
+    groups.includes('archive_admin') ? 'Admin' :
+    groups.includes('archive_upload') ? 'Contributor' : 'Member';
+
+  // Bio meta
+  document.getElementById('joinedDate').textContent = joinedFmt(profile.created_at);
+
+  // Meta sidebar
+  document.getElementById('metaAccountAge').textContent = accountAge(profile.created_at);
+  document.getElementById('metaVisibility').textContent = profile.visibility === 'private' ? 'Private' : 'Public';
+  document.getElementById('metaFeaturedBadge').textContent = profile.featured_badge || 'None';
+  document.getElementById('metaShowcases').textContent = (showcases ? showcases.length : 0) + ' / 3';
+
+  // Theme
+  applyTheme(profile.theme || 'ocean', false);
+
+  // Stats
+  renderStats(stats || {});
+  renderLevel(stats || {});
+
+  // Badge case
+  const bc = document.getElementById('badgeCase');
+  if (profile.featured_badge) {
+    bc.innerHTML = `<div class="badge-item featured" title="Featured">${escHtml(profile.featured_badge)}</div>`;
+  } else {
+    bc.innerHTML = '<div style="font-size:13px;color:var(--text-muted);">No badges yet</div>';
+  }
+
+  // Showcases
+  renderShowcases(showcases);
+
+  // Activity
+  renderActivity(activity);
+}
+
+/* ─────────────────────────────────────────────
+   Edit mode
+───────────────────────────────────────────── */
+let editMode = false;
+const editableIds = ['displayName', 'tagline', 'bioText'];
+let savedValues = {};
+
+document.getElementById('editBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('editBtn');
+  if (!editMode) {
+    editMode = true;
+    editableIds.forEach(id => {
+      const el = document.getElementById(id);
+      savedValues[id] = el.textContent;
+      el.contentEditable = 'true';
+    });
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8l4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Save Profile`;
+  } else {
+    btn.disabled = true;
+    try {
+      await apiPut('/api/profile/me', {
+        display_name: document.getElementById('displayName').textContent.trim(),
+        tagline: document.getElementById('tagline').textContent.trim(),
+        bio: document.getElementById('bioText').textContent.trim(),
+      });
+      showToast('Profile saved', 'ok');
+    } catch (e) {
+      showToast('Save failed: ' + e.message, 'err');
+      editableIds.forEach(id => {
+        document.getElementById(id).textContent = savedValues[id];
+      });
+    }
+    editMode = false;
+    editableIds.forEach(id => {
+      const el = document.getElementById(id);
+      el.contentEditable = 'false';
+    });
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5l3 3-9 9H2.5v-3l9-9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg> Edit Profile`;
+  }
+});
+
+/* ─────────────────────────────────────────────
+   Avatar upload
+───────────────────────────────────────────── */
+document.getElementById('avatarFrame').addEventListener('click', () => {
+  document.getElementById('avatarUpload').click();
+});
+
+document.getElementById('avatarUpload').addEventListener('change', async function () {
+  const file = this.files[0];
+  if (!file) return;
+  this.value = '';
+  try {
+    const data = await apiUpload('/api/profile/me/avatar', file);
+    const initials = document.getElementById('displayName').textContent.slice(0, 2).toUpperCase();
+    setAvatar(data.avatar_url, initials);
+    showToast('Avatar updated', 'ok');
+  } catch (e) {
+    showToast('Upload failed: ' + e.message, 'err');
+  }
+});
+
+/* ─────────────────────────────────────────────
+   Banner upload
+───────────────────────────────────────────── */
+document.getElementById('bannerEditBtn').addEventListener('click', () => {
+  document.getElementById('bannerUpload').click();
+});
+
+document.getElementById('bannerUpload').addEventListener('change', async function () {
+  const file = this.files[0];
+  if (!file) return;
+  this.value = '';
+  try {
+    const data = await apiUpload('/api/profile/me/banner', file);
+    const img = document.getElementById('bannerImg');
+    img.src = data.banner_url + '?t=' + Date.now();
+    img.classList.add('loaded');
+    showToast('Banner updated', 'ok');
+  } catch (e) {
+    showToast('Upload failed: ' + e.message, 'err');
+  }
+});
+
+/* ─────────────────────────────────────────────
+   Share button
+───────────────────────────────────────────── */
+document.getElementById('shareBtn').addEventListener('click', () => {
+  navigator.clipboard.writeText(window.location.href).then(
+    () => showToast('Link copied!', 'ok'),
+    () => showToast('Could not copy link', 'err'),
+  );
+});
+
+/* ─────────────────────────────────────────────
+   Utility
+───────────────────────────────────────────── */
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* ─────────────────────────────────────────────
+   Intersection observer for scroll animations
+───────────────────────────────────────────── */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.style.animationPlayState = 'running';
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.animate-in').forEach(el => {
+  el.style.animationPlayState = 'paused';
+  observer.observe(el);
+});
+
+/* ─────────────────────────────────────────────
+   Bootstrap
+───────────────────────────────────────────── */
+(async function init() {
+  const token = getToken();
+  if (!token) {
+    window.location.href = '/account/?next=' + encodeURIComponent(window.location.pathname);
+    return;
+  }
+
+  // Grab groups from userinfo so we can show role badge
+  try {
+    const info = await fetch('/application/o/userinfo/', {
+      headers: { 'Authorization': 'Bearer ' + token },
+    });
+    if (info.ok) {
+      const claims = await info.json();
+      window._profileGroups = claims.groups || [];
+    }
+  } catch (_) {}
+
+  try {
+    const data = await apiGet('/api/profile/me');
+    renderProfile(data);
+  } catch (e) {
+    showToast('Could not load profile: ' + e.message, 'err');
+    document.getElementById('displayName').textContent = 'Error loading profile';
+  }
+})();
 </script>
 
 </body>
