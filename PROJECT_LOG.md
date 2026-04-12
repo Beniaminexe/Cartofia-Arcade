@@ -1,10 +1,10 @@
-# Cartofia Platform ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Project Log
+# Cartofia Platform – Project Log
 
 Chronological log of design decisions and milestones for the Cartofia Platform.
 
 ---
 
-## 2025-11-30 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Initial Concept & Architecture
+## 2025-11-30 – Initial Concept & Architecture
 
 - Decided to build a **self-hosted platform** using Proxmox, Discord, and web tech.
 - Core idea:
@@ -22,20 +22,20 @@ Chronological log of design decisions and milestones for the Cartofia Platform.
 ### Containers and IDs
 
 - Chosen numbering convention:
-  - **CT1000** ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Bot / orchestration container.
-  - **CT2000** ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Game container (initially Cartofia).
+  - **CT1000** – Bot / orchestration container.
+  - **CT2000** – Game container (initially Cartofia).
 - CT1000 runs Discord bots and automation.
 - CT2000 will host the web version of Cartofia.
 
 ---
 
-## 2025-11-30 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Network Design
+## 2025-11-30 – Network Design
 
 - Existing setup:
-  - `vmbr0` ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ external/LAN access.
-  - `vmbr1` ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ unsafe / vulnerable lab.
+  - `vmbr0` – external/LAN access.
+  - `vmbr1` – unsafe / vulnerable lab.
 - New design:
-  - Add **`vmbr2`** for ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œgames & servicesÃƒÂ¢Ã¢â€šÂ¬Ã‚Â network.
+  - Add **`vmbr2`** for “games & services? network.
     - Example subnet: `10.22.0.1/24`.
 - Purpose of `vmbr2`:
   - Isolated network for CTs that serve games and websites.
@@ -43,9 +43,9 @@ Chronological log of design decisions and milestones for the Cartofia Platform.
 
 ---
 
-## 2025-11-30 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Role Definitions
+## 2025-11-30 – Role Definitions
 
-### CT1000 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Bot / Orchestration
+### CT1000 – Bot / Orchestration
 
 - Runs Discord bot(s).
 - Talks to Proxmox API to:
@@ -58,10 +58,10 @@ Planned behaviour:
 
 - `/play_cartofia`:
   - Start CT2000 (if stopped).
-  - Send a ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œloadingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â message while the container boots.
+  - Send a “loading? message while the container boots.
   - Post the public URL once the game is reachable.
 
-### CT1010 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Gateway
+### CT1010 – Gateway
 
 - New container planned as the **only public-facing web entry point**.
 - Dual-homed:
@@ -71,7 +71,7 @@ Planned behaviour:
   - Terminate HTTPS.
   - Route subdomains to internal CTs (e.g., Cartofia, games portal, other apps).
 
-### CT2000 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Cartofia Web Game
+### CT2000 – Cartofia Web Game
 
 - Connected only to `vmbr2`.
 - Will host:
@@ -80,15 +80,15 @@ Planned behaviour:
 
 ---
 
-## 2025-11-30 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Future Platform Direction
+## 2025-11-30 – Future Platform Direction
 
 - The Cartofia CT (`CT2000`) is planned as the **first game CT**, but the architecture is designed for expansion:
-  - CT2100 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ a future ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œgames portalÃƒÂ¢Ã¢â€šÂ¬Ã‚Â website.
-  - Additional CTs (CT22xx) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ more WASM games or web tools.
-  - Optional CT3000 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ shared services (databases, metrics, logging).
+  - CT2100 – a future “games portal? website.
+  - Additional CTs (CT22xx) – more WASM games or web tools.
+  - Optional CT3000 – shared services (databases, metrics, logging).
 
 - Long-term goal:
-  - A small ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œhome arcadeÃƒÂ¢Ã¢â€šÂ¬Ã‚Â platform:
+  - A small “home arcade? platform:
     - Discord for control and notifications.
     - Proxmox for lifecycle management.
     - Web front-end for playing multiple games and using tools.
@@ -97,7 +97,7 @@ Planned behaviour:
 
 ---
 
-## 2025-12-01 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ CT1000 bot + Proxmox integration
+## 2025-12-01 – CT1000 bot + Proxmox integration
 
 **Summary**
 
@@ -126,7 +126,7 @@ Planned behaviour:
 
 ---
 
-## 2025-12-01 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Cloudflare tunnel + Cartofia web host container
+## 2025-12-01 – Cloudflare tunnel + Cartofia web host container
 
 **Summary**
 
@@ -151,13 +151,13 @@ Planned behaviour:
 **Next steps**
 
 - Finish Cloudflare Tunnel configuration:
-  - Add DNS routing for `cartofia.com` ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ the tunnel.
+  - Add DNS routing for `cartofia.com` → the tunnel.
   - Define ingress rules so `/` and `/game/` on `cartofia.com` are served by the Cartofia web host container.
 - Once the web build is stable, copy `build/web/*` from the Cartofia-game repo into `/var/www/cartofia/game/` and verify that `https://cartofia.com/game/` loads the game.
 
 ---
 
-## 2025-12-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Cartofia-game refactor & web build prep (cross-repo work)
+## 2025-12-02 – Cartofia-game refactor & web build prep (cross-repo work)
 
 > This work is in the **Cartofia-game** repo but is directly relevant to Cartofia-Arcade, because CT2000 will serve this web build.
 
@@ -198,8 +198,8 @@ Planned behaviour:
 - Finish stabilising the pygbag/pygame-web build so CT2000 can serve a working `build/web` bundle.
 - Hook the successful web build into the Cartofia-Arcade architecture:
   - CT2000 = static host for Cartofia-game web bundle.
-  - CT1000 bot = start/stop CT2000 and post the game URL into Discord when itÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s ready.
-- Once things are stable, mirror a shortened version of the Cartofia-game change summary into that repoÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s own `PROJECT_LOG` for cross-project consistency.
+  - CT1000 bot = start/stop CT2000 and post the game URL into Discord when it’s ready.
+- Once things are stable, mirror a shortened version of the Cartofia-game change summary into that repo’s own `PROJECT_LOG` for cross-project consistency.
 
 
 
@@ -792,7 +792,7 @@ Planned behaviour:
   - `node --check` on extracted inline scripts from touched HTML pages
 - Ran content checks:
   - Confirmed no `data-archive-link`/`data-archive-only` markers remain in redesigned public/shared pages.
-  - Confirmed no mojibake (`ÃƒÆ’Ã‚Â¢...`) artifacts remain in touched templates.
+  - Confirmed no mojibake artifacts remain in touched templates.
 
 
 ---
@@ -1310,5 +1310,64 @@ Planned behaviour:
 
 - Some PC clients were still running cached pre-fix code and showing old spawn behavior.
 - Versioned script URL forces fresh download of the updated spawn logic.
+
+---
+
+## 2026-04-05 - Repo hygiene, backend hardening, and documentation alignment
+
+**Summary**
+
+- Performed a broad quality pass focused on repository hygiene, safer backend defaults, and documentation consistency with the current platform state.
+
+**Details**
+
+- Repository hygiene:
+  - Expanded `.gitignore` to cover Python caches, virtualenvs, and editor artifacts.
+  - Removed tracked `.pyc` cache artifacts from `src/cartofia_bot/**/__pycache__/`.
+  - Removed stale local helper artifacts (`-S`, `index.html.save`).
+  - Replaced broken gitlink at `arcade/cartofia/archives` with a normal tracked directory (`.gitkeep`) to eliminate submodule mapping errors.
+
+- Backend/API hardening:
+  - Updated `src/cartofia_bot/proxmox_stats.py` to:
+    - Use structured logging (no raw `print` calls).
+    - Support modern token config (`PROXMOX_TOKEN_ID` + `PROXMOX_TOKEN_SECRET`) with legacy fallback.
+    - Respect `PROXMOX_VERIFY_SSL`.
+    - Return safer fallback stats when Proxmox is unavailable.
+  - Updated `src/cartofia_bot/api_server.py` to:
+    - Use package-safe ProxmoxStats imports.
+    - Set and warn on missing `API_SECRET_KEY`.
+    - Disable cross-origin CORS by default unless `API_ALLOWED_ORIGINS` is explicitly set.
+    - Replace runtime `print` statements with structured logger calls.
+
+- Auth/session consistency:
+  - Updated token retrieval and clearing logic across:
+    - `account/index.html`
+    - `account/profile/index.html`
+    - `archive/index.html`
+    - `assets/site.js`
+  - Tokens now prefer `sessionStorage` with `localStorage` compatibility fallback.
+  - Logout/token cleanup clears both storages consistently.
+  - Access token cookie attributes tightened to `SameSite=Strict; Secure`.
+
+- Documentation and maintainability:
+  - Rewrote `README.md` to reflect current project scope and architecture.
+  - Replaced empty `Docs/ARCHITECTURE.md` with an actual architecture document.
+  - Replaced stale Snake-only `TODO.md` with platform-level backlog.
+  - Added `.editorconfig`.
+  - Added GitHub Actions workflow at `.github/workflows/ci.yml` for dependency install + Python compile checks.
+
+- Encoding normalization:
+  - Cleaned mojibake artifacts in `PROJECT_LOG.md` and `archive/index.html`.
+
+**Validation performed**
+
+- `python -m compileall src`
+- `node --check assets/site.js`
+- `node --check` on extracted inline scripts from:
+  - `account/index.html`
+  - `account/profile/index.html`
+  - `archive/index.html`
+- `git submodule status` (validated broken submodule mapping no longer errors)
+- Encoding scan on repository text files (excluding large generated Cartofia bundle)
 
 *This log is updated as new milestones and design decisions are made.*

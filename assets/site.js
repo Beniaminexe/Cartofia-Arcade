@@ -5,6 +5,36 @@
   var OIDC_LOGIN_URL    = "/account/#login";
   var PROFILE_ME_URL    = "/api/profile/me";
 
+  function getStoredToken(key) {
+    try {
+      if (typeof sessionStorage !== "undefined") {
+        var sessionValue = sessionStorage.getItem(key);
+        if (sessionValue) return sessionValue;
+      }
+      if (typeof localStorage !== "undefined") {
+        return localStorage.getItem(key);
+      }
+    } catch (_error) {
+      return null;
+    }
+    return null;
+  }
+
+  function clearStoredTokens() {
+    try {
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.removeItem("oidc_access_token");
+        sessionStorage.removeItem("oidc_id_token");
+      }
+      if (typeof localStorage !== "undefined") {
+        localStorage.removeItem("oidc_access_token");
+        localStorage.removeItem("oidc_id_token");
+      }
+    } catch (_error) {
+      return;
+    }
+  }
+
   function initialsFrom(username) {
     var value = username ? String(username).trim() : "";
     return value ? value.slice(0, 2).toUpperCase() : "CA";
@@ -30,7 +60,7 @@
 
   async function fetchSession() {
     try {
-      var token = typeof localStorage !== "undefined" ? localStorage.getItem("oidc_access_token") : null;
+      var token = getStoredToken("oidc_access_token");
       var headers = token ? { "Authorization": "Bearer " + token } : {};
       var response = await fetch(OIDC_USERINFO_URL, {
         credentials: "include",
@@ -55,7 +85,7 @@
 
   async function fetchProfile() {
     try {
-      var token = typeof localStorage !== "undefined" ? localStorage.getItem("oidc_access_token") : null;
+      var token = getStoredToken("oidc_access_token");
       if (!token) return null;
       var response = await fetch(PROFILE_ME_URL, {
         credentials: "include",
@@ -184,11 +214,8 @@
       var action = event.target && event.target.closest("[data-logout]");
       if (action) {
         event.preventDefault();
-        if (typeof localStorage !== "undefined") {
-          localStorage.removeItem("oidc_access_token");
-          localStorage.removeItem("oidc_id_token");
-        }
-        document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        clearStoredTokens();
+        document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure";
         renderAccountDropdown(menu, { authenticated: false });
         setExpanded(button, dropdown, false);
         window.location.href = OIDC_LOGOUT_URL;

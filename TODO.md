@@ -1,9 +1,21 @@
-# Cartofia Arcade - New Snake Game Task
+# Cartofia TODO
 
-## Steps from approved plan:
+## Immediate Quality Work
 
-- [x] Create TODO.md with steps
-- [x] Create `arcade/snake/index.html` (full Snake game implementation)
-- [ ] Edit `arcade/index.html` (add Snake to game grid, update slots/activity)
-- [ ] Test: Verify menu shows Snake, game playable (controls, score, restart)
-- [ ] Complete task
+- [ ] Split `src/cartofia_bot/api_server.py` into feature modules.
+- [ ] Add unit tests for auth/profile/archive helpers.
+- [ ] Add websocket room-state tests for multiplayer reliability.
+- [ ] Add CI workflow (lint + syntax + tests).
+- [ ] Add production session/token hardening plan for account pages.
+
+## Frontend Maintainability
+
+- [ ] Move large inline scripts/CSS from pages into dedicated assets.
+- [ ] Introduce per-page JS modules where game logic is still inline.
+- [ ] Standardize reusable page shell components.
+
+## Ops and Release
+
+- [ ] Define release process for large generated artifacts (`cartofia-game.apk`, web build files).
+- [ ] Add deployment checklist for API + static assets.
+- [ ] Add rollback/runbook docs for infra outages.

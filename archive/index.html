@@ -228,14 +228,14 @@
 
   <script src="/assets/site.js"></script>
   <script>
-    /* â”€â”€ OIDC / access configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── OIDC / access configuration ───────────────────────────────── */
     var OIDC_USERINFO_URL = "/application/o/userinfo/";
     var NOT_FOUND_URL     = "/404.html";
 
     var ARCHIVE_VIEW_GROUPS   = ["archive_view", "archive_upload", "archive_admin"];
     var ARCHIVE_UPLOAD_GROUPS = ["archive_upload", "archive_admin"];
 
-    /* â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── State ─────────────────────────────────────────────────────── */
     var state = {
       user: null,
       canView: false,
@@ -245,7 +245,7 @@
       uploading: false
     };
 
-    /* â”€â”€ DOM refs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── DOM refs ──────────────────────────────────────────────────── */
     var refs = {
       archiveContent:    document.getElementById("archiveContent"),
       uploadSection:     document.getElementById("upload"),
@@ -266,12 +266,20 @@
       activityList:      document.getElementById("activityList")
     };
 
-    /* â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Helpers ───────────────────────────────────────────────────── */
     function getToken() {
       /* Reads the access token stored by the account page after OIDC callback. */
-      return typeof localStorage !== "undefined"
-        ? localStorage.getItem("oidc_access_token")
-        : null;
+      try {
+        var sessionToken = typeof sessionStorage !== "undefined"
+          ? sessionStorage.getItem("oidc_access_token")
+          : null;
+        if (sessionToken) return sessionToken;
+        return typeof localStorage !== "undefined"
+          ? localStorage.getItem("oidc_access_token")
+          : null;
+      } catch (_error) {
+        return null;
+      }
     }
 
     function hasAnyGroup(userGroups, allowed) {
@@ -334,7 +342,7 @@
       return name.slice(idx + 1).toLowerCase();
     }
 
-    /* â”€â”€ Authenticated fetch wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Authenticated fetch wrapper ───────────────────────────────── */
     function authHeaders() {
       var token = getToken();
       return token ? { "Authorization": "Bearer " + token } : {};
@@ -411,7 +419,7 @@
       });
     }
 
-    /* â”€â”€ Download via fetch + blob (sends Bearer token) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Download via fetch + blob (sends Bearer token) ────────────── */
     async function downloadFile(fileId, fileName) {
       try {
         var resp = await fetch("/api/archive/download/" + fileId, {
@@ -441,7 +449,7 @@
       }
     }
 
-    /* â”€â”€ File selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── File selection ─────────────────────────────────────────────── */
     function setSelectedFile(file) {
       state.selectedFile = file || null;
       if (state.selectedFile) {
@@ -451,7 +459,7 @@
       }
     }
 
-    /* â”€â”€ User / permission state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── User / permission state ───────────────────────────────────── */
     function setUser(user) {
       state.user = user || null;
 
@@ -547,7 +555,7 @@
       refs.typeFilter.value = found ? previous : "all";
     }
 
-    /* â”€â”€ Activity panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Activity panel ────────────────────────────────────────────── */
     function renderActivity(files) {
       refs.activityList.innerHTML = "";
 
@@ -582,7 +590,7 @@
       });
     }
 
-    /* â”€â”€ File table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── File table ────────────────────────────────────────────────── */
     function renderFiles() {
       refs.filesBody.innerHTML = "";
 
@@ -657,7 +665,7 @@
       renderActivity(state.files);
     }
 
-    /* â”€â”€ Load files â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Load files ────────────────────────────────────────────────── */
     async function refreshFiles() {
       if (!state.user || !state.canView) {
         state.files = [];
@@ -679,7 +687,7 @@
       }
     }
 
-    /* â”€â”€ Upload handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Upload handler ────────────────────────────────────────────── */
     async function handleUpload() {
       if (state.uploading) {
         return;
@@ -724,7 +732,7 @@
       }
     }
 
-    /* â”€â”€ Drag/drop + file input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Drag/drop + file input ────────────────────────────────────── */
     function onDropZoneClick() {
       if (state.uploading) return;
       if (!state.canUpload) return;
@@ -769,7 +777,7 @@
       refs.uploadButton.disabled = !state.canUpload || !state.selectedFile;
     }
 
-    /* â”€â”€ Download delegation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Download delegation ───────────────────────────────────────── */
     function onTableClick(event) {
       var btn = event.target.closest("[data-file-id]");
       if (!btn) return;
@@ -777,7 +785,7 @@
       downloadFile(Number(btn.getAttribute("data-file-id")), btn.getAttribute("data-file-name"));
     }
 
-    /* â”€â”€ Wire up events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Wire up events ────────────────────────────────────────────── */
     function bindEvents() {
       refs.uploadButton.addEventListener("click", handleUpload);
       refs.fileInput.addEventListener("change", onFileInputChange);
@@ -794,7 +802,7 @@
       refs.filesBody.addEventListener("click", onTableClick);
     }
 
-    /* â”€â”€ Boot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Boot ──────────────────────────────────────────────────────── */
     async function boot() {
       bindEvents();
       hideUploadProgress();
@@ -807,6 +815,5 @@
   </script>
 </body>
 </html>
-
 
 

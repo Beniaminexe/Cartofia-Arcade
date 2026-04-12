@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import json
+import logging
 import sqlite3
 import threading
 import uuid
@@ -21,7 +22,10 @@ from flask_cors import CORS
 from flask_sock import Sock
 from werkzeug.utils import secure_filename
 
-from proxmox_stats import ProxmoxStats
+try:
+    from cartofia_bot.proxmox_stats import ProxmoxStats
+except ImportError:  # pragma: no cover - fallback for direct script execution
+    from proxmox_stats import ProxmoxStats
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 ARCHIVE_DATA_DIR = Path(
@@ -58,8 +62,15 @@ OIDC_UPLOAD_GROUPS = [
 ARCHIVE_ACCESS_GROUPS = list(OIDC_REQUIRED_GROUPS)
 ARCHIVE_UPLOAD_GROUPS = list(OIDC_UPLOAD_GROUPS)
 
+log = logging.getLogger(__name__)
+
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
+app.config["SECRET_KEY"] = os.getenv("API_SECRET_KEY", "dev-unsafe-change-me")
+if app.config["SECRET_KEY"] == "dev-unsafe-change-me":
+    log.warning(
+        "API_SECRET_KEY is not set; using an unsafe default. Set API_SECRET_KEY in production."
+    )
 sock = Sock(app)
 
 allowed_origins = [
@@ -70,7 +81,8 @@ allowed_origins = [
 if allowed_origins:
     CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
 else:
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    # Same-origin requests do not need CORS; explicit origins can be configured via env.
+    log.info("API_ALLOWED_ORIGINS is empty; CORS is disabled for cross-origin requests.")
 
 PROFILE_BADGE_CATALOG: dict[str, dict[str, str]] = {
     "first_login": {
@@ -785,7 +797,7 @@ def get_stats():
         stats = proxmox.get_all_stats()
         return jsonify(stats), 200
     except Exception as exc:
-        print(f"Error in /api/stats: {exc}")
+        log.exception("Error in /api/stats: %s", exc)
         return jsonify({"error": str(exc)}), 500
 
 
@@ -796,7 +808,7 @@ def get_container_stats():
         stats = proxmox.get_container_stats()
         return jsonify(stats), 200
     except Exception as exc:
-        print(f"Error in /api/stats/containers: {exc}")
+        log.exception("Error in /api/stats/containers: %s", exc)
         return jsonify({"error": str(exc)}), 500
 
 
@@ -807,7 +819,7 @@ def get_vm_stats():
         stats = proxmox.get_qemu_stats()
         return jsonify(stats), 200
     except Exception as exc:
-        print(f"Error in /api/stats/vms: {exc}")
+        log.exception("Error in /api/stats/vms: %s", exc)
         return jsonify({"error": str(exc)}), 500
 
 
@@ -818,7 +830,7 @@ def get_node_stats():
         stats = proxmox.get_node_stats()
         return jsonify(stats), 200
     except Exception as exc:
-        print(f"Error in /api/stats/node: {exc}")
+        log.exception("Error in /api/stats/node: %s", exc)
         return jsonify({"error": str(exc)}), 500
 
 
@@ -895,10 +907,7 @@ def _cleanup_stale_rooms(game_key: str) -> None:
                 stale_codes.append(code)
                 rooms.pop(code, None)
     if stale_codes:
-        print(
-            f"{game_key}: cleaned stale rooms:",
-            ", ".join(sorted(stale_codes)),
-        )
+        log.info("%s: cleaned stale rooms: %s", game_key, ", ".join(sorted(stale_codes)))
 
 
 def _room_can_start(
@@ -1259,7 +1268,7 @@ def _ws_room_socket(ws, game_key: str) -> None:
             _cleanup_stale_rooms(game_key)
 
     except Exception as exc:
-        print(f"Error in /ws/{game_key} for client {client_id}: {exc}")
+        log.exception("Error in /ws/%s for client %s: %s", game_key, client_id, exc)
     finally:
         if room_code is not None:
             _remove_ws_client(game_key, room_code, client_id)
@@ -1289,4 +1298,10 @@ init_storage()
 if __name__ == "__main__":
     port = int(os.getenv("API_PORT", "5000"))
     debug = os.getenv("FLASK_ENV", "production") == "development"
+    if not logging.getLogger().handlers:
+        logging.basicConfig(
+            level=os.getenv("LOG_LEVEL", "INFO").upper(),
+            format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
     app.run(host="0.0.0.0", port=port, debug=debug)

@@ -1,232 +1,104 @@
-# Cartofia Platform – Proxmox + Discord + Web Arcade
+# Cartofia Arcade Platform
 
-> Self-hosted game platform built on Proxmox, Discord bots, and WebAssembly (pygbag).  
-> Starts as a home for the Cartofia Pygame game, and grows into a mini web arcade.
+Self-hosted platform that combines:
 
----
+- Browser games (static frontend under `arcade/`)
+- Account/profile/archive pages (OIDC-aware frontend + Flask API)
+- Proxmox-backed infrastructure status and Discord bot control
 
-## Table of Contents
+## Current Direction
 
-- [Overview](#overview)
-- [High-Level Architecture](#high-level-architecture)
-- [Components](#components)
-- [Networking](#networking)
-- [Current Features](#current-features)
-- [Roadmap](#roadmap)
-- [Inspirations & Credits](#inspirations--credits)
-- [Disclaimer](#disclaimer)
+The project has moved from "single Cartofia web build" into a broader platform:
 
----
+- Multi-game arcade lineup (single-player and online room multiplayer)
+- Unified branded web experience across Home, Arcade, Minecraft, Account, Archive
+- Authenticated profile and archive APIs
+- WebSocket room relay for real-time multiplayer game sessions
+- Discord bot commands for Proxmox CT operations
 
-## Overview
+## Architecture Summary
 
-This project turns a Proxmox host into a small self-hosted game platform:
+Runtime layers:
 
-- A **Discord bot** can start/stop game containers on Proxmox.
-- Games (starting with **Cartofia**, a Pygame project) are compiled to **WebAssembly** using `pygbag`.
-- A dedicated **gateway container** exposes HTTPS endpoints and routes traffic to internal game containers.
-- Over time, the platform is intended to host **multiple browser-playable games and tools**.
+- Static web layer:
+  - `index.html`
+  - `arcade/`, `minecraft/`, `account/`, `archive/`
+  - Shared UI assets in `assets/site.css` and `assets/site.js`
+- API layer:
+  - `src/cartofia_bot/api_server.py` (Flask + Flask-Sock)
+  - Stats endpoints, archive endpoints, profile endpoints, websocket room relay
+- Bot/orchestration layer:
+  - `src/cartofia_bot/main.py`
+  - `src/cartofia_bot/commands/basic.py`
+  - `src/cartofia_bot/proxmox_client.py`
 
-The main goals:
+Deployment intent (home lab):
 
-- Keep bandwidth usage low (no video streaming, mostly static asset hosting).
-- Use **Proxmox containers (LXC)** for lightweight, isolated services.
-- Build a clean architecture that can grow into “a website with games and other stuff”.
+- Proxmox hosts LXC containers
+- Gateway container exposes public endpoints
+- Internal services stay on isolated network
+- Discord bot controls game/service container lifecycle
 
----
+For a fuller technical map, see `Docs/ARCHITECTURE.md`.
 
-## High-Level Architecture
+## Repository Layout
 
-Logical view:
+- `assets/`: shared frontend CSS/JS
+- `arcade/`: game pages and game scripts
+- `account/`: account and profile pages
+- `archive/`: archive frontend
+- `minecraft/`: Minecraft destination page
+- `src/cartofia_bot/`: Python bot + API backend
+- `Docs/`: architecture notes
+- `PROJECT_LOG.md`: chronological implementation log
 
-```text
-Discord  ──>  CT1000 (Bot / Orchestration)  ──>  Proxmox API
-                                               │
-Internet ──> Router ──> CT1010 (Gateway / Reverse Proxy) ──> vmbr2 (services network)
-                                                          ├─ CT2000 (Cartofia WebAssembly)
-                                                          ├─ CT2100 (Future: Games Portal)
-                                                          └─ CT22xx... (Future: Other Games/Apps)
+## Local Development
 
+Python setup:
 
-Bridges on Proxmox:
-
-vmbr0 – external LAN / WAN access (existing).
-vmbr1 – unsafe / vulnerable lab (existing).
-vmbr2 – new internal network for game and service containers.
+```bash
+python -m venv .venv
+.venv\\Scripts\\activate
+pip install -r requirements.txt
 ```
 
-Components
-Proxmox Host
+Run API locally:
 
-Runs all LXC containers.
+```bash
+set PYTHONPATH=src
+python -m cartofia_bot.api_server
+```
 
-Provides:
+Run Discord bot locally:
 
-vmbr0 – external bridge.
-vmbr1 – unsafe lab.
-vmbr2 – internal “games & services” bridge, e.g. 10.22.0.1/24.
+```bash
+set PYTHONPATH=src
+python -m cartofia_bot.main
+```
 
-CT1000 – Bot / Orchestration
+Serve frontend files locally with any static web server.
 
-Role: control plane.
+## Environment
 
-Responsibilities:
+Copy `.env.example` to `.env` and fill required values:
 
-Run Discord bot(s).
-Talk to Proxmox API using an API token.
-Start/stop specific containers (e.g. CT2000) on demand.
-Post status updates and URLs into Discord.
+- `DISCORD_TOKEN`
+- `DISCORD_GUILD_IDS`
+- Proxmox vars (`PROXMOX_*`)
+- API vars (`API_*`, `ARCHIVE_*`, OIDC vars as needed)
 
-Network:
+## Operational Notes
 
-Attached to vmbr0 for outbound access to Discord and Proxmox API.
+- The API defaults to same-origin requests when `API_ALLOWED_ORIGINS` is unset.
+- `API_SECRET_KEY` must be set in production.
+- `PROXMOX_TOKEN_ID` + `PROXMOX_TOKEN_SECRET` are preferred over legacy token mode.
 
-Does not expose public web endpoints.
+## Status
 
-CT1010 – Gateway / Front Door
+Feature velocity is high and core functionality is live, but the next quality phase should focus on:
 
-Role: public web entry point.
-
-Responsibilities:
-
-Terminate HTTPS (TLS).
-Reverse proxy for internal services on vmbr2.
-Optionally run a Cloudflare Tunnel or similar, if needed.
-
-Example routing:
-
-https://cartofia.example.com → CT2000.
-https://games.example.com → CT2100 (future portal).
-
-Network:
-
-One interface on vmbr0 (public/LAN).
-One interface on vmbr2 (internal services).
-
-CT2000 – Cartofia Web Game
-
-Role: host the WebAssembly build of Cartofia.
-
-Responsibilities:
-
-Serve static files produced by pygbag:
-
-index.html, JavaScript, .wasm, assets.
-
-Network:
-
-Only attached to vmbr2 (e.g. 10.22.0.10).
-No direct exposure to the internet; only reachable through CT1010.
-
-Future CTs
-
-CT2100 – Games Portal
-
-A main site listing games, tools, and links.
-
-CT22xx – Additional Games / Apps
-
-Each game or app can be a separate CT, or multiple games can share one CT.
-
-CT3000 – Shared Services (optional)
-
-Databases, metrics, etc., shared across games.
-
-Networking
-
-vmbr2 is created as an internal bridge with no physical NIC:
-
-Example configuration:
-
-Bridge: vmbr2
-
-IPv4: 10.22.0.1/24
-
-No bridge ports
-
-Internal IP scheme:
-
-Proxmox host (on vmbr2): 10.22.0.1
-
-CT1010 (gateway): 10.22.0.2
-
-CT2000 (Cartofia): 10.22.0.10
-
-Future CTs: 10.22.0.x
-
-External access:
-
-Router forwards ports 80/443 to CT1010 (vmbr0 IP), or
-
-A Cloudflare Tunnel from CT1010 exposes selected hostnames without direct port forwarding.
-
-All internal HTTP traffic stays on vmbr2.
-
-Current Features
-
-Defined network layout for:
-
-Unsafe lab (vmbr1),
-
-Games/services (vmbr2).
-
-Planned separation of concerns:
-
-Bot/orchestration (CT1000),
-
-Public gateway (CT1010),
-
-Game hosting (CT2000).
-
-Architecture ready for:
-
-Pygame → WebAssembly builds (using pygbag),
-
-Publishing games via HTTPS on subdomains,
-
-Discord commands that start/stop game containers.
-
-Implementation is intentionally staged: infrastructure first, game hosting and automation next.
-
-Roadmap
-
-Phase 1 – Infrastructure
-
- Design Proxmox network layout (vmbr2 for services).
- Create vmbr2 and verify internal connectivity.
- Create CT1010 (gateway) with reverse proxy.
- Create CT2000 with a simple “Cartofia coming soon” static page.
- Configure domain + HTTPS (via Let’s Encrypt or Cloudflare).
-Phase 2 – Cartofia WebAssembly
-
- Build Cartofia using pygbag to WebAssembly.
- Deploy Cartofia WASM build into CT2000.
- Expose Cartofia at https://cartofia.example.com via CT1010.
- Basic performance and bandwidth testing with a few friends.
-Phase 3 – Discord Integration
-
- Implement Discord bot in CT1000 with /play_cartofia command.
- Wire bot to Proxmox API to start/stop CT2000.
- Add “loading…” / status messages while CT2000 boots.
- Permissions and rate limiting (which roles can start/stop games).
-Phase 4 – Platform Expansion
-
- Add CT2100 as a main games portal.
- Add additional games/tool CTs.
- Shared services CT (databases, metrics, logging).
- Documentation on how to add a new game to the platform.
-
-Inspirations & Credits
-
-Cartofia – original Pygame project.
-
-Proxmox and LXC for containerized infrastructure.
-
-pygbag for running Pygame in the browser via WebAssembly.
-
-Disclaimer
-
-This project is a personal/home lab setup and is not intended as a production-grade hosting environment.
-Security, hardening, and resource limits should be adapted to the specific deployment scenario.
-
----
+- Breaking down backend/frontend monolith files
+- Test coverage
+- CI and release pipeline
+- Security hardening (token/session strategy)
+- Artifact management for large generated game bundles

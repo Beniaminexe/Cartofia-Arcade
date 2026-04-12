@@ -273,7 +273,15 @@
       };
 
       function getToken() {
-        return (typeof localStorage !== "undefined" && localStorage.getItem("oidc_access_token")) || "";
+        var sessionToken = "";
+        var localToken = "";
+        try {
+          sessionToken = (typeof sessionStorage !== "undefined" && sessionStorage.getItem("oidc_access_token")) || "";
+          localToken = (typeof localStorage !== "undefined" && localStorage.getItem("oidc_access_token")) || "";
+        } catch (_error) {
+          return "";
+        }
+        return sessionToken || localToken;
       }
 
       function getInitials(value) {
