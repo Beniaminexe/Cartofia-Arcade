@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cartofia — Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<style>
+/* ── PROFILE-SPECIFIC TOKENS ── */
+:root {
+  --bg-deep: #080b12;
+  --bg-base: #0d1117;
+  --bg-surface: #141b27;
+  --bg-elevated: #1a2332;
+  --bg-card: #161f2d;
+  --bg-hover: #1e2a3c;
+  --border: rgba(56, 130, 235, 0.12);
+  --border-bright: rgba(56, 130, 235, 0.25);
+  --accent: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.4);
+  --accent-soft: rgba(59, 130, 246, 0.15);
+  --accent-2: #06b6d4;
+  --accent-3: #8b5cf6;
+  --text-primary: #e8edf5;
+  --text-secondary: #7d8fa8;
+  --text-muted: #4a5b73;
+  --text-accent: #7cb3ff;
+  --success: #22c55e;
+  --warning: #eab308;
+  --font-body: 'Outfit', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+}
+
+/* ── BANNER / HERO ── */
+.profile-banner {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  margin-top: 0; /* body padding-top from site.css handles nav offset */
+  overflow: hidden;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+}
+
+.banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.6);
+  display: none;
+}
+
+.banner-img.loaded { display: block; }
+
+.banner-gradient {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, transparent 30%, var(--bg-deep) 100%),
+    linear-gradient(90deg, rgba(8,11,18,0.6) 0%, transparent 50%);
+}
+
+/* ── IDENTITY HEADER ── */
+.identity-section {
+  position: relative;
+  max-width: 1100px;
+  margin: -80px auto 0;
+  padding: 0 24px;
+  z-index: 10;
+}
+
+/* "This is you" banner */
+.own-profile-notice {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  font-size: 13px;
+  color: var(--text-accent);
+}
+
+.own-profile-notice.visible { display: flex; }
+
+.own-profile-notice a {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.own-profile-notice a:hover { text-decoration: underline; }
+
+.identity-card {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 24px 28px 28px;
+  background: rgba(20, 27, 39, 0.8);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 80px var(--accent-glow);
+}
+
+.avatar-frame {
+  position: relative;
+  flex-shrink: 0;
+  margin-bottom: -8px;
+}
+
+.avatar-ring {
+  width: 120px;
+  height: 120px;
+  border-radius: 20px;
+  padding: 4px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
+  box-shadow: 0 0 30px var(--accent-glow);
+  animation: ring-glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes ring-glow {
+  0% { box-shadow: 0 0 20px var(--accent-glow); }
+  100% { box-shadow: 0 0 40px var(--accent-glow), 0 0 60px rgba(139,92,246,0.15); }
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 17px;
+  object-fit: cover;
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--accent);
+  overflow: hidden;
+}
+
+.avatar-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 17px;
+}
+
+.level-badge {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+  border: 3px solid var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 2px 10px var(--accent-glow);
+}
+
+.identity-info { flex: 1; min-width: 0; }
+
+.identity-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.display-name {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.username-link {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  text-decoration: none;
+}
+
+.username-link:hover { color: var(--text-accent); }
+
+.status-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.status-badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-online {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.badge-role {
+  background: var(--accent-soft);
+  color: var(--text-accent);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.tagline {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  font-style: italic;
+}
+
+.identity-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* Profile-local btn styles (supplement site.css .btn) */
+.btn-friend {
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: not-allowed;
+  border: 1px solid var(--border-bright);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.6;
+  position: relative;
+}
+
+.btn-share {
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--border-bright);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-share:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.coming-soon-tip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-deep);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-secondary);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.btn-friend:hover .coming-soon-tip { display: block; }
+
+/* ── MAIN CONTENT ── */
+.profile-content {
+  max-width: 1100px;
+  margin: 28px auto 60px;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+}
+
+/* ── CARDS ── */
+.pcard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  transition: border-color 0.3s;
+}
+
+.pcard:hover { border-color: var(--border-bright); }
+
+.card-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+/* ── BIO ── */
+.bio-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
+.bio-meta {
+  margin-top: 16px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.bio-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.bio-meta-item svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.6;
+}
+
+/* ── SHOWCASES ── */
+.showcases { display: flex; flex-direction: column; gap: 20px; }
+
+.showcase-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.showcase-header .card-label { margin-bottom: 0; }
+
+/* Game showcase */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.game-card {
+  position: relative;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  aspect-ratio: 3/4;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.game-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.game-card-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.7);
+  transition: filter 0.2s;
+}
+
+.game-card:hover .game-card-bg { filter: brightness(0.9); }
+
+.game-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.85) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 12px;
+}
+
+.game-card-name { font-size: 12px; font-weight: 600; color: white; }
+.game-card-hours { font-size: 10px; color: rgba(255,255,255,0.6); font-family: var(--font-mono); }
+
+/* Achievement showcase */
+.achievement-row { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.achievement-item {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.achievement-item:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 16px var(--accent-glow);
+  transform: scale(1.08);
+}
+
+.achievement-item.rare {
+  border-color: rgba(234, 179, 8, 0.4);
+  background: rgba(234, 179, 8, 0.08);
+}
+
+.achievement-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-deep);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-primary);
+  z-index: 20;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+
+.achievement-item:hover .achievement-tooltip { display: block; }
+
+/* Arcade records */
+.record-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.record-row:last-child { margin-bottom: 0; }
+.record-game { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.record-label { font-size: 11px; color: var(--text-muted); }
+.record-value { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent); }
+
+.showcase-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ── ACTIVITY ── */
+.activity-list { display: flex; flex-direction: column; gap: 0; }
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.activity-item:last-child { border-bottom: none; }
+
+.activity-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.activity-icon.play   { background: rgba(59, 130, 246, 0.15); }
+.activity-icon.badge  { background: rgba(234, 179, 8, 0.15); }
+.activity-icon.upload { background: rgba(34, 197, 94, 0.15); }
+.activity-icon.level  { background: rgba(139, 92, 246, 0.15); }
+.activity-icon.avatar { background: rgba(59, 130, 246, 0.1); }
+
+.activity-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.activity-text strong { color: var(--text-primary); font-weight: 500; }
+.activity-text .highlight { color: var(--text-accent); font-weight: 500; }
+.activity-time { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 2px; }
+
+/* ── SIDEBAR ── */
+.sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stat-cell {
+  padding: 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  border: 1px solid var(--border);
+  transition: border-color 0.3s;
+}
+
+.stat-cell:hover { border-color: var(--border-bright); }
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+/* Level progress */
+.level-section { text-align: center; }
+
+.level-ring {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 12px;
+  position: relative;
+}
+
+.level-ring svg { width: 80px; height: 80px; transform: rotate(-90deg); }
+.level-ring-bg { fill: none; stroke: var(--bg-hover); stroke-width: 4; }
+.level-ring-fill {
+  fill: none;
+  stroke: url(#level-gradient);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 226;
+  stroke-dashoffset: 226;
+  transition: stroke-dashoffset 1s ease;
+}
+
+.level-number {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.level-xp { font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); }
+
+/* Badge case */
+.badge-case { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.badge-item {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all 0.2s;
+}
+
+.badge-item.featured {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.badge-item:hover { transform: scale(1.1); border-color: var(--accent); }
+
+/* Profile meta */
+.meta-list { display: flex; flex-direction: column; gap: 10px; }
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.meta-key { color: var(--text-muted); }
+.meta-value { color: var(--text-secondary); font-family: var(--font-mono); font-size: 12px; }
+
+/* ── 404 STATE ── */
+.not-found {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  gap: 16px;
+  padding: 48px 24px;
+}
+
+.not-found-icon { font-size: 64px; }
+.not-found h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; color: var(--text-primary); }
+.not-found p { font-size: 15px; color: var(--text-secondary); max-width: 40ch; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in { animation: fadeInUp 0.5s ease forwards; opacity: 0; }
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }
+.delay-6 { animation-delay: 0.6s; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .profile-content { grid-template-columns: 1fr; }
+  .identity-card { flex-direction: column; align-items: flex-start; }
+  .identity-actions { align-self: flex-start; margin-top: 12px; }
+  .avatar-ring { width: 96px; height: 96px; }
+  .display-name { font-size: 22px; }
+  .game-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 520px) {
+  .profile-banner { height: 200px; }
+  .identity-section { margin-top: -50px; }
+  .identity-card { padding: 16px 18px 20px; gap: 16px; }
+  .avatar-ring { width: 72px; height: 72px; }
+  .level-badge { width: 28px; height: 28px; font-size: 11px; }
+  .display-name { font-size: 20px; }
+  .game-grid { grid-template-columns: repeat(2, 1fr); }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .profile-content { padding: 0 16px; }
+  .identity-section { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV — site.js renders viewer's own avatar here -->
+<header class="app-header">
+  <a class="brand" href="/">
+    <span class="brand-chip" aria-hidden="true">
+      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"/>
+        <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"/>
+        <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"/>
+        <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"/>
+      </svg>
+    </span>
+    <span class="brand-text">Cartofia</span>
+  </a>
+  <nav class="site-nav" aria-label="Primary">
+    <a href="/">Home</a>
+    <a href="/arcade/">Arcade</a>
+    <a href="/minecraft/">Minecraft</a>
+    <a href="/account/">Account</a>
+  </nav>
+  <div class="account-menu" data-account-menu>
+    <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+    <div class="account-dropdown hidden" data-account-dropdown role="menu">
+      <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+    </div>
+  </div>
+</header>
+
+<!-- 404 STATE (hidden until needed) -->
+<div class="not-found" id="notFound">
+  <div class="not-found-icon">👤</div>
+  <h1>Profile not found</h1>
+  <p>This profile doesn't exist or has been set to private.</p>
+  <a class="btn btn-ghost" href="/">Back to Home</a>
+</div>
+
+<!-- PROFILE CONTENT (shown after successful load) -->
+<div id="profileContent" style="display:none">
+
+  <!-- BANNER -->
+  <div class="profile-banner">
+    <img class="banner-img" id="bannerImg" alt="Profile banner">
+    <div class="banner-gradient"></div>
+  </div>
+
+  <!-- IDENTITY HEADER -->
+  <div class="identity-section animate-in">
+    <!-- "This is you" notice — shown if viewer owns this profile -->
+    <div class="own-profile-notice" id="ownProfileNotice">
+      <span>This is your public profile.</span>
+      <a href="/account/profile/">Edit your profile →</a>
+    </div>
+
+    <div class="identity-card">
+      <div class="avatar-frame">
+        <div class="avatar-ring">
+          <div class="avatar-img" id="avatarDisplay">–</div>
+        </div>
+        <div class="level-badge" id="levelBadge">1</div>
+      </div>
+
+      <div class="identity-info">
+        <div class="identity-top">
+          <span class="display-name" id="displayName">Loading…</span>
+          <a class="username-link" id="usernameDisplay" href="#" title="Public profile link">@—</a>
+          <div class="status-badges">
+            <span class="status-badge badge-role" id="roleBadge">Member</span>
+          </div>
+        </div>
+        <div class="tagline" id="tagline">—</div>
+      </div>
+
+      <div class="identity-actions">
+        <button class="btn-friend" type="button" disabled aria-disabled="true">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 8c3.3 0 6 1.3 6 3v1H2v-1c0-1.7 2.7-3 6-3z" fill="currentColor" opacity="0.6"/><path d="M13 5v4M11 7h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Add Friend
+          <span class="coming-soon-tip">Coming soon</span>
+        </button>
+        <button class="btn-share" type="button" id="shareBtn">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="12" cy="3" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 9l4 3M10 4L6 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Share
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="profile-content">
+
+    <!-- LEFT COLUMN -->
+    <div class="main-column">
+
+      <!-- BIO -->
+      <div class="pcard animate-in delay-1">
+        <div class="card-label">About</div>
+        <div class="bio-text" id="bioText">—</div>
+        <div class="bio-meta">
+          <div class="bio-meta-item">
+            <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 4v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Joined <span id="joinedDate">—</span>
+          </div>
+          <div class="bio-meta-item">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M2 13V3h12v10H2zM5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span id="profileViewsCount">0</span> profile views
+          </div>
+        </div>
+      </div>
+
+      <!-- SHOWCASES -->
+      <div class="showcases" id="showcasesContainer"></div>
+
+      <!-- ACTIVITY FEED -->
+      <div class="pcard animate-in delay-5">
+        <div class="card-label">Recent Activity</div>
+        <div class="activity-list" id="activityList">
+          <div class="activity-item">
+            <div class="activity-icon play">⏳</div>
+            <div><div class="activity-text">Loading activity…</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- Level -->
+      <div class="pcard animate-in delay-2">
+        <div class="card-label">Level</div>
+        <div class="level-section">
+          <div class="level-ring">
+            <svg viewBox="0 0 80 80">
+              <defs>
+                <linearGradient id="level-gradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="var(--accent)"/>
+                  <stop offset="100%" stop-color="var(--accent-3)"/>
+                </linearGradient>
+              </defs>
+              <circle class="level-ring-bg" cx="40" cy="40" r="36"/>
+              <circle class="level-ring-fill" id="levelRingFill" cx="40" cy="40" r="36"/>
+            </svg>
+            <div class="level-number" id="levelNumber">1</div>
+          </div>
+          <div class="level-xp" id="levelXp">0 XP</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="pcard animate-in delay-3">
+        <div class="card-label">Stats</div>
+        <div class="stats-grid">
+          <div class="stat-cell">
+            <div class="stat-value" id="statGamesPlayed">0</div>
+            <div class="stat-label">Games Played</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-value" id="statPlaytime">0h</div>
+            <div class="stat-label">Playtime</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-value" id="statAchievements">0</div>
+            <div class="stat-label">Achievements</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-value" id="statUploads">0</div>
+            <div class="stat-label">Uploads</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-value" id="statBadges">0</div>
+            <div class="stat-label">Badges</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-value" id="statViews">0</div>
+            <div class="stat-label">Profile Views</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Badge Case -->
+      <div class="pcard animate-in delay-4">
+        <div class="card-label">Badge Case</div>
+        <div class="badge-case" id="badgeCase">
+          <div style="font-size:13px;color:var(--text-muted);">No badges yet</div>
+        </div>
+      </div>
+
+      <!-- Profile Meta -->
+      <div class="pcard animate-in delay-5">
+        <div class="card-label">Profile</div>
+        <div class="meta-list">
+          <div class="meta-row">
+            <span class="meta-key">Account Age</span>
+            <span class="meta-value" id="metaAccountAge">—</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-key">Theme</span>
+            <span class="meta-value" id="metaTheme">Ocean</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-key">Featured Badge</span>
+            <span class="meta-value" id="metaFeaturedBadge">None</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-key">Showcases</span>
+            <span class="meta-value" id="metaShowcases">0 / 3</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div><!-- #profileContent -->
+
+<script src="/assets/site.js"></script>
+<script>
+/* ─────────────────────────────────────────────
+   URL parsing — extract username from /u/<username>
+───────────────────────────────────────────── */
+function getUsernameFromPath() {
+  const parts = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/');
+  // ['u', 'arcadejockey'] → 'arcadejockey'
+  return parts.length >= 2 ? (parts[1] || '') : '';
+}
+
+/* ─────────────────────────────────────────────
+   Theme system (read-only — applies owner's theme)
+───────────────────────────────────────────── */
+const THEMES = {
+  ocean:     { accent:'#3b82f6', accentGlow:'rgba(59,130,246,0.4)',  accentSoft:'rgba(59,130,246,0.15)',  accent2:'#06b6d4', accent3:'#8b5cf6', textAccent:'#7cb3ff' },
+  neon:      { accent:'#a855f7', accentGlow:'rgba(168,85,247,0.4)',  accentSoft:'rgba(168,85,247,0.15)',  accent2:'#ec4899', accent3:'#f472b6', textAccent:'#d8b4fe' },
+  ember:     { accent:'#f59e0b', accentGlow:'rgba(245,158,11,0.4)',  accentSoft:'rgba(245,158,11,0.15)',  accent2:'#ef4444', accent3:'#f97316', textAccent:'#fcd34d' },
+  matrix:    { accent:'#22c55e', accentGlow:'rgba(34,197,94,0.4)',   accentSoft:'rgba(34,197,94,0.15)',   accent2:'#06b6d4', accent3:'#10b981', textAccent:'#86efac' },
+  synthwave: { accent:'#e11d48', accentGlow:'rgba(225,29,72,0.4)',   accentSoft:'rgba(225,29,72,0.15)',   accent2:'#9333ea', accent3:'#ec4899', textAccent:'#fda4af' },
+};
+
+const THEME_NAMES = { ocean:'Deep Ocean', neon:'Neon Night', ember:'Ember', matrix:'Matrix', synthwave:'Synthwave' };
+
+function applyTheme(name) {
+  const t = THEMES[name] || THEMES.ocean;
+  const r = document.documentElement;
+  r.style.setProperty('--accent', t.accent);
+  r.style.setProperty('--accent-glow', t.accentGlow);
+  r.style.setProperty('--accent-soft', t.accentSoft);
+  r.style.setProperty('--accent-2', t.accent2);
+  r.style.setProperty('--accent-3', t.accent3);
+  r.style.setProperty('--text-accent', t.textAccent);
+  document.getElementById('metaTheme').textContent = THEME_NAMES[name] || name;
+}
+
+/* ─────────────────────────────────────────────
+   Avatar rendering
+───────────────────────────────────────────── */
+function setAvatar(url, initials) {
+  const el = document.getElementById('avatarDisplay');
+  if (url) {
+    el.innerHTML = `<img src="${url}" alt="avatar" onerror="this.parentElement.textContent='${escHtml(initials)}'">`;
+  } else {
+    el.textContent = initials;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Level calculation
+───────────────────────────────────────────── */
+function calcLevel(stats) {
+  const xp = (stats.games_played || 0) * 50
+           + (stats.achievements_unlocked || 0) * 100
+           + (stats.uploads || 0) * 25
+           + (stats.badges_earned || 0) * 75;
+  const level = Math.max(1, Math.floor(Math.sqrt(xp / 100)) + 1);
+  const xpForLevel = Math.pow(level - 1, 2) * 100;
+  const xpForNext  = Math.pow(level, 2) * 100;
+  const progress = xpForNext > xpForLevel
+    ? (xp - xpForLevel) / (xpForNext - xpForLevel)
+    : 1;
+  return { level, xp, xpForNext, progress };
+}
+
+function renderLevel(stats) {
+  const { level, xp, xpForNext, progress } = calcLevel(stats);
+  document.getElementById('levelNumber').textContent = level;
+  document.getElementById('levelBadge').textContent = level;
+  document.getElementById('levelXp').textContent = xp.toLocaleString() + ' / ' + xpForNext.toLocaleString() + ' XP';
+  document.getElementById('levelRingFill').style.strokeDashoffset = 226 * (1 - progress);
+}
+
+/* ─────────────────────────────────────────────
+   Time helpers
+───────────────────────────────────────────── */
+function relTime(iso) {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  if (diff < 86400 * 7) return Math.floor(diff / 86400) + 'd ago';
+  return new Date(iso).toLocaleDateString();
+}
+
+function accountAge(iso) {
+  const months = Math.floor((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+  if (months < 1) return '< 1 month';
+  if (months < 12) return months + ' month' + (months > 1 ? 's' : '');
+  const y = Math.floor(months / 12), m = months % 12;
+  return y + 'y' + (m ? ' ' + m + 'mo' : '');
+}
+
+function fmtPlaytime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  if (h < 1) return Math.floor(seconds / 60) + 'm';
+  return h + 'h';
+}
+
+function joinedFmt(iso) {
+  return new Date(iso).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+}
+
+/* ─────────────────────────────────────────────
+   Activity rendering
+───────────────────────────────────────────── */
+const ACTIVITY_MAP = {
+  played_game:          { icon: '🎮', cls: 'play',   text: m => `Played <span class="highlight">${escHtml(m.game || 'a game')}</span>` },
+  earned_badge:         { icon: '🏆', cls: 'badge',  text: m => `Earned badge <strong>${escHtml(m.badge || '')}</strong>` },
+  unlocked_achievement: { icon: '🎖️', cls: 'badge',  text: m => `Unlocked achievement <strong>${escHtml(m.achievement || '')}</strong>` },
+  uploaded_file:        { icon: '📁', cls: 'upload', text: () => 'Uploaded a file to Archive' },
+  reached_level:        { icon: '⬆️', cls: 'level',  text: m => `Reached <span class="highlight">Level ${escHtml(String(m.level || '?'))}</span>` },
+  changed_avatar:       { icon: '🖼️', cls: 'avatar', text: () => 'Updated profile avatar' },
+  changed_banner:       { icon: '🖼️', cls: 'avatar', text: () => 'Updated profile banner' },
+};
+
+function renderActivity(items) {
+  const list = document.getElementById('activityList');
+  if (!items || items.length === 0) {
+    list.innerHTML = '<div class="activity-item"><div class="activity-icon play">💤</div><div><div class="activity-text">No activity yet</div></div></div>';
+    return;
+  }
+  list.innerHTML = items.map(item => {
+    const def = ACTIVITY_MAP[item.event_type] || { icon: '●', cls: 'play', text: () => escHtml(item.event_type) };
+    return `<div class="activity-item">
+      <div class="activity-icon ${def.cls}">${def.icon}</div>
+      <div>
+        <div class="activity-text">${def.text(item.metadata || {})}</div>
+        <div class="activity-time">${relTime(item.created_at)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ─────────────────────────────────────────────
+   Showcase rendering
+───────────────────────────────────────────── */
+const GAME_COLORS = [
+  'linear-gradient(135deg,#b91c1c,#ef4444)',
+  'linear-gradient(135deg,#0f766e,#2dd4bf)',
+  'linear-gradient(135deg,#7c3aed,#a78bfa)',
+  'linear-gradient(135deg,#1d4ed8,#60a5fa)',
+  'linear-gradient(135deg,#b45309,#fcd34d)',
+];
+
+function renderShowcase(s) {
+  const cfg = s.config || {};
+  const label = {
+    favorite_games: '★ Favorite Games',
+    achievements:   '🏆 Achievement Showcase',
+    arcade_records: '🎯 Arcade Records',
+    badge_case:     '🎖️ Badge Case',
+  }[s.showcase_type] || s.showcase_type;
+
+  let body = '';
+
+  if (s.showcase_type === 'favorite_games') {
+    const games = cfg.games || [];
+    body = games.length
+      ? '<div class="game-grid">' + games.slice(0, 3).map((g, i) => `
+          <div class="game-card">
+            <div class="game-card-bg" style="background:${GAME_COLORS[i % GAME_COLORS.length]};"></div>
+            <div class="game-card-overlay">
+              <div class="game-card-name">${escHtml(g.name || 'Game')}</div>
+              <div class="game-card-hours">${g.hours || 0} hrs</div>
+            </div>
+          </div>`).join('') + '</div>'
+      : '<div class="showcase-empty">No favorite games set.</div>';
+
+  } else if (s.showcase_type === 'achievements') {
+    const items = cfg.achievements || [];
+    body = items.length
+      ? '<div class="achievement-row">' + items.map(a => `
+          <div class="achievement-item ${a.rare ? 'rare' : ''}">
+            ${escHtml(a.emoji || '🏅')}
+            <div class="achievement-tooltip">${escHtml(a.label || '')}</div>
+          </div>`).join('') + '</div>'
+      : '<div class="showcase-empty">No achievements showcased.</div>';
+
+  } else if (s.showcase_type === 'arcade_records') {
+    const records = cfg.records || [];
+    body = records.length
+      ? '<div>' + records.map(r => `
+          <div class="record-row">
+            <div>
+              <div class="record-game">${escHtml(r.game || '')}</div>
+              <div class="record-label">${escHtml(r.label || 'Personal Best')}</div>
+            </div>
+            <div class="record-value">${escHtml(String(r.value || '—'))}</div>
+          </div>`).join('') + '</div>'
+      : '<div class="showcase-empty">No records set.</div>';
+
+  } else if (s.showcase_type === 'badge_case') {
+    const badges = cfg.badges || [];
+    body = badges.length
+      ? '<div class="badge-case">' + badges.map(b => `
+          <div class="badge-item" title="${escHtml(b.label || '')}">${escHtml(b.emoji || '🏅')}</div>`
+        ).join('') + '</div>'
+      : '<div class="showcase-empty">No badges in showcase.</div>';
+  }
+
+  return `<div class="pcard animate-in">
+    <div class="showcase-header">
+      <div class="card-label">${label}</div>
+    </div>
+    ${body}
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────
+   Stats rendering
+───────────────────────────────────────────── */
+function renderStats(stats) {
+  document.getElementById('statGamesPlayed').textContent  = (stats.games_played || 0).toLocaleString();
+  document.getElementById('statPlaytime').textContent     = fmtPlaytime(stats.total_playtime_seconds || 0);
+  document.getElementById('statAchievements').textContent = (stats.achievements_unlocked || 0).toLocaleString();
+  document.getElementById('statUploads').textContent      = (stats.uploads || 0).toLocaleString();
+  document.getElementById('statBadges').textContent       = (stats.badges_earned || 0).toLocaleString();
+  document.getElementById('statViews').textContent        = (stats.profile_views || 0).toLocaleString();
+  document.getElementById('profileViewsCount').textContent = (stats.profile_views || 0).toLocaleString();
+}
+
+/* ─────────────────────────────────────────────
+   Full profile render
+───────────────────────────────────────────── */
+function renderProfile(data) {
+  const { profile, showcases, stats, activity } = data;
+
+  // Page title
+  document.title = (profile.display_name || profile.username_slug || 'Profile') + ' — Cartofia';
+
+  // Banner
+  if (profile.banner_url) {
+    const img = document.getElementById('bannerImg');
+    img.src = profile.banner_url;
+    img.onload  = () => img.classList.add('loaded');
+    img.onerror = () => {};
+  }
+
+  // Avatar
+  const initials = (profile.display_name || profile.username_slug || '?').slice(0, 2).toUpperCase();
+  setAvatar(profile.avatar_url, initials);
+
+  // Identity
+  document.getElementById('displayName').textContent = profile.display_name || profile.username_slug || '—';
+  const uLink = document.getElementById('usernameDisplay');
+  uLink.textContent = '@' + (profile.username_slug || '—');
+  uLink.href = '/u/' + (profile.username_slug || '');
+
+  document.getElementById('tagline').textContent = profile.tagline || '';
+
+  // Bio
+  document.getElementById('bioText').textContent = profile.bio || 'No bio yet.';
+  document.getElementById('joinedDate').textContent = joinedFmt(profile.created_at);
+
+  // Meta sidebar
+  document.getElementById('metaAccountAge').textContent  = accountAge(profile.created_at);
+  document.getElementById('metaFeaturedBadge').textContent = profile.featured_badge || 'None';
+  document.getElementById('metaShowcases').textContent   = (showcases ? showcases.length : 0) + ' / 3';
+
+  // Theme (read-only: apply owner's theme)
+  applyTheme(profile.theme || 'ocean');
+
+  // Stats & level
+  renderStats(stats || {});
+  renderLevel(stats || {});
+
+  // Badge case
+  const bc = document.getElementById('badgeCase');
+  bc.innerHTML = profile.featured_badge
+    ? `<div class="badge-item featured" title="Featured">${escHtml(profile.featured_badge)}</div>`
+    : '<div style="font-size:13px;color:var(--text-muted);">No badges yet</div>';
+
+  // Showcases
+  const sc = document.getElementById('showcasesContainer');
+  sc.innerHTML = (showcases && showcases.length)
+    ? showcases.map(renderShowcase).join('')
+    : '';
+
+  // Activity
+  renderActivity(activity);
+
+  // Show profile content
+  document.getElementById('profileContent').style.display = 'block';
+
+  // Wire up scroll animations
+  document.querySelectorAll('.animate-in').forEach(el => {
+    el.style.animationPlayState = 'paused';
+    animObserver.observe(el);
+  });
+}
+
+/* ─────────────────────────────────────────────
+   Show "This is you" banner if viewer owns profile
+───────────────────────────────────────────── */
+function checkOwnProfile(profileSlug) {
+  // Use site.js's stored token to silently check userinfo
+  const token = sessionStorage.getItem('oidc_access_token')
+              || localStorage.getItem('oidc_access_token');
+  if (!token) return;
+
+  fetch('/application/o/userinfo/', {
+    headers: { 'Authorization': 'Bearer ' + token },
+  })
+    .then(r => r.ok ? r.json() : null)
+    .then(claims => {
+      if (!claims) return;
+      const viewerSlug = (claims.preferred_username || '').toLowerCase();
+      if (viewerSlug && viewerSlug === profileSlug.toLowerCase()) {
+        document.getElementById('ownProfileNotice').classList.add('visible');
+      }
+    })
+    .catch(() => {});
+}
+
+/* ─────────────────────────────────────────────
+   Utility
+───────────────────────────────────────────── */
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* ─────────────────────────────────────────────
+   Intersection observer for scroll animations
+───────────────────────────────────────────── */
+const animObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.style.animationPlayState = 'running';
+  });
+}, { threshold: 0.1 });
+
+/* ─────────────────────────────────────────────
+   Share button
+───────────────────────────────────────────── */
+document.getElementById('shareBtn').addEventListener('click', () => {
+  navigator.clipboard.writeText(window.location.href).then(
+    () => { /* silent success */ },
+    () => { /* silent fail */ },
+  );
+  const btn = document.getElementById('shareBtn');
+  const orig = btn.innerHTML;
+  btn.textContent = 'Copied!';
+  setTimeout(() => { btn.innerHTML = orig; }, 1500);
+});
+
+/* ─────────────────────────────────────────────
+   Bootstrap
+───────────────────────────────────────────── */
+(async function init() {
+  const username = getUsernameFromPath();
+
+  if (!username) {
+    document.getElementById('notFound').style.display = 'flex';
+    return;
+  }
+
+  try {
+    const resp = await fetch('/api/profile/' + encodeURIComponent(username));
+    if (resp.status === 404 || resp.status === 403) {
+      document.getElementById('notFound').style.display = 'flex';
+      document.title = 'Profile not found — Cartofia';
+      return;
+    }
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+    const data = await resp.json();
+    renderProfile(data);
+    checkOwnProfile(data.profile.username_slug || username);
+
+  } catch (err) {
+    document.getElementById('notFound').style.display = 'flex';
+    document.title = 'Profile not found — Cartofia';
+  }
+})();
+</script>
+</body>
+</html>
