@@ -1,6 +1,8 @@
 (function () {
   /* OIDC configuration */
   var OIDC_USERINFO_URL = "/application/o/userinfo/";
+  var OIDC_TOKEN_URL    = "/application/o/token/";
+  var OIDC_CLIENT_ID    = "cartofia";
   var OIDC_LOGOUT_URL   = "/application/o/cartofia/end-session/";
   var OIDC_LOGIN_URL    = "/account/#login";
   var PROFILE_ME_URL    = "/api/profile/me";
@@ -20,18 +22,68 @@
     return null;
   }
 
+  /* Returns { token, storage: "session"|"local" } or null */
+  function getStoredRefreshToken() {
+    try {
+      if (typeof sessionStorage !== "undefined") {
+        var v = sessionStorage.getItem("oidc_refresh_token");
+        if (v) return { token: v, storage: "session" };
+      }
+      if (typeof localStorage !== "undefined") {
+        var v = localStorage.getItem("oidc_refresh_token");
+        if (v) return { token: v, storage: "local" };
+      }
+    } catch (_) {}
+    return null;
+  }
+
   function clearStoredTokens() {
     try {
       if (typeof sessionStorage !== "undefined") {
         sessionStorage.removeItem("oidc_access_token");
         sessionStorage.removeItem("oidc_id_token");
+        sessionStorage.removeItem("oidc_refresh_token");
       }
       if (typeof localStorage !== "undefined") {
         localStorage.removeItem("oidc_access_token");
         localStorage.removeItem("oidc_id_token");
+        localStorage.removeItem("oidc_refresh_token");
+        localStorage.removeItem("cartofia_remember");
       }
     } catch (_error) {
       return;
+    }
+  }
+
+  /* Silently exchange a stored refresh token for a new access token.
+     Writes the new tokens back to the same storage tier (local or session).
+     Returns the new access token string, or null on failure. */
+  async function refreshTokensSilently() {
+    var stored = getStoredRefreshToken();
+    if (!stored) return null;
+    try {
+      var resp = await fetch(OIDC_TOKEN_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          grant_type:    "refresh_token",
+          client_id:     OIDC_CLIENT_ID,
+          refresh_token: stored.token,
+        }),
+      });
+      if (!resp.ok) {
+        clearStoredTokens();
+        return null;
+      }
+      var tokens = await resp.json();
+      var store = stored.storage === "local" ? localStorage : sessionStorage;
+      store.setItem("oidc_access_token", tokens.access_token);
+      if (tokens.id_token) store.setItem("oidc_id_token", tokens.id_token);
+      if (tokens.refresh_token) store.setItem("oidc_refresh_token", tokens.refresh_token);
+      return tokens.access_token;
+    } catch (_) {
+      clearStoredTokens();
+      return null;
     }
   }
 
@@ -66,6 +118,27 @@
         credentials: "include",
         headers: headers,
       });
+
+      /* Access token expired — try a silent refresh before giving up */
+      if (response.status === 401 && token) {
+        var newToken = await refreshTokensSilently();
+        if (!newToken) return { authenticated: false };
+        var retryResp = await fetch(OIDC_USERINFO_URL, {
+          credentials: "include",
+          headers: { "Authorization": "Bearer " + newToken },
+        });
+        if (!retryResp.ok) return { authenticated: false };
+        var retryClaims = await retryResp.json();
+        return {
+          authenticated: true,
+          user: {
+            username: retryClaims.preferred_username || retryClaims.sub || "",
+            email:    retryClaims.email || "",
+            groups:   retryClaims.groups || [],
+          },
+        };
+      }
+
       if (response.status === 401 || !response.ok) {
         return { authenticated: false };
       }
@@ -74,8 +147,8 @@
         authenticated: true,
         user: {
           username: claims.preferred_username || claims.sub || "",
-          email: claims.email || "",
-          groups: claims.groups || [],
+          email:    claims.email || "",
+          groups:   claims.groups || [],
         },
       };
     } catch (_error) {
