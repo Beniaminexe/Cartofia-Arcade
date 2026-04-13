@@ -4,10 +4,7 @@
   <meta charset="utf-8" />
   <title>Cartofia Minecraft</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css" />
+  <link rel="stylesheet" href="/assets/site.css?v=4" />
   <style>
     .minecraft-hero {
       grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
@@ -34,13 +31,12 @@
     }
 
     .server-callout h2 {
-      font-family: "Sora", "Segoe UI", sans-serif;
       font-size: clamp(22px, 2.3vw, 34px);
       letter-spacing: -0.03em;
     }
 
     .server-code {
-      font-family: "Sora", "Segoe UI", sans-serif;
+      font-family: var(--font-mono);
       color: #d9efff;
       font-size: 18px;
       letter-spacing: -0.02em;
@@ -85,12 +81,12 @@
       border-radius: 14px;
       padding: 12px 14px;
       background: rgba(11, 19, 31, 0.58);
-      color: #c5d4e7;
+      color: var(--text-secondary);
       font-size: 14px;
     }
 
     .join-steps b {
-      color: #f2f6ff;
+      color: var(--text-primary);
       font-weight: 700;
     }
 
@@ -128,14 +124,13 @@
     }
 
     .mc-highlight h3 {
-      font-family: "Sora", "Segoe UI", sans-serif;
       font-size: clamp(19px, 2vw, 28px);
       letter-spacing: -0.03em;
       line-height: 1.1;
     }
 
     .mc-highlight p {
-      color: var(--muted);
+      color: var(--text-secondary);
       font-size: 14px;
     }
 
@@ -149,33 +144,26 @@
   </style>
 </head>
 <body>
-  <div class="site-shell">
-    <header class="app-header reveal">
-      <a class="brand" href="/">
-        <span class="brand-chip" aria-hidden="true">
-          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
-            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
-            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
-            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
-          </svg>
-        </span>
-        <span class="brand-text">Cartofia</span>
-      </a>
-      <nav class="site-nav" aria-label="Primary">
-        <a href="/">Home</a>
-        <a href="/arcade/">Arcade</a>
-        <a class="active" href="/minecraft/">Minecraft</a>
-        <a href="/account/">Account</a>
-      </nav>
-      <div class="account-menu" data-account-menu>
-        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
-        <div class="account-dropdown hidden" data-account-dropdown role="menu">
-          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-        </div>
+  <header class="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+      Cartofia
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/">Arcade</a>
+      <a class="active" href="/minecraft/">Minecraft</a>
+      <a href="/account/">Account</a>
+    </nav>
+    <div class="account-menu" data-account-menu>
+      <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+      <div class="account-dropdown hidden" data-account-dropdown role="menu">
+        <a class="account-item" href="/account/" role="menuitem">Open Account</a>
       </div>
-    </header>
+    </div>
+  </header>
 
+  <div class="site-shell" style="position:relative;z-index:1;">
     <main>
       <section class="page-hero minecraft-hero reveal" data-delay="1">
         <div class="minecraft-hero-copy">
@@ -199,7 +187,7 @@
           <p class="section-label">Server Address</p>
           <h2>Connect directly</h2>
           <div class="server-code" id="serverIp">answers-advertising.gl.joinmc.link</div>
-          <p style="color:var(--muted);font-size:14px;">Use Java Edition and add the server with port 25565.</p>
+          <p style="color:var(--text-secondary);font-size:14px;">Use Java Edition and add the server with port 25565.</p>
           <div class="button-row">
             <a class="btn btn-ghost" href="minecraft://answers-advertising.gl.joinmc.link:25565">Open In Launcher</a>
           </div>
@@ -215,7 +203,7 @@
 
         <div class="mc-content">
           <article class="card">
-            <h3 style="font-family:'Sora','Segoe UI',sans-serif;font-size:32px;letter-spacing:-0.03em;">Join steps</h3>
+            <h3 style="font-size:32px;letter-spacing:-0.03em;">Join steps</h3>
             <ul class="join-steps">
               <li>Open <b>Minecraft Java Edition</b> and go to multiplayer server list.</li>
               <li>Add server: <b>answers-advertising.gl.joinmc.link:25565</b>.</li>
@@ -282,7 +270,7 @@
     </footer>
   </div>
 
-  <script src="/assets/site.js"></script>
+  <script src="/assets/site.js?v=4"></script>
   <script>
     const CONFIG = {
       serverHost: "answers-advertising.gl.joinmc.link",
