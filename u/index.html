@@ -1026,16 +1026,35 @@ function renderActivity(items) {
 /* ─────────────────────────────────────────────
    Showcase rendering
 ───────────────────────────────────────────── */
-const GAME_COLORS = [
+const GAME_COLORS = {
+  'bomber-raid':  'linear-gradient(135deg,#b91c1c,#ef4444)',
+  'blackjack':    'linear-gradient(135deg,#0f766e,#2dd4bf)',
+  'chess':        'linear-gradient(135deg,#7c3aed,#a78bfa)',
+  'checkers':     'linear-gradient(135deg,#c2410c,#fb923c)',
+  'snake':        'linear-gradient(135deg,#15803d,#4ade80)',
+  'zuma-temple':  'linear-gradient(135deg,#b45309,#fbbf24)',
+  'minesweeper':  'linear-gradient(135deg,#475569,#94a3b8)',
+  'maze-chase':   'linear-gradient(135deg,#1d4ed8,#60a5fa)',
+};
+const GAME_COLORS_FALLBACK = [
   'linear-gradient(135deg,#b91c1c,#ef4444)',
   'linear-gradient(135deg,#0f766e,#2dd4bf)',
   'linear-gradient(135deg,#7c3aed,#a78bfa)',
   'linear-gradient(135deg,#1d4ed8,#60a5fa)',
-  'linear-gradient(135deg,#b45309,#fcd34d)',
+  'linear-gradient(135deg,#b45309,#fbbf24)',
 ];
+let arcadeStats = null;
+
+function gameColor(gameId, idx) {
+  return GAME_COLORS[gameId] || GAME_COLORS_FALLBACK[idx % GAME_COLORS_FALLBACK.length];
+}
+
+function fmtHrs(seconds) {
+  const h = seconds / 3600;
+  return h < 0.1 ? '<1m' : h.toFixed(1) + ' hrs';
+}
 
 function renderShowcase(s) {
-  const cfg = s.config || {};
   const label = {
     favorite_games: '★ Favorite Games',
     achievements:   '🏆 Achievement Showcase',
@@ -1043,49 +1062,48 @@ function renderShowcase(s) {
     badge_case:     '🎖️ Badge Case',
   }[s.showcase_type] || s.showcase_type;
 
+  const games = (arcadeStats && arcadeStats.games) ? arcadeStats.games : [];
   let body = '';
 
   if (s.showcase_type === 'favorite_games') {
-    const games = cfg.games || [];
-    body = games.length
-      ? '<div class="game-grid">' + games.slice(0, 3).map((g, i) => `
+    if (!games.length) {
+      body = '<div class="showcase-empty">No games played yet.</div>';
+    } else {
+      const top = games.slice(0, 3);
+      body = '<div class="game-grid">' + top.map((g, i) => `
           <div class="game-card">
-            <div class="game-card-bg" style="background:${GAME_COLORS[i % GAME_COLORS.length]};"></div>
+            <div class="game-card-bg" style="background:${gameColor(g.game, i)};"></div>
             <div class="game-card-overlay">
-              <div class="game-card-name">${escHtml(g.name || 'Game')}</div>
-              <div class="game-card-hours">${g.hours || 0} hrs</div>
+              <div class="game-card-name">${escHtml(g.display_name || g.game)}</div>
+              <div class="game-card-hours">${fmtHrs(g.total_playtime_seconds)}</div>
             </div>
-          </div>`).join('') + '</div>'
-      : '<div class="showcase-empty">No favorite games set.</div>';
-
-  } else if (s.showcase_type === 'achievements') {
-    const items = cfg.achievements || [];
-    body = items.length
-      ? '<div class="achievement-row">' + items.map(a => `
-          <div class="achievement-item ${a.rare ? 'rare' : ''}">
-            ${escHtml(a.emoji || '🏅')}
-            <div class="achievement-tooltip">${escHtml(a.label || '')}</div>
-          </div>`).join('') + '</div>'
-      : '<div class="showcase-empty">No achievements showcased.</div>';
+          </div>`).join('') + '</div>';
+    }
 
   } else if (s.showcase_type === 'arcade_records') {
-    const records = cfg.records || [];
-    body = records.length
-      ? '<div>' + records.map(r => `
+    if (!games.length) {
+      body = '<div class="showcase-empty">No games played yet.</div>';
+    } else {
+      const sorted = [...games].sort((a, b) => b.total_sessions - a.total_sessions);
+      body = '<div>' + sorted.map(r => `
           <div class="record-row">
             <div>
-              <div class="record-game">${escHtml(r.game || '')}</div>
-              <div class="record-label">${escHtml(r.label || 'Personal Best')}</div>
+              <div class="record-game">${escHtml(r.display_name || r.game)}</div>
+              <div class="record-label">${r.total_sessions} session${r.total_sessions !== 1 ? 's' : ''}</div>
             </div>
-            <div class="record-value">${escHtml(String(r.value || '—'))}</div>
-          </div>`).join('') + '</div>'
-      : '<div class="showcase-empty">No records set.</div>';
+            <div class="record-value">${fmtHrs(r.total_playtime_seconds)}</div>
+          </div>`).join('') + '</div>';
+    }
+
+  } else if (s.showcase_type === 'achievements') {
+    body = '<div class="showcase-empty" style="padding:20px 24px;">Achievements coming soon.</div>';
 
   } else if (s.showcase_type === 'badge_case') {
+    const cfg = s.config || {};
     const badges = cfg.badges || [];
     body = badges.length
-      ? '<div class="badge-case">' + badges.map(b => `
-          <div class="badge-item" title="${escHtml(b.label || '')}">${escHtml(b.emoji || '🏅')}</div>`
+      ? '<div class="badge-case">' + badges.map(b =>
+          `<div class="badge-item" title="${escHtml(b.label || '')}">${escHtml(b.emoji || '🏅')}</div>`
         ).join('') + '</div>'
       : '<div class="showcase-empty">No badges in showcase.</div>';
   }
@@ -1097,7 +1115,6 @@ function renderShowcase(s) {
     ${body}
   </div>`;
 }
-
 /* ─────────────────────────────────────────────
    Stats rendering
 ───────────────────────────────────────────── */
@@ -1259,6 +1276,9 @@ document.getElementById('shareBtn').addEventListener('click', () => {
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
     const data = await resp.json();
+    arcadeStats = await fetch('/api/arcade/stats/' + encodeURIComponent(username))
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null);
     renderProfile(data);
     checkOwnProfile(data.profile.username_slug || username);
 
