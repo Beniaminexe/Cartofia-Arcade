@@ -84,6 +84,18 @@ body {
   padding-top: 56px; /* space for fixed nav */
 }
 
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60vh;
+  background: radial-gradient(ellipse at 50% 0%, rgba(120, 60, 180, 0.15) 0%, rgba(60, 30, 120, 0.08) 40%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
 a { color: inherit; text-decoration: none; }
 
 /* ── FIXED NAV ── */
