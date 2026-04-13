@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css" />
+  <link rel="stylesheet" href="/assets/site.css?v=4" />
   <style>
     .game-layout {
       display: grid;
@@ -289,26 +289,19 @@
   </style>
 </head>
 <body>
-  <div class="site-shell">
-    <header class="app-header reveal">
-      <a class="brand" href="/">
-        <span class="brand-chip" aria-hidden="true">
-          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="6" height="6" rx="1" fill="#40B5FF"></rect>
-            <rect x="12" y="2" width="6" height="6" rx="1" fill="#1288DF"></rect>
-            <rect x="2" y="12" width="6" height="6" rx="1" fill="#2AD5FF"></rect>
-            <rect x="12" y="12" width="6" height="6" rx="1" fill="#6BC6FF"></rect>
-          </svg>
-        </span>
-        <span class="brand-text">Cartofia</span>
+  <div class="site-shell" style="position:relative;z-index:1;">
+    <header class="nav">
+      <a class="nav-brand" href="/">
+        <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+      Cartofia
       </a>
-      <nav class="site-nav" aria-label="Primary">
+      <nav class="nav-links" aria-label="Primary">
         <a href="/">Home</a>
         <a class="active" href="/arcade/">Arcade</a>
         <a href="/minecraft/">Minecraft</a>
       </nav>
       <div class="account-menu" data-account-menu>
-        <button class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
           <a class="account-item" href="/arcade/" role="menuitem">Back to Arcade</a>
@@ -417,7 +410,7 @@
     </footer>
   </div>
 
-  <script src="/assets/site.js"></script>
+  <script src="/assets/site.js?v=4"></script>
   <script>
     (() => {
       const presets = {
