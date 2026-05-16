@@ -1,5 +1,5 @@
 (() => {
-  const WS_URL = window.CARTOFIA_BLACKJACK_WS_URL || ((window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + "/ws/blackjack");
+  const WS_URL = window.CARTOFIA_BLACKJACK_WS_URL || ((window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + "/ws/rooms/blackjack");
   const HEARTBEAT_MS = 20000;
   const DEFAULT_NAME = "Player";
   const SUIT_ICON = { S: "\u2660", H: "\u2665", D: "\u2666", C: "\u2663" };
@@ -51,6 +51,8 @@
     results: {},
     deck: []
   };
+  let roundStartTime = 0;
+  let lastLoggedRound = -1;
 
   function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
   function normalizeName(raw) {
@@ -266,6 +268,14 @@
   }
 
   function renderAll() {
+    if (game.phase === "results" && game.round !== lastLoggedRound && online.clientId) {
+      lastLoggedRound = game.round;
+      const myResult = game.results[online.clientId] || "unknown";
+      const _dur = roundStartTime ? Math.round((Date.now() - roundStartTime) / 1000) : 0;
+      if (typeof window !== "undefined" && typeof window.logGameActivity === "function") {
+        window.logGameActivity({ game: "blackjack", result: myResult, round: game.round, duration_seconds: _dur });
+      }
+    }
     renderLobby();
     renderTable();
     updateReadyButton();
@@ -287,7 +297,11 @@
 
   function applyGameSnapshot(raw) {
     if (!raw || typeof raw !== "object") return;
+    const prevPhase = game.phase;
     game.phase = String(raw.phase || "lobby");
+    if (game.phase === "playing" && prevPhase !== "playing") {
+      roundStartTime = Date.now();
+    }
     game.round = clamp(Number(raw.round || 0), 0, 99999);
     game.order = Array.isArray(raw.order) ? raw.order.map((id) => String(id)) : [];
     game.turnIndex = clamp(Number(raw.turnIndex || 0), 0, Math.max(0, game.order.length));
@@ -368,6 +382,7 @@
     }
     game.phase = "playing";
     game.round += 1;
+    roundStartTime = Date.now();
     game.order = active;
     game.turnIndex = 0;
     game.deck = buildShuffledDeck();

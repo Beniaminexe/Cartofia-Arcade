@@ -411,6 +411,7 @@
   </div>
 
   <script src="/assets/site.js?v=4"></script>
+  <script src="/assets/game-utils.js?v=1"></script>
   <script>
     (() => {
       const presets = {
@@ -664,6 +665,9 @@
         finished = true;
         won = false;
         stopTimer();
+        if (typeof logGameActivity === "function") {
+          logGameActivity({ game: "minesweeper", result: "loss", mines: cfg.m, duration_seconds: seconds });
+        }
 
         for (let yy = 0; yy < cfg.h; yy += 1) {
           for (let xx = 0; xx < cfg.w; xx += 1) {
@@ -707,6 +711,9 @@
           saveBestTimes();
         }
 
+        if (typeof logGameActivity === "function") {
+          logGameActivity({ game: "minesweeper", result: "win", mines: cfg.m, duration_seconds: seconds });
+        }
         setFace("cool");
         setStatus("Board cleared. Nice run.");
       }

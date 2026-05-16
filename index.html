@@ -2,370 +2,412 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Cartofia Home</title>
+  <title>Cartofia — Home</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/home.css?v=1" />
   <style>
-    .home-hero {
-      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-      gap: clamp(22px, 4.6vw, 58px);
-      align-items: end;
-    }
-
-    .home-hero-copy {
-      display: grid;
-      gap: 20px;
-      max-width: 60ch;
-      z-index: 1;
-    }
-
-    .home-hero-actions {
-      margin-top: 6px;
-    }
-
-    .hero-footnote {
-      color: var(--text-secondary);
-      font-size: 14px;
-      max-width: 50ch;
-    }
-
-    .home-hero-aside {
-      display: grid;
-      gap: 14px;
-      border-radius: 24px;
-      padding: 24px;
-      background: linear-gradient(180deg, rgba(13, 22, 35, 0.64), rgba(8, 14, 24, 0.56));
-      box-shadow: 0 20px 40px rgba(2, 10, 20, 0.38);
-    }
-
-    .home-hero-aside h2 {
-      font-size: 23px;
-      letter-spacing: -0.025em;
-    }
-
-    .home-hero-aside p {
-      color: var(--text-secondary);
-      font-size: 14px;
-    }
-
-    .home-hero-list {
-      display: grid;
-      gap: 11px;
-      list-style: none;
-    }
-
-    .home-hero-list li {
-      color: var(--text-primary);
-      font-size: 15px;
-      padding-left: 16px;
-      position: relative;
-    }
-
-    .home-hero-list li::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: linear-gradient(145deg, var(--accent-2), var(--accent));
-      position: absolute;
-      left: 0;
-      top: 10px;
-    }
-
-    .destination-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
-    }
-
-    .destination-card {
-      border-radius: 24px;
-      padding: clamp(20px, 3vw, 34px);
-      background:
-        radial-gradient(560px 220px at -10% -20%, rgba(120, 207, 255, 0.2), transparent 72%),
-        linear-gradient(150deg, rgba(15, 26, 42, 0.86), rgba(10, 17, 29, 0.68));
-      box-shadow: 0 24px 52px rgba(1, 9, 19, 0.38);
-      display: grid;
-      gap: 16px;
-    }
-
-    .destination-head {
-      display: grid;
-      gap: 8px;
-    }
-
-    .destination-label {
-      color: var(--text-accent);
-      text-transform: uppercase;
-      letter-spacing: 0.13em;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .destination-card h3 {
-      font-size: clamp(22px, 2.4vw, 34px);
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-    }
-
-    .destination-card p {
-      color: var(--text-secondary);
-      font-size: 16px;
-      max-width: 36ch;
-    }
-
-    .destination-meta {
-      color: var(--text-secondary);
-      font-size: 13px;
-      opacity: 0.92;
-    }
-
-    .infra-band {
-      border-radius: 26px;
-      padding: clamp(18px, 3.2vw, 30px);
-      background: linear-gradient(180deg, rgba(13, 22, 35, 0.66), rgba(8, 14, 24, 0.56));
-      box-shadow: 0 20px 40px rgba(1, 8, 16, 0.36);
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .infra-item {
-      display: grid;
-      gap: 6px;
-    }
-
-    .infra-label {
-      color: var(--text-muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.11em;
-    }
-
-    .infra-value {
-      font-family: var(--font-mono);
-      font-size: clamp(20px, 2.5vw, 34px);
-      letter-spacing: -0.03em;
-      line-height: 1.04;
-    }
-
-    .stats-note {
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-
-    .learning-wrap {
-      border-radius: 24px;
-      padding: clamp(18px, 3.2vw, 30px);
-      background: linear-gradient(180deg, rgba(14, 24, 39, 0.64), rgba(8, 14, 24, 0.5));
-      box-shadow: 0 20px 40px rgba(1, 8, 16, 0.33);
-      display: grid;
-      grid-template-columns: 1.1fr auto;
-      align-items: center;
-      gap: 24px;
-    }
-
-    .learning-copy p {
-      color: var(--text-secondary);
-      font-size: 16px;
-      max-width: 50ch;
-    }
-
-    .embed-wrap {
-      display: inline-block;
-      width: fit-content;
-      max-width: 100%;
-      border-radius: 16px;
-      border: 1px solid rgba(152, 184, 220, 0.24);
-      overflow: hidden;
-      background: rgba(9, 15, 24, 0.74);
-    }
-
-    .embed-wrap iframe {
-      width: 329px;
-      height: 88px;
-      border: 0;
-      display: block;
-      background: transparent;
-    }
-
-    @media (max-width: 1080px) {
-      .home-hero {
-        grid-template-columns: 1fr;
-        align-items: start;
-      }
-
-      .destination-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .infra-band {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .learning-wrap {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 620px) {
-      .infra-band {
-        grid-template-columns: 1fr;
-      }
+    /* Make the nav-avatar button reset so home.css styles apply cleanly */
+    button.nav-avatar {
+      appearance: none;
+      -webkit-appearance: none;
+      font: inherit;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <header class="nav">
+
+  <!-- ================================================
+       NAV — fixed top bar
+  ================================================= -->
+  <header class="nav" id="nav">
     <a class="nav-brand" href="/">
-      <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
-    Cartofia
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
+      Cartofia
     </a>
+
     <nav class="nav-links" aria-label="Primary">
-      <a class="active" href="/">Home</a>
+      <a href="/" class="active">Home</a>
       <a href="/arcade/">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
       <a href="/account/">Account</a>
     </nav>
-    <div class="account-menu" data-account-menu>
-      <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
-      <div class="account-dropdown hidden" data-account-dropdown role="menu">
-        <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+
+    <div class="nav-right">
+      <div class="account-menu" data-account-menu>
+        <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+        </div>
       </div>
+      <button class="nav-hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobileNav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
   </header>
 
-  <div class="site-shell">
-    <main>
-      <section class="page-hero home-hero reveal" data-delay="1">
-        <div class="home-hero-copy">
-          <p class="hero-kicker">Cartofia Platform</p>
-          <h1 class="hero-title">Your arcade. Your server. Your rules.</h1>
-          <p class="hero-lead">
-            Pick a game, hop on the Minecraft server, or just make an account and see what's new — everything here runs on one homelab, built from scratch.
-          </p>
-          <div class="button-row home-hero-actions">
-            <a class="btn btn-primary" href="/arcade/">Enter Arcade</a>
-            <a class="btn btn-ghost" href="/minecraft/">Open Minecraft</a>
-          </div>
-          <p class="hero-footnote">Sign in to track your stats, customize your profile, and unlock more.</p>
-        </div>
-
-        <aside class="home-hero-aside">
-          <h2>Tonight on Cartofia</h2>
-          <p>Live from the platform.</p>
-          <ul class="home-hero-list" id="feedList">
-            <li>Loading...</li>
-          </ul>
-        </aside>
-      </section>
-
-      <section class="section-block reveal" data-delay="2">
-        <div class="section-head">
-          <p class="section-label">Destinations</p>
-          <h2 class="section-title">What do you want to do?</h2>
-          <p class="section-lead">Everything lives under one roof. Pick a lane.</p>
-        </div>
-
-        <div class="destination-grid">
-          <article class="destination-card">
-            <div class="destination-head">
-              <span class="destination-label">Play</span>
-              <h3>Arcade</h3>
-            </div>
-            <p>Classic games you can play right now — no install, no login required.</p>
-            <div class="destination-meta">Zuma Temple, Snake, Bomber Raid, Minesweeper, Maze Chase</div>
-            <div class="button-row">
-              <a class="btn btn-primary" href="/arcade/">Browse Games</a>
-            </div>
-          </article>
-
-          <article class="destination-card">
-            <div class="destination-head">
-              <span class="destination-label">World</span>
-              <h3>Minecraft</h3>
-            </div>
-            <p>A vanilla survival world. Check if it's online, grab the IP, and jump in.</p>
-            <div class="destination-meta">Wake the server through Discord when it's sleeping.</div>
-            <div class="button-row">
-              <a class="btn btn-ghost" href="/minecraft/">View Server</a>
-            </div>
-          </article>
-
-          <article class="destination-card">
-            <div class="destination-head">
-              <span class="destination-label">Identity</span>
-              <h3>Account</h3>
-            </div>
-            <p>One login for everything. Track your games, customize your profile, unlock the archive.</p>
-            <div class="button-row">
-              <a class="btn btn-ghost" href="/account/#login">Open Account</a>
-            </div>
-          </article>
-
-          <article class="destination-card">
-            <div class="destination-head">
-              <span class="destination-label">Community</span>
-              <h3>Discord + GitHub</h3>
-            </div>
-            <p>It's all open source. Come hang out, suggest features, report bugs, or see how it's built.</p>
-            <div class="button-row">
-              <a class="btn btn-ghost" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Join Discord</a>
-            </div>
-          </article>
-        </div>
-      </section>
-
-    </main>
-
-    <footer class="footer">
-      <span>Copyright <span id="year"></span> Cartofia. All rights reserved.</span>
-      <div class="footer-links">
-        <a href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-        <a href="/account/">Account</a>
-        <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
-        <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
-      </div>
-    </footer>
+  <!-- Mobile nav overlay -->
+  <div class="mobile-nav hidden" id="mobileNav" aria-hidden="true">
+    <a href="/" class="active">Home</a>
+    <a href="/arcade/">Arcade</a>
+    <a href="/minecraft/">Minecraft</a>
+    <a href="/account/">Account</a>
   </div>
 
+
+  <!-- ================================================
+       HERO
+  ================================================= -->
+  <section class="hero" id="hero">
+    <div class="hero-inner">
+
+      <!-- Left: main copy -->
+      <div class="hero-copy">
+        <p class="hero-kicker">Cartofia Platform</p>
+        <h1 class="hero-headline">Your arcade.<br>Your server.<br>Your rules.</h1>
+        <p class="hero-lead">
+          Browser games, a Minecraft world, and a community — all self-hosted on one machine.
+          No accounts required to start playing.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="/arcade/">Enter the Arcade</a>
+          <a class="btn btn-ghost"   href="/minecraft/">Explore the Server</a>
+        </div>
+      </div>
+
+      <!-- Right: "Tonight on Cartofia" feed card -->
+      <aside class="hero-card" aria-label="Live feed">
+        <div class="feed-card">
+          <div class="feed-card-head">
+            <h2>Tonight on Cartofia</h2>
+            <span class="live-badge" aria-label="Live">LIVE</span>
+          </div>
+          <p class="feed-card-sub">Live from the platform.</p>
+          <ul class="feed-list">
+            <li><span class="feed-icon" aria-hidden="true">🌙</span>Check back soon — feed is warming up.</li>
+          </ul>
+          <p class="feed-footer">Updates every 60 seconds</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+
+  <!-- ================================================
+       STATS STRIP — platform at a glance
+  ================================================= -->
+  <div class="stats-strip" id="stats" aria-label="Platform at a glance">
+    <div class="stats-inner">
+      <div class="stat-item">
+        <span class="stat-icon" aria-hidden="true">🎮</span>
+        <span class="stat-value">9</span>
+        <span class="stat-label">games in the arcade</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-icon" aria-hidden="true">⛏️</span>
+        <span class="stat-value">1</span>
+        <span class="stat-label">survival world</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-icon" aria-hidden="true">👤</span>
+        <span class="stat-value">∞</span>
+        <span class="stat-label">players welcome</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-icon" aria-hidden="true">🏠</span>
+        <span class="stat-value">1</span>
+        <span class="stat-label">homelab server</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================================================
+       SHOWCASE — interactive feature tabs
+  ================================================= -->
+  <section class="section showcase reveal" id="showcase">
+    <div class="section-head">
+      <p class="section-label">Features</p>
+      <h2 class="section-title">What's inside</h2>
+    </div>
+
+    <div class="showcase-wrap">
+
+      <!-- Tab selector buttons -->
+      <div class="showcase-tabs" role="tablist" aria-label="Features">
+
+        <button class="tab-btn active" role="tab" aria-selected="true"
+                aria-controls="tab-arcade" data-tab="arcade" id="tabctrl-arcade">
+          <span class="tab-icon" aria-hidden="true">🕹️</span>
+          <span class="tab-label">Arcade</span>
+          <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button class="tab-btn" role="tab" aria-selected="false"
+                aria-controls="tab-minecraft" data-tab="minecraft" id="tabctrl-minecraft">
+          <span class="tab-icon" aria-hidden="true">⛏️</span>
+          <span class="tab-label">Minecraft</span>
+          <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button class="tab-btn" role="tab" aria-selected="false"
+                aria-controls="tab-account" data-tab="account" id="tabctrl-account">
+          <span class="tab-icon" aria-hidden="true">👤</span>
+          <span class="tab-label">Account</span>
+          <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button class="tab-btn" role="tab" aria-selected="false"
+                aria-controls="tab-community" data-tab="community" id="tabctrl-community">
+          <span class="tab-icon" aria-hidden="true">💬</span>
+          <span class="tab-label">Community</span>
+          <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Tab content panels -->
+      <div class="showcase-content">
+
+        <!-- ARCADE -->
+        <div class="tab-panel active" id="tab-arcade" role="tabpanel" aria-labelledby="tabctrl-arcade">
+          <div class="tab-info">
+            <p class="tab-tagline">No downloads. No installs. Just play.</p>
+            <p class="tab-desc">
+              Jump into browser games instantly — Zuma Temple, Snake, Bomber Raid, Minesweeper,
+              Maze Chase, and more. Works on desktop and mobile. Some games support multiplayer
+              through live WebSocket rooms.
+            </p>
+            <a class="btn btn-primary btn-sm" href="/arcade/">Browse Games →</a>
+          </div>
+          <div class="tab-visual">
+            <div class="mini-arcade-grid">
+              <div class="mini-game-card">🐍 Snake</div>
+              <div class="mini-game-card">💣 Bomber Raid</div>
+              <div class="mini-game-card">🏺 Zuma Temple</div>
+              <div class="mini-game-card">♟️ Chess</div>
+              <div class="mini-game-card">🧩 Minesweeper</div>
+              <div class="mini-game-card">🌀 Maze Chase</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MINECRAFT -->
+        <div class="tab-panel" id="tab-minecraft" role="tabpanel" aria-labelledby="tabctrl-minecraft">
+          <div class="tab-info">
+            <p class="tab-tagline">A shared survival world.</p>
+            <p class="tab-desc">
+              Vanilla Minecraft server that sleeps when nobody's on and wakes up through Discord.
+              Check the status, grab the server address, and jump in. No whitelist.
+            </p>
+            <a class="btn btn-primary btn-sm" href="/minecraft/">View Server →</a>
+          </div>
+          <div class="tab-visual">
+            <div class="mc-status-card">
+              <div class="mc-status-header">
+                <span class="status-dot sleeping" aria-label="Sleeping"></span>
+                <span class="status-label">Server Sleeping</span>
+              </div>
+              <div class="mc-detail">
+                <span class="mc-detail-label">Address</span>
+                <span class="mc-detail-value">mc.cartofia.com</span>
+              </div>
+              <div class="mc-detail">
+                <span class="mc-detail-label">Version</span>
+                <span class="mc-detail-value">1.21.x Vanilla</span>
+              </div>
+              <div class="mc-detail">
+                <span class="mc-detail-label">Mode</span>
+                <span class="mc-detail-value">Survival</span>
+              </div>
+              <div class="mc-wake-hint">💤 Wake it up via Discord</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACCOUNT -->
+        <div class="tab-panel" id="tab-account" role="tabpanel" aria-labelledby="tabctrl-account">
+          <div class="tab-info">
+            <p class="tab-tagline">One login. Everything connected.</p>
+            <p class="tab-desc">
+              Create a profile, track which games you've played, upload to the file archive, and
+              customize your presence across Cartofia. Sign in once and you're set everywhere.
+            </p>
+            <a class="btn btn-primary btn-sm" href="/account/">Open Account →</a>
+          </div>
+          <div class="tab-visual">
+            <div class="mock-profile-card">
+              <div class="mock-profile-banner"></div>
+              <div class="mock-profile-body">
+                <div class="mock-avatar-wrap">
+                  <div class="mock-avatar" aria-hidden="true">P1</div>
+                </div>
+                <div class="mock-username">player_one</div>
+                <div class="mock-tagline-text">Joined Cartofia</div>
+                <div class="mock-badges">
+                  <span class="mock-badge">🎮 Gamer</span>
+                  <span class="mock-badge">📦 Archivist</span>
+                  <span class="mock-badge">⭐ OG</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COMMUNITY -->
+        <div class="tab-panel" id="tab-community" role="tabpanel" aria-labelledby="tabctrl-community">
+          <div class="tab-info">
+            <p class="tab-tagline">See how it's built.</p>
+            <p class="tab-desc">
+              Cartofia is fully open source. Join the Discord to suggest features, report bugs, or
+              just hang out. Check the GitHub to see the code, infrastructure, and everything that
+              makes this run.
+            </p>
+            <a class="btn btn-primary btn-sm" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Join Discord →</a>
+          </div>
+          <div class="tab-visual">
+            <div class="mock-commits" aria-label="Recent commits">
+              <div class="commit-row">
+                <span class="commit-dot" aria-hidden="true"></span>
+                <div class="commit-info">
+                  <span class="commit-msg">feat: homepage feed + game activity logging</span>
+                  <span class="commit-meta">main · recent</span>
+                </div>
+              </div>
+              <div class="commit-row">
+                <span class="commit-dot" aria-hidden="true"></span>
+                <div class="commit-info">
+                  <span class="commit-msg">fix: OIDC token refresh on expiry</span>
+                  <span class="commit-meta">main · recent</span>
+                </div>
+              </div>
+              <div class="commit-row">
+                <span class="commit-dot" aria-hidden="true"></span>
+                <div class="commit-info">
+                  <span class="commit-msg">feat: profile system with badges</span>
+                  <span class="commit-meta">main · recent</span>
+                </div>
+              </div>
+              <div class="commit-row">
+                <span class="commit-dot" aria-hidden="true"></span>
+                <div class="commit-info">
+                  <span class="commit-msg">feat: multiplayer rooms for chess, blackjack</span>
+                  <span class="commit-meta">main · recent</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.showcase-content -->
+    </div><!-- /.showcase-wrap -->
+  </section>
+
+
+  <!-- ================================================
+       HOW IT WORKS — 3-step strip
+  ================================================= -->
+  <section class="section how-it-works reveal" id="how">
+    <div class="section-head">
+      <p class="section-label">Getting started</p>
+      <h2 class="section-title">How it works</h2>
+    </div>
+
+    <div class="steps-strip">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3 class="step-title">Pick something</h3>
+        <p class="step-desc">Browse the arcade, check the Minecraft server, or explore the archive.</p>
+        <p class="step-desc-extra">Everything's right here — no external links, no redirects.</p>
+      </div>
+
+      <div class="step-connector" aria-hidden="true"></div>
+
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3 class="step-title">Play or explore</h3>
+        <p class="step-desc">Everything runs in your browser. No downloads, no setup.</p>
+        <p class="step-desc-extra">Games work on desktop and mobile. Some even support multiplayer.</p>
+      </div>
+
+      <div class="step-connector" aria-hidden="true"></div>
+
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3 class="step-title">Make it yours</h3>
+        <p class="step-desc">Create an account to track stats, earn badges, and unlock more.</p>
+        <p class="step-desc-extra">Your profile, your stats, your archive access — all in one place.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ================================================
+       ABOUT — "Built different"
+  ================================================= -->
+  <section class="section about-section reveal" id="about">
+    <div class="about-inner">
+      <p class="section-label">About</p>
+      <h2 class="about-heading">One machine. One person. No cloud.</h2>
+      <p class="about-body">
+        Cartofia runs on a single homelab server — no AWS, no subscriptions, no corporate
+        infrastructure. It's a personal project built for fun, learning, and sharing with anyone
+        who wants to play. The entire platform is open source.
+      </p>
+      <div class="about-actions">
+        <a class="btn btn-ghost" href="https://github.com/Beniaminexe/Cartofia-Arcade" target="_blank" rel="noopener noreferrer">View on GitHub →</a>
+        <a class="btn btn-ghost" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Join the Discord →</a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ================================================
+       FINAL CTA — "Ready to play?"
+  ================================================= -->
+  <div class="final-cta" id="cta">
+    <div class="final-cta-inner">
+      <h2 class="final-cta-heading">Ready to play?</h2>
+      <p class="final-cta-sub">Jump into the arcade — no account needed to start.</p>
+      <a class="btn btn-primary" href="/arcade/">Enter the Arcade →</a>
+    </div>
+  </div>
+
+
+  <!-- ================================================
+       FOOTER
+  ================================================= -->
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/account/">Account</a>
+      <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </footer>
+
+
   <script src="/assets/site.js?v=4"></script>
-  <script>
-    (async function () {
-      const list = document.getElementById("feedList");
-      const FALLBACK = "Check back soon \u2014 feed is warming up.";
-
-      try {
-        const resp = await fetch("/api/homepage/feed");
-        if (!resp.ok) throw new Error("non-200");
-        const data = await resp.json();
-        const items = Array.isArray(data.items) && data.items.length ? data.items : null;
-
-        list.innerHTML = "";
-        if (items) {
-          items.forEach(function (item) {
-            const li = document.createElement("li");
-            li.textContent = (item.icon ? item.icon + "\u00a0" : "") + (item.text || "");
-            list.appendChild(li);
-          });
-        } else {
-          const li = document.createElement("li");
-          li.textContent = FALLBACK;
-          list.appendChild(li);
-        }
-      } catch (_err) {
-        list.innerHTML = "";
-        const li = document.createElement("li");
-        li.textContent = FALLBACK;
-        list.appendChild(li);
-      }
-
-      const year = document.getElementById("year");
-      if (year) year.textContent = String(new Date().getFullYear());
-    })();
-  </script>
+  <script src="/home.js?v=1"></script>
 </body>
 </html>

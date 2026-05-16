@@ -325,6 +325,7 @@
   </div>
 
   <script src="/assets/site.js?v=4"></script>
+  <script src="/assets/game-utils.js?v=1"></script>
   <script>
     (function () {
       const canvas = document.getElementById("game");
@@ -364,6 +365,7 @@
       let gameOver = false;
       let accumulator = 0;
       let lastFrameTime = 0;
+      let gameStartTime = null;
 
       function loadBest() {
         try {
@@ -473,12 +475,17 @@
         paused = false;
         gameOver = false;
         accumulator = 0;
+        gameStartTime = null;
         spawnFood();
         setOverlay("Press Start or any direction key to begin.");
         updateHud();
       }
 
       function handleDeath() {
+        const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+        if (typeof logGameActivity === "function") {
+          logGameActivity({ game: "snake", result: "loss", score: score, duration_seconds: _dur });
+        }
         running = false;
         paused = false;
         gameOver = true;
@@ -500,6 +507,7 @@
         if (!running) {
           running = true;
           paused = false;
+          if (!gameStartTime) gameStartTime = Date.now();
           setOverlay("");
         }
       }

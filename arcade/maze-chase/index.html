@@ -332,6 +332,7 @@
   </div>
 
   <script src="/assets/site.js?v=4"></script>
+  <script src="/assets/game-utils.js?v=1"></script>
   <script>
     (() => {
       const canvas = document.getElementById("game");
@@ -408,6 +409,7 @@
       let won = false;
       let frightMs = 0;
       let graceMs = 0;
+      let gameStartTime = null;
 
       let playerAcc = 0;
       let ghostAcc = 0;
@@ -619,6 +621,7 @@
         paused = false;
         gameOver = false;
         won = false;
+        gameStartTime = null;
         pellets = new Map(initialPellets);
         resetActors();
         setOverlay("Press Start to begin.", true);
@@ -708,6 +711,10 @@
         if (pellets.size === 0) {
           won = true;
           running = false;
+          const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+          if (typeof logGameActivity === "function") {
+            logGameActivity({ game: "maze-chase", result: "win", score: score, duration_seconds: _dur });
+          }
           setOverlay("You cleared the maze. Press Restart for another run.", true);
         }
       }
@@ -718,6 +725,10 @@
           lives = 0;
           gameOver = true;
           running = false;
+          const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+          if (typeof logGameActivity === "function") {
+            logGameActivity({ game: "maze-chase", result: "loss", score: score, duration_seconds: _dur });
+          }
           setOverlay("Game over. Press Restart to play again.", true);
           updateHud();
           return;
@@ -1020,6 +1031,7 @@
         }
         running = true;
         paused = false;
+        if (!gameStartTime) gameStartTime = Date.now();
         setOverlay("", false);
         updateHud();
       }

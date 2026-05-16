@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Cartofia Arcade — All Games</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="arcade_template.css" />
+</head>
+<body>
+
+  <!-- ================================================
+       NAV — fixed top bar (shared with homepage)
+  ================================================= -->
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="#">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
+      Cartofia
+    </a>
+
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#"                       >Home</a>
+      <a href="#hero"     class="active">Arcade</a>
+      <a href="#"                       >Minecraft</a>
+      <a href="#"                       >Account</a>
+    </nav>
+
+    <div class="nav-right">
+      <div class="nav-avatar" aria-label="Account (not signed in)" title="Account">
+        <svg viewBox="0 0 24 24" fill="none" width="17" height="17" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" fill="currentColor" opacity="0.85"/>
+          <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/>
+        </svg>
+      </div>
+
+      <button class="nav-hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobileNav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile nav overlay -->
+  <div class="mobile-nav hidden" id="mobileNav" aria-hidden="true">
+    <a href="#"                       >Home</a>
+    <a href="#hero"     class="active">Arcade</a>
+    <a href="#"                       >Minecraft</a>
+    <a href="#"                       >Account</a>
+  </div>
+
+
+  <!-- ================================================
+       HERO — compact (~56vh), copy + featured Cartofia
+  ================================================= -->
+  <section class="hero" id="hero">
+    <div class="hero-inner">
+
+      <!-- Left: main copy -->
+      <div class="hero-copy">
+        <p class="hero-kicker">Cartofia Arcade</p>
+        <h1 class="hero-headline">Pick a game.<br>Start playing.</h1>
+        <p class="hero-lead">
+          No downloads, no installs, no account required. Everything runs in your
+          browser — desktop and mobile.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#games" data-scroll-to="games">Jump to Games</a>
+          <a class="btn btn-ghost"   href="#">Play Cartofia</a>
+        </div>
+      </div>
+
+      <!-- Right: featured Cartofia card (special treatment) -->
+      <aside class="featured-card-wrap" aria-label="Featured game">
+        <div class="featured-card">
+          <div class="featured-card-inner">
+            <p class="featured-label">Flagship</p>
+            <h2 class="featured-title">Cartofia</h2>
+            <p class="featured-desc">
+              A 2D platformer built in Python, ported to the web. The game that started it all.
+            </p>
+            <div class="featured-tags">
+              <span class="featured-tag">Single player</span>
+              <span class="featured-tag">Keyboard</span>
+              <span class="featured-tag">WebAssembly</span>
+            </div>
+            <a class="btn btn-primary btn-sm" href="#">Launch Now →</a>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+
+  <!-- ================================================
+       GAMES — the main event
+  ================================================= -->
+  <section class="section games-section reveal" id="games">
+
+    <div class="section-head-row">
+      <div class="section-head" style="margin-bottom:0;">
+        <p class="section-label">The Lineup</p>
+        <h2 class="section-title">All games</h2>
+        <p class="section-sub">Every game launches from right here.</p>
+      </div>
+
+      <!-- Filter pills -->
+      <div class="filter-row" role="tablist" aria-label="Filter games by mode">
+        <button class="filter-pill active" type="button" role="tab" aria-selected="true" data-filter="all">
+          All <span class="pill-count">10</span>
+        </button>
+        <button class="filter-pill" type="button" role="tab" aria-selected="false" data-filter="single">
+          Single Player <span class="pill-count">7</span>
+        </button>
+        <button class="filter-pill" type="button" role="tab" aria-selected="false" data-filter="multiplayer">
+          Multiplayer <span class="pill-count">3</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="games-grid" id="gamesGrid">
+
+      <!-- 1. Cartofia -->
+      <article class="game-card" data-mode="single">
+        <div class="game-card-head">
+          <h3 class="game-name">Cartofia</h3>
+          <div class="game-tags">
+            <span class="game-tag">Single player</span>
+            <span class="game-tag">Keyboard</span>
+            <span class="game-tag">WebAssembly</span>
+          </div>
+        </div>
+        <p class="game-desc">The flagship platformer — built in Python, playable in your browser.</p>
+        <a class="btn btn-primary btn-sm" href="#">Play →</a>
+      </article>
+
+      <!-- 2. Snake Classic -->
+      <article class="game-card" data-mode="single">
+        <div class="game-card-head">
+          <h3 class="game-name">Snake Classic</h3>
+          <div class="game-tags">
+            <span class="game-tag">Single player</span>
+            <span class="game-tag">Touch + Keyboard</span>
+          </div>
+        </div>
+        <p class="game-desc">The classic snake game. Chase your high score.</p>
+        <a class="btn btn-primary btn-sm" href="#">Play →</a>
+      </article>
+
+      <!-- 3. Brick Blitz -->
+      <article class="game-card" data-mode="single">
+        <div class="game-card-head">
+          <h3 class="game-name">Brick Blitz</h3>
+          <div class="game-tags">
+            <span class="game-tag">Single player</span>
+            <span class="game-tag">Touch + Keyboard</span>
+          </div>
+        </div>
+        <p class="game-desc">Smash bricks, rack up lives, climb through levels.</p>
+        <a class="btn btn-primary btn-sm" href="#">Play →</a>
+      </article>
+
+      <!-- 4. Bomber Raid -->
+      <article class="game-card is-multiplayer" data-mode="multiplayer">
+        <span class="mode-badge" aria-label="Online multiplayer">👥 Online</span>
+        <div class="game-card-head">
+          <h3 class="game-name">Bomber Raid</h3>
+          <div class="game-tags">
+            <span class="game-tag">Online multiplayer</span>
+            <span class="game-tag">Touch + Keyboard</span>
+          </div>
+        </div>
+        <p class="game-desc">Drop bombs, grab powerups, outlast your opponents online.</p>
+        <a class="btn btn-primary btn-sm" href="#">Play →</a>
+      </article>
+
+      <!-- 5. Minesweeper Classic -->
+      <article class="game-card" data-mode="single">
+        <div class="game-card-head">
+          <h3 class="game-name">Minesweeper Classic</h3>
+          <div class="game-tags">
+            <span class="game-tag">Single player</span>
+            <span class="game-tag">Mouse + Touch</span>
+          </div>
+        </div>
+        <p class="game-desc">The original logic puzzle. Beginner to expert.</p>
+        <a class="btn btn-primary btn-sm" href="#">Play →</a>
+      </article>
+
+      <!-- 6. Maze Chase -->
+      <article class="game-card" data-mode="single">
+        <div class="game-card-head">
+          <h3 class="game-name">Maze Chase</h3>
+          <div class="game-tags">
+            <span class="game-tag">Single player</span>
+            <span class="game-tag">Touch + Keyboard</span>
+          </div>
+        </div>
+        <p class="game-desc">Eat pellets, dodge ghosts, flip the chase with power orbs.</p>
+        <a class="btn btn-primary btn-sm" href="#">Play →</a>
+      </article>
+
+      <!-- 7. Word Puzzle -->
+      <article class="game-card" data-mode="single">
+        <div class="game-card-head">
+          <h3 class="game-name">Word Puzzle</h3>
+          <div class="game-tags">
+            <span class="game-tag">Single player</span>
+            <span class="game-tag">Keyboard + Touch</span>
+          </div>
+        </div>
+        <p class="game-desc">Six attempts. One word. Track your streak.</p>
+        <a class="btn btn-primary btn-sm" href="#">Play →</a>
+      </article>
+
+      <!-- 8. Chess -->
+      <article class="game-card is-multiplayer" data-mode="multiplayer">
+        <span class="mode-badge" aria-label="Online multiplayer">👥 Online</span>
+        <div class="game-card-head">
+          <h3 class="game-name">Chess</h3>
+          <div class="game-tags">
+            <span class="game-tag">Multiplayer + AI</span>
+            <span class="game-tag">Mouse + Touch</span>
+          </div>
+        </div>
+        <p class="game-desc">Play a friend on the same screen, online, or challenge the bot.</p>
+        <a class="btn btn-primary btn-sm" href="#">Play →</a>
+      </article>
+
+      <!-- 9. Blackjack Rooms -->
+      <article class="game-card is-multiplayer" data-mode="multiplayer">
+        <span class="mode-badge" aria-label="Online multiplayer">👥 Online</span>
+        <div class="game-card-head">
+          <h3 class="game-name">Blackjack Rooms</h3>
+          <div class="game-tags">
+            <span class="game-tag">Online multiplayer</span>
+            <span class="game-tag">Touch + Mouse</span>
+          </div>
+        </div>
+        <p class="game-desc">Join a table, play hands, try not to bust.</p>
+        <a class="btn btn-primary btn-sm" href="#">Play →</a>
+      </article>
+
+      <!-- 10. Zuma Temple -->
+      <article class="game-card" data-mode="single">
+        <div class="game-card-head">
+          <h3 class="game-name">Zuma Temple</h3>
+          <div class="game-tags">
+            <span class="game-tag">Single player</span>
+            <span class="game-tag">Mouse + Touch</span>
+          </div>
+        </div>
+        <p class="game-desc">Match marbles, chain combos, clear all 12 temples.</p>
+        <a class="btn btn-primary btn-sm" href="#">Play →</a>
+      </article>
+
+    </div>
+  </section>
+
+
+  <!-- ================================================
+       QUICK INFO STRIP — three inline items
+  ================================================= -->
+  <div class="info-strip" aria-label="Arcade at a glance">
+    <div class="info-inner">
+      <div class="info-item">
+        <span class="info-icon" aria-hidden="true">🎮</span>
+        <span>10 games and growing</span>
+      </div>
+      <div class="info-item">
+        <span class="info-icon" aria-hidden="true">🌐</span>
+        <span>Works on any device</span>
+      </div>
+      <div class="info-item">
+        <span class="info-icon" aria-hidden="true">⚡</span>
+        <span>No installs needed</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================================================
+       FINAL CTA — "Got a game idea?"
+  ================================================= -->
+  <div class="final-cta reveal" id="cta">
+    <div class="final-cta-inner">
+      <h2 class="final-cta-heading">Got a game idea?</h2>
+      <p class="final-cta-sub">Cartofia is open source. Suggest a game, report a bug, or build one yourself.</p>
+      <div class="final-cta-actions">
+        <a class="btn btn-primary" href="#">Join Discord →</a>
+        <a class="btn btn-ghost"   href="#">View on GitHub →</a>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================================================
+       FOOTER (copied from homepage)
+  ================================================= -->
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="#">Arcade</a>
+      <a href="#">Minecraft</a>
+      <a href="#">Account</a>
+      <a href="#">Discord</a>
+      <a href="#">GitHub</a>
+    </nav>
+  </footer>
+
+
+  <script src="arcade_template.js"></script>
+</body>
+</html>

@@ -206,6 +206,7 @@
     </main>
   </div>
 
+  <script src="/assets/game-utils.js?v=1"></script>
   <script>
 (() => {
   const g = document.getElementById("g");
@@ -268,6 +269,7 @@
   let pau = false;
   let over = false;
   let win = false;
+  let gameStartTime = null;
   let gameMode = "multi";
   let last = 0;
   let acc = 0;
@@ -1375,6 +1377,7 @@
     pau = false;
     over = false;
     win = false;
+    gameStartTime = null;
     for (let i = 0; i < players.length; i += 1) {
       clearPlayerInput(players[i]);
       players[i].cd = 0;
@@ -1406,6 +1409,7 @@
     if (over || win) { reset(); }
     run = true;
     pau = false;
+    if (!gameStartTime) gameStartTime = Date.now();
     msg("");
     hud();
     maybeBroadcastState(true);
@@ -1441,6 +1445,11 @@
       bs = sc;
       saveBest();
     }
+    const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+    gameStartTime = null;
+    if (typeof logGameActivity === "function") {
+      logGameActivity({ game: "bomber-raid", result: "loss", score: sc, duration_seconds: _dur });
+    }
     msg(text);
     hud();
     maybeBroadcastState(true);
@@ -1456,6 +1465,11 @@
     if (sc > bs) {
       bs = sc;
       saveBest();
+    }
+    const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+    gameStartTime = null;
+    if (typeof logGameActivity === "function") {
+      logGameActivity({ game: "bomber-raid", result: "win", score: sc, duration_seconds: _dur });
     }
     msg("Area cleared. Team victory. Press Restart for another run.");
     hud();

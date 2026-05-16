@@ -44,6 +44,8 @@
     result: "",
     botThinking: false
   };
+  let gameStartTime = null;
+  let activityLogged = false;
 
   const online = {
     ws: null,
@@ -587,6 +589,13 @@
       st.over = true;
       if (inCheck(st.pos, st.pos.turn)) st.result = st.pos.turn === "w" ? "Checkmate. Black wins." : "Checkmate. White wins.";
       else st.result = "Stalemate.";
+      if (!activityLogged) {
+        activityLogged = true;
+        const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+        if (typeof window !== "undefined" && typeof window.logGameActivity === "function") {
+          window.logGameActivity({ game: "chess", result: st.result, duration_seconds: _dur });
+        }
+      }
     }
   }
 
@@ -625,6 +634,8 @@
     st.over = false;
     st.result = "";
     st.botThinking = false;
+    gameStartTime = Date.now();
+    activityLogged = false;
     renderAll();
     maybeDoBotMove();
   }
@@ -673,11 +684,19 @@
     if (!p) return;
     st.pos = p;
     st.log = Array.isArray(packet.log) ? packet.log.slice(0, 600).map((x) => String(x)) : [];
+    const wasOver = st.over;
     st.over = !!(packet && packet.over);
     st.result = String((packet && packet.result) || "");
     st.selected = null;
     st.selectedMoves = [];
     st.botThinking = false;
+    if (st.over && !wasOver && !activityLogged) {
+      activityLogged = true;
+      const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+      if (typeof window !== "undefined" && typeof window.logGameActivity === "function") {
+        window.logGameActivity({ game: "chess", result: st.result, duration_seconds: _dur });
+      }
+    }
     renderAll();
   }
 
@@ -736,6 +755,11 @@
       return;
     }
     if ((kind === "state_update" || kind === "state_sync") && online.role === "guest") {
+      const reason = String(payload.reason || "");
+      if (reason === "host_start" || reason === "host_reset") {
+        gameStartTime = Date.now();
+        activityLogged = false;
+      }
       applyRemoteState(payload.state || {});
       return;
     }

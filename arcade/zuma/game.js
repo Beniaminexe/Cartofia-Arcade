@@ -69,6 +69,7 @@
   let score = 0;
   let best = loadBest();
   let gameState = "ready"; // ready, running, paused, lost, cleared, complete
+  let gameStartTime = null;
 
   let path = compilePath(getPathPoints(LEVELS[levelIndex].path));
   let chain = [];
@@ -211,9 +212,28 @@
   }
 
   function setGameState(nextState, overlayText) {
+    const prevState = gameState;
     gameState = nextState;
     if (nextState === "running") {
+      if (prevState !== "running" && prevState !== "paused") {
+        gameStartTime = Date.now();
+      }
       setOverlay("", false);
+    } else if (nextState === "lost" || nextState === "complete") {
+      const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+      gameStartTime = null;
+      if (typeof window !== "undefined" && typeof window.logGameActivity === "function") {
+        window.logGameActivity({
+          game: "zuma-temple",
+          result: nextState === "complete" ? "win" : "loss",
+          score: score,
+          level: levelIndex + 1,
+          duration_seconds: _dur,
+        });
+      }
+      if (typeof overlayText === "string") {
+        setOverlay(overlayText, true);
+      }
     } else if (typeof overlayText === "string") {
       setOverlay(overlayText, true);
     }
