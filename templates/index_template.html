@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Cartofia — Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="home_template.css" />
+</head>
+<body>
+
+  <!-- ================================================
+       NAV — fixed top bar
+  ================================================= -->
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="#">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
+      Cartofia
+    </a>
+
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#hero"     class="active">Home</a>
+      <a href="#showcase"             >Arcade</a>
+      <a href="#"                     >Minecraft</a>
+      <a href="#"                     >Account</a>
+    </nav>
+
+    <div class="nav-right">
+      <div class="nav-avatar" aria-label="Account (not signed in)" title="Account">
+        <svg viewBox="0 0 24 24" fill="none" width="17" height="17" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" fill="currentColor" opacity="0.85"/>
+          <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/>
+        </svg>
+      </div>
+
+      <button class="nav-hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobileNav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile nav overlay -->
+  <div class="mobile-nav hidden" id="mobileNav" aria-hidden="true">
+    <a href="#hero"     class="active">Home</a>
+    <a href="#showcase"             >Arcade</a>
+    <a href="#"                     >Minecraft</a>
+    <a href="#"                     >Account</a>
+  </div>
+
+
+  <!-- ================================================
+       HERO
+  ================================================= -->
+  <section class="hero" id="hero">
+    <div class="hero-inner">
+
+      <!-- Left: main copy -->
+      <div class="hero-copy">
+        <p class="hero-kicker">Cartofia Platform</p>
+        <h1 class="hero-headline">Your arcade.<br>Your server.<br>Your rules.</h1>
+        <p class="hero-lead">
+          Browser games, a Minecraft world, and a community — all self-hosted on one machine.
+          No accounts required to start playing.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#showcase">Enter the Arcade</a>
+          <a class="btn btn-ghost"   href="#">Explore the Server</a>
+        </div>
+      </div>
+
+      <!-- Right: "Tonight on Cartofia" feed card -->
+      <aside class="hero-card" aria-label="Live feed">
+        <div class="feed-card">
+          <div class="feed-card-head">
+            <h2>Tonight on Cartofia</h2>
+            <span class="live-badge" aria-label="Live">LIVE</span>
+          </div>
+          <p class="feed-card-sub">Live from the platform.</p>
+          <ul class="feed-list">
+            <li><span class="feed-icon" aria-hidden="true">🎮</span>Snake played 12 times today</li>
+            <li><span class="feed-icon" aria-hidden="true">👤</span>3 new profiles this week</li>
+            <li><span class="feed-icon" aria-hidden="true">📦</span>2 files added to the archive</li>
+          </ul>
+          <p class="feed-footer">Updates every 60 seconds</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+
+  <!-- ================================================
+       STATS STRIP — platform at a glance
+  ================================================= -->
+  <div class="stats-strip" id="stats" aria-label="Platform at a glance">
+    <div class="stats-inner">
+      <div class="stat-item">
+        <span class="stat-icon" aria-hidden="true">🎮</span>
+        <span class="stat-value">6</span>
+        <span class="stat-label">games in the arcade</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-icon" aria-hidden="true">⛏️</span>
+        <span class="stat-value">1</span>
+        <span class="stat-label">survival world</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-icon" aria-hidden="true">👤</span>
+        <span class="stat-value">12</span>
+        <span class="stat-label">players joined</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-icon" aria-hidden="true">📦</span>
+        <span class="stat-value">47</span>
+        <span class="stat-label">files in the archive</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================================================
+       SHOWCASE — interactive feature tabs
+  ================================================= -->
+  <section class="section showcase reveal" id="showcase">
+    <div class="section-head">
+      <p class="section-label">Features</p>
+      <h2 class="section-title">What's inside</h2>
+    </div>
+
+    <div class="showcase-wrap">
+
+      <!-- Tab selector buttons -->
+      <div class="showcase-tabs" role="tablist" aria-label="Features">
+
+        <button class="tab-btn active" role="tab" aria-selected="true"
+                aria-controls="tab-arcade" data-tab="arcade" id="tabctrl-arcade">
+          <span class="tab-icon" aria-hidden="true">🕹️</span>
+          <span class="tab-label">Arcade</span>
+          <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button class="tab-btn" role="tab" aria-selected="false"
+                aria-controls="tab-minecraft" data-tab="minecraft" id="tabctrl-minecraft">
+          <span class="tab-icon" aria-hidden="true">⛏️</span>
+          <span class="tab-label">Minecraft</span>
+          <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button class="tab-btn" role="tab" aria-selected="false"
+                aria-controls="tab-account" data-tab="account" id="tabctrl-account">
+          <span class="tab-icon" aria-hidden="true">👤</span>
+          <span class="tab-label">Account</span>
+          <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button class="tab-btn" role="tab" aria-selected="false"
+                aria-controls="tab-community" data-tab="community" id="tabctrl-community">
+          <span class="tab-icon" aria-hidden="true">💬</span>
+          <span class="tab-label">Community</span>
+          <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Tab content panels (all in same grid cell, transition via opacity) -->
+      <div class="showcase-content">
+
+        <!-- ARCADE -->
+        <div class="tab-panel active" id="tab-arcade" role="tabpanel" aria-labelledby="tabctrl-arcade">
+          <div class="tab-info">
+            <p class="tab-tagline">No downloads. No installs. Just play.</p>
+            <p class="tab-desc">
+              Jump into browser games instantly — Zuma Temple, Snake, Bomber Raid, Minesweeper,
+              Maze Chase, and more. Works on desktop and mobile. Some games support multiplayer
+              through live WebSocket rooms.
+            </p>
+            <a class="btn btn-primary btn-sm" href="#">Browse Games →</a>
+          </div>
+          <div class="tab-visual">
+            <div class="mini-arcade-grid">
+              <div class="mini-game-card">🐍 Snake</div>
+              <div class="mini-game-card">💣 Bomber Raid</div>
+              <div class="mini-game-card">🏺 Zuma Temple</div>
+              <div class="mini-game-card">💥 Blast Zone</div>
+              <div class="mini-game-card">🧩 Minesweeper</div>
+              <div class="mini-game-card">🌀 Maze Chase</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MINECRAFT -->
+        <div class="tab-panel" id="tab-minecraft" role="tabpanel" aria-labelledby="tabctrl-minecraft">
+          <div class="tab-info">
+            <p class="tab-tagline">A shared survival world.</p>
+            <p class="tab-desc">
+              Vanilla Minecraft server that sleeps when nobody's on and wakes up through Discord.
+              Check the status, grab the server address, and jump in. No whitelist.
+            </p>
+            <a class="btn btn-primary btn-sm" href="#">View Server →</a>
+          </div>
+          <div class="tab-visual">
+            <div class="mc-status-card">
+              <div class="mc-status-header">
+                <span class="status-dot sleeping" aria-label="Sleeping"></span>
+                <span class="status-label">Server Sleeping</span>
+              </div>
+              <div class="mc-detail">
+                <span class="mc-detail-label">Address</span>
+                <span class="mc-detail-value">mc.cartofia.com</span>
+              </div>
+              <div class="mc-detail">
+                <span class="mc-detail-label">Version</span>
+                <span class="mc-detail-value">1.21.x Vanilla</span>
+              </div>
+              <div class="mc-detail">
+                <span class="mc-detail-label">Mode</span>
+                <span class="mc-detail-value">Survival</span>
+              </div>
+              <div class="mc-wake-hint">💤 Wake it up via Discord</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACCOUNT -->
+        <div class="tab-panel" id="tab-account" role="tabpanel" aria-labelledby="tabctrl-account">
+          <div class="tab-info">
+            <p class="tab-tagline">One login. Everything connected.</p>
+            <p class="tab-desc">
+              Create a profile, track which games you've played, upload to the file archive, and
+              customize your presence across Cartofia. Sign in once and you're set everywhere.
+            </p>
+            <a class="btn btn-primary btn-sm" href="#">Open Account →</a>
+          </div>
+          <div class="tab-visual">
+            <div class="mock-profile-card">
+              <div class="mock-profile-banner"></div>
+              <div class="mock-profile-body">
+                <div class="mock-avatar-wrap">
+                  <div class="mock-avatar" aria-hidden="true">P1</div>
+                </div>
+                <div class="mock-username">player_one</div>
+                <div class="mock-tagline-text">Joined Cartofia</div>
+                <div class="mock-badges">
+                  <span class="mock-badge">🎮 Gamer</span>
+                  <span class="mock-badge">📦 Archivist</span>
+                  <span class="mock-badge">⭐ OG</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COMMUNITY -->
+        <div class="tab-panel" id="tab-community" role="tabpanel" aria-labelledby="tabctrl-community">
+          <div class="tab-info">
+            <p class="tab-tagline">See how it's built.</p>
+            <p class="tab-desc">
+              Cartofia is fully open source. Join the Discord to suggest features, report bugs, or
+              just hang out. Check the GitHub to see the code, infrastructure, and everything that
+              makes this run.
+            </p>
+            <a class="btn btn-primary btn-sm" href="#">Join Discord →</a>
+          </div>
+          <div class="tab-visual">
+            <div class="mock-commits" aria-label="Recent commits">
+              <div class="commit-row">
+                <span class="commit-dot" aria-hidden="true"></span>
+                <div class="commit-info">
+                  <span class="commit-msg">feat: add Blast Zone game</span>
+                  <span class="commit-meta">main · 2h ago</span>
+                </div>
+              </div>
+              <div class="commit-row">
+                <span class="commit-dot" aria-hidden="true"></span>
+                <div class="commit-info">
+                  <span class="commit-msg">fix: OIDC token refresh on expiry</span>
+                  <span class="commit-meta">main · 1d ago</span>
+                </div>
+              </div>
+              <div class="commit-row">
+                <span class="commit-dot" aria-hidden="true"></span>
+                <div class="commit-info">
+                  <span class="commit-msg">feat: dynamic homepage feed</span>
+                  <span class="commit-meta">main · 2d ago</span>
+                </div>
+              </div>
+              <div class="commit-row">
+                <span class="commit-dot" aria-hidden="true"></span>
+                <div class="commit-info">
+                  <span class="commit-msg">refactor: profile system with badges</span>
+                  <span class="commit-meta">main · 5d ago</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.showcase-content -->
+    </div><!-- /.showcase-wrap -->
+  </section>
+
+
+  <!-- ================================================
+       HOW IT WORKS — 3-step strip
+  ================================================= -->
+  <section class="section how-it-works reveal" id="how">
+    <div class="section-head">
+      <p class="section-label">Getting started</p>
+      <h2 class="section-title">How it works</h2>
+    </div>
+
+    <div class="steps-strip">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3 class="step-title">Pick something</h3>
+        <p class="step-desc">Browse the arcade, check the Minecraft server, or explore the archive.</p>
+        <p class="step-desc-extra">Everything's right here — no external links, no redirects.</p>
+      </div>
+
+      <div class="step-connector" aria-hidden="true"></div>
+
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3 class="step-title">Play or explore</h3>
+        <p class="step-desc">Everything runs in your browser. No downloads, no setup.</p>
+        <p class="step-desc-extra">Games work on desktop and mobile. Some even support multiplayer.</p>
+      </div>
+
+      <div class="step-connector" aria-hidden="true"></div>
+
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3 class="step-title">Make it yours</h3>
+        <p class="step-desc">Create an account to track stats, earn badges, and unlock more.</p>
+        <p class="step-desc-extra">Your profile, your stats, your archive access — all in one place.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ================================================
+       ABOUT — "Built different"
+  ================================================= -->
+  <section class="section about-section reveal" id="about">
+    <div class="about-inner">
+      <p class="section-label">About</p>
+      <h2 class="about-heading">One machine. One person. No cloud.</h2>
+      <p class="about-body">
+        Cartofia runs on a single homelab server — no AWS, no subscriptions, no corporate
+        infrastructure. It's a personal project built for fun, learning, and sharing with anyone
+        who wants to play. The entire platform is open source.
+      </p>
+      <div class="about-actions">
+        <a class="btn btn-ghost" href="#">View on GitHub →</a>
+        <a class="btn btn-ghost" href="#">Join the Discord →</a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ================================================
+       FINAL CTA — "Ready to play?"
+  ================================================= -->
+  <div class="final-cta" id="cta">
+    <div class="final-cta-inner">
+      <h2 class="final-cta-heading">Ready to play?</h2>
+      <p class="final-cta-sub">Jump into the arcade — no account needed to start.</p>
+      <a class="btn btn-primary" href="#">Enter the Arcade →</a>
+    </div>
+  </div>
+
+
+  <!-- ================================================
+       FOOTER
+  ================================================= -->
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="#">Arcade</a>
+      <a href="#">Minecraft</a>
+      <a href="#">Account</a>
+      <a href="#">Discord</a>
+      <a href="#">GitHub</a>
+    </nav>
+  </footer>
+
+
+  <script src="home_template.js"></script>
+</body>
+</html>
