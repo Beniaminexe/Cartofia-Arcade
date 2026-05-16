@@ -242,24 +242,22 @@
       <section class="page-hero home-hero reveal" data-delay="1">
         <div class="home-hero-copy">
           <p class="hero-kicker">Cartofia Platform</p>
-          <h1 class="hero-title">Play, build, and connect on one self-hosted world.</h1>
+          <h1 class="hero-title">Your arcade. Your server. Your rules.</h1>
           <p class="hero-lead">
-            Cartofia brings your game hub, community spaces, and account services into a single premium home base.
+            Pick a game, hop on the Minecraft server, or just make an account and see what's new — everything here runs on one homelab, built from scratch.
           </p>
           <div class="button-row home-hero-actions">
             <a class="btn btn-primary" href="/arcade/">Enter Arcade</a>
             <a class="btn btn-ghost" href="/minecraft/">Open Minecraft</a>
           </div>
-          <p class="hero-footnote">Account login personalizes your navigation and unlocks role-based private features.</p>
+          <p class="hero-footnote">Sign in to track your stats, customize your profile, and unlock more.</p>
         </div>
 
         <aside class="home-hero-aside">
           <h2>Tonight on Cartofia</h2>
-          <p>Curated highlights from the platform this week.</p>
-          <ul class="home-hero-list">
-            <li>Arcade lineup now includes Zuma Temple, Snake, Bomber Raid, Minesweeper, and Maze Chase.</li>
-            <li>Minecraft server routing stays live through Discord-powered wake flow.</li>
-            <li>Account profiles support badges, avatars, and persistent progression.</li>
+          <p>Live from the platform.</p>
+          <ul class="home-hero-list" id="feedList">
+            <li>Loading...</li>
           </ul>
         </aside>
       </section>
@@ -267,8 +265,8 @@
       <section class="section-block reveal" data-delay="2">
         <div class="section-head">
           <p class="section-label">Destinations</p>
-          <h2 class="section-title">Choose your Cartofia lane</h2>
-          <p class="section-lead">Each destination keeps its own purpose and flow while sharing one design language.</p>
+          <h2 class="section-title">What do you want to do?</h2>
+          <p class="section-lead">Everything lives under one roof. Pick a lane.</p>
         </div>
 
         <div class="destination-grid">
@@ -277,8 +275,8 @@
               <span class="destination-label">Play</span>
               <h3>Arcade</h3>
             </div>
-            <p>Launch browser-first games with curated presentation and touch-friendly controls.</p>
-            <div class="destination-meta">Featured: Cartofia, Zuma Temple, Bomber Raid, Minesweeper, Maze Chase</div>
+            <p>Classic games you can play right now — no install, no login required.</p>
+            <div class="destination-meta">Zuma Temple, Snake, Bomber Raid, Minesweeper, Maze Chase</div>
             <div class="button-row">
               <a class="btn btn-primary" href="/arcade/">Browse Games</a>
             </div>
@@ -289,8 +287,8 @@
               <span class="destination-label">World</span>
               <h3>Minecraft</h3>
             </div>
-            <p>Get live server status, join instructions, and operations notes for the shared world.</p>
-            <div class="destination-meta">Vanilla survival node with Discord-assisted startup</div>
+            <p>A vanilla survival world. Check if it's online, grab the IP, and jump in.</p>
+            <div class="destination-meta">Wake the server through Discord when it's sleeping.</div>
             <div class="button-row">
               <a class="btn btn-ghost" href="/minecraft/">View Server</a>
             </div>
@@ -301,8 +299,7 @@
               <span class="destination-label">Identity</span>
               <h3>Account</h3>
             </div>
-            <p>Sign in once, manage your profile, and keep your presence consistent across Cartofia.</p>
-            <div class="destination-meta">OIDC-based SSO with role-aware access</div>
+            <p>One login for everything. Track your games, customize your profile, unlock the archive.</p>
             <div class="button-row">
               <a class="btn btn-ghost" href="/account/#login">Open Account</a>
             </div>
@@ -313,8 +310,7 @@
               <span class="destination-label">Community</span>
               <h3>Discord + GitHub</h3>
             </div>
-            <p>Follow updates, share feedback, and track development from the same community channels.</p>
-            <div class="destination-meta">Direct links to Discord and source activity</div>
+            <p>It's all open source. Come hang out, suggest features, report bugs, or see how it's built.</p>
             <div class="button-row">
               <a class="btn btn-ghost" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Join Discord</a>
             </div>
@@ -322,53 +318,6 @@
         </div>
       </section>
 
-      <section class="section-block reveal" data-delay="3">
-        <div class="section-head">
-          <p class="section-label">Infrastructure</p>
-          <h2 class="section-title">Live platform signal</h2>
-          <p class="section-lead">Operational metrics stay visible, but remain visually secondary to the platform experience.</p>
-        </div>
-
-        <div class="infra-band">
-          <div class="infra-item">
-            <span class="infra-label">Games Online</span>
-            <span class="infra-value" data-stat="games_online">--</span>
-          </div>
-          <div class="infra-item">
-            <span class="infra-label">Active Bots</span>
-            <span class="infra-value" data-stat="active_bots">--</span>
-          </div>
-          <div class="infra-item">
-            <span class="infra-label">Containers</span>
-            <span class="infra-value"><span data-stat="online_containers">--</span> / <span data-stat="total_containers">--</span></span>
-          </div>
-          <div class="infra-item">
-            <span class="infra-label">Node Uptime</span>
-            <span class="infra-value" data-stat="uptime_display">--</span>
-          </div>
-          <div class="infra-item">
-            <span class="infra-label">Memory</span>
-            <span class="infra-value"><span data-stat="memory_used_gb">--</span> / <span data-stat="memory_total_gb">--</span> GB</span>
-          </div>
-        </div>
-        <p class="stats-note" id="statsTimestamp">Last update: waiting for first fetch.</p>
-      </section>
-
-      <section class="section-block reveal" data-delay="3">
-        <div class="section-head">
-          <p class="section-label">Progress</p>
-          <h2 class="section-title">Security learning track</h2>
-          <p class="section-lead">TryHackMe progress badge connected to the current public profile.</p>
-        </div>
-        <div class="learning-wrap">
-          <div class="learning-copy">
-            <p>Cartofia continues to blend platform building with practical security learning and deployment operations.</p>
-          </div>
-          <div class="embed-wrap">
-            <iframe src="https://tryhackme.com/api/v2/badges/public-profile?userPublicId=5285070" title="TryHackMe progress" loading="lazy" scrolling="no" referrerpolicy="no-referrer"></iframe>
-          </div>
-        </div>
-      </section>
     </main>
 
     <footer class="footer">
@@ -385,124 +334,38 @@
 
   <script src="/assets/site.js?v=4"></script>
   <script>
-    const API_PATH = "/api/stats";
-    const REFRESH_INTERVAL = 30000;
+    (async function () {
+      const list = document.getElementById("feedList");
+      const FALLBACK = "Check back soon \u2014 feed is warming up.";
 
-    function normalizeStatsUrl(base) {
-      const value = String(base || "").trim();
-      if (!value) {
-        return "";
-      }
-      const noSlash = value.replace(/\/+$/, "");
-      if (noSlash.endsWith("/api/stats")) {
-        return noSlash;
-      }
-      if (noSlash.endsWith("/api")) {
-        return `${noSlash}/stats`;
-      }
-      return `${noSlash}${API_PATH}`;
-    }
-
-    function getStatsCandidates() {
-      const candidates = [];
-      const fromMeta = document.querySelector('meta[name="cartofia-api-base"]');
-      const fromGlobal = window.CARTOFIA_API_BASE;
-      const fromQuery = new URLSearchParams(window.location.search).get("apiBase") || "";
-      let fromStorage = "";
       try {
-        fromStorage = window.localStorage.getItem("cartofia-api-base") || "";
-      } catch (_error) {
-        fromStorage = "";
-      }
+        const resp = await fetch("/api/homepage/feed");
+        if (!resp.ok) throw new Error("non-200");
+        const data = await resp.json();
+        const items = Array.isArray(data.items) && data.items.length ? data.items : null;
 
-      const configured = [
-        normalizeStatsUrl(fromQuery),
-        normalizeStatsUrl(fromMeta ? fromMeta.content : ""),
-        normalizeStatsUrl(fromGlobal),
-        normalizeStatsUrl(fromStorage),
-      ].filter(Boolean);
-
-      candidates.push(...configured, API_PATH);
-
-      const host = window.location.hostname;
-      const protocol = window.location.protocol;
-      const isLocalHost = host === "localhost" || host === "127.0.0.1" || host === "::1";
-      const isFile = protocol === "file:";
-
-      if (isLocalHost || isFile) {
-        if (protocol === "https:") {
-          candidates.push("https://127.0.0.1:5000/api/stats", "https://localhost:5000/api/stats");
+        list.innerHTML = "";
+        if (items) {
+          items.forEach(function (item) {
+            const li = document.createElement("li");
+            li.textContent = (item.icon ? item.icon + "\u00a0" : "") + (item.text || "");
+            list.appendChild(li);
+          });
         } else {
-          candidates.push("http://127.0.0.1:5000/api/stats", "http://localhost:5000/api/stats");
+          const li = document.createElement("li");
+          li.textContent = FALLBACK;
+          list.appendChild(li);
         }
+      } catch (_err) {
+        list.innerHTML = "";
+        const li = document.createElement("li");
+        li.textContent = FALLBACK;
+        list.appendChild(li);
       }
 
-      return Array.from(new Set(candidates));
-    }
-
-    function updateTimestamp(iso, sourceUrl) {
-      const el = document.getElementById("statsTimestamp");
-      if (!el) {
-        return;
-      }
-      if (!iso) {
-        el.textContent = "Last update: unavailable.";
-        return;
-      }
-      const dt = new Date(iso);
-      if (Number.isNaN(dt.getTime())) {
-        el.textContent = "Last update: unavailable.";
-        return;
-      }
-      const suffix = sourceUrl && sourceUrl !== API_PATH ? " (fallback API)" : "";
-      el.textContent = `Last update: ${dt.toLocaleString()}${suffix}`;
-    }
-
-    async function fetchStats() {
-      const candidates = getStatsCandidates();
-      const attempts = [];
-
-      for (const url of candidates) {
-        try {
-          const response = await fetch(url, { credentials: "include" });
-          if (!response.ok) {
-            attempts.push(`${url} -> HTTP ${response.status}`);
-            continue;
-          }
-          const data = await response.json();
-          return { data, sourceUrl: url };
-        } catch (error) {
-          attempts.push(`${url} -> ${error instanceof Error ? error.message : String(error)}`);
-        }
-      }
-
-      throw new Error(attempts.join(" | "));
-    }
-
-    async function updateStats() {
-      const targets = document.querySelectorAll("[data-stat]");
-      try {
-        const { data, sourceUrl } = await fetchStats();
-        targets.forEach((el) => {
-          const key = el.getAttribute("data-stat");
-          if (key && Object.prototype.hasOwnProperty.call(data, key)) {
-            el.textContent = data[key];
-          }
-        });
-        updateTimestamp(data.timestamp, sourceUrl);
-      } catch (error) {
-        console.error("Failed to fetch stats:", error);
-        updateTimestamp(null, "");
-      }
-    }
-
-    updateStats();
-    setInterval(updateStats, REFRESH_INTERVAL);
-
-    const year = document.getElementById("year");
-    if (year) {
-      year.textContent = String(new Date().getFullYear());
-    }
+      const year = document.getElementById("year");
+      if (year) year.textContent = String(new Date().getFullYear());
+    })();
   </script>
 </body>
 </html>

@@ -790,6 +790,103 @@ def file_too_large(_error):
     return jsonify({"error": f"File is too large. Max size is {MAX_UPLOAD_MB}MB."}), 413
 
 
+# ── Homepage feed ──────────────────────────────────────────────────────────────
+
+_feed_cache: dict[str, object] = {"payload": None, "expires_at": 0.0}
+_feed_cache_lock = threading.Lock()
+_FEED_CACHE_TTL = 60.0  # seconds
+
+
+def _build_feed_payload() -> dict:
+    """Query SQLite for live feed items. Never raises — returns fallback on any error."""
+    items: list[dict[str, str]] = []
+    try:
+        db = sqlite3.connect(ARCHIVE_DB_PATH)
+        db.row_factory = sqlite3.Row
+        try:
+            now_iso = _utc_now_iso()
+            week_ago = datetime.fromtimestamp(
+                time.time() - 7 * 86400, tz=timezone.utc
+            ).isoformat()
+
+            # New profiles this week
+            try:
+                row = db.execute(
+                    "SELECT COUNT(*) AS n FROM user_profiles WHERE created_at >= ?",
+                    (week_ago,),
+                ).fetchone()
+                count = row["n"] if row else 0
+                if count > 0:
+                    noun = "profile" if count == 1 else "profiles"
+                    items.append({"icon": "🏆", "text": f"{count} new {noun} created this week"})
+            except sqlite3.OperationalError:
+                pass  # table may not exist yet
+
+            # Recent archive uploads
+            try:
+                row = db.execute(
+                    "SELECT COUNT(*) AS n FROM archive_files WHERE uploaded_at >= ?",
+                    (week_ago,),
+                ).fetchone()
+                count = row["n"] if row else 0
+                if count > 0:
+                    noun = "file" if count == 1 else "files"
+                    items.append({"icon": "📦", "text": f"{count} {noun} uploaded to the archive recently"})
+            except sqlite3.OperationalError:
+                pass
+
+            # Most played game today (activity_log table — populated by game sessions)
+            try:
+                today = datetime.fromtimestamp(
+                    time.time() - 86400, tz=timezone.utc
+                ).isoformat()
+                row = db.execute(
+                    """
+                    SELECT game_name, COUNT(*) AS plays
+                    FROM activity_log
+                    WHERE logged_at >= ? AND game_name IS NOT NULL AND game_name != ''
+                    GROUP BY game_name
+                    ORDER BY plays DESC
+                    LIMIT 1
+                    """,
+                    (today,),
+                ).fetchone()
+                if row and row["plays"] > 0:
+                    noun = "time" if row["plays"] == 1 else "times"
+                    items.append(
+                        {"icon": "🎮", "text": f"{row['game_name']} played {row['plays']} {noun} today"}
+                    )
+            except sqlite3.OperationalError:
+                pass  # activity_log not yet created
+
+        finally:
+            db.close()
+    except Exception:
+        log.debug("homepage feed: db query failed", exc_info=True)
+
+    if not items:
+        items = [{"icon": "🌙", "text": "Quiet night \u2014 be the first to play something."}]
+
+    return {"items": items}
+
+
+@app.route("/api/homepage/feed", methods=["GET"])
+def homepage_feed():
+    """Public feed of live platform activity for the homepage sidebar."""
+    now = time.monotonic()
+    with _feed_cache_lock:
+        if _feed_cache["payload"] is not None and now < _feed_cache["expires_at"]:
+            return jsonify(_feed_cache["payload"]), 200
+
+    payload = _build_feed_payload()
+
+    with _feed_cache_lock:
+        _feed_cache["payload"] = payload
+        _feed_cache["expires_at"] = time.monotonic() + _FEED_CACHE_TTL
+
+    return jsonify(payload), 200
+
+
 @app.route("/api/stats", methods=["GET"])
 def get_stats():
     """Endpoint to get all infrastructure statistics."""
