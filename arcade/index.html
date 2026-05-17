@@ -17,6 +17,28 @@
       font: inherit;
       cursor: pointer;
     }
+    .game-player-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
+    .game-player-count.has-players { color: #4ade80; }
+    .player-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+    }
+    .game-player-count.has-players .player-dot {
+      background: #4ade80;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
   </style>
 </head>
 <body>
@@ -133,6 +155,7 @@
           </div>
         </div>
         <p class="game-desc">The flagship platformer — built in Python, playable in your browser.</p>
+        <span class="game-player-count" data-game="cartofia"><span class="player-dot"></span><span class="player-count-text"></span></span>
         <a class="btn btn-primary btn-sm" href="cartofia/">Play →</a>
       </article>
 
@@ -146,6 +169,7 @@
           </div>
         </div>
         <p class="game-desc">The classic snake game. Chase your high score.</p>
+        <span class="game-player-count" data-game="snake"><span class="player-dot"></span><span class="player-count-text"></span></span>
         <a class="btn btn-primary btn-sm" href="snake/">Play →</a>
       </article>
 
@@ -159,6 +183,7 @@
           </div>
         </div>
         <p class="game-desc">Smash bricks, rack up lives, climb through levels.</p>
+        <span class="game-player-count" data-game="brick-blitz"><span class="player-dot"></span><span class="player-count-text"></span></span>
         <a class="btn btn-primary btn-sm" href="brick-blitz/">Play →</a>
       </article>
 
@@ -173,6 +198,7 @@
           </div>
         </div>
         <p class="game-desc">Drop bombs, grab powerups, outlast your opponents online.</p>
+        <span class="game-player-count" data-game="bomber-raid"><span class="player-dot"></span><span class="player-count-text"></span></span>
         <a class="btn btn-primary btn-sm" href="bomber-raid/">Play →</a>
       </article>
 
@@ -186,6 +212,7 @@
           </div>
         </div>
         <p class="game-desc">The original logic puzzle. Beginner to expert.</p>
+        <span class="game-player-count" data-game="minesweeper"><span class="player-dot"></span><span class="player-count-text"></span></span>
         <a class="btn btn-primary btn-sm" href="minesweeper/">Play →</a>
       </article>
 
@@ -199,6 +226,7 @@
           </div>
         </div>
         <p class="game-desc">Eat pellets, dodge ghosts, flip the chase with power orbs.</p>
+        <span class="game-player-count" data-game="maze-chase"><span class="player-dot"></span><span class="player-count-text"></span></span>
         <a class="btn btn-primary btn-sm" href="maze-chase/">Play →</a>
       </article>
 
@@ -212,6 +240,7 @@
           </div>
         </div>
         <p class="game-desc">Six attempts. One word. Track your streak.</p>
+        <span class="game-player-count" data-game="word-puzzle"><span class="player-dot"></span><span class="player-count-text"></span></span>
         <a class="btn btn-primary btn-sm" href="word-puzzle/">Play →</a>
       </article>
 
@@ -226,6 +255,7 @@
           </div>
         </div>
         <p class="game-desc">Play a friend on the same screen, online, or challenge the bot.</p>
+        <span class="game-player-count" data-game="chess"><span class="player-dot"></span><span class="player-count-text"></span></span>
         <a class="btn btn-primary btn-sm" href="chess/">Play →</a>
       </article>
 
@@ -240,6 +270,7 @@
           </div>
         </div>
         <p class="game-desc">Join a table, play hands, try not to bust.</p>
+        <span class="game-player-count" data-game="blackjack"><span class="player-dot"></span><span class="player-count-text"></span></span>
         <a class="btn btn-primary btn-sm" href="blackjack/">Play →</a>
       </article>
 
@@ -253,6 +284,7 @@
           </div>
         </div>
         <p class="game-desc">Match marbles, chain combos, clear all 12 temples.</p>
+        <span class="game-player-count" data-game="zuma"><span class="player-dot"></span><span class="player-count-text"></span></span>
         <a class="btn btn-primary btn-sm" href="zuma/">Play →</a>
       </article>
 
@@ -311,7 +343,33 @@
   </footer>
 
 
-  <script src="/assets/site.js?v=5"></script>
-  <script src="/arcade/arcade.js?v=1"></script>
+  <script src="/assets/site.js?v=6"></script>
+  <script src="/arcade/arcade.js?v=2"></script>
+  <script>
+  function updateGameCounts() {
+    fetch('/api/online/games')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var games = data.games || {};
+        document.querySelectorAll('.game-player-count').forEach(function(el) {
+          var slug = el.dataset.game;
+          var count = games[slug] || 0;
+          var textEl = el.querySelector('.player-count-text');
+          if (count > 0) {
+            el.classList.add('has-players');
+            textEl.textContent = count === 1 ? '1 playing' : count + ' playing';
+          } else {
+            el.classList.remove('has-players');
+            textEl.textContent = '';
+          }
+        });
+      })
+      .catch(function() {});
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    updateGameCounts();
+    setInterval(updateGameCounts, 30000);
+  });
+  </script>
 </body>
 </html>

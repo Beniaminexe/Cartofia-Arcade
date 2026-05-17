@@ -350,7 +350,7 @@
     fetch('/api/heartbeat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ visitor_id: visitorId })
+      body: JSON.stringify({ visitor_id: visitorId, page: window.location.pathname })
     }).catch(function() {});
   }
   sendHeartbeat();
