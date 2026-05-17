@@ -234,4 +234,24 @@
     }
   })();
 
+
+
+  /* --------------------------------------------------
+     7. PLAYERS ONLINE COUNTER
+     Polls /api/online every 30 seconds and updates
+     the stat-value element with id="online-count".
+  -------------------------------------------------- */
+
+  function updateOnlineCount() {
+    fetch('/api/online')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var el = document.getElementById('online-count');
+        if (el) el.textContent = data.count;
+      })
+      .catch(function() {});
+  }
+  updateOnlineCount();
+  setInterval(updateOnlineCount, 30000);
+
 })();

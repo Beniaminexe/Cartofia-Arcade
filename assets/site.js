@@ -334,3 +334,25 @@
     init();
   }
 })();
+
+// --- Presence heartbeat ---
+(function() {
+  var visitorId = localStorage.getItem('cartofia_visitor_id');
+  if (!visitorId) {
+    visitorId = (crypto.randomUUID ? crypto.randomUUID() :
+      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      }));
+    localStorage.setItem('cartofia_visitor_id', visitorId);
+  }
+  function sendHeartbeat() {
+    fetch('/api/heartbeat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitor_id: visitorId })
+    }).catch(function() {});
+  }
+  sendHeartbeat();
+  setInterval(sendHeartbeat, 60000);
+})();
