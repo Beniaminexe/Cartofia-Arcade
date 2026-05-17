@@ -306,6 +306,7 @@
   </div>
 
   <script src="/assets/site.js?v=4"></script>
+  <script src="/assets/game-utils.js?v=2"></script>
   <script>
     (function () {
       const canvas = document.getElementById("game");
@@ -368,6 +369,7 @@
       let running = false;
       let paused = false;
       let gameOver = false;
+      let gameStartTime = null;
       let lastFrameTime = 0;
       let accumulator = 0;
       const fixedStep = 1000 / 60;
@@ -474,6 +476,7 @@
         running = false;
         paused = false;
         gameOver = false;
+        gameStartTime = null;
         paddle.x = (canvas.width - paddle.w) / 2;
         makeBricks();
         resetBall(true);
@@ -488,6 +491,7 @@
         running = true;
         paused = false;
         ball.stuck = false;
+        if (!gameStartTime) gameStartTime = Date.now();
         setOverlay("");
       }
 
@@ -520,6 +524,11 @@
           running = false;
           paused = false;
           gameOver = true;
+          const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+          gameStartTime = null;
+          if (typeof logGameActivity === "function") {
+            logGameActivity({ game: "brick-blitz", result: "loss", score: score, level: level, duration_seconds: _dur });
+          }
           if (score > best) {
             best = score;
             saveBest();

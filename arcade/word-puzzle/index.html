@@ -192,7 +192,6 @@
         <a href="/">Home</a>
         <a class="active" href="/arcade/">Arcade</a>
         <a href="/minecraft/">Minecraft</a>
-        <a href="/account/">Account</a>
       </nav>
       <div class="account-menu" data-account-menu>
         <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
@@ -266,6 +265,7 @@
   </div>
 
   <script src="/assets/site.js?v=4"></script>
+  <script src="/assets/game-utils.js?v=2"></script>
   <script>
     (function () {
       const WORDS = [
@@ -291,6 +291,7 @@
       const newPuzzleButton = document.getElementById("newPuzzleButton");
 
       let target = "";
+      let gameStartTime = null;
       let guesses = [];
       let currentGuess = "";
       let gameOver = false;
@@ -442,6 +443,11 @@
 
       function finishGame(won) {
         gameOver = true;
+        const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+        gameStartTime = null;
+        if (typeof logGameActivity === "function") {
+          logGameActivity({ game: "word-puzzle", result: won ? "win" : "loss", attempts: guesses.length, duration_seconds: _dur });
+        }
         const streak = loadNumber(STORAGE_STREAK);
         const best = loadNumber(STORAGE_BEST);
 
@@ -521,6 +527,7 @@
         currentGuess = "";
         gameOver = false;
         keyState = {};
+        gameStartTime = Date.now();
         setNotice("Type a 5-letter word and press Enter.", "");
         render();
       }

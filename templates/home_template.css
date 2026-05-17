@@ -77,7 +77,7 @@ body::before {
 }
 
 /* All content layers above the glow */
-header, main, section, div.stats-strip, div.final-cta, footer, .mobile-nav {
+header, main, section, div.stats-strip, div.final-cta, footer {
   position: relative;
   z-index: 1;
 }
@@ -164,58 +164,6 @@ header, main, section, div.stats-strip, div.final-cta, footer, .mobile-nav {
   background: var(--bg-card-h);
   color: var(--text-primary);
 }
-
-/* Hamburger (mobile only) */
-.nav-hamburger {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  padding: 6px 4px;
-}
-.nav-hamburger span {
-  display: block;
-  width: 22px;
-  height: 2px;
-  background: var(--text-secondary);
-  border-radius: 99px;
-  transition: transform 0.25s ease, opacity 0.2s ease;
-}
-.nav-hamburger[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.nav-hamburger[aria-expanded="true"] span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-.nav-hamburger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-
-/* Mobile nav dropdown */
-.mobile-nav {
-  position: fixed;
-  top: var(--nav-h);
-  left: 0; right: 0;
-  z-index: 199;
-  background: rgba(10, 14, 26, 0.97);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid var(--border);
-  padding: 8px var(--gutter) 16px;
-  display: flex;
-  flex-direction: column;
-  transition: opacity 0.2s ease, transform 0.22s ease;
-}
-.mobile-nav.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-6px);
-}
-.mobile-nav a {
-  padding: 13px 0;
-  color: var(--text-secondary);
-  font-size: 15px;
-  font-weight: 500;
-  border-bottom: 1px solid var(--border);
-  transition: color 0.15s;
-}
-.mobile-nav a:last-child { border-bottom: none; }
-.mobile-nav a:hover,
-.mobile-nav a.active { color: var(--text-primary); }
 
 
 /* --------------------------------------------------
@@ -1108,6 +1056,10 @@ header, main, section, div.stats-strip, div.final-cta, footer, .mobile-nav {
 
 /* --------------------------------------------------
    RESPONSIVE — 768px (tablet/mobile)
+   Showcase tabs become an accordion: each panel sits
+   directly below its tab button (JS moves the panels
+   from .showcase-content into .showcase-tabs at this
+   breakpoint).
 -------------------------------------------------- */
 @media (max-width: 768px) {
   /* Hero: single column */
@@ -1115,9 +1067,8 @@ header, main, section, div.stats-strip, div.final-cta, footer, .mobile-nav {
     grid-template-columns: 1fr;
   }
 
-  /* Nav: hide links, show hamburger */
-  .nav-links     { display: none; }
-  .nav-hamburger { display: flex; }
+  /* Nav: hide links (hamburger removed entirely) */
+  .nav-links { display: none; }
 
   /* Steps: stack vertically, hide connectors */
   .steps-strip {
@@ -1143,6 +1094,67 @@ header, main, section, div.stats-strip, div.final-cta, footer, .mobile-nav {
     flex-direction: column;
     align-items: center;
   }
+
+  /* === Accordion mode for the feature showcase === */
+  .showcase-tabs {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 6px;
+    position: static;
+  }
+
+  .tab-btn {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    padding: 13px 14px;
+  }
+
+  /* Show the caret on mobile and rotate when open */
+  .tab-arrow {
+    display: block;
+    margin-left: auto;
+    opacity: 0.45;
+    transition: transform 0.22s ease, opacity 0.18s ease, color 0.18s ease;
+  }
+  .tab-btn.active .tab-arrow {
+    transform: rotate(90deg);
+    opacity: 1;
+    color: var(--accent);
+  }
+
+  /* Panel when nested inside .showcase-tabs (JS moves it here) */
+  .showcase-tabs .tab-panel {
+    grid-column: auto;
+    grid-row: auto;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin: 0 0 6px;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    border-width: 0;
+    transition:
+      max-height 0.34s ease,
+      opacity 0.24s ease,
+      padding 0.22s ease,
+      border-width 0.18s ease;
+  }
+  .showcase-tabs .tab-panel.active {
+    max-height: 1600px;
+    padding-top: clamp(20px, 3vw, 28px);
+    padding-bottom: clamp(20px, 3vw, 28px);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    border-width: 1px;
+  }
+
+  /* Original content container is empty on mobile — hide it */
+  .showcase-content { display: none; }
 }
 
 

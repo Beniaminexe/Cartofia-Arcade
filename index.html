@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
-  <link rel="stylesheet" href="/home.css?v=1" />
+  <link rel="stylesheet" href="/home.css?v=2" />
   <style>
     /* Make the nav-avatar button reset so home.css styles apply cleanly */
     button.nav-avatar {
@@ -39,7 +39,6 @@
       <a href="/" class="active">Home</a>
       <a href="/arcade/">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
-      <a href="/account/">Account</a>
     </nav>
 
     <div class="nav-right">
@@ -49,21 +48,8 @@
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
         </div>
       </div>
-      <button class="nav-hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobileNav">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
     </div>
   </header>
-
-  <!-- Mobile nav overlay -->
-  <div class="mobile-nav hidden" id="mobileNav" aria-hidden="true">
-    <a href="/" class="active">Home</a>
-    <a href="/arcade/">Arcade</a>
-    <a href="/minecraft/">Minecraft</a>
-    <a href="/account/">Account</a>
-  </div>
 
 
   <!-- ================================================
@@ -121,8 +107,8 @@
       </div>
       <div class="stat-item">
         <span class="stat-icon" aria-hidden="true">👤</span>
-        <span class="stat-value">∞</span>
-        <span class="stat-label">players welcome</span>
+        <span class="stat-value">0</span>
+        <span class="stat-label">players online</span>
       </div>
       <div class="stat-item">
         <span class="stat-icon" aria-hidden="true">🏠</span>
@@ -408,6 +394,6 @@
 
 
   <script src="/assets/site.js?v=4"></script>
-  <script src="/home.js?v=1"></script>
+  <script src="/home.js?v=2"></script>
 </body>
 </html>

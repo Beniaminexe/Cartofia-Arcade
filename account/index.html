@@ -6,273 +6,608 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/home.css?v=2" />
   <style>
-    .account-hero {
-      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-      align-items: end;
-      gap: clamp(24px, 4.9vw, 58px);
+    /* nav-avatar button reset (matches homepage) */
+    button.nav-avatar {
+      appearance: none;
+      -webkit-appearance: none;
+      font: inherit;
+      cursor: pointer;
     }
 
-    .account-hero-copy {
-      display: grid;
-      gap: 20px;
-      max-width: 60ch;
+    /* ----- Visibility helpers ----- */
+    .acct-hidden { display: none !important; }
+
+    /* ----- Account page container ----- */
+    .acct-shell {
+      max-width: var(--container);
+      margin: 0 auto;
+      padding: calc(var(--nav-h) + 40px) var(--gutter) 60px;
+      position: relative;
       z-index: 1;
     }
 
-    .identity-panel {
-      border-radius: 24px;
-      padding: clamp(20px, 3.2vw, 32px);
-      background:
-        radial-gradient(420px 240px at 100% -20%, rgba(137, 208, 255, 0.19), transparent 74%),
-        linear-gradient(180deg, rgba(14, 24, 39, 0.72), rgba(8, 14, 24, 0.58));
-      box-shadow: 0 22px 45px rgba(2, 10, 20, 0.36);
-      display: grid;
-      gap: 10px;
-    }
-
-    .identity-panel h2 {
-      font-size: clamp(22px, 2.4vw, 36px);
-      letter-spacing: -0.03em;
-      line-height: 1.08;
-    }
-
-    .identity-panel p {
-      color: var(--text-secondary);
-      font-size: 15px;
-    }
-
-    .account-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
-      gap: 20px;
-    }
-
-    .account-story {
-      border-radius: 24px;
-      padding: clamp(20px, 3vw, 32px);
-      background: linear-gradient(175deg, rgba(15, 25, 40, 0.76), rgba(9, 15, 25, 0.58));
-      box-shadow: 0 20px 42px rgba(1, 8, 17, 0.35);
-      display: grid;
-      gap: 18px;
-    }
-
-    .account-story h2 {
-      font-size: clamp(28px, 3vw, 46px);
-      letter-spacing: -0.03em;
-      line-height: 1.07;
-    }
-
-    .account-story p {
-      color: var(--text-secondary);
-      font-size: 16px;
-      max-width: 58ch;
-    }
-
-    .benefit-list {
-      list-style: none;
-      display: grid;
-      gap: 12px;
-    }
-
-    .benefit-list li {
-      border-radius: 14px;
-      padding: 12px 14px;
-      background: rgba(11, 19, 31, 0.58);
-      color: var(--text-secondary);
-      font-size: 14px;
-    }
-
-    .benefit-list b {
-      color: var(--text-primary);
-      font-weight: 700;
-    }
-
-    .portal-card {
-      border-radius: 24px;
-      padding: clamp(20px, 3vw, 30px);
-      background:
-        radial-gradient(420px 160px at -20% -20%, rgba(132, 206, 255, 0.2), transparent 74%),
-        linear-gradient(180deg, rgba(14, 24, 39, 0.76), rgba(8, 14, 24, 0.62));
-      box-shadow: 0 22px 44px rgba(1, 8, 17, 0.38);
-      display: grid;
-      gap: 14px;
-    }
-
-    .portal-head h2 {
-      font-size: clamp(24px, 2.6vw, 36px);
-      letter-spacing: -0.03em;
-      line-height: 1.08;
-    }
-
-    .portal-head p {
-      color: var(--text-secondary);
-      font-size: 15px;
-      margin-top: 8px;
-    }
-
-    .session-card {
-      margin-top: 4px;
-    }
-
-    .remember-row {
+    /* ====================================================
+       GUEST VIEW
+    ===================================================== */
+    .guest-hero {
+      min-height: 38vh;
       display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 32px 0 28px;
+    }
+    .guest-hero .hero-kicker {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-accent);
+      margin-bottom: 14px;
+    }
+    .guest-hero h1 {
+      font-size: clamp(30px, 4.4vw, 52px);
+      font-weight: 700;
+      letter-spacing: -0.038em;
+      line-height: 1.06;
+      max-width: 22ch;
+      margin-bottom: 14px;
+      color: var(--text-primary);
+      background: linear-gradient(135deg,
+        var(--text-primary) 0%,
+        #b8d0ff 28%,
+        var(--accent-2) 54%,
+        var(--accent) 76%,
+        var(--text-primary) 100%);
+      background-size: 250% 250%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .guest-hero .lead {
+      color: var(--text-secondary);
+      font-size: clamp(15px, 1.5vw, 17px);
+      max-width: 56ch;
+      line-height: 1.65;
+      margin-bottom: 22px;
+    }
+    .guest-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .guest-fineprint {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .remember-row {
+      display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-
-    .remember-row input[type="checkbox"] {
-      width: 15px;
-      height: 15px;
-      cursor: pointer;
-      accent-color: var(--accent);
-    }
-
-    .remember-row label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 6px;
       cursor: pointer;
       user-select: none;
     }
+    .remember-row input { cursor: pointer; accent-color: var(--accent); }
 
-    @media (max-width: 1080px) {
-      .account-hero,
-      .account-grid {
+    .benefits-strip {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 26px 0;
+      margin-top: 24px;
+    }
+    .benefits-inner {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      text-align: left;
+    }
+    .benefit-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 4px;
+    }
+    .benefit-icon { font-size: 22px; line-height: 1.1; flex-shrink: 0; }
+    .benefit-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: -0.018em;
+      margin-bottom: 2px;
+    }
+    .benefit-desc {
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    /* ====================================================
+       DASHBOARD VIEW
+    ===================================================== */
+
+    /* Identity card */
+    .identity-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 20px;
+      padding: 22px clamp(20px, 3vw, 30px);
+      border-radius: var(--radius);
+      background:
+        radial-gradient(420px 200px at 0% 0%, rgba(124, 91, 245, 0.14), transparent 70%),
+        linear-gradient(180deg, rgba(15, 26, 42, 0.78), rgba(10, 17, 29, 0.62));
+      border: 1px solid var(--border);
+      box-shadow: 0 22px 48px rgba(1, 9, 19, 0.4);
+      margin-bottom: 24px;
+    }
+    .identity-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg,
+        rgba(124, 91, 245, 0.5) 0%,
+        rgba(79, 125, 249, 0.5) 50%,
+        transparent 100%);
+      border-top-left-radius: var(--radius);
+      border-top-right-radius: var(--radius);
+    }
+
+    .identity-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 26px;
+      letter-spacing: -0.02em;
+      color: #fff;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .identity-avatar img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+
+    .identity-info { min-width: 0; }
+    .identity-username {
+      font-size: clamp(20px, 2.4vw, 28px);
+      font-weight: 700;
+      letter-spacing: -0.028em;
+      line-height: 1.1;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .identity-email {
+      color: var(--text-secondary);
+      font-size: 13.5px;
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .badge-pill {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      padding: 3px 9px;
+      border-radius: 99px;
+      background: rgba(79, 125, 249, 0.13);
+      border: 1px solid rgba(79, 125, 249, 0.28);
+      color: var(--text-accent);
+    }
+    .identity-actions { flex-shrink: 0; }
+
+    /* Stats row (full-width strip — same look as homepage stats-strip) */
+    .acct-stats-strip {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 24px 0;
+      margin: 8px 0 24px;
+    }
+    .acct-stats-inner {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      text-align: center;
+    }
+    .acct-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .acct-stat-icon { font-size: 20px; line-height: 1; margin-bottom: 3px; }
+    .acct-stat-value {
+      font-size: clamp(22px, 3vw, 32px);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--text-primary);
+    }
+    .acct-stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Settings list */
+    .settings-list {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .setting-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s ease;
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-row:hover { background: rgba(255, 255, 255, 0.03); }
+    .setting-icon {
+      font-size: 22px;
+      line-height: 1;
+      width: 28px;
+      text-align: center;
+    }
+    .setting-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: -0.018em;
+      color: var(--text-primary);
+    }
+    .setting-desc {
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-top: 2px;
+    }
+
+    /* Session footer */
+    .session-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 4px 4px;
+      font-size: 13px;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+    .signed-in-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .signed-in-row b { color: var(--text-secondary); font-weight: 600; }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 8px rgba(74, 222, 128, 0.55);
+      flex-shrink: 0;
+    }
+    .logout-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .logout-link:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    /* Loading skeleton */
+    .skeleton {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.04) 0%,
+        rgba(255,255,255,0.08) 50%,
+        rgba(255,255,255,0.04) 100%);
+      background-size: 200% 100%;
+      animation: skeletonPulse 1.4s ease-in-out infinite;
+      color: transparent !important;
+      border-radius: 6px;
+      display: inline-block;
+      min-height: 1em;
+    }
+    @keyframes skeletonPulse {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Error view */
+    .error-view {
+      text-align: center;
+      padding: clamp(40px, 8vh, 80px) 0;
+    }
+    .error-view h1 {
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 700;
+      letter-spacing: -0.028em;
+      margin-bottom: 8px;
+    }
+    .error-view p {
+      color: var(--text-secondary);
+      margin-bottom: 22px;
+      max-width: 44ch;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ====================================================
+       RESPONSIVE
+    ===================================================== */
+    @media (max-width: 768px) {
+      .identity-card {
         grid-template-columns: 1fr;
+        text-align: center;
+        gap: 14px;
       }
+      .identity-avatar { margin: 0 auto; }
+      .identity-username, .identity-email {
+        white-space: normal;
+      }
+      .badge-row { justify-content: center; }
+      .identity-actions { justify-self: center; }
+
+      .acct-stats-inner {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px 0;
+      }
+
+      .benefits-inner {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .setting-row {
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        column-gap: 14px;
+        row-gap: 8px;
+        padding: 14px 18px;
+      }
+      .setting-row .btn {
+        grid-column: 1 / -1;
+        justify-self: start;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .guest-actions { flex-direction: column; align-items: stretch; }
+      .guest-actions .btn { justify-content: center; width: 100%; }
     }
   </style>
 </head>
 <body>
-  <header class="nav">
+
+  <!-- NAV (matches homepage, no Account link in nav-links) -->
+  <header class="nav" id="nav">
     <a class="nav-brand" href="/">
-      <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
-    Cartofia
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
+      Cartofia
     </a>
     <nav class="nav-links" aria-label="Primary">
       <a href="/">Home</a>
       <a href="/arcade/">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
-      <a class="active" href="/account/">Account</a>
     </nav>
-    <div class="account-menu" data-account-menu>
-      <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
-      <div class="account-dropdown hidden" data-account-dropdown role="menu">
-        <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+    <div class="nav-right">
+      <div class="account-menu" data-account-menu>
+        <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+        </div>
       </div>
     </div>
   </header>
 
-  <div class="site-shell">
-    <main>
-      <section class="page-hero account-hero reveal" data-delay="1">
-        <div class="account-hero-copy">
-          <p class="hero-kicker">Cartofia Accounts</p>
-          <h1 class="hero-title">One account for your full Cartofia experience.</h1>
-          <p class="hero-lead">
-            Sign in once through Cartofia Accounts, keep your identity consistent, and move across services without re-auth prompts.
-          </p>
-          <div class="pill-row">
-            <span class="pill"><strong>SSO</strong> OIDC-based session flow</span>
-            <span class="pill"><strong>Identity</strong> unified profile and avatar</span>
-            <span class="pill"><strong>Access</strong> role-aware private services</span>
-          </div>
-        </div>
+  <div class="acct-shell">
 
-        <aside class="identity-panel">
-          <p class="section-label">Security Model</p>
-          <h2>Protected by Authentik OIDC</h2>
-          <p>Auth flows and session state are handled in-browser with PKCE, then shared with backend APIs through bearer token validation.</p>
-          <div class="button-row">
-            <a class="btn btn-ghost" href="/account/profile/">Open Profile</a>
-          </div>
-        </aside>
+    <!-- ===== GUEST VIEW (hidden until init decides) ===== -->
+    <main id="guestView" class="acct-hidden">
+      <section class="guest-hero">
+        <p class="hero-kicker">Cartofia Accounts</p>
+        <h1>Sign in to unlock everything.</h1>
+        <p class="lead">
+          Track your game stats, upload to the archive, customize your profile, and access
+          members-only features. One account works across all of Cartofia.
+        </p>
+        <div class="guest-actions">
+          <button id="signInButton" type="button" class="btn btn-primary">Sign In</button>
+          <a id="registerLink" href="#" class="btn btn-ghost">Create Account</a>
+        </div>
+        <p class="guest-fineprint">Powered by single sign-on. Your password never touches Cartofia's servers.</p>
+        <label class="remember-row">
+          <input id="rememberMe" type="checkbox" />
+          Remember me on this device
+        </label>
       </section>
 
-      <section class="section-block reveal" data-delay="2">
-        <div class="account-grid">
-          <article class="account-story">
-            <p class="section-label">Why account access matters</p>
-            <h2>Identity powers the Cartofia platform layer</h2>
-            <p>Account sessions are more than sign-in status. They unify profile data, badges, and role-aware navigation while keeping private surfaces controlled.</p>
-            <ul class="benefit-list">
-              <li><b>Single sign-on:</b> one login flow across account, profile, and platform surfaces.</li>
-              <li><b>Profile continuity:</b> display name and avatar are reflected throughout shared UI.</li>
-              <li><b>Permission model:</b> access is decided by account groups, not client-only checks.</li>
-              <li><b>Session clarity:</b> this page always shows your current identity and token-backed state.</li>
-            </ul>
-          </article>
-
-          <article class="portal-card">
-            <div class="portal-head">
-              <h2>Account Portal</h2>
-              <p>Sign in to continue, or manage your active session below.</p>
+      <div class="benefits-strip">
+        <div class="benefits-inner">
+          <div class="benefit-item">
+            <span class="benefit-icon" aria-hidden="true">🎮</span>
+            <div>
+              <div class="benefit-title">Game tracking</div>
+              <div class="benefit-desc">Every game you play is logged to your profile.</div>
             </div>
-
-            <div id="authNotice" class="notice warn">Checking session...</div>
-
-            <div id="authActions" class="stack" style="gap:14px;">
-              <button class="btn btn-primary" type="button" id="signInButton" style="width:100%">Sign In with Cartofia</button>
-              <div class="remember-row">
-                <input type="checkbox" id="rememberMe" checked />
-                <label for="rememberMe">Remember me on this device</label>
-              </div>
-              <p style="text-align:center;color:var(--text-secondary);font-size:14px;">
-                Don't have an account?
-                <a class="inline-link" id="registerLink" href="#">Create one</a>
-              </p>
+          </div>
+          <div class="benefit-item">
+            <span class="benefit-icon" aria-hidden="true">📦</span>
+            <div>
+              <div class="benefit-title">Archive access</div>
+              <div class="benefit-desc">Upload and download from the Cartofia archive.</div>
             </div>
-
-            <div id="authSuccess" class="auth-success hidden">
-              <div class="notice ok" id="authSuccessNotice">Signed in.</div>
-              <div class="button-row">
-                <a class="btn btn-ghost" href="/account/profile/">Open Profile</a>
-                <a class="btn btn-ghost" href="/">Back Home</a>
-              </div>
+          </div>
+          <div class="benefit-item">
+            <span class="benefit-icon" aria-hidden="true">🎨</span>
+            <div>
+              <div class="benefit-title">Your profile</div>
+              <div class="benefit-desc">Avatar, banner, bio, badges — make it yours.</div>
             </div>
-
-            <div class="session-card" id="sessionCard">
-              <div class="session-head">
-                <span class="badge">Session</span>
-                <span id="sessionStatus">Checking session...</span>
-              </div>
-              <div class="session-row">
-                <span>Username</span>
-                <strong id="sessionUsername">-</strong>
-              </div>
-              <div class="session-row">
-                <span>Email</span>
-                <strong id="sessionEmail">-</strong>
-              </div>
-              <div class="session-row">
-                <span>Groups</span>
-                <strong id="sessionGroups">-</strong>
-              </div>
-              <div class="button-row hidden" id="sessionActions">
-                <a class="btn btn-ghost" href="/account/profile/">Open Profile</a>
-                <button class="btn btn-ghost" type="button" id="logoutButton">Logout</button>
-              </div>
-            </div>
-          </article>
+          </div>
         </div>
-      </section>
+      </div>
     </main>
 
-    <footer class="footer">
-      <span>Cartofia account management powered by single sign-on.</span>
-      <div class="footer-links">
-        <a href="/">Home</a>
-        <a href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-        <a href="/account/profile/">Profile</a>
+
+    <!-- ===== DASHBOARD VIEW (hidden until init decides) ===== -->
+    <main id="dashView" class="acct-hidden">
+      <!-- Identity card -->
+      <section class="identity-card">
+        <div class="identity-avatar" id="dashAvatar"><span class="skeleton" style="width:48px;">CA</span></div>
+        <div class="identity-info">
+          <div class="identity-username" id="dashUsername"><span class="skeleton" style="width:140px;">loading</span></div>
+          <div class="identity-email"    id="dashEmail"><span class="skeleton" style="width:200px;">loading</span></div>
+          <div class="badge-row" id="dashBadges"></div>
+        </div>
+        <div class="identity-actions">
+          <a id="viewPublicLink" href="#" class="btn btn-ghost btn-sm">View Public Profile</a>
+        </div>
+      </section>
+
+      <!-- Stats row -->
+      <div class="acct-stats-strip">
+        <div class="acct-stats-inner">
+          <div class="acct-stat">
+            <span class="acct-stat-icon" aria-hidden="true">🎮</span>
+            <span class="acct-stat-value" id="statGames">0</span>
+            <span class="acct-stat-label">Games Played</span>
+          </div>
+          <div class="acct-stat">
+            <span class="acct-stat-icon" aria-hidden="true">⏱️</span>
+            <span class="acct-stat-value" id="statPlaytime">0m</span>
+            <span class="acct-stat-label">Play Time</span>
+          </div>
+          <div class="acct-stat">
+            <span class="acct-stat-icon" aria-hidden="true">📦</span>
+            <span class="acct-stat-value" id="statUploads">0</span>
+            <span class="acct-stat-label">Uploads</span>
+          </div>
+          <div class="acct-stat">
+            <span class="acct-stat-icon" aria-hidden="true">👁️</span>
+            <span class="acct-stat-value" id="statViews">0</span>
+            <span class="acct-stat-label">Profile Views</span>
+          </div>
+        </div>
       </div>
-    </footer>
+
+      <!-- Settings list -->
+      <section class="settings-list">
+        <div class="setting-row">
+          <span class="setting-icon" aria-hidden="true">✏️</span>
+          <div>
+            <div class="setting-title">Edit Profile</div>
+            <div class="setting-desc">Change your avatar, banner, and bio.</div>
+          </div>
+          <a class="btn btn-ghost btn-sm" href="/account/profile/">Edit</a>
+        </div>
+        <div class="setting-row">
+          <span class="setting-icon" aria-hidden="true">🔐</span>
+          <div>
+            <div class="setting-title">Manage Account</div>
+            <div class="setting-desc">Update your password, email, or security settings.</div>
+          </div>
+          <a class="btn btn-ghost btn-sm" href="https://accounts.cartofia.com/if/user/" target="_blank" rel="noopener noreferrer">Open Settings</a>
+        </div>
+        <div class="setting-row">
+          <span class="setting-icon" aria-hidden="true">📦</span>
+          <div>
+            <div class="setting-title">File Archive</div>
+            <div class="setting-desc">Browse your uploads and downloads.</div>
+          </div>
+          <a class="btn btn-ghost btn-sm" href="/archive/">Open Archive</a>
+        </div>
+        <div class="setting-row">
+          <span class="setting-icon" aria-hidden="true">👤</span>
+          <div>
+            <div class="setting-title">Public Profile</div>
+            <div class="setting-desc">See how others see you.</div>
+          </div>
+          <a id="viewPublicLink2" class="btn btn-ghost btn-sm" href="#">View</a>
+        </div>
+      </section>
+
+      <!-- Session footer -->
+      <div class="session-bar">
+        <span class="signed-in-row">
+          <span class="status-dot" aria-hidden="true"></span>
+          Signed in as <b id="dashFooterUsername">…</b>
+        </span>
+        <a id="logoutButton" href="#" class="logout-link">Logout</a>
+      </div>
+    </main>
+
+
+    <!-- ===== ERROR VIEW ===== -->
+    <main id="errorView" class="acct-hidden">
+      <div class="error-view">
+        <h1>Couldn't load your profile.</h1>
+        <p>Your session may have expired or the profile service is unreachable. Try refreshing or signing in again.</p>
+        <button id="errorSignIn" type="button" class="btn btn-primary">Sign In</button>
+      </div>
+    </main>
+
   </div>
+
+  <!-- Footer (copied from homepage) -->
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/account/">Account</a>
+      <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </footer>
+
 
   <script src="/assets/site.js?v=4"></script>
   <script>
-    /* OIDC Configuration */
+    /* ============================================================
+       OIDC PKCE auth — same logic as the previous account page.
+       Only applySession() / wiring changed for the new UI.
+       ============================================================ */
+
     const OIDC = {
       AUTHORITY:                  "https://accounts.cartofia.com/application/o/cartofia/",
       CLIENT_ID:                  "cartofia",
@@ -282,27 +617,59 @@
       REGISTRATION_URL:           "https://accounts.cartofia.com/if/flow/cartofia-enrollment/",
     };
 
-    /* DOM refs */
-    const refs = {
-      authNotice:       document.getElementById("authNotice"),
-      authActions:      document.getElementById("authActions"),
-      authSuccess:      document.getElementById("authSuccess"),
-      authSuccessNotice:document.getElementById("authSuccessNotice"),
-      signInButton:     document.getElementById("signInButton"),
-      registerLink:     document.getElementById("registerLink"),
-      logoutButton:     document.getElementById("logoutButton"),
-      sessionStatus:    document.getElementById("sessionStatus"),
-      sessionUsername:   document.getElementById("sessionUsername"),
-      sessionEmail:     document.getElementById("sessionEmail"),
-      sessionGroups:    document.getElementById("sessionGroups"),
-      sessionActions:   document.getElementById("sessionActions"),
-      rememberMe:       document.getElementById("rememberMe"),
+    /* Group display name map — only shows whitelisted groups */
+    const GROUP_DISPLAY = {
+      "member":           "Member",
+      "archive_view":     "Archive Viewer",
+      "archive_upload":   "Uploader",
+      "archive_admin":    "Archive Admin",
+      "arcade_player":    "Player",
+      "arcade_admin":     "Arcade Admin",
+      "minecraft_admin":  "MC Admin",
     };
 
-    function setNotice(message, type) {
-      refs.authNotice.textContent = message;
-      refs.authNotice.className = "notice";
-      if (type) refs.authNotice.classList.add(type);
+    /* DOM refs */
+    const refs = {
+      guestView:          document.getElementById("guestView"),
+      dashView:           document.getElementById("dashView"),
+      errorView:          document.getElementById("errorView"),
+      signInButton:       document.getElementById("signInButton"),
+      registerLink:       document.getElementById("registerLink"),
+      rememberMe:         document.getElementById("rememberMe"),
+      logoutButton:       document.getElementById("logoutButton"),
+      errorSignIn:        document.getElementById("errorSignIn"),
+      dashAvatar:         document.getElementById("dashAvatar"),
+      dashUsername:       document.getElementById("dashUsername"),
+      dashEmail:          document.getElementById("dashEmail"),
+      dashBadges:         document.getElementById("dashBadges"),
+      dashFooterUsername: document.getElementById("dashFooterUsername"),
+      viewPublicLink:     document.getElementById("viewPublicLink"),
+      viewPublicLink2:    document.getElementById("viewPublicLink2"),
+      statGames:          document.getElementById("statGames"),
+      statPlaytime:       document.getElementById("statPlaytime"),
+      statUploads:        document.getElementById("statUploads"),
+      statViews:          document.getElementById("statViews"),
+    };
+
+    function showView(name) {
+      refs.guestView.classList.toggle("acct-hidden", name !== "guest");
+      refs.dashView.classList.toggle("acct-hidden", name !== "dash");
+      refs.errorView.classList.toggle("acct-hidden", name !== "error");
+    }
+
+    function initialsFrom(name) {
+      const v = (name || "").trim();
+      return v ? v.slice(0, 2).toUpperCase() : "CA";
+    }
+
+    function formatPlaytime(seconds) {
+      const s = Number(seconds) || 0;
+      if (s < 60) return s + "s";
+      const m = Math.floor(s / 60);
+      if (m < 60) return m + "m";
+      const h = Math.floor(m / 60);
+      const rem = m % 60;
+      return rem ? h + "h " + rem + "m" : h + "h";
     }
 
     /* PKCE helpers (Web Crypto) */
@@ -314,9 +681,7 @@
 
     function base64url(buffer) {
       return btoa(String.fromCharCode(...new Uint8Array(buffer)))
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
     }
 
     async function generatePKCE() {
@@ -325,7 +690,7 @@
       return { verifier, challenge: base64url(digest) };
     }
 
-    /* OIDC Discovery */
+    /* OIDC discovery */
     let _discovery = null;
     async function discover() {
       if (_discovery) return _discovery;
@@ -336,34 +701,21 @@
       return _discovery;
     }
 
-    /* Token storage helpers */
-    function getToken() {
-      return sessionStorage.getItem("oidc_access_token") || localStorage.getItem("oidc_access_token");
-    }
-    function getIdToken() {
-      return sessionStorage.getItem("oidc_id_token") || localStorage.getItem("oidc_id_token");
-    }
-    function getRefreshToken() {
-      return sessionStorage.getItem("oidc_refresh_token") || localStorage.getItem("oidc_refresh_token");
-    }
+    /* Token storage */
+    function getToken()        { return sessionStorage.getItem("oidc_access_token")  || localStorage.getItem("oidc_access_token");  }
+    function getIdToken()      { return sessionStorage.getItem("oidc_id_token")       || localStorage.getItem("oidc_id_token");       }
+    function getRefreshToken() { return sessionStorage.getItem("oidc_refresh_token")  || localStorage.getItem("oidc_refresh_token");  }
 
-    /* Write tokens to localStorage (remember me) or sessionStorage (session only).
-       The cartofia_remember flag set before redirect tells us which to use. */
     function storeTokens(tokens) {
-      var remember = localStorage.getItem("cartofia_remember") === "true";
-      var store  = remember ? localStorage  : sessionStorage;
-      var other  = remember ? sessionStorage : localStorage;
-
+      const remember = localStorage.getItem("cartofia_remember") === "true";
+      const store = remember ? localStorage : sessionStorage;
+      const other = remember ? sessionStorage : localStorage;
       store.setItem("oidc_access_token", tokens.access_token);
-      if (tokens.id_token)      store.setItem("oidc_id_token",      tokens.id_token);
-      if (tokens.refresh_token) store.setItem("oidc_refresh_token",  tokens.refresh_token);
-
+      if (tokens.id_token)      store.setItem("oidc_id_token",     tokens.id_token);
+      if (tokens.refresh_token) store.setItem("oidc_refresh_token", tokens.refresh_token);
       other.removeItem("oidc_access_token");
       other.removeItem("oidc_id_token");
       other.removeItem("oidc_refresh_token");
-
-      /* Set cookie so direct-navigation requests (file downloads etc.) can auth
-         without an Authorization header. */
       document.cookie = "access_token=" + tokens.access_token + "; path=/; SameSite=Strict; Secure";
     }
 
@@ -378,36 +730,13 @@
       document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure";
     }
 
-    /* Session UI */
-    function applySession(user) {
-      const ok = Boolean(user);
-
-      refs.sessionStatus.textContent   = ok ? "Signed in" : "Not signed in";
-      refs.sessionUsername.textContent  = ok ? user.username : "-";
-      refs.sessionEmail.textContent    = ok ? (user.email || "-") : "-";
-      refs.sessionGroups.textContent   = ok && user.groups.length ? user.groups.join(", ") : "-";
-
-      refs.sessionActions.classList.toggle("hidden", !ok);
-      refs.authActions.classList.toggle("hidden", ok);
-      refs.authSuccess.classList.toggle("hidden", !ok);
-
-      if (ok) {
-        setNotice("Signed in as " + user.username, "ok");
-        refs.authSuccessNotice.textContent = "Signed in. Open your profile or return home.";
-        var next = new URLSearchParams(window.location.search).get("next");
-        if (next) window.location.href = next;
-      } else {
-        setNotice("Not signed in. Use your Cartofia account to continue.", "warn");
-      }
-    }
-
-    /* Userinfo — returns user object or null (does NOT attempt refresh itself) */
+    /* Userinfo — returns user object or null */
     async function fetchUserinfo(token) {
-      var resp = await fetch(OIDC.USERINFO_URL, {
+      const resp = await fetch(OIDC.USERINFO_URL, {
         headers: { "Authorization": "Bearer " + token },
       });
       if (!resp.ok) return null;
-      var claims = await resp.json();
+      const claims = await resp.json();
       return {
         username: claims.preferred_username || claims.sub || "",
         email:    claims.email || "",
@@ -415,17 +744,27 @@
       };
     }
 
-    /* Silent refresh — POST to token endpoint with the stored refresh token.
-       Writes new tokens back to whichever storage tier held the refresh token.
-       Returns new access token string, or null on failure. */
-    async function tryRefresh() {
-      var refreshToken = getRefreshToken();
-      if (!refreshToken) return null;
-      /* Determine which storage tier holds the refresh token */
-      var inLocal = !!localStorage.getItem("oidc_refresh_token");
+    /* Profile data from our API */
+    async function fetchProfile(token) {
       try {
-        var disc = await discover();
-        var resp = await fetch(disc.token_endpoint, {
+        const resp = await fetch("/api/profile/me", {
+          headers: { "Authorization": "Bearer " + token },
+        });
+        if (!resp.ok) return null;
+        return await resp.json();
+      } catch (_) {
+        return null;
+      }
+    }
+
+    /* Silent refresh */
+    async function tryRefresh() {
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) return null;
+      const inLocal = !!localStorage.getItem("oidc_refresh_token");
+      try {
+        const disc = await discover();
+        const resp = await fetch(disc.token_endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams({
@@ -435,9 +774,8 @@
           }),
         });
         if (!resp.ok) { clearTokens(); return null; }
-        var tokens = await resp.json();
-        /* Persist to same tier */
-        var store = inLocal ? localStorage : sessionStorage;
+        const tokens = await resp.json();
+        const store = inLocal ? localStorage : sessionStorage;
         store.setItem("oidc_access_token", tokens.access_token);
         if (tokens.id_token)      store.setItem("oidc_id_token",     tokens.id_token);
         if (tokens.refresh_token) store.setItem("oidc_refresh_token", tokens.refresh_token);
@@ -449,29 +787,24 @@
       }
     }
 
-    /* Login (PKCE Authorization Code) */
+    /* Start login (PKCE) */
     async function startLogin() {
       try {
-        var remember = refs.rememberMe ? refs.rememberMe.checked : false;
-        if (remember) {
-          localStorage.setItem("cartofia_remember", "true");
-        } else {
-          localStorage.removeItem("cartofia_remember");
-        }
+        const remember = refs.rememberMe ? refs.rememberMe.checked : false;
+        if (remember) localStorage.setItem("cartofia_remember", "true");
+        else          localStorage.removeItem("cartofia_remember");
 
-        var disc = await discover();
-        var pkce = await generatePKCE();
-        var state = randomString(16);
+        const disc = await discover();
+        const pkce = await generatePKCE();
+        const state = randomString(16);
 
         sessionStorage.setItem("oidc_pkce_verifier", pkce.verifier);
         sessionStorage.setItem("oidc_state", state);
 
-        /* Request offline_access when remember me is checked so Authentik
-           returns a refresh token alongside the access token. */
-        var scope = "openid profile email groups";
+        let scope = "openid profile email groups";
         if (remember) scope += " offline_access";
 
-        var params = new URLSearchParams({
+        const params = new URLSearchParams({
           response_type:        "code",
           client_id:            OIDC.CLIENT_ID,
           redirect_uri:         OIDC.REDIRECT_URI,
@@ -480,43 +813,42 @@
           code_challenge_method:"S256",
           state:                state,
         });
-
         window.location.href = disc.authorization_endpoint + "?" + params.toString();
       } catch (err) {
-        setNotice("Failed to start login: " + err.message, "error");
+        console.error("startLogin failed:", err);
+        showView("error");
       }
     }
 
-    /* Callback handler */
+    /* Callback handler — runs on /account/callback/ */
     async function handleCallback() {
-      var params = new URLSearchParams(window.location.search);
-      var code = params.get("code");
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
       if (!code) return false;
 
-      var error = params.get("error");
-      if (error) {
-        setNotice("Login denied: " + (params.get("error_description") || error), "error");
-        window.history.replaceState({}, document.title, window.location.pathname);
+      if (params.get("error")) {
+        console.error("Login denied:", params.get("error_description") || params.get("error"));
+        window.history.replaceState({}, document.title, "/account/");
         return true;
       }
 
-      var storedState = sessionStorage.getItem("oidc_state");
+      const storedState = sessionStorage.getItem("oidc_state");
       if (params.get("state") !== storedState) {
-        setNotice("Invalid state parameter. Please try signing in again.", "error");
-        window.history.replaceState({}, document.title, window.location.pathname);
+        console.error("Invalid OIDC state");
+        window.history.replaceState({}, document.title, "/account/");
         return true;
       }
 
-      var verifier = sessionStorage.getItem("oidc_pkce_verifier");
+      const verifier = sessionStorage.getItem("oidc_pkce_verifier");
       if (!verifier) {
-        setNotice("Missing PKCE verifier. Please try signing in again.", "error");
-        window.history.replaceState({}, document.title, window.location.pathname);
+        console.error("Missing PKCE verifier");
+        window.history.replaceState({}, document.title, "/account/");
         return true;
       }
 
       try {
-        var disc = await discover();
-        var resp = await fetch(disc.token_endpoint, {
+        const disc = await discover();
+        const resp = await fetch(disc.token_endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams({
@@ -527,75 +859,139 @@
             code_verifier: verifier,
           }),
         });
-
         if (!resp.ok) {
-          var errBody = await resp.json().catch(function () { return {}; });
+          const errBody = await resp.json().catch(function () { return {}; });
           throw new Error(errBody.error_description || errBody.error || "Token exchange failed");
         }
-
-        var tokens = await resp.json();
-        storeTokens(tokens);  /* uses cartofia_remember flag set before redirect */
-
+        const tokens = await resp.json();
+        storeTokens(tokens);
         sessionStorage.removeItem("oidc_pkce_verifier");
         sessionStorage.removeItem("oidc_state");
-        window.history.replaceState({}, document.title, window.location.pathname);
-
-        var user = await fetchUserinfo(tokens.access_token);
-        applySession(user);
+        window.history.replaceState({}, document.title, "/account/");
+        await loadSession(tokens.access_token);
       } catch (err) {
-        setNotice("Login failed: " + err.message, "error");
-        window.history.replaceState({}, document.title, window.location.pathname);
+        console.error("Login failed:", err);
+        showView("error");
       }
       return true;
     }
 
     /* Logout */
-    async function doLogout() {
-      var idToken = getIdToken();
+    async function doLogout(ev) {
+      if (ev) ev.preventDefault();
+      const idToken = getIdToken();
       clearTokens();
       try {
-        var disc = await discover();
-        var params = new URLSearchParams({
+        const disc = await discover();
+        const params = new URLSearchParams({
           post_logout_redirect_uri: OIDC.POST_LOGOUT_REDIRECT_URI,
         });
         if (idToken) params.set("id_token_hint", idToken);
         window.location.href = disc.end_session_endpoint + "?" + params.toString();
       } catch (_err) {
-        applySession(null);
+        window.location.href = OIDC.POST_LOGOUT_REDIRECT_URI;
       }
     }
 
-    /* Wire up events */
+    /* Populate dashboard with userinfo + profile data */
+    function applyDashboard(user, profileData) {
+      const username = user.username || "user";
+      const slug = (profileData && profileData.profile && profileData.profile.username_slug) || username;
+      const avatarUrl = (profileData && profileData.profile && profileData.profile.avatar_url) || "";
+      const displayName = (profileData && profileData.profile && profileData.profile.display_name) || username;
+
+      /* Avatar */
+      refs.dashAvatar.innerHTML = "";
+      if (avatarUrl) {
+        const img = document.createElement("img");
+        img.src = avatarUrl;
+        img.alt = displayName;
+        refs.dashAvatar.appendChild(img);
+      } else {
+        refs.dashAvatar.textContent = initialsFrom(displayName);
+      }
+
+      /* Identity text */
+      refs.dashUsername.textContent       = displayName;
+      refs.dashEmail.textContent          = user.email || "";
+      refs.dashFooterUsername.textContent = username;
+
+      /* Group badges (whitelist + map to display names) */
+      refs.dashBadges.innerHTML = "";
+      (user.groups || []).forEach(function (g) {
+        const label = GROUP_DISPLAY[g];
+        if (!label) return; /* skip unknown / internal groups */
+        const pill = document.createElement("span");
+        pill.className = "badge-pill";
+        pill.textContent = label;
+        refs.dashBadges.appendChild(pill);
+      });
+
+      /* Stats */
+      const stats = (profileData && profileData.stats) || {};
+      refs.statGames.textContent    = String(stats.games_played || 0);
+      refs.statPlaytime.textContent = formatPlaytime(stats.total_playtime_seconds);
+      refs.statUploads.textContent  = String(stats.uploads || 0);
+      refs.statViews.textContent    = String(stats.profile_views || 0);
+
+      /* Public profile links */
+      const publicUrl = "/u/" + encodeURIComponent(slug);
+      refs.viewPublicLink.href  = publicUrl;
+      refs.viewPublicLink2.href = publicUrl;
+    }
+
+    /* Given a working access token, fetch userinfo + profile and show dashboard */
+    async function loadSession(token) {
+      const user = await fetchUserinfo(token);
+      if (!user) {
+        /* token rejected — try a silent refresh once */
+        const newToken = await tryRefresh();
+        if (!newToken) { showView("guest"); return; }
+        const u2 = await fetchUserinfo(newToken);
+        if (!u2) { showView("error"); return; }
+        return loadSession(newToken);
+      }
+      showView("dash");
+      const profileData = await fetchProfile(token);
+      applyDashboard(user, profileData);
+    }
+
+    /* Wire events */
     refs.signInButton.addEventListener("click", startLogin);
-    refs.registerLink.addEventListener("click", function(e) { e.preventDefault(); startLogin(); });
+    refs.errorSignIn.addEventListener("click", startLogin);
+    refs.registerLink.addEventListener("click", function (e) {
+      e.preventDefault();
+      window.location.href = OIDC.REGISTRATION_URL;
+    });
     refs.logoutButton.addEventListener("click", doLogout);
 
     /* Init */
     (async function init() {
+      /* Hash-triggered login (site.js sends users to /account/#login for sign-in) */
+      if (window.location.hash === "#login") {
+        history.replaceState({}, document.title, "/account/");
+        startLogin();
+        return;
+      }
+
+      /* OAuth callback */
       if (await handleCallback()) return;
 
-      var token = getToken();
+      /* Existing token? */
+      const token = getToken();
       if (token) {
-        var user = await fetchUserinfo(token);
-        if (!user) {
-          /* Access token rejected — try a silent refresh */
-          var newToken = await tryRefresh();
-          if (newToken) user = await fetchUserinfo(newToken);
-        }
-        applySession(user);
+        await loadSession(token);
         return;
       }
 
-      /* No access token — but maybe we have a refresh token from a previous
-         "remember me" session. Try to silently obtain a new access token. */
-      var newToken = await tryRefresh();
+      /* No token — maybe a remembered refresh token */
+      const newToken = await tryRefresh();
       if (newToken) {
-        var user = await fetchUserinfo(newToken);
-        applySession(user);
+        await loadSession(newToken);
         return;
       }
 
-      applySession(null);
+      showView("guest");
     })();
   </script>
 </body>

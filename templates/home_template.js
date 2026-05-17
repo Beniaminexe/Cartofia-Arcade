@@ -88,57 +88,46 @@
 
 
   /* --------------------------------------------------
-     2. HAMBURGER / MOBILE NAV
+     2. MOBILE ACCORDION REARRANGE
+     On screens ≤768px, move each tab panel directly
+     after its corresponding tab button so it sits inline
+     under the tab that opened it. On wider screens, move
+     all panels back into .showcase-content for the
+     side-by-side desktop layout. Reacts to resize so the
+     layout stays correct after rotation or window resize.
   -------------------------------------------------- */
 
-  var hamburger = document.getElementById('hamburger');
-  var mobileNav = document.getElementById('mobileNav');
+  var showcaseTabs    = document.querySelector('.showcase-tabs');
+  var showcaseContent = document.querySelector('.showcase-content');
+  var accordionMQ     = window.matchMedia('(max-width: 768px)');
 
-  if (hamburger && mobileNav) {
-
-    function openMenu() {
-      hamburger.setAttribute('aria-expanded', 'true');
-      mobileNav.classList.remove('hidden');
-      mobileNav.setAttribute('aria-hidden', 'false');
+  function arrangePanels() {
+    if (!showcaseTabs || !showcaseContent) return;
+    if (accordionMQ.matches) {
+      // Mobile: nest each panel directly after its tab button
+      tabBtns.forEach(function (btn) {
+        var panel = document.getElementById('tab-' + btn.dataset.tab);
+        if (!panel) return;
+        if (panel.previousElementSibling !== btn) {
+          btn.insertAdjacentElement('afterend', panel);
+        }
+      });
+    } else {
+      // Desktop: panels go back into .showcase-content
+      tabPanels.forEach(function (panel) {
+        if (panel.parentNode !== showcaseContent) {
+          showcaseContent.appendChild(panel);
+        }
+      });
     }
+  }
 
-    function closeMenu() {
-      hamburger.setAttribute('aria-expanded', 'false');
-      mobileNav.classList.add('hidden');
-      mobileNav.setAttribute('aria-hidden', 'true');
-    }
-
-    hamburger.addEventListener('click', function () {
-      if (hamburger.getAttribute('aria-expanded') === 'true') {
-        closeMenu();
-      } else {
-        openMenu();
-      }
-    });
-
-    // Close when clicking outside nav or hamburger
-    document.addEventListener('click', function (e) {
-      if (
-        hamburger.getAttribute('aria-expanded') === 'true' &&
-        !hamburger.contains(e.target) &&
-        !mobileNav.contains(e.target)
-      ) {
-        closeMenu();
-      }
-    });
-
-    // Close on Escape
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && hamburger.getAttribute('aria-expanded') === 'true') {
-        closeMenu();
-        hamburger.focus();
-      }
-    });
-
-    // Close when a mobile nav link is clicked
-    mobileNav.querySelectorAll('a').forEach(function (link) {
-      link.addEventListener('click', function () { closeMenu(); });
-    });
+  arrangePanels();
+  // matchMedia.addEventListener is the modern API; addListener fallback for old Safari
+  if (accordionMQ.addEventListener) {
+    accordionMQ.addEventListener('change', arrangePanels);
+  } else if (accordionMQ.addListener) {
+    accordionMQ.addListener(arrangePanels);
   }
 
 
@@ -176,7 +165,7 @@
      scrolls through sections.
   -------------------------------------------------- */
 
-  var navLinks = document.querySelectorAll('.nav-links a, .mobile-nav a');
+  var navLinks = document.querySelectorAll('.nav-links a');
   var sections = document.querySelectorAll('section[id]');
 
   if (navLinks.length && sections.length) {
