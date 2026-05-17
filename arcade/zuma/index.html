@@ -2,13 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Zuma | Cartofia Arcade</title>
+  <title>Zuma Temple — Cartofia Arcade</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
   <style>
+    /* ── game layout ── */
     .zuma-layout {
       display: grid;
       grid-template-columns: minmax(320px, 780px) minmax(260px, 1fr);
@@ -19,27 +21,22 @@
     .board-panel {
       position: relative;
       border-radius: 14px;
-      border: 1px solid rgba(126, 183, 235, 0.32);
+      border: 1px solid var(--border);
       background:
-        radial-gradient(420px 180px at 20% 6%, rgba(98, 190, 255, 0.13), transparent 68%),
-        radial-gradient(520px 220px at 82% 0%, rgba(74, 129, 248, 0.14), transparent 70%),
-        linear-gradient(180deg, rgba(7, 16, 27, 0.92), rgba(4, 10, 18, 0.96));
+        radial-gradient(420px 180px at 20% 6%, rgba(79, 125, 249, 0.12), transparent 68%),
+        radial-gradient(520px 220px at 82% 0%, rgba(124, 91, 245, 0.1), transparent 70%),
+        linear-gradient(180deg, rgba(10, 14, 26, 0.92), rgba(4, 10, 18, 0.96));
       padding: 12px;
       overflow: hidden;
-      box-shadow:
-        0 18px 36px rgba(1, 8, 16, 0.46),
-        inset 0 0 0 1px rgba(174, 212, 255, 0.08);
     }
 
     .board-frame {
       position: relative;
       border-radius: 10px;
-      border: 1px solid rgba(100, 186, 255, 0.34);
+      border: 1px solid rgba(79, 125, 249, 0.2);
       background: #030912;
       overflow: hidden;
-      box-shadow:
-        inset 0 0 0 1px rgba(0, 0, 0, 0.25),
-        inset 0 0 40px rgba(41, 122, 184, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), inset 0 0 40px rgba(41, 122, 184, 0.08);
     }
 
     #game {
@@ -63,7 +60,6 @@
       box-shadow: none;
       padding: 0;
     }
-
     #board-frame:fullscreen #game,
     #board-frame:-webkit-full-screen #game {
       width: min(100vw, calc(100vh * 1.6));
@@ -79,18 +75,14 @@
       place-items: center;
       text-align: center;
       background: rgba(2, 8, 13, 0.72);
-      color: #d8ecff;
-      font-family: "Sora", "Segoe UI", sans-serif;
-      font-size: 18px;
-      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 16px;
       padding: 22px;
       pointer-events: none;
       transition: opacity 0.2s ease;
     }
-
-    .board-overlay.hidden {
-      opacity: 0;
-    }
+    .board-overlay.hidden { opacity: 0; }
 
     .inframe-actions {
       position: absolute;
@@ -101,79 +93,9 @@
       z-index: 4;
       transition: opacity .18s ease;
     }
-
-    .inframe-actions .btn {
-      min-height: 32px;
-      padding: 6px 10px;
-      font-size: 12px;
-      backdrop-filter: blur(2px);
-    }
-
-    .inframe-actions .btn.btn-compact {
-      min-width: 106px;
-    }
-
-    .inframe-actions.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .game-panel {
-      display: grid;
-      gap: 14px;
-    }
-
-    .stat-grid {
-      display: grid;
-      gap: 8px;
-    }
-
-    .stat-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      border-bottom: 1px solid rgba(138, 160, 185, 0.16);
-      padding-bottom: 8px;
-      font-size: 14px;
-      color: var(--muted);
-    }
-
-    .stat-row:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-
-    .stat-row b {
-      color: #cbe8ff;
-      font-family: "Sora", "Segoe UI", sans-serif;
-      font-size: 18px;
-      font-weight: 650;
-      letter-spacing: -0.01em;
-    }
-
-    .controls-list {
-      list-style: none;
-      display: grid;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: 4px;
-    }
-
-    .controls-list b {
-      color: #90d4ff;
-      font-weight: 700;
-    }
-
-    .game-note {
-      border-radius: 10px;
-      border: 1px dashed var(--line);
-      background: rgba(4, 10, 16, 0.66);
-      color: var(--muted);
-      font-size: 13px;
-      padding: 9px 10px;
-    }
+    .inframe-actions .btn { min-height: 32px; padding: 6px 10px; font-size: 12px; backdrop-filter: blur(2px); }
+    .inframe-actions .btn.btn-compact { min-width: 106px; }
+    .inframe-actions.hidden { opacity: 0; pointer-events: none; }
 
     .landscape-tip {
       margin-top: 10px;
@@ -182,100 +104,304 @@
       justify-content: space-between;
       gap: 10px;
       border-radius: 10px;
-      border: 1px solid rgba(113, 185, 255, 0.34);
-      background: rgba(8, 17, 29, 0.72);
-      color: #c8def8;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
       font-size: 13px;
       padding: 8px 10px;
     }
-
-    .landscape-tip.hidden {
-      display: none;
-    }
-
+    .landscape-tip.hidden { display: none; }
     .landscape-tip .tip-action {
       min-height: 30px;
       min-width: 110px;
       border-radius: 999px;
-      border: 1px solid rgba(117, 195, 255, 0.54);
-      background: rgba(18, 48, 79, 0.72);
-      color: #dff1ff;
+      border: 1px solid var(--border-h);
+      background: var(--bg-card);
+      color: var(--text-primary);
       font: inherit;
       font-weight: 700;
       cursor: pointer;
       touch-action: manipulation;
     }
 
+    /* ── side panel ── */
+    .game-panel { display: grid; gap: 14px; }
+
+    .panel-section-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-accent);
+      margin-bottom: 10px;
+    }
+
+    .stat-grid { display: grid; gap: 8px; }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .stat-row b {
+      color: var(--text-accent);
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    .controls-list {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    .controls-list b { color: var(--text-accent); font-weight: 600; }
+
+    .game-note {
+      border-radius: 10px;
+      border: 1px dashed var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: 13px;
+      padding: 9px 10px;
+    }
+
+    /* ── level-complete card (lighter, non-full-screen) ── */
+    .level-complete-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 14, 26, 0.62);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      animation: fadeIn 0.2s ease;
+    }
+    .level-complete-overlay.hidden { display: none; }
+
+    .level-complete-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(79, 125, 249, 0.3);
+      border-radius: 20px;
+      padding: clamp(22px, 4vw, 36px);
+      max-width: 340px;
+      width: 90%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 0 0 1px rgba(79, 125, 249, 0.08) inset, 0 28px 56px rgba(0,0,0,0.5);
+      animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .level-complete-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-accent);
+    }
+
+    .level-complete-heading {
+      font-size: clamp(20px, 4vw, 28px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: var(--text-primary);
+    }
+
+    .level-complete-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .lc-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .lc-stat-value {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .lc-stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── confetti for "all clear" ── */
+    .confetti-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 159;
+      overflow: hidden;
+    }
+    .confetti-container.hidden { display: none; }
+
+    .confetti-dot {
+      position: absolute;
+      border-radius: 50%;
+      width: 10px;
+      height: 10px;
+      animation: confettiFall linear forwards;
+    }
+
+    @keyframes confettiFall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0.2; }
+    }
+
     @media (max-width: 980px) {
-      .zuma-layout {
-        grid-template-columns: 1fr;
-      }
-
-      .inframe-actions {
-        left: 8px;
-        right: 8px;
-        top: 8px;
-        justify-content: space-between;
-      }
-
-      .inframe-actions .btn {
-        flex: 1;
-        min-height: 34px;
-        font-size: 12px;
-        padding: 6px 8px;
-      }
-
-      .inframe-actions .btn.btn-compact {
-        min-width: 0;
-      }
+      .zuma-layout { grid-template-columns: 1fr; }
+      .inframe-actions { left: 8px; right: 8px; top: 8px; justify-content: space-between; }
+      .inframe-actions .btn { flex: 1; min-height: 34px; font-size: 12px; padding: 6px 8px; }
+      .inframe-actions .btn.btn-compact { min-width: 0; }
     }
   </style>
 </head>
 <body>
-  <div class="site-shell" style="position:relative;z-index:1;">
-    <header class="nav">
-      <a class="nav-brand" href="/">
-        <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+
+  <!-- PRE-GAME SCREEN -->
+  <div class="pre-game" id="preGame">
+    <div class="pre-game-card">
+      <p class="pre-game-label">Arcade / Zuma Temple</p>
+      <h1 class="pre-game-title">Zuma Temple</h1>
+      <p class="pre-game-desc">Shoot marbles, match colors, chain combos. Clear all 12 temples before the marbles reach the end.</p>
+      <div id="levelProgressWrap" style="display:none; width:100%;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;">Level Progress</span>
+          <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-accent);" id="levelProgressLabel">0/12</span>
+        </div>
+        <div style="height:6px;border-radius:99px;background:var(--border);overflow:hidden;">
+          <div id="levelProgressBar" style="height:100%;border-radius:99px;background:var(--accent);width:0%;transition:width 0.3s ease;"></div>
+        </div>
+      </div>
+      <button class="start-btn" id="preGameStart" type="button">Start Game</button>
+      <p class="pre-game-hint">Click to aim and shoot &middot; Right-click or X to swap colors</p>
+    </div>
+  </div>
+
+  <!-- LEVEL-COMPLETE CARD (lighter, non-blocking) -->
+  <div class="level-complete-overlay hidden" id="levelCompleteOverlay">
+    <div class="level-complete-card">
+      <p class="level-complete-label">Level Clear</p>
+      <h2 class="level-complete-heading" id="lcHeading">Temple 1 Cleared</h2>
+      <div class="level-complete-stats">
+        <div class="lc-stat">
+          <span class="lc-stat-value" id="lcScore">0</span>
+          <span class="lc-stat-label">Score</span>
+        </div>
+        <div class="lc-stat">
+          <span class="lc-stat-value" id="lcLevel">1/12</span>
+          <span class="lc-stat-label">Progress</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="lcNextBtn" type="button" style="width:100%;justify-content:center;">Next Temple &rarr;</button>
+    </div>
+  </div>
+
+  <!-- CONFETTI (all temples cleared) -->
+  <div class="confetti-container hidden" id="confettiContainer"></div>
+
+  <!-- GAME-OVER OVERLAY (lost or all 12 cleared) -->
+  <div class="game-over-overlay hidden" id="gameOverOverlay">
+    <div class="game-over-card">
+      <p class="game-over-label" id="goLabel">Game Over</p>
+      <h2 class="game-over-heading" id="goHeading">The marbles won.</h2>
+      <div class="game-over-score" id="goScore">0</div>
+      <p class="game-over-score-label">Score</p>
+      <div class="game-over-stats">
+        <div class="go-stat">
+          <span class="go-stat-value" id="goLevel">1</span>
+          <span class="go-stat-label">Level Reached</span>
+        </div>
+        <div class="go-stat">
+          <span class="go-stat-value" id="goDuration">0s</span>
+          <span class="go-stat-label">Duration</span>
+        </div>
+      </div>
+      <div class="game-over-divider"></div>
+      <div class="game-over-actions">
+        <button class="btn btn-primary" id="goPlayAgain" type="button">Try Again</button>
+        <a class="btn btn-ghost" href="/arcade/">Back to Arcade</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
       Cartofia
-      </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="/">Home</a>
-        <a class="active" href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-      </nav>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+    </nav>
+    <div class="nav-right">
       <div class="account-menu" data-account-menu>
         <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-          <a class="account-item" href="/arcade/" role="menuitem">Back to Arcade</a>
         </div>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <main>
-      <section class="hero-card reveal" data-delay="1">
-        <div class="hero-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="7.5" stroke="#57C2FF" stroke-width="1.5"></circle>
-            <circle cx="12" cy="12" r="2" fill="#57C2FF"></circle>
-            <path d="M12 4V2M12 22V20M4 12H2M22 12H20" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div class="hero-copy">
-          <p class="hero-kicker">Arcade Slot 10</p>
-          <h1 class="hero-title">Zuma Temple</h1>
-          <p class="hero-lead">
-            Match-3 marble shooter inspired by classic Zuma flow. Clear every chain before it reaches the skull and advance through 10+ levels.
-          </p>
-          <div class="pill-row">
-            <span class="pill"><strong>Mode</strong> Single player</span>
-            <span class="pill"><strong>Controls</strong> Mouse / touch aim + shoot + fullscreen</span>
-            <span class="pill"><strong>Levels</strong> 12-stage progression</span>
-          </div>
-        </div>
-      </section>
+  <!-- GAME HEADER -->
+  <div class="game-header" id="gameHeader" style="display:none;">
+    <a class="game-header-back" href="/arcade/">
+      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back to Arcade
+    </a>
+    <span class="game-header-title" id="gameHeaderTitle">Zuma Temple</span>
+    <div class="game-header-stats">
+      <div class="header-stat">
+        <span class="header-stat-label">Score</span>
+        <span class="header-stat-value" id="headerScore">0</span>
+      </div>
+      <div class="header-stat">
+        <span class="header-stat-label">Level</span>
+        <span class="header-stat-value" id="headerLevel">1/12</span>
+      </div>
+    </div>
+  </div>
 
-      <section class="card reveal" data-delay="2">
+  <!-- GAME PAGE -->
+  <div class="game-page" id="gamePage" style="display:none;">
+    <div class="game-container">
+      <div class="game-container-inner">
         <div class="zuma-layout">
           <div class="board-panel">
             <div id="board-frame" class="board-frame">
@@ -296,8 +422,7 @@
 
           <aside class="game-panel">
             <div>
-              <h2 class="card-title">Run Stats</h2>
-              <p class="card-subtitle">Best score is saved in this browser.</p>
+              <p class="panel-section-label">Run Stats</p>
               <div class="stat-grid">
                 <div class="stat-row"><span>Level</span><b id="level">1 / 12</b></div>
                 <div class="stat-row"><span>Score</span><b id="score">0</b></div>
@@ -308,40 +433,242 @@
             </div>
 
             <div>
-              <h3 class="section-label">How To Play</h3>
+              <p class="panel-section-label">Controls</p>
               <ul class="controls-list">
                 <li><b>Aim:</b> Move mouse or drag touch over the board</li>
-                <li><b>Shoot:</b> Click / tap / press <b>Space</b></li>
-                <li><b>Swap Ball:</b> <b>X</b>, <b>Shift</b>, or right click</li>
-                <li><b>Screen:</b> <b>Fullscreen</b> button (tries to lock landscape on phones)</li>
-                <li><b>Goal:</b> Match 3+ marbles and clear the chain before the skull</li>
+                <li><b>Shoot:</b> Click / tap / press Space</li>
+                <li><b>Swap Ball:</b> X, Shift, or right-click</li>
+                <li><b>Fullscreen:</b> Button below canvas (locks landscape on phones)</li>
+                <li><b>Goal:</b> Match 3+ marbles, clear all chains</li>
               </ul>
             </div>
 
-            <div class="game-note">Tip: break long mixed sections first so later shots have cleaner match angles.</div>
+            <div class="game-note">
+              Tip: break long mixed sections first so later shots have cleaner match angles.
+            </div>
           </aside>
         </div>
-      </section>
-    </main>
-
-    <footer class="footer">
-      <span>Copyright <span id="year"></span> Cartofia. All rights reserved.</span>
-      <div class="footer-links">
-        <a href="/">Home</a>
-        <a href="/arcade/">Arcade</a>
-        <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
       </div>
-    </footer>
+    </div>
   </div>
 
   <script src="/assets/site.js?v=6"></script>
   <script src="/assets/game-utils.js?v=2"></script>
   <script src="/arcade/zuma/game.js?v=20260327-2"></script>
   <script>
-    const year = document.getElementById("year");
-    if (year) {
-      year.textContent = String(new Date().getFullYear());
-    }
+    (function () {
+      // ── Pre-game: show level progress from localStorage ──
+      const BEST_KEY = "cartofia_zuma_best_v1";
+      try {
+        const savedBest = Number(window.localStorage.getItem(BEST_KEY) || 0);
+        if (savedBest > 0) {
+          // Estimate progress from best score — not perfect but better than nothing
+          // We just show if a best score exists
+        }
+      } catch (_) {}
+
+      // ── Hook into game state transitions ──
+      const preGame = document.getElementById("preGame");
+      const preGameStart = document.getElementById("preGameStart");
+      const gameHeader = document.getElementById("gameHeader");
+      const gameHeaderTitle = document.getElementById("gameHeaderTitle");
+      const gamePage = document.getElementById("gamePage");
+      const gameOverOverlay = document.getElementById("gameOverOverlay");
+      const levelCompleteOverlay = document.getElementById("levelCompleteOverlay");
+      const confettiContainer = document.getElementById("confettiContainer");
+
+      const goLabel = document.getElementById("goLabel");
+      const goHeading = document.getElementById("goHeading");
+      const goScore = document.getElementById("goScore");
+      const goLevel = document.getElementById("goLevel");
+      const goDuration = document.getElementById("goDuration");
+      const goPlayAgain = document.getElementById("goPlayAgain");
+
+      const lcHeading = document.getElementById("lcHeading");
+      const lcScore = document.getElementById("lcScore");
+      const lcLevel = document.getElementById("lcLevel");
+      const lcNextBtn = document.getElementById("lcNextBtn");
+
+      const headerScore = document.getElementById("headerScore");
+      const headerLevel = document.getElementById("headerLevel");
+
+      // Mirror header stats — the game updates #score and #level directly
+      const scoreEl = document.getElementById("score");
+      const levelEl = document.getElementById("level");
+
+      let gameRunStartTime = null;
+
+      // Observe score/level elements to mirror to header
+      function syncHeader() {
+        if (headerScore && scoreEl) headerScore.textContent = scoreEl.textContent;
+        if (headerLevel && levelEl) headerLevel.textContent = levelEl.textContent;
+        if (gameHeaderTitle && levelEl) {
+          gameHeaderTitle.textContent = "Zuma Temple — Level " + levelEl.textContent.split(" ")[0];
+        }
+      }
+
+      // Poll header every 500ms (lightweight, game already runs rAF)
+      setInterval(syncHeader, 500);
+
+      function spawnConfetti() {
+        confettiContainer.innerHTML = "";
+        confettiContainer.classList.remove("hidden");
+        const colors = ["#ff5d8b", "#57c2ff", "#ffd057", "#86f6a4", "#c58bff", "#ff9f5a", "#ff8c42"];
+        for (let i = 0; i < 48; i++) {
+          const dot = document.createElement("div");
+          dot.className = "confetti-dot";
+          dot.style.left = Math.random() * 100 + "vw";
+          dot.style.top = "-20px";
+          dot.style.background = colors[Math.floor(Math.random() * colors.length)];
+          dot.style.width = (6 + Math.random() * 8) + "px";
+          dot.style.height = dot.style.width;
+          dot.style.animationDuration = (2.5 + Math.random() * 3) + "s";
+          dot.style.animationDelay = (Math.random() * 1.5) + "s";
+          confettiContainer.appendChild(dot);
+        }
+        // Hide confetti after animations complete
+        setTimeout(() => { confettiContainer.classList.add("hidden"); }, 6000);
+      }
+
+      function showLevelComplete(levelIdx, currentScore) {
+        // levelIdx is 0-based index of the level just cleared
+        const levelNum = levelIdx + 1;
+        lcHeading.textContent = "Temple " + levelNum + " Cleared";
+        lcScore.textContent = String(currentScore);
+        lcLevel.textContent = levelNum + "/12";
+        levelCompleteOverlay.classList.remove("hidden");
+      }
+
+      function showGameOverLost(levelIdx, currentScore) {
+        const dur = gameRunStartTime ? Math.round((Date.now() - gameRunStartTime) / 1000) : 0;
+        goLabel.textContent = "Game Over";
+        goHeading.textContent = "The marbles won.";
+        goScore.textContent = String(currentScore);
+        goLevel.textContent = String(levelIdx + 1);
+        document.querySelector("#goLevel + .go-stat-label, .go-stat:first-child .go-stat-label") && null;
+        // fix label for level
+        const statLabels = document.querySelectorAll(".go-stat .go-stat-label");
+        if (statLabels[0]) statLabels[0].textContent = "Level Reached";
+        goDuration.textContent = dur + "s";
+        goPlayAgain.textContent = "Try Again";
+        gameOverOverlay.classList.remove("hidden");
+      }
+
+      function showGameOverWon(levelIdx, currentScore) {
+        const dur = gameRunStartTime ? Math.round((Date.now() - gameRunStartTime) / 1000) : 0;
+        goLabel.textContent = "All Clear!";
+        goHeading.textContent = "All Temples Cleared!";
+        goHeading.style.background = "linear-gradient(135deg, #ffd057 0%, #ff9f5a 50%, #ff5d8b 100%)";
+        goHeading.style.webkitBackgroundClip = "text";
+        goHeading.style.webkitTextFillColor = "transparent";
+        goHeading.style.backgroundClip = "text";
+        goScore.textContent = String(currentScore);
+        const statLabels = document.querySelectorAll(".go-stat .go-stat-label");
+        if (statLabels[0]) statLabels[0].textContent = "12/12";
+        goLevel.textContent = "12/12";
+        goDuration.textContent = dur + "s";
+        goPlayAgain.textContent = "Play Again";
+        spawnConfetti();
+        gameOverOverlay.classList.remove("hidden");
+      }
+
+      // ── Intercept the game's setGameState ──
+      // game.js runs as an IIFE and doesn't expose setGameState, so we hook
+      // by wrapping the action-bar button handlers and the game loop state.
+      // The cleanest hook point: override start-btn, restart-btn after game.js
+      // sets them up, then watch for the game's state changes via the stateEl.
+
+      // We poll the #state element to detect transitions
+      let _lastGameState = "";
+      let _lastScoreForOverlay = 0;
+      let _lastLevelForOverlay = 0;
+
+      function checkGameStateChange() {
+        const stateEl = document.getElementById("state");
+        const scoreEl2 = document.getElementById("score");
+        const levelEl2 = document.getElementById("level");
+        if (!stateEl) return;
+
+        const st = stateEl.textContent.trim();
+        const sc = parseInt(scoreEl2 ? scoreEl2.textContent : "0", 10) || 0;
+        const lvRaw = levelEl2 ? levelEl2.textContent : "1 / 12";
+        const lvNum = parseInt(lvRaw.split("/")[0].trim(), 10) || 1;
+
+        if (st !== _lastGameState) {
+          const prev = _lastGameState;
+          _lastGameState = st;
+
+          if (st === "Running" || st === "Live") {
+            // Hide all our overlays when game starts/resumes
+            levelCompleteOverlay.classList.add("hidden");
+            // Don't hide game-over overlay here — let play-again do it
+          }
+
+          if (st === "Level Clear" && prev !== "Level Clear") {
+            _lastScoreForOverlay = sc;
+            _lastLevelForOverlay = lvNum;
+            // Show level-complete card (not game-over overlay)
+            showLevelComplete(lvNum - 1, sc);
+          }
+
+          if (st === "Defeat" && prev !== "Defeat") {
+            _lastScoreForOverlay = sc;
+            _lastLevelForOverlay = lvNum;
+            showGameOverLost(lvNum - 1, sc);
+          }
+
+          if (st === "Run Complete" && prev !== "Run Complete") {
+            _lastScoreForOverlay = sc;
+            _lastLevelForOverlay = lvNum;
+            showGameOverWon(lvNum - 1, sc);
+          }
+        }
+      }
+
+      // Poll every 150ms — fast enough to catch transitions
+      setInterval(checkGameStateChange, 150);
+
+      // ── Level complete: "Next Temple" button ──
+      // This delegates to the game's start-btn which handles the "cleared" state
+      lcNextBtn.addEventListener("click", () => {
+        levelCompleteOverlay.classList.add("hidden");
+        const startBtn = document.getElementById("start-btn");
+        if (startBtn) startBtn.click();
+      });
+
+      // ── Game-over: Play Again / Try Again ──
+      goPlayAgain.addEventListener("click", () => {
+        gameOverOverlay.classList.add("hidden");
+        confettiContainer.classList.add("hidden");
+        // Reset heading gradient for next use
+        goHeading.style.background = "";
+        goHeading.style.webkitBackgroundClip = "";
+        goHeading.style.webkitTextFillColor = "";
+        goHeading.style.backgroundClip = "";
+        gameRunStartTime = Date.now();
+        const restartBtn = document.getElementById("restart-btn");
+        if (restartBtn) restartBtn.click();
+      });
+
+      // ── Pre-game start ──
+      preGameStart.addEventListener("click", () => {
+        preGame.classList.add("hidden");
+        gameHeader.style.display = "";
+        gamePage.style.display = "";
+        gameRunStartTime = Date.now();
+        // Trigger the game's start button
+        const startBtn = document.getElementById("start-btn");
+        if (startBtn) startBtn.click();
+      });
+
+      // ── Track start time on any manual start ──
+      const inlineStartBtn = document.getElementById("start-btn");
+      if (inlineStartBtn) {
+        inlineStartBtn.addEventListener("click", () => {
+          if (!gameRunStartTime) gameRunStartTime = Date.now();
+        }, true); // capture phase so we fire before game.js
+      }
+    })();
   </script>
 </body>
 </html>

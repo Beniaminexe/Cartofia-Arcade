@@ -2,13 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Maze Chase - Cartofia Arcade</title>
+  <title>Maze Chase — Cartofia Arcade</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
   <style>
+    /* ── game layout ── */
     .game-layout {
       display: grid;
       grid-template-columns: minmax(320px, 760px) minmax(250px, 1fr);
@@ -19,8 +21,8 @@
     .board-panel {
       position: relative;
       border-radius: 14px;
-      border: 1px solid var(--line);
-      background: radial-gradient(circle at 50% 0%, rgba(46, 168, 255, 0.1), rgba(5, 13, 20, 0.95) 62%);
+      border: 1px solid var(--border);
+      background: radial-gradient(circle at 50% 0%, rgba(79, 125, 249, 0.1), rgba(10, 14, 26, 0.95) 62%);
       padding: 12px;
       overflow: hidden;
     }
@@ -28,7 +30,7 @@
     .board-frame {
       position: relative;
       border-radius: 10px;
-      border: 1px solid rgba(46, 168, 255, 0.25);
+      border: 1px solid rgba(79, 125, 249, 0.2);
       background: #030912;
       overflow: hidden;
       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
@@ -50,52 +52,14 @@
       place-items: center;
       text-align: center;
       background: rgba(2, 8, 13, 0.72);
-      color: #d8ecff;
-      font-family: "Sora", "Segoe UI", sans-serif;
-      font-size: 18px;
-      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 16px;
       padding: 22px;
       pointer-events: none;
       transition: opacity 0.2s ease;
     }
-
-    .board-overlay.hidden {
-      opacity: 0;
-    }
-
-    .game-panel {
-      display: grid;
-      gap: 14px;
-    }
-
-    .stat-grid {
-      display: grid;
-      gap: 8px;
-    }
-
-    .stat-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      border-bottom: 1px solid rgba(138, 160, 185, 0.16);
-      padding-bottom: 8px;
-      font-size: 14px;
-      color: var(--muted);
-    }
-
-    .stat-row:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-
-    .stat-row b {
-      color: #cbe8ff;
-      font-family: "Sora", "Segoe UI", sans-serif;
-      font-size: 18px;
-      font-weight: 650;
-      letter-spacing: -0.01em;
-    }
+    .board-overlay.hidden { opacity: 0; }
 
     .inframe-actions {
       position: absolute;
@@ -106,32 +70,10 @@
       z-index: 4;
       transition: opacity .18s ease;
     }
+    .inframe-actions .btn { min-height: 32px; padding: 6px 10px; font-size: 12px; }
+    .inframe-actions.hidden { opacity: 0; pointer-events: none; }
 
-    .inframe-actions .btn {
-      min-height: 32px;
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-
-    .inframe-actions.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .controls-list {
-      list-style: none;
-      display: grid;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: 4px;
-    }
-
-    .controls-list b {
-      color: #90d4ff;
-      font-weight: 700;
-    }
-
+    /* joystick */
     .inframe-joystick {
       position: absolute;
       inset: 0;
@@ -139,7 +81,6 @@
       pointer-events: none;
       display: none;
     }
-
     .joystick-base {
       position: absolute;
       left: -9999px;
@@ -157,7 +98,6 @@
       transition: opacity .12s ease, transform .12s ease;
       pointer-events: none;
     }
-
     .joystick-base::before,
     .joystick-base::after {
       content: "";
@@ -168,10 +108,8 @@
       background: rgba(170,219,255,.15);
       pointer-events: none;
     }
-
     .joystick-base::before { width: 2px; height: 66%; }
     .joystick-base::after { width: 66%; height: 2px; }
-
     .joystick-thumb {
       position: absolute;
       left: 50%;
@@ -188,93 +126,179 @@
       transition: transform .08s ease;
       pointer-events: none;
     }
+    .joystick-base.active { opacity: .6; transform: translate(-50%, -50%) scale(1); }
+    .joystick-base.active .joystick-thumb { transition: none; }
 
-    .joystick-base.active {
-      opacity: .6;
-      transform: translate(-50%, -50%) scale(1);
+    /* ── side panel ── */
+    .game-panel { display: grid; gap: 14px; }
+
+    .panel-section-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-accent);
+      margin-bottom: 10px;
     }
 
-    .joystick-base.active .joystick-thumb {
-      transition: none;
+    .stat-grid { display: grid; gap: 8px; }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
     }
+    .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .stat-row b {
+      color: var(--text-accent);
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    .controls-list {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    .controls-list b { color: var(--text-accent); font-weight: 600; }
 
     .game-note {
       border-radius: 10px;
-      border: 1px dashed var(--line);
-      background: rgba(4, 10, 16, 0.66);
-      color: var(--muted);
+      border: 1px dashed var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
       font-size: 13px;
       padding: 9px 10px;
     }
 
-    @media (max-width: 980px) {
-      .game-layout {
-        grid-template-columns: 1fr;
-      }
+    /* hearts lives display */
+    .lives-display {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+    }
+    .life-heart {
+      font-size: 14px;
+      line-height: 1;
+      transition: opacity 0.2s;
+    }
+    .life-heart.lost { opacity: 0.18; }
 
+    @media (max-width: 980px) {
+      .game-layout { grid-template-columns: 1fr; }
       .inframe-actions {
-        left: 8px;
-        right: 8px;
-        top: 8px;
+        left: 8px; right: 8px; top: 8px;
         justify-content: space-between;
       }
-
-      .inframe-actions .btn {
-        flex: 1;
-        min-height: 34px;
-        font-size: 12px;
-        padding: 6px 8px;
-      }
-
+      .inframe-actions .btn { flex: 1; min-height: 34px; font-size: 12px; padding: 6px 8px; }
       .inframe-joystick { display: block; }
     }
   </style>
 </head>
 <body>
-  <div class="site-shell" style="position:relative;z-index:1;">
-    <header class="nav">
-      <a class="nav-brand" href="/">
-        <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+
+  <!-- PRE-GAME SCREEN -->
+  <div class="pre-game" id="preGame">
+    <div class="pre-game-card">
+      <p class="pre-game-label">Arcade / Maze Chase</p>
+      <h1 class="pre-game-title">Maze Chase</h1>
+      <p class="pre-game-desc">Clear the pellets, dodge the ghosts, grab power orbs to turn the tables.</p>
+      <button class="start-btn" id="preGameStart" type="button">Start Game</button>
+      <p class="pre-game-hint">Arrow keys or swipe to move</p>
+    </div>
+  </div>
+
+  <!-- GAME-OVER OVERLAY (final death or board clear only) -->
+  <div class="game-over-overlay hidden" id="gameOverOverlay">
+    <div class="game-over-card">
+      <p class="game-over-label" id="goLabel">Game Over</p>
+      <h2 class="game-over-heading" id="goHeading">Caught! 👻</h2>
+      <div class="game-over-score" id="goScore">0</div>
+      <p class="game-over-score-label">Score</p>
+      <div class="game-over-stats">
+        <div class="go-stat">
+          <span class="go-stat-value" id="goPellets">0</span>
+          <span class="go-stat-label">Pellets Eaten</span>
+        </div>
+        <div class="go-stat">
+          <span class="go-stat-value" id="goLivesLeft">0</span>
+          <span class="go-stat-label">Lives Left</span>
+        </div>
+        <div class="go-stat">
+          <span class="go-stat-value" id="goDuration">0s</span>
+          <span class="go-stat-label">Duration</span>
+        </div>
+      </div>
+      <div class="game-over-divider"></div>
+      <div class="game-over-actions">
+        <button class="btn btn-primary" id="goPlayAgain" type="button">Play Again</button>
+        <a class="btn btn-ghost" href="/arcade/">Back to Arcade</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
       Cartofia
-      </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="/">Home</a>
-        <a class="active" href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-      </nav>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+    </nav>
+    <div class="nav-right">
       <div class="account-menu" data-account-menu>
         <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-          <a class="account-item" href="/arcade/" role="menuitem">Back to Arcade</a>
         </div>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <main>
-      <section class="hero-card reveal" data-delay="1">
-        <div class="hero-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 12H20" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
-            <path d="M12 4V20" stroke="#57C2FF" stroke-width="1.5" stroke-linecap="round"></path>
-            <circle cx="12" cy="12" r="7" stroke="#57C2FF" stroke-width="1.5"></circle>
-          </svg>
-        </div>
-        <div class="hero-copy">
-          <p class="hero-kicker">Arcade Slot 6</p>
-          <h1 class="hero-title">Maze Chase</h1>
-          <p class="hero-lead">
-            Pac-Man style maze runner: collect pellets, grab power orbs, dodge ghosts, and clear the board.
-          </p>
-          <div class="pill-row">
-            <span class="pill"><strong>Mode</strong> Single player</span>
-            <span class="pill"><strong>Controls</strong> Arrows / WASD / floating touch joystick</span>
-            <span class="pill"><strong>Playable</strong> In browser</span>
-          </div>
-        </div>
-      </section>
+  <!-- GAME HEADER -->
+  <div class="game-header" id="gameHeader" style="display:none;">
+    <a class="game-header-back" href="/arcade/">
+      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back to Arcade
+    </a>
+    <span class="game-header-title">Maze Chase</span>
+    <div class="game-header-stats">
+      <div class="header-stat">
+        <span class="header-stat-label">Score</span>
+        <span class="header-stat-value" id="headerScore">0</span>
+      </div>
+      <div class="header-stat">
+        <span class="header-stat-label">Lives</span>
+        <span class="header-stat-value" id="headerLives">♥♥♥</span>
+      </div>
+    </div>
+  </div>
 
-      <section class="card reveal" data-delay="2">
+  <!-- GAME PAGE -->
+  <div class="game-page" id="gamePage" style="display:none;">
+    <div class="game-container">
+      <div class="game-container-inner">
         <div class="game-layout">
           <div class="board-panel">
             <div class="board-frame">
@@ -295,40 +319,42 @@
 
           <aside class="game-panel">
             <div>
-              <h2 class="card-title">Run Stats</h2>
-              <p class="card-subtitle">Best score is saved in this browser.</p>
+              <p class="panel-section-label">Run Stats</p>
               <div class="stat-grid">
                 <div class="stat-row"><span>Score</span><b id="score">0</b></div>
                 <div class="stat-row"><span>Best</span><b id="best">0</b></div>
-                <div class="stat-row"><span>Lives</span><b id="lives">3</b></div>
+                <div class="stat-row">
+                  <span>Lives</span>
+                  <div class="lives-display" id="livesDisplay">
+                    <span class="life-heart" id="h1">♥</span>
+                    <span class="life-heart" id="h2">♥</span>
+                    <span class="life-heart" id="h3">♥</span>
+                  </div>
+                  <!-- hidden element for JS compatibility -->
+                  <b id="lives" style="display:none;">3</b>
+                </div>
                 <div class="stat-row"><span>Pellets Left</span><b id="pellets">0</b></div>
                 <div class="stat-row"><span>Status</span><b id="state">Ready</b></div>
               </div>
             </div>
 
             <div>
-              <h3 class="section-label">How To Play</h3>
+              <p class="panel-section-label">Controls</p>
               <ul class="controls-list">
-                <li><b>Move:</b> Arrow keys or <b>W A S D</b></li>
-                <li><b>Score:</b> Eat small pellets and power orbs</li>
-                <li><b>Power:</b> During blue mode, ghosts can be eaten</li>
+                <li><b>Move:</b> Arrow keys or W A S D</li>
+                <li><b>Pause:</b> Space or P</li>
+                <li><b>Power:</b> During blue mode, eat ghosts</li>
                 <li><b>Goal:</b> Clear every pellet in the maze</li>
               </ul>
             </div>
 
-            <div class="game-note">Tip: clear corners with power orbs first to create safer routes.</div>
+            <div class="game-note">
+              Tip: clear corners with power orbs first to create safer routes.
+            </div>
           </aside>
         </div>
-      </section>
-    </main>
-
-    <footer class="footer">
-      <span>Copyright <span id="year"></span> Cartofia. All rights reserved.</span>
-      <div class="footer-links">
-        <a href="/">Home</a>
-        <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
       </div>
-    </footer>
+    </div>
   </div>
 
   <script src="/assets/site.js?v=6"></script>
@@ -353,7 +379,6 @@
       const BEST_KEY = "cartofia_maze_chase_best_v1";
       const TILE = 28;
       const PLAYER_STEP_MS = 108;
-      // Slowed down to reduce ghost pressure (at least 50% slower than previous pacing).
       const GHOST_STEP_MS = 400;
       const POWER_MS = 8000;
       const START_GRACE_MS = 1100;
@@ -410,6 +435,7 @@
       let frightMs = 0;
       let graceMs = 0;
       let gameStartTime = null;
+      let totalPelletsEaten = 0;
 
       let playerAcc = 0;
       let ghostAcc = 0;
@@ -417,42 +443,70 @@
       let joyPointerId = null;
       let joyCenter = { x: 0, y: 0 };
 
+      // ── UI helpers ──
+      const preGame = document.getElementById("preGame");
+      const preGameStart = document.getElementById("preGameStart");
+      const gameHeader = document.getElementById("gameHeader");
+      const gamePage = document.getElementById("gamePage");
+      const gameOverOverlay = document.getElementById("gameOverOverlay");
+      const goHeading = document.getElementById("goHeading");
+      const goLabel = document.getElementById("goLabel");
+      const goScore = document.getElementById("goScore");
+      const goPellets = document.getElementById("goPellets");
+      const goLivesLeft = document.getElementById("goLivesLeft");
+      const goDuration = document.getElementById("goDuration");
+      const goPlayAgain = document.getElementById("goPlayAgain");
+      const headerScore = document.getElementById("headerScore");
+      const headerLives = document.getElementById("headerLives");
+      const heartEls = [
+        document.getElementById("h1"),
+        document.getElementById("h2"),
+        document.getElementById("h3")
+      ];
+
+      function updateLivesDisplay(n) {
+        heartEls.forEach((h, i) => {
+          if (h) h.classList.toggle("lost", i >= n);
+        });
+        if (headerLives) {
+          headerLives.textContent = "♥".repeat(Math.max(0, n));
+        }
+      }
+
+      function showGameOverOverlay(opts) {
+        const dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+        if (opts.won) {
+          goLabel.textContent = "Maze Clear";
+          goHeading.textContent = "Maze Cleared!";
+          goLivesLeft.textContent = String(lives);
+          document.querySelector(".go-stat:nth-child(2) .go-stat-label").textContent = "Lives Left";
+        } else {
+          goLabel.textContent = "Game Over";
+          goHeading.textContent = "Caught! 👻";
+          goLivesLeft.textContent = "0";
+          document.querySelector(".go-stat:nth-child(2) .go-stat-label").textContent = "Lives Left";
+        }
+        goScore.textContent = String(score);
+        goPellets.textContent = String(totalPelletsEaten);
+        goDuration.textContent = dur + "s";
+        gameOverOverlay.classList.remove("hidden");
+      }
+
       function loadBest() {
         const raw = Number(window.localStorage.getItem(BEST_KEY) || 0);
-        if (Number.isFinite(raw) && raw > 0) {
-          return Math.floor(raw);
-        }
+        if (Number.isFinite(raw) && raw > 0) { return Math.floor(raw); }
         return 0;
       }
 
       function saveBest() {
-        try {
-          window.localStorage.setItem(BEST_KEY, String(best));
-        } catch (_e) {
-          // ignore storage failures
-        }
+        try { window.localStorage.setItem(BEST_KEY, String(best)); } catch (_e) {}
       }
 
-      function key(x, y) {
-        return x + "," + y;
-      }
-
-      function manhattan(x1, y1, x2, y2) {
-        return Math.abs(x1 - x2) + Math.abs(y1 - y2);
-      }
-
-      function inBounds(x, y) {
-        return y >= 0 && y < mapH && x >= 0 && x < mapW;
-      }
-
-      function isWall(x, y) {
-        if (!inBounds(x, y)) { return true; }
-        return map[y][x] === "#";
-      }
-
-      function canWalk(x, y) {
-        return inBounds(x, y) && !isWall(x, y);
-      }
+      function key(x, y) { return x + "," + y; }
+      function manhattan(x1, y1, x2, y2) { return Math.abs(x1 - x2) + Math.abs(y1 - y2); }
+      function inBounds(x, y) { return y >= 0 && y < mapH && x >= 0 && x < mapW; }
+      function isWall(x, y) { if (!inBounds(x, y)) { return true; } return map[y][x] === "#"; }
+      function canWalk(x, y) { return inBounds(x, y) && !isWall(x, y); }
 
       function setOverlay(text, show) {
         overlay.textContent = text;
@@ -468,20 +522,16 @@
       }
 
       function syncActionBar() {
-        if (!actionBar) {
-          return;
-        }
+        if (!actionBar) { return; }
         const live = running && !paused && !gameOver && !won;
         const ended = gameOver || won;
         actionBar.classList.toggle("hidden", live);
-
         if (ended) {
           startBtn.style.display = "none";
           pauseBtn.style.display = "none";
           restartBtn.style.display = "";
           return;
         }
-
         if (paused) {
           startBtn.style.display = "";
           startBtn.textContent = "Resume";
@@ -489,7 +539,6 @@
           restartBtn.style.display = "";
           return;
         }
-
         if (!running) {
           startBtn.style.display = "";
           startBtn.textContent = "Start";
@@ -497,7 +546,6 @@
           restartBtn.style.display = "";
           return;
         }
-
         startBtn.style.display = "none";
         pauseBtn.style.display = "";
         restartBtn.style.display = "none";
@@ -509,6 +557,8 @@
         livesEl.textContent = String(lives);
         pelletsEl.textContent = String(pellets.size);
         stateEl.textContent = modeText();
+        if (headerScore) headerScore.textContent = String(score);
+        updateLivesDisplay(lives);
         syncActionBar();
       }
 
@@ -523,21 +573,11 @@
           const row = [];
           for (let x = 0; x < mapW; x += 1) {
             const ch = mazeRows[y][x];
-            if (ch === "P") {
-              playerSpawn = { x: x, y: y };
-              row.push(" ");
-            } else if (ch === "G") {
-              ghostCoreSpawn = { x: x, y: y };
-              row.push(" ");
-            } else {
-              row.push(ch);
-            }
-
-            if (ch === ".") {
-              pellets.set(key(x, y), "dot");
-            } else if (ch === "o") {
-              pellets.set(key(x, y), "power");
-            }
+            if (ch === "P") { playerSpawn = { x: x, y: y }; row.push(" "); }
+            else if (ch === "G") { ghostCoreSpawn = { x: x, y: y }; row.push(" "); }
+            else { row.push(ch); }
+            if (ch === ".") { pellets.set(key(x, y), "dot"); }
+            else if (ch === "o") { pellets.set(key(x, y), "power"); }
           }
           map.push(row);
         }
@@ -555,7 +595,6 @@
           }
         }
 
-        // Prefer spawns near ghost house but at a safe distance from the player spawn.
         const primary = pool.filter((p) => p.dp >= 4);
         primary.sort((a, b) => a.dc - b.dc || b.dp - a.dp || a.y - b.y || a.x - b.x);
         const fallback = pool.filter((p) => p.dp >= 3);
@@ -567,10 +606,7 @@
             const c = list[i];
             let crowded = false;
             for (let j = 0; j < ghostSpawns.length; j += 1) {
-              if (manhattan(c.x, c.y, ghostSpawns[j].x, ghostSpawns[j].y) <= 1) {
-                crowded = true;
-                break;
-              }
+              if (manhattan(c.x, c.y, ghostSpawns[j].x, ghostSpawns[j].y) <= 1) { crowded = true; break; }
             }
             if (crowded) { continue; }
             ghostSpawns.push({ x: c.x, y: c.y });
@@ -578,35 +614,18 @@
         }
 
         pushFrom(primary);
-        if (ghostSpawns.length < 4) {
-          pushFrom(fallback);
-        }
-        if (!ghostSpawns.length) {
-          ghostSpawns = [{ x: ghostCoreSpawn.x, y: ghostCoreSpawn.y }];
-        }
+        if (ghostSpawns.length < 4) { pushFrom(fallback); }
+        if (!ghostSpawns.length) { ghostSpawns = [{ x: ghostCoreSpawn.x, y: ghostCoreSpawn.y }]; }
       }
 
       function resetActors() {
-        player = {
-          x: playerSpawn.x,
-          y: playerSpawn.y,
-          dir: "l",
-          next: "l"
-        };
-
+        player = { x: playerSpawn.x, y: playerSpawn.y, dir: "l", next: "l" };
         const colors = ["#ff5d8b", "#57c2ff", "#ffb457", "#7fff93"];
         ghosts = [];
         for (let i = 0; i < colors.length; i += 1) {
           const spawn = ghostSpawns[i % ghostSpawns.length];
-          ghosts.push({
-            x: spawn.x,
-            y: spawn.y,
-            dir: i % 2 === 0 ? "l" : "r",
-            color: colors[i],
-            home: { x: spawn.x, y: spawn.y }
-          });
+          ghosts.push({ x: spawn.x, y: spawn.y, dir: i % 2 === 0 ? "l" : "r", color: colors[i], home: { x: spawn.x, y: spawn.y } });
         }
-
         playerAcc = 0;
         ghostAcc = 0;
         frightMs = 0;
@@ -622,6 +641,7 @@
         gameOver = false;
         won = false;
         gameStartTime = null;
+        totalPelletsEaten = 0;
         pellets = new Map(initialPellets);
         resetActors();
         setOverlay("Press Start to begin.", true);
@@ -637,9 +657,7 @@
       }
 
       function setNextDirection(dir) {
-        if (DIRS[dir]) {
-          player.next = dir;
-        }
+        if (DIRS[dir]) { player.next = dir; }
       }
 
       function resetJoystick() {
@@ -670,37 +688,24 @@
           dx *= scale;
           dy *= scale;
         }
-
         joyThumb.style.transform = "translate(calc(-50% + " + dx.toFixed(2) + "px), calc(-50% + " + dy.toFixed(2) + "px))";
-
         const deadZone = joyBase.clientWidth * 0.18;
-        if (magnitude < deadZone) {
-          return;
-        }
-
-        if (Math.abs(dx) >= Math.abs(dy)) {
-          setNextDirection(dx >= 0 ? "r" : "l");
-        } else {
-          setNextDirection(dy >= 0 ? "d" : "u");
-        }
+        if (magnitude < deadZone) { return; }
+        if (Math.abs(dx) >= Math.abs(dy)) { setNextDirection(dx >= 0 ? "r" : "l"); }
+        else { setNextDirection(dy >= 0 ? "d" : "u"); }
       }
 
       function scorePoints(amount) {
         score += amount;
-        if (score > best) {
-          best = score;
-          saveBest();
-        }
+        if (score > best) { best = score; saveBest(); }
       }
 
       function handlePelletPickup() {
         const k = key(player.x, player.y);
         const type = pellets.get(k);
-        if (!type) {
-          return;
-        }
-
+        if (!type) { return; }
         pellets.delete(k);
+        totalPelletsEaten += 1;
         if (type === "power") {
           scorePoints(50);
           frightMs = POWER_MS;
@@ -715,7 +720,8 @@
           if (typeof logGameActivity === "function") {
             logGameActivity({ game: "maze-chase", result: "win", score: score, duration_seconds: _dur });
           }
-          setOverlay("You cleared the maze. Press Restart for another run.", true);
+          setOverlay("You cleared the maze! Press Restart for another run.", true);
+          showGameOverOverlay({ won: true });
         }
       }
 
@@ -731,19 +737,15 @@
           }
           setOverlay("Game over. Press Restart to play again.", true);
           updateHud();
+          showGameOverOverlay({ won: false });
           return;
         }
         restartRoundAfterHit();
       }
 
       function resolveGhostCollision(ghost) {
-        if (graceMs > 0) {
-          return;
-        }
-        if (ghost.x !== player.x || ghost.y !== player.y) {
-          return;
-        }
-
+        if (graceMs > 0) { return; }
+        if (ghost.x !== player.x || ghost.y !== player.y) { return; }
         if (frightMs > 0) {
           scorePoints(200);
           ghost.x = ghost.home.x;
@@ -751,55 +753,38 @@
           ghost.dir = "u";
           return;
         }
-
         loseLife();
       }
 
       function tryMove(entity, dir) {
         const step = DIRS[dir];
-        if (!step) {
-          return false;
-        }
+        if (!step) { return false; }
         const nx = entity.x + step.x;
         const ny = entity.y + step.y;
-        if (!canWalk(nx, ny)) {
-          return false;
-        }
+        if (!canWalk(nx, ny)) { return false; }
         entity.x = nx;
         entity.y = ny;
         return true;
       }
 
       function stepPlayer() {
-        if (!running || paused || gameOver || won) {
-          return;
-        }
-
+        if (!running || paused || gameOver || won) { return; }
         if (player.next && player.next !== player.dir) {
           const nd = DIRS[player.next];
-          if (canWalk(player.x + nd.x, player.y + nd.y)) {
-            player.dir = player.next;
-          }
+          if (canWalk(player.x + nd.x, player.y + nd.y)) { player.dir = player.next; }
         }
-
         if (player.dir) {
           if (!tryMove(player, player.dir)) {
             if (player.next && player.next !== player.dir) {
               const nd = DIRS[player.next];
-              if (canWalk(player.x + nd.x, player.y + nd.y)) {
-                player.dir = player.next;
-                tryMove(player, player.dir);
-              }
+              if (canWalk(player.x + nd.x, player.y + nd.y)) { player.dir = player.next; tryMove(player, player.dir); }
             }
           }
         }
-
         handlePelletPickup();
         for (let i = 0; i < ghosts.length; i += 1) {
           resolveGhostCollision(ghosts[i]);
-          if (!running || gameOver) {
-            break;
-          }
+          if (!running || gameOver) { break; }
         }
       }
 
@@ -811,25 +796,16 @@
           const step = DIRS[d];
           const nx = ghost.x + step.x;
           const ny = ghost.y + step.y;
-          if (!canWalk(nx, ny)) {
-            continue;
-          }
+          if (!canWalk(nx, ny)) { continue; }
           options.push(d);
         }
-
-        if (options.length <= 1) {
-          return options;
-        }
-
+        if (options.length <= 1) { return options; }
         const filtered = options.filter((d) => d !== OPP[ghost.dir]);
         return filtered.length ? filtered : options;
       }
 
       function pickGhostDir(ghost, options) {
-        if (!options.length) {
-          return ghost.dir;
-        }
-
+        if (!options.length) { return ghost.dir; }
         if (frightMs > 0) {
           let bestDist = -1;
           let pick = options[0];
@@ -839,18 +815,11 @@
             const nx = ghost.x + step.x;
             const ny = ghost.y + step.y;
             const dist = Math.abs(nx - player.x) + Math.abs(ny - player.y) + (Math.random() * 0.8);
-            if (dist > bestDist) {
-              bestDist = dist;
-              pick = d;
-            }
+            if (dist > bestDist) { bestDist = dist; pick = d; }
           }
           return pick;
         }
-
-        if (Math.random() < 0.2) {
-          return options[Math.floor(Math.random() * options.length)];
-        }
-
+        if (Math.random() < 0.2) { return options[Math.floor(Math.random() * options.length)]; }
         let bestDist = Infinity;
         let pick = options[0];
         for (let i = 0; i < options.length; i += 1) {
@@ -859,39 +828,21 @@
           const nx = ghost.x + step.x;
           const ny = ghost.y + step.y;
           const dist = Math.abs(nx - player.x) + Math.abs(ny - player.y) + (Math.random() * 0.2);
-          if (dist < bestDist) {
-            bestDist = dist;
-            pick = d;
-          }
+          if (dist < bestDist) { bestDist = dist; pick = d; }
         }
         return pick;
       }
 
       function stepGhosts() {
-        if (!running || paused || gameOver || won || graceMs > 0) {
-          return;
-        }
-
+        if (!running || paused || gameOver || won || graceMs > 0) { return; }
         for (let i = 0; i < ghosts.length; i += 1) {
           const g = ghosts[i];
           const options = availableGhostDirs(g);
-          if (!options.length) {
-            continue;
-          }
-
-          if (options.indexOf(g.dir) < 0 || options.length > 2 || Math.random() < 0.25) {
-            g.dir = pickGhostDir(g, options);
-          }
-
-          if (!tryMove(g, g.dir)) {
-            g.dir = pickGhostDir(g, options);
-            tryMove(g, g.dir);
-          }
-
+          if (!options.length) { continue; }
+          if (options.indexOf(g.dir) < 0 || options.length > 2 || Math.random() < 0.25) { g.dir = pickGhostDir(g, options); }
+          if (!tryMove(g, g.dir)) { g.dir = pickGhostDir(g, options); tryMove(g, g.dir); }
           resolveGhostCollision(g);
-          if (!running || gameOver) {
-            break;
-          }
+          if (!running || gameOver) { break; }
         }
       }
 
@@ -920,7 +871,6 @@
           const y = Number(parts[1]);
           const cx = (x * TILE) + (TILE / 2);
           const cy = (y * TILE) + (TILE / 2);
-
           if (type === "power") {
             const pulse = 0.8 + (Math.sin(now / 160) * 0.2);
             ctx.fillStyle = "#ffd388";
@@ -940,12 +890,10 @@
         const cx = (player.x * TILE) + (TILE / 2);
         const cy = (player.y * TILE) + (TILE / 2);
         const base = (Math.sin(now / 90) + 1) * 0.18 + 0.12;
-
         let angle = 0;
         if (player.dir === "u") { angle = -Math.PI / 2; }
         if (player.dir === "d") { angle = Math.PI / 2; }
         if (player.dir === "l") { angle = Math.PI; }
-
         ctx.fillStyle = "#ffd84c";
         ctx.beginPath();
         ctx.moveTo(cx, cy);
@@ -960,7 +908,6 @@
           const cx = (g.x * TILE) + (TILE / 2);
           const cy = (g.y * TILE) + (TILE / 2);
           const color = frightMs > 0 ? "#4b7fff" : g.color;
-
           ctx.fillStyle = color;
           ctx.beginPath();
           ctx.arc(cx, cy, TILE * 0.38, Math.PI, 0);
@@ -971,13 +918,11 @@
           ctx.lineTo(cx - (TILE * 0.38), cy + (TILE * 0.36));
           ctx.closePath();
           ctx.fill();
-
           ctx.fillStyle = "#ffffff";
           ctx.beginPath();
           ctx.arc(cx - 4.5, cy - 1, 3.5, 0, Math.PI * 2);
           ctx.arc(cx + 4.5, cy - 1, 3.5, 0, Math.PI * 2);
           ctx.fill();
-
           ctx.fillStyle = "#0b1e3e";
           ctx.beginPath();
           ctx.arc(cx - 4, cy - 1, 1.6, 0, Math.PI * 2);
@@ -995,29 +940,17 @@
       }
 
       function tick(now) {
-        if (!lastFrame) {
-          lastFrame = now;
-        }
+        if (!lastFrame) { lastFrame = now; }
         const dt = Math.min(40, now - lastFrame);
         lastFrame = now;
 
         if (running && !paused && !gameOver && !won) {
           graceMs = Math.max(0, graceMs - dt);
-          if (frightMs > 0) {
-            frightMs = Math.max(0, frightMs - dt);
-          }
-
+          if (frightMs > 0) { frightMs = Math.max(0, frightMs - dt); }
           playerAcc += dt;
-          while (playerAcc >= PLAYER_STEP_MS && running && !paused && !gameOver && !won) {
-            stepPlayer();
-            playerAcc -= PLAYER_STEP_MS;
-          }
-
+          while (playerAcc >= PLAYER_STEP_MS && running && !paused && !gameOver && !won) { stepPlayer(); playerAcc -= PLAYER_STEP_MS; }
           ghostAcc += dt;
-          while (ghostAcc >= GHOST_STEP_MS && running && !paused && !gameOver && !won) {
-            stepGhosts();
-            ghostAcc -= GHOST_STEP_MS;
-          }
+          while (ghostAcc >= GHOST_STEP_MS && running && !paused && !gameOver && !won) { stepGhosts(); ghostAcc -= GHOST_STEP_MS; }
         }
 
         updateHud();
@@ -1026,125 +959,79 @@
       }
 
       function beginRun() {
-        if (gameOver || won) {
-          resetGame();
-        }
+        if (gameOver || won) { resetGame(); }
         running = true;
         paused = false;
-        if (!gameStartTime) gameStartTime = Date.now();
+        if (!gameStartTime) { gameStartTime = Date.now(); }
         setOverlay("", false);
         updateHud();
       }
 
       function togglePause() {
-        if (!running || gameOver || won) {
-          return;
-        }
+        if (!running || gameOver || won) { return; }
         paused = !paused;
-        if (paused) {
-          setOverlay("Paused", true);
-        } else {
-          setOverlay("", false);
-        }
+        if (paused) { setOverlay("Paused", true); }
+        else { setOverlay("", false); }
         updateHud();
       }
 
+      // ── keyboard ──
       document.addEventListener("keydown", (event) => {
         const k = event.key.toLowerCase();
-
-        if (k === "arrowup" || k === "w") {
-          event.preventDefault();
-          setNextDirection("u");
-          return;
-        }
-        if (k === "arrowdown" || k === "s") {
-          event.preventDefault();
-          setNextDirection("d");
-          return;
-        }
-        if (k === "arrowleft" || k === "a") {
-          event.preventDefault();
-          setNextDirection("l");
-          return;
-        }
-        if (k === "arrowright" || k === "d") {
-          event.preventDefault();
-          setNextDirection("r");
-          return;
-        }
-        if (k === "enter") {
-          event.preventDefault();
-          beginRun();
-          return;
-        }
-        if (k === " " || k === "p") {
-          event.preventDefault();
-          togglePause();
-        }
+        if (k === "arrowup"    || k === "w") { event.preventDefault(); setNextDirection("u"); return; }
+        if (k === "arrowdown"  || k === "s") { event.preventDefault(); setNextDirection("d"); return; }
+        if (k === "arrowleft"  || k === "a") { event.preventDefault(); setNextDirection("l"); return; }
+        if (k === "arrowright" || k === "d") { event.preventDefault(); setNextDirection("r"); return; }
+        if (k === "enter") { event.preventDefault(); beginRun(); return; }
+        if (k === " " || k === "p") { event.preventDefault(); togglePause(); }
       });
 
-      startBtn.addEventListener("click", () => {
-        beginRun();
-      });
+      startBtn.addEventListener("click", () => { beginRun(); });
+      pauseBtn.addEventListener("click", () => { togglePause(); });
+      restartBtn.addEventListener("click", () => { gameOverOverlay.classList.add("hidden"); resetGame(); beginRun(); });
 
-      pauseBtn.addEventListener("click", () => {
-        togglePause();
-      });
-
-      restartBtn.addEventListener("click", () => {
-        resetGame();
-        beginRun();
-      });
-
-      function usesTouchJoystick(event) {
-        const type = String(event.pointerType || "");
-        return type === "touch" || type === "pen";
-      }
-
+      // ── joystick ──
       canvas.addEventListener("pointerdown", (event) => {
-        if (!usesTouchJoystick(event)) {
-          return;
-        }
+        if (String(event.pointerType || "") !== "touch" && String(event.pointerType || "") !== "pen") { return; }
         event.preventDefault();
         joyPointerId = event.pointerId;
         setJoystickCenter(event.clientX, event.clientY);
         joyBase.classList.add("active");
-        if (canvas.setPointerCapture) {
-          canvas.setPointerCapture(event.pointerId);
-        }
+        if (canvas.setPointerCapture) { canvas.setPointerCapture(event.pointerId); }
         updateJoystick(event.clientX, event.clientY);
       });
-
       canvas.addEventListener("pointermove", (event) => {
-        if (joyPointerId !== event.pointerId) {
-          return;
-        }
+        if (joyPointerId !== event.pointerId) { return; }
         event.preventDefault();
         updateJoystick(event.clientX, event.clientY);
       });
-
       function releaseJoystick(event) {
-        if (joyPointerId === null) {
-          return;
-        }
-        if (event && event.pointerId !== undefined && joyPointerId !== event.pointerId) {
-          return;
-        }
-        if (event && canvas.releasePointerCapture) {
-          try { canvas.releasePointerCapture(event.pointerId); } catch (_e) { /* ignore */ }
-        }
+        if (joyPointerId === null) { return; }
+        if (event && event.pointerId !== undefined && joyPointerId !== event.pointerId) { return; }
+        if (event && canvas.releasePointerCapture) { try { canvas.releasePointerCapture(event.pointerId); } catch (_e) {} }
         joyPointerId = null;
         resetJoystick();
       }
-
       canvas.addEventListener("pointerup", releaseJoystick);
       canvas.addEventListener("pointercancel", releaseJoystick);
       canvas.addEventListener("lostpointercapture", releaseJoystick);
 
-      const year = document.getElementById("year");
-      if (year) {
-        year.textContent = String(new Date().getFullYear());
-      }
+      // ── pre-game start ──
+      preGameStart.addEventListener("click", () => {
+        preGame.classList.add("hidden");
+        gameHeader.style.display = "";
+        gamePage.style.display = "";
+        resetJoystick();
+        resetGame();
+        beginRun();
+      });
+
+      // ── game-over play again ──
+      goPlayAgain.addEventListener("click", () => {
+        gameOverOverlay.classList.add("hidden");
+        resetGame();
+        beginRun();
+      });
 
       resetJoystick();
       resetGame();
