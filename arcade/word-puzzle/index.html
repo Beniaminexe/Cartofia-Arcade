@@ -2,58 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Word Puzzle | Cartofia Arcade</title>
+  <title>Word Puzzle — Cartofia Arcade</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
   <style>
+    /* ── Puzzle layout ── */
     .puzzle-layout {
       display: grid;
       gap: 18px;
+      max-width: 520px;
+      margin: 0 auto;
     }
 
     .puzzle-panel {
-      border-radius: 24px;
-      padding: clamp(18px, 3.2vw, 30px);
-      background: linear-gradient(180deg, rgba(14, 24, 39, 0.74), rgba(9, 15, 25, 0.6));
-      box-shadow: 0 20px 42px rgba(1, 8, 17, 0.36);
+      border-radius: 20px;
+      padding: clamp(18px, 3.2vw, 28px);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       display: grid;
       gap: 16px;
     }
 
-    .puzzle-meta {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .meta-box {
-      border-radius: 12px;
-      padding: 10px;
-      background: rgba(9, 16, 27, 0.65);
-      display: grid;
-      gap: 4px;
-    }
-
-    .meta-box span {
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #9eb2cc;
-    }
-
-    .meta-box strong {
-      font-family: "Sora", "Segoe UI", sans-serif;
-      font-size: 20px;
-      letter-spacing: -0.02em;
-    }
-
+    /* ── Board ── */
     .board {
       display: grid;
       gap: 8px;
-      max-width: 360px;
+      max-width: 340px;
       margin: 0 auto;
       width: 100%;
     }
@@ -65,203 +43,177 @@
     }
 
     .cell {
-      border-radius: 12px;
-      height: 58px;
+      border-radius: 10px;
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: "Sora", "Segoe UI", sans-serif;
-      font-size: clamp(22px, 3vw, 28px);
+      font-family: var(--font-mono);
+      font-size: clamp(20px, 3vw, 26px);
       font-weight: 700;
       letter-spacing: 0.02em;
       text-transform: uppercase;
       background: rgba(10, 18, 30, 0.74);
-      border: 1px solid rgba(143, 175, 209, 0.26);
+      border: 1px solid var(--border);
     }
 
-    .cell.filled {
-      border-color: rgba(165, 191, 219, 0.62);
-    }
+    .cell.filled  { border-color: var(--border-h); }
+    .cell.correct { background: rgba(59, 154, 97, 0.92);  border-color: rgba(105, 211, 146, 0.94); color: #f5fff8; }
+    .cell.present { background: rgba(180, 133, 35, 0.9);  border-color: rgba(255, 208, 104, 0.88); color: #fff9ed; }
+    .cell.absent  { background: rgba(40, 52, 70, 0.86);   border-color: rgba(100, 120, 160, 0.4);  color: var(--text-secondary); }
 
-    .cell.correct {
-      background: rgba(59, 154, 97, 0.92);
-      border-color: rgba(105, 211, 146, 0.94);
-      color: #f5fff8;
-    }
-
-    .cell.present {
-      background: rgba(180, 133, 35, 0.9);
-      border-color: rgba(255, 208, 104, 0.88);
-      color: #fff9ed;
-    }
-
-    .cell.absent {
-      background: rgba(60, 75, 97, 0.86);
-      border-color: rgba(150, 173, 206, 0.4);
-      color: #d9e4f4;
-    }
-
-    .keyboard {
-      display: grid;
-      gap: 8px;
-    }
+    /* ── Keyboard ── */
+    .keyboard { display: grid; gap: 8px; }
 
     .kbd-row {
       display: grid;
       grid-template-columns: repeat(10, minmax(0, 1fr));
-      gap: 8px;
+      gap: 6px;
     }
-
     .kbd-row.middle {
       grid-template-columns: repeat(9, minmax(0, 1fr));
       margin-left: 4.5%;
       margin-right: 4.5%;
     }
-
     .kbd-row.bottom {
       grid-template-columns: 1.4fr repeat(7, minmax(0, 1fr)) 1.4fr;
     }
 
     .kbd-btn {
-      border-radius: 10px;
-      border: 1px solid rgba(143, 175, 209, 0.28);
+      border-radius: 8px;
+      border: 1px solid var(--border);
       background: rgba(11, 18, 30, 0.72);
-      color: #d5e3f5;
-      min-height: 42px;
-      font-family: inherit;
-      font-size: 14px;
-      font-weight: 700;
+      color: var(--text-primary);
+      min-height: 40px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
       transition: background 0.16s ease, transform 0.14s ease;
       touch-action: manipulation;
     }
+    .kbd-btn:hover  { transform: translateY(-1px); background: rgba(19, 31, 48, 0.9); }
+    .kbd-btn.correct { background: rgba(59, 154, 97, 0.92);  border-color: rgba(105, 211, 146, 0.92); color: #f5fff8; }
+    .kbd-btn.present { background: rgba(180, 133, 35, 0.9);  border-color: rgba(255, 208, 104, 0.88); color: #fff9ed; }
+    .kbd-btn.absent  { background: rgba(40, 52, 70, 0.86);   border-color: rgba(100, 120, 160, 0.4);  color: var(--text-secondary); }
 
-    .kbd-btn:hover {
-      transform: translateY(-1px);
-      background: rgba(19, 31, 48, 0.9);
-    }
-
-    .kbd-btn.correct {
-      background: rgba(59, 154, 97, 0.92);
-      border-color: rgba(105, 211, 146, 0.92);
-      color: #f5fff8;
-    }
-
-    .kbd-btn.present {
-      background: rgba(180, 133, 35, 0.9);
-      border-color: rgba(255, 208, 104, 0.88);
-      color: #fff9ed;
-    }
-
-    .kbd-btn.absent {
-      background: rgba(60, 75, 97, 0.86);
-      border-color: rgba(150, 173, 206, 0.4);
-      color: #d9e4f4;
-    }
-
-    .puzzle-help {
-      color: var(--muted);
+    .puzzle-notice {
       font-size: 14px;
-      line-height: 1.45;
+      color: var(--text-secondary);
+      text-align: center;
+      min-height: 20px;
     }
+    .puzzle-notice.warn { color: #ffc857; }
+    .puzzle-notice.ok   { color: #73ebb1; }
 
-    @media (max-width: 720px) {
-      .puzzle-meta {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .cell {
-        height: 52px;
-      }
-
-      .kbd-btn {
-        min-height: 38px;
-        font-size: 13px;
-      }
+    @media (max-width: 480px) {
+      .cell { height: 46px; }
+      .kbd-btn { min-height: 34px; font-size: 12px; }
     }
   </style>
 </head>
 <body>
-  <div class="site-shell" style="position:relative;z-index:1;">
-    <header class="nav">
-      <a class="nav-brand" href="/">
-        <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+
+  <!-- PRE-GAME SCREEN -->
+  <div class="pre-game" id="preGame">
+    <div class="pre-game-card">
+      <p class="pre-game-label">Arcade / Word Puzzle</p>
+      <h1 class="pre-game-title">Word Puzzle</h1>
+      <p class="pre-game-desc">Six guesses. One word. How fast can you crack it?</p>
+      <div id="preStreak" class="pre-game-streak" style="display:none;">
+        <span>Current streak:</span>
+        <strong id="preStreakVal">0</strong>
+      </div>
+      <button class="start-btn" id="preGameStart" type="button">Start Game</button>
+      <p class="pre-game-hint">Type your guess and press Enter</p>
+    </div>
+  </div>
+
+  <!-- GAME-OVER OVERLAY -->
+  <div class="game-over-overlay hidden" id="gameOverOverlay">
+    <div class="game-over-card">
+      <p class="game-over-label" id="goLabel">Result</p>
+      <h2 class="game-over-heading" id="goHeading">Nice!</h2>
+      <!-- Win: score = guesses used. Loss: reveal the word -->
+      <div class="game-over-score" id="goGuesses" style="display:none;"></div>
+      <p class="game-over-score-label" id="goGuessLabel" style="display:none;">guesses</p>
+      <div class="game-over-word" id="goWord" style="display:none;"></div>
+      <div class="game-over-stats">
+        <div class="go-stat">
+          <span class="go-stat-value" id="goStreak">0</span>
+          <span class="go-stat-label">Streak</span>
+        </div>
+      </div>
+      <div class="game-over-divider"></div>
+      <div class="game-over-actions">
+        <button class="btn btn-primary" id="goPlayAgain" type="button">Play Again</button>
+        <a class="btn btn-ghost" href="/arcade/">Back to Arcade</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
       Cartofia
-      </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="/">Home</a>
-        <a class="active" href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-      </nav>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+    </nav>
+    <div class="nav-right">
       <div class="account-menu" data-account-menu>
         <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
         </div>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <main>
-      <section class="hero-card reveal" data-delay="1">
-        <div class="hero-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="4" y="4" width="16" height="16" rx="3" stroke="#57C2FF" stroke-width="1.6"></rect>
-            <path d="M8 10H16M8 14H16" stroke="#57C2FF" stroke-width="1.6" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div class="hero-copy">
-          <p class="hero-kicker">Arcade Puzzle</p>
-          <h1 class="hero-title">Word Puzzle</h1>
-          <p class="hero-lead">Guess the hidden 5-letter word in 6 tries. Green is correct spot, yellow is wrong spot.</p>
-          <div class="button-row">
-            <a class="btn btn-ghost" href="/arcade/">Back to Arcade</a>
-          </div>
-        </div>
-      </section>
-
-      <section class="puzzle-layout">
-        <article class="puzzle-panel reveal" data-delay="2">
-          <div class="puzzle-meta">
-            <div class="meta-box">
-              <span>Mode</span>
-              <strong>5 Letters</strong>
-            </div>
-            <div class="meta-box">
-              <span>Attempts Left</span>
-              <strong id="attemptsLeft">6</strong>
-            </div>
-            <div class="meta-box">
-              <span>Streak</span>
-              <strong id="streakCount">0</strong>
-            </div>
-            <div class="meta-box">
-              <span>Best</span>
-              <strong id="bestStreak">0</strong>
-            </div>
-          </div>
-
-          <div class="board" id="board"></div>
-
-          <div class="keyboard" id="keyboard"></div>
-
-          <div class="button-row">
-            <button class="btn btn-primary" type="button" id="newPuzzleButton">New Puzzle</button>
-          </div>
-
-          <div class="notice" id="puzzleNotice">Type a 5-letter word and press Enter.</div>
-          <p class="puzzle-help">Keyboard and touch controls are both supported.</p>
-        </article>
-      </section>
-    </main>
-
-    <footer class="footer">
-      <span>Word Puzzle is a local browser game. No server calls required.</span>
-      <div class="footer-links">
-        <a href="/">Home</a>
-        <a href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
+  <!-- GAME HEADER -->
+  <div class="game-header">
+    <a class="game-header-back" href="/arcade/">
+      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back to Arcade
+    </a>
+    <span class="game-header-title">Word Puzzle</span>
+    <div class="game-header-stats">
+      <div class="header-stat">
+        <span class="header-stat-label">Guess</span>
+        <span class="header-stat-value" id="headerGuess">0/6</span>
       </div>
-    </footer>
+    </div>
+  </div>
+
+  <!-- GAME PAGE -->
+  <div class="game-page">
+    <div class="game-container">
+      <div class="game-container-inner">
+        <section class="puzzle-layout">
+          <article class="puzzle-panel">
+
+            <div class="board" id="board"></div>
+            <div class="keyboard" id="keyboard"></div>
+
+            <div class="notice puzzle-notice" id="puzzleNotice">Type a 5-letter word and press Enter.</div>
+
+            <div style="display:flex;justify-content:center;">
+              <button class="btn btn-ghost btn-sm" type="button" id="newPuzzleButton">New Puzzle</button>
+            </div>
+          </article>
+        </section>
+      </div>
+    </div>
   </div>
 
   <script src="/assets/site.js?v=6"></script>
@@ -277,168 +229,166 @@
         "toast", "trail", "vivid", "whale", "wheat", "world", "youth", "zebra"
       ];
 
-      const MAX_GUESSES = 6;
-      const WORD_LENGTH = 5;
+      const MAX_GUESSES  = 6;
+      const WORD_LENGTH  = 5;
       const STORAGE_STREAK = "cartofia-word-puzzle-streak";
-      const STORAGE_BEST = "cartofia-word-puzzle-best";
+      const STORAGE_BEST   = "cartofia-word-puzzle-best";
 
-      const board = document.getElementById("board");
-      const keyboard = document.getElementById("keyboard");
-      const attemptsLeftText = document.getElementById("attemptsLeft");
-      const streakCountText = document.getElementById("streakCount");
-      const bestStreakText = document.getElementById("bestStreak");
-      const notice = document.getElementById("puzzleNotice");
-      const newPuzzleButton = document.getElementById("newPuzzleButton");
+      const boardEl          = document.getElementById("board");
+      const keyboardEl       = document.getElementById("keyboard");
+      const puzzleNotice     = document.getElementById("puzzleNotice");
+      const newPuzzleButton  = document.getElementById("newPuzzleButton");
+      const headerGuess      = document.getElementById("headerGuess");
 
-      let target = "";
-      let gameStartTime = null;
-      let guesses = [];
-      let currentGuess = "";
-      let gameOver = false;
-      let keyState = {};
+      /* ── pre-game ── */
+      const preGame      = document.getElementById("preGame");
+      const preGameStart = document.getElementById("preGameStart");
+      const preStreak    = document.getElementById("preStreak");
+      const preStreakVal = document.getElementById("preStreakVal");
 
-      function pickWord() {
-        return WORDS[Math.floor(Math.random() * WORDS.length)];
-      }
+      /* ── game-over ── */
+      const gameOverOverlay = document.getElementById("gameOverOverlay");
+      const goLabel         = document.getElementById("goLabel");
+      const goHeading       = document.getElementById("goHeading");
+      const goGuesses       = document.getElementById("goGuesses");
+      const goGuessLabel    = document.getElementById("goGuessLabel");
+      const goWord          = document.getElementById("goWord");
+      const goStreak        = document.getElementById("goStreak");
+      const goPlayAgain     = document.getElementById("goPlayAgain");
+
+      /* ── state ── */
+      let target = "", guesses = [], currentGuess = "", gameOver = false, keyState = {}, gameStartTime = null;
 
       function loadNumber(key) {
-        const value = Number(localStorage.getItem(key) || "0");
-        return Number.isFinite(value) && value >= 0 ? value : 0;
+        const v = Number(localStorage.getItem(key) || "0");
+        return Number.isFinite(v) && v >= 0 ? v : 0;
       }
+      function saveNumber(key, value) { localStorage.setItem(key, String(value)); }
 
-      function saveNumber(key, value) {
-        localStorage.setItem(key, String(value));
-      }
-
-      function setNotice(message, type) {
-        notice.className = "notice";
-        if (type) {
-          notice.classList.add(type);
+      /* show streak on pre-game card if > 0 */
+      function refreshPreGameStreak() {
+        const s = loadNumber(STORAGE_STREAK);
+        if (s > 0) {
+          preStreak.style.display = "flex";
+          preStreakVal.textContent = String(s);
         }
-        notice.textContent = message;
       }
+
+      function setNotice(msg, type) {
+        puzzleNotice.className = "notice puzzle-notice";
+        if (type) puzzleNotice.classList.add(type);
+        puzzleNotice.textContent = msg;
+      }
+
+      function pickWord() { return WORDS[Math.floor(Math.random() * WORDS.length)]; }
 
       function createBoard() {
-        board.innerHTML = "";
-        for (let row = 0; row < MAX_GUESSES; row += 1) {
+        boardEl.innerHTML = "";
+        for (let row = 0; row < MAX_GUESSES; row++) {
           const rowEl = document.createElement("div");
           rowEl.className = "board-row";
-          for (let col = 0; col < WORD_LENGTH; col += 1) {
+          for (let col = 0; col < WORD_LENGTH; col++) {
             const cell = document.createElement("div");
             cell.className = "cell";
             rowEl.appendChild(cell);
           }
-          board.appendChild(rowEl);
+          boardEl.appendChild(rowEl);
         }
       }
 
-      function keyboardRows() {
-        return [
-          ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
-          ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-          ["ENTER", "Z", "X", "C", "V", "B", "N", "M", "BACK"]
-        ];
-      }
-
       function createKeyboard() {
-        keyboard.innerHTML = "";
-        const rows = keyboardRows();
+        keyboardEl.innerHTML = "";
+        const rows = [
+          ["Q","W","E","R","T","Y","U","I","O","P"],
+          ["A","S","D","F","G","H","J","K","L"],
+          ["ENTER","Z","X","C","V","B","N","M","BACK"]
+        ];
         rows.forEach((letters, index) => {
           const row = document.createElement("div");
           row.className = "kbd-row";
           if (index === 1) row.classList.add("middle");
           if (index === 2) row.classList.add("bottom");
-
           letters.forEach((letter) => {
             const btn = document.createElement("button");
-            btn.className = "kbd-btn";
-            btn.type = "button";
-            btn.dataset.key = letter;
+            btn.className = "kbd-btn"; btn.type = "button"; btn.dataset.key = letter;
             btn.textContent = letter === "BACK" ? "Back" : letter;
             btn.addEventListener("click", () => handleInput(letter));
             row.appendChild(btn);
           });
-          keyboard.appendChild(row);
+          keyboardEl.appendChild(row);
         });
       }
 
-      function getPrecedence(value) {
-        if (value === "correct") return 3;
-        if (value === "present") return 2;
-        if (value === "absent") return 1;
-        return 0;
-      }
+      function getPrecedence(v) { return v === "correct" ? 3 : v === "present" ? 2 : v === "absent" ? 1 : 0; }
 
       function setKeyColor(letter, state) {
-        const prev = keyState[letter];
-        if (getPrecedence(state) < getPrecedence(prev)) {
-          return;
-        }
+        if (getPrecedence(state) < getPrecedence(keyState[letter])) return;
         keyState[letter] = state;
       }
 
       function evaluateGuess(word) {
         const result = new Array(WORD_LENGTH).fill("absent");
         const counts = {};
-
-        for (let i = 0; i < WORD_LENGTH; i += 1) {
-          const char = target[i];
-          counts[char] = (counts[char] || 0) + 1;
-        }
-
-        for (let i = 0; i < WORD_LENGTH; i += 1) {
-          if (word[i] === target[i]) {
-            result[i] = "correct";
-            counts[word[i]] -= 1;
-          }
-        }
-
-        for (let i = 0; i < WORD_LENGTH; i += 1) {
+        for (let i = 0; i < WORD_LENGTH; i++) { const c = target[i]; counts[c] = (counts[c] || 0) + 1; }
+        for (let i = 0; i < WORD_LENGTH; i++) { if (word[i] === target[i]) { result[i] = "correct"; counts[word[i]]--; } }
+        for (let i = 0; i < WORD_LENGTH; i++) {
           if (result[i] === "correct") continue;
-          const char = word[i];
-          if ((counts[char] || 0) > 0) {
-            result[i] = "present";
-            counts[char] -= 1;
-          }
+          const c = word[i];
+          if ((counts[c] || 0) > 0) { result[i] = "present"; counts[c]--; }
         }
-
         return result;
       }
 
       function render() {
-        const rows = board.querySelectorAll(".board-row");
+        const rows = boardEl.querySelectorAll(".board-row");
         rows.forEach((row, rowIndex) => {
-          const cells = row.querySelectorAll(".cell");
+          const cells  = row.querySelectorAll(".cell");
           const guessData = guesses[rowIndex];
-          const text = guessData ? guessData.word : rowIndex === guesses.length ? currentGuess : "";
+          const text   = guessData ? guessData.word : rowIndex === guesses.length ? currentGuess : "";
           const states = guessData ? guessData.states : [];
-
           cells.forEach((cell, colIndex) => {
             const letter = text[colIndex] || "";
             cell.textContent = letter.toUpperCase();
             cell.className = "cell";
-            if (letter) {
-              cell.classList.add("filled");
-            }
-            if (states[colIndex]) {
-              cell.classList.add(states[colIndex]);
-            }
+            if (letter) cell.classList.add("filled");
+            if (states[colIndex]) cell.classList.add(states[colIndex]);
           });
         });
 
-        const allKeys = keyboard.querySelectorAll("[data-key]");
-        allKeys.forEach((btn) => {
-          const key = btn.dataset.key;
+        keyboardEl.querySelectorAll("[data-key]").forEach((btn) => {
+          const k = btn.dataset.key;
           btn.classList.remove("correct", "present", "absent");
-          if (key.length === 1) {
-            const state = keyState[key.toLowerCase()];
-            if (state) btn.classList.add(state);
-          }
+          if (k.length === 1) { const state = keyState[k.toLowerCase()]; if (state) btn.classList.add(state); }
         });
 
-        attemptsLeftText.textContent = String(MAX_GUESSES - guesses.length);
-        streakCountText.textContent = String(loadNumber(STORAGE_STREAK));
-        bestStreakText.textContent = String(loadNumber(STORAGE_BEST));
+        if (headerGuess) headerGuess.textContent = guesses.length + "/" + MAX_GUESSES;
+      }
+
+      function winHeading(guessCount) {
+        if (guessCount <= 2) return "Genius!";
+        if (guessCount <= 4) return "Great!";
+        return "Phew!";
+      }
+
+      function showGameOver(won) {
+        const streak = loadNumber(STORAGE_STREAK);
+        goStreak.textContent = String(streak);
+        if (won) {
+          goLabel.textContent   = "Victory";
+          goHeading.textContent = winHeading(guesses.length);
+          goGuesses.textContent = String(guesses.length);
+          goGuesses.style.display = "";
+          goGuessLabel.style.display = "";
+          goWord.style.display = "none";
+        } else {
+          goLabel.textContent   = "Not this time";
+          goHeading.textContent = "Not this time";
+          goGuesses.style.display = "none";
+          goGuessLabel.style.display = "none";
+          goWord.textContent = target.toUpperCase();
+          goWord.style.display = "";
+        }
+        gameOverOverlay.classList.remove("hidden");
       }
 
       function finishGame(won) {
@@ -449,84 +399,44 @@
           logGameActivity({ game: "word-puzzle", result: won ? "win" : "loss", attempts: guesses.length, duration_seconds: _dur });
         }
         const streak = loadNumber(STORAGE_STREAK);
-        const best = loadNumber(STORAGE_BEST);
-
+        const best   = loadNumber(STORAGE_BEST);
         if (won) {
-          const nextStreak = streak + 1;
-          saveNumber(STORAGE_STREAK, nextStreak);
-          if (nextStreak > best) saveNumber(STORAGE_BEST, nextStreak);
+          const next = streak + 1;
+          saveNumber(STORAGE_STREAK, next);
+          if (next > best) saveNumber(STORAGE_BEST, next);
           setNotice("Correct! Great solve.", "ok");
         } else {
           saveNumber(STORAGE_STREAK, 0);
-          setNotice(`No tries left. Word was "${target.toUpperCase()}".`, "warn");
+          setNotice('No tries left. Word was "' + target.toUpperCase() + '".', "warn");
         }
-
         render();
+        showGameOver(won);
       }
 
       function submitGuess() {
-        if (currentGuess.length !== WORD_LENGTH) {
-          setNotice("Word must be exactly 5 letters.", "warn");
-          return;
-        }
-
-        if (!WORDS.includes(currentGuess)) {
-          setNotice("Word not in puzzle dictionary.", "warn");
-          return;
-        }
-
+        if (currentGuess.length !== WORD_LENGTH) { setNotice("Word must be exactly 5 letters.", "warn"); return; }
+        if (!WORDS.includes(currentGuess))        { setNotice("Word not in puzzle dictionary.", "warn"); return; }
         const states = evaluateGuess(currentGuess);
         guesses.push({ word: currentGuess, states });
-
-        for (let i = 0; i < WORD_LENGTH; i += 1) {
-          setKeyColor(currentGuess[i], states[i]);
-        }
-
+        for (let i = 0; i < WORD_LENGTH; i++) setKeyColor(currentGuess[i], states[i]);
         const won = currentGuess === target;
         currentGuess = "";
         render();
-
-        if (won) {
-          finishGame(true);
-          return;
-        }
-
-        if (guesses.length >= MAX_GUESSES) {
-          finishGame(false);
-          return;
-        }
-
+        if (won)                       { finishGame(true);  return; }
+        if (guesses.length >= MAX_GUESSES) { finishGame(false); return; }
         setNotice("Try another word.", "");
       }
 
       function handleInput(key) {
-        if (gameOver && key !== "NEW") {
-          return;
-        }
-
-        if (key === "ENTER") {
-          submitGuess();
-          return;
-        }
-
-        if (key === "BACK") {
-          currentGuess = currentGuess.slice(0, -1);
-          render();
-          return;
-        }
-
-        if (/^[A-Z]$/.test(key) && currentGuess.length < WORD_LENGTH) {
-          currentGuess += key.toLowerCase();
-          render();
-        }
+        if (gameOver && key !== "NEW") return;
+        if (key === "ENTER") { submitGuess(); return; }
+        if (key === "BACK")  { currentGuess = currentGuess.slice(0, -1); render(); return; }
+        if (/^[A-Z]$/.test(key) && currentGuess.length < WORD_LENGTH) { currentGuess += key.toLowerCase(); render(); }
       }
 
       function newPuzzle() {
         target = pickWord();
-        guesses = [];
-        currentGuess = "";
-        gameOver = false;
-        keyState = {};
+        guesses = []; currentGuess = ""; gameOver = false; keyState = {};
         gameStartTime = Date.now();
         setNotice("Type a 5-letter word and press Enter.", "");
         render();
@@ -535,26 +445,31 @@
       document.addEventListener("keydown", (event) => {
         if (event.ctrlKey || event.metaKey || event.altKey) return;
         const key = event.key.toUpperCase();
-        if (key === "ENTER") {
-          event.preventDefault();
-          handleInput("ENTER");
-          return;
-        }
-        if (key === "BACKSPACE") {
-          event.preventDefault();
-          handleInput("BACK");
-          return;
-        }
-        if (/^[A-Z]$/.test(key)) {
-          handleInput(key);
-        }
+        if (key === "ENTER")     { event.preventDefault(); handleInput("ENTER"); return; }
+        if (key === "BACKSPACE") { event.preventDefault(); handleInput("BACK");  return; }
+        if (/^[A-Z]$/.test(key)) handleInput(key);
+      });
+
+      /* ── pre-game start ── */
+      preGameStart.addEventListener("click", () => {
+        preGame.classList.add("hidden");
+        newPuzzle();
+      });
+
+      /* ── game-over play again ── */
+      goPlayAgain.addEventListener("click", () => {
+        gameOverOverlay.classList.add("hidden");
+        newPuzzle();
       });
 
       newPuzzleButton.addEventListener("click", newPuzzle);
 
+      /* ── init ── */
       createBoard();
       createKeyboard();
-      newPuzzle();
+      refreshPreGameStreak();
+      /* don't start game until pre-game dismissed — render empty board */
+      render();
     })();
   </script>
 </body>
