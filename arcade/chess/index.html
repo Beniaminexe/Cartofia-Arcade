@@ -2,169 +2,435 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Chess | Cartofia Arcade</title>
+  <title>Chess — Cartofia Arcade</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
   <style>
-    .chess-layout { display:grid; grid-template-columns:minmax(300px,680px) minmax(270px,1fr); gap:16px; align-items:start; }
-    .board-wrap { border-radius:20px; padding:12px; background:linear-gradient(180deg, rgba(14,24,39,.76), rgba(8,14,24,.62)); box-shadow:0 20px 40px rgba(1,8,17,.36); }
-    .board-grid { width:100%; aspect-ratio:1/1; border-radius:14px; overflow:hidden; display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); border:1px solid rgba(148,180,216,.3); }
-    .sq { border:0; margin:0; padding:0; display:flex; align-items:center; justify-content:center; font-family:"Sora","Segoe UI",sans-serif; font-size:clamp(26px,4.5vw,48px); cursor:pointer; position:relative; user-select:none; touch-action:manipulation; transition:filter .12s ease; }
-    .sq.light { background:#d6dfec; }
-    .sq.dark { background:#7f95b3; }
-    .sq:hover { filter:brightness(1.05); }
-    .sq.disabled { opacity:.78; cursor:default; }
-    .sq.selected { box-shadow:inset 0 0 0 4px rgba(56,145,255,.72); }
-    .sq.move::after { content:""; width:30%; height:30%; border-radius:50%; background:rgba(34,128,255,.64); position:absolute; }
-    .sq.capture::after { content:""; width:72%; height:72%; border-radius:50%; border:4px solid rgba(255,117,145,.8); position:absolute; box-sizing:border-box; }
-    .piece-white { color:#f8fbff; text-shadow:0 2px 0 rgba(24,37,56,.45),0 0 8px rgba(0,0,0,.28); }
-    .piece-black { color:#091321; text-shadow:0 1px 0 rgba(244,250,255,.36); }
-    .side-panel { display:grid; gap:14px; }
-    .panel-block { border-radius:18px; padding:14px; background:rgba(11,19,31,.62); box-shadow:0 12px 26px rgba(1,8,17,.28); display:grid; gap:10px; }
-    .control-grid { display:grid; gap:8px; }
-    .control-grid label { font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:#9eb3cd; }
-    .status-line { color:#d0deef; font-size:14px; min-height:22px; }
-    .captured-row { display:grid; gap:5px; }
-    .captured-row span { color:#9eb3cd; font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
-    .captured-pieces { min-height:28px; font-family:"Sora","Segoe UI",sans-serif; font-size:24px; letter-spacing:.02em; }
-    .move-log { max-height:240px; overflow:auto; border-radius:12px; border:1px solid rgba(148,180,216,.22); background:rgba(9,16,27,.64); padding:8px; display:grid; gap:6px; }
-    .move-log div { color:#c3d3e8; font-size:13px; font-family:"Sora","Segoe UI",sans-serif; }
-    .game-note { border-radius:12px; border:1px dashed rgba(148,180,216,.26); background:rgba(6,12,20,.62); color:var(--muted); font-size:13px; padding:10px 11px; }
-    .online-box { border-radius:12px; border:1px solid rgba(148,180,216,.22); background:rgba(8,14,25,.65); padding:10px; display:grid; gap:8px; }
-    .online-box.hidden { display:none; }
-    .online-row { display:flex; flex-wrap:wrap; gap:8px; }
-    .online-input { min-height:36px; padding:8px 10px; border-radius:10px; border:1px solid rgba(148,180,216,.26); background:rgba(6,12,21,.85); color:#e0eeff; min-width:120px; flex:1; }
-    .online-pill { border-radius:999px; border:1px solid rgba(148,180,216,.3); min-height:32px; display:inline-flex; align-items:center; padding:0 10px; font-size:12px; color:#bad1eb; background:rgba(8,14,24,.75); }
-    .online-pill.ok { border-color:rgba(57,203,123,.5); color:#b2efce; }
-    .online-pill.warn { border-color:rgba(245,186,77,.5); color:#ffe3b3; }
-    .lobby-list { list-style:none; margin:0; padding:0; display:grid; gap:6px; }
-    .lobby-list li { border-radius:8px; border:1px solid rgba(148,180,216,.2); padding:6px 8px; display:flex; justify-content:space-between; gap:8px; color:#d5e9ff; background:rgba(8,14,24,.7); font-size:13px; }
-    .lobby-ready { color:#9ddfb7; }
-    .lobby-wait { color:#ffcc98; }
-    @media (max-width:980px) { .chess-layout { grid-template-columns:1fr; } }
+    .chess-layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 580px) minmax(240px, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    /* Board wrapper */
+    .board-panel {
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: radial-gradient(circle at 50% 0%, rgba(79,125,249,0.08), rgba(10,14,26,0.96) 60%);
+      padding: 14px;
+    }
+
+    /* Chess board grid — DOM-based squares */
+    .board-grid {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 10px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      border: 1px solid rgba(79,125,249,0.25);
+    }
+
+    /* Individual squares */
+    .sq {
+      border: 0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      font-size: clamp(22px, 4.5vw, 46px);
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      touch-action: manipulation;
+      transition: filter 0.12s ease;
+    }
+    .sq.light { background: rgba(255,255,255,0.08); }
+    .sq.dark  { background: rgba(255,255,255,0.02); }
+    .sq:hover { filter: brightness(1.3); }
+    .sq.disabled { opacity: 0.78; cursor: default; }
+    .sq.selected { box-shadow: inset 0 0 0 3px rgba(79,125,249,0.72); background: rgba(79,125,249,0.15); }
+    .sq.move::after { content: ""; width: 28%; height: 28%; border-radius: 50%; background: rgba(79,125,249,0.55); position: absolute; }
+    .sq.capture::after { content: ""; width: 70%; height: 70%; border-radius: 50%; border: 3px solid rgba(255,117,145,0.8); position: absolute; box-sizing: border-box; }
+    .sq.last-move { background: rgba(246,183,60,0.12); }
+    .sq.in-check  { background: rgba(255,80,80,0.18); }
+    .piece-white { color: #f0f6ff; text-shadow: 0 2px 0 rgba(0,0,0,0.5), 0 0 8px rgba(0,0,0,0.3); }
+    .piece-black { color: #1a2840; text-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+
+    /* Side panel */
+    .game-panel { display: grid; gap: 14px; }
+
+    .panel-section-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-accent);
+      margin-bottom: 10px;
+    }
+
+    /* Mode select cards */
+    .mode-cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .mode-card {
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      background: var(--bg-card);
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s, transform .18s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .mode-card:hover  { border-color: var(--border-h); background: var(--bg-card-h); transform: translateY(-1px); }
+    .mode-card.active { border-color: var(--accent); background: rgba(79,125,249,.08); }
+    .mode-card-icon   { font-size: 22px; line-height: 1; flex-shrink: 0; }
+    .mode-card-body   { flex: 1; }
+    .mode-card-title  { font-size: 14px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+    .mode-card-desc   { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* Difficulty row (shown for bot mode) */
+    .difficulty-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .difficulty-row label { font-size: 13px; color: var(--text-secondary); }
+
+    .settings-select {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border-h);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 7px 12px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      min-height: 36px;
+    }
+
+    /* Status line */
+    .status-line {
+      font-size: 14px;
+      color: var(--text-secondary);
+      min-height: 20px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+    }
+
+    /* Online box */
+    .online-box {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .online-box.hidden { display: none; }
+
+    .online-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    .online-input {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border-h);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 8px 12px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      min-height: 36px;
+      min-width: 110px;
+      flex: 1;
+    }
+    .online-input::placeholder { color: var(--text-muted); }
+
+    .online-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      padding: 0 12px;
+      min-height: 30px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      background: var(--bg-card);
+      white-space: nowrap;
+    }
+    .online-pill.ok   { border-color: rgba(41,196,108,.5); color: #a7efc7; }
+    .online-pill.warn { border-color: rgba(246,183,60,.55); color: #ffd89b; }
+
+    .lobby-list { list-style: none; display: grid; gap: 6px; }
+    .lobby-list li { border: 1px solid rgba(79,125,249,.18); border-radius: 8px; padding: 7px 10px; display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-primary); background: rgba(7,18,30,.6); }
+    .lobby-ready { color: #9ddfb7; }
+    .lobby-wait  { color: #ffcc98; }
+
+    .lobby-state-text { font-size: 12px; color: var(--text-muted); }
+
+    /* Captured pieces */
+    .captured-section { display: grid; gap: 10px; }
+    .captured-row { display: grid; gap: 4px; }
+    .captured-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); }
+    .captured-pieces { min-height: 28px; font-size: 22px; letter-spacing: .02em; line-height: 1.3; }
+
+    /* Move log */
+    .move-log {
+      max-height: 220px;
+      overflow: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(5,10,20,.5);
+      padding: 8px;
+      display: grid;
+      gap: 4px;
+    }
+    .move-log div { font-size: 13px; color: var(--text-secondary); font-family: var(--font-mono); }
+
+    .game-note {
+      border-radius: 10px;
+      border: 1px dashed var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 9px 10px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 980px) {
+      .chess-layout { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <div class="site-shell" style="position:relative;z-index:1;">
-    <header class="nav">
-      <a class="nav-brand" href="/">
-        <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+
+  <!-- NAV -->
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
       Cartofia
-      </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="/">Home</a>
-        <a class="active" href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-      </nav>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+    </nav>
+    <div class="nav-right">
       <div class="account-menu" data-account-menu>
         <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-          <a class="account-item" href="/arcade/" role="menuitem">Back to Arcade</a>
         </div>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <main>
-      <section class="hero-card reveal" data-delay="1">
-        <div class="hero-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 4L13.8 7H17L14.5 9.3L15.3 13L12 11.1L8.7 13L9.5 9.3L7 7H10.2L12 4Z" stroke="#57C2FF" stroke-width="1.4"></path>
-            <path d="M8 20H16" stroke="#57C2FF" stroke-width="1.6" stroke-linecap="round"></path>
-            <path d="M9.5 18H14.5" stroke="#57C2FF" stroke-width="1.6" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div class="hero-copy">
-          <p class="hero-kicker">Arcade Slot 8</p>
-          <h1 class="hero-title">Chess</h1>
-          <p class="hero-lead">Play same-device multiplayer, online room multiplayer, or face bots with easy, medium, and hard difficulty levels.</p>
-          <div class="pill-row">
-            <span class="pill"><strong>Modes</strong> Same device, online, bot</span>
-            <span class="pill"><strong>Rules</strong> Legal move checks</span>
-            <span class="pill"><strong>Playable</strong> In browser</span>
-          </div>
-        </div>
-      </section>
+  <!-- GAME HEADER -->
+  <div class="game-header">
+    <a class="game-header-back" href="/arcade/">
+      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back to Arcade
+    </a>
+    <span class="game-header-title">Chess</span>
+    <div class="game-header-stats">
+      <div class="header-stat" id="headerTurnStat">
+        <span class="header-stat-label">Turn</span>
+        <span class="header-stat-value" id="headerTurn">White</span>
+      </div>
+    </div>
+  </div>
 
-      <section class="card reveal" data-delay="2">
+  <!-- GAME PAGE -->
+  <div class="game-page">
+    <div class="game-container">
+      <div class="game-container-inner">
         <div class="chess-layout">
-          <div class="board-wrap">
-            <div class="board-grid" id="board" aria-label="Chess board"></div>
+
+          <!-- LEFT: board -->
+          <div class="board-panel">
+            <div id="board" class="board-grid" aria-label="Chess board"></div>
           </div>
 
-          <aside class="side-panel">
-            <div class="panel-block">
-              <h2 class="card-title" style="margin:0;">Match Setup</h2>
-              <div class="control-grid">
-                <label for="modeSelect">Mode</label>
-                <select id="modeSelect" class="select">
+          <!-- RIGHT: panel -->
+          <aside class="game-panel">
+
+            <!-- Mode select -->
+            <div>
+              <p class="panel-section-label">Mode</p>
+              <div class="mode-cards">
+                <div class="mode-card" id="card-multi" role="button" tabindex="0" aria-pressed="true">
+                  <span class="mode-card-icon">&#129309;</span>
+                  <div class="mode-card-body">
+                    <div class="mode-card-title">Same Device</div>
+                    <div class="mode-card-desc">Two players, one screen.</div>
+                  </div>
+                </div>
+                <div class="mode-card" id="card-bot" role="button" tabindex="0" aria-pressed="false">
+                  <span class="mode-card-icon">&#129302;</span>
+                  <div class="mode-card-body">
+                    <div class="mode-card-title">vs Bot</div>
+                    <div class="mode-card-desc">Test your skills against AI.</div>
+                  </div>
+                </div>
+                <div class="mode-card" id="card-online" role="button" tabindex="0" aria-pressed="false">
+                  <span class="mode-card-icon">&#127760;</span>
+                  <div class="mode-card-body">
+                    <div class="mode-card-title">Online</div>
+                    <div class="mode-card-desc">Create or join a room.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hidden selects the game JS reads -->
+              <div style="display:none;" aria-hidden="true">
+                <select id="modeSelect">
                   <option value="multi">Multiplayer (same device)</option>
                   <option value="online">Multiplayer (online room)</option>
                   <option value="bot">Vs Bot</option>
                 </select>
               </div>
-              <div class="control-grid">
-                <label for="difficultySelect">Bot Difficulty</label>
-                <select id="difficultySelect" class="select">
+
+              <!-- Difficulty (shown below card area for bot mode) -->
+              <div class="difficulty-row" id="difficultyRow" style="margin-top:10px; display:none;">
+                <label for="difficultySelect">Difficulty</label>
+                <select id="difficultySelect" class="settings-select">
                   <option value="easy">Easy</option>
                   <option value="medium">Medium</option>
                   <option value="hard">Hard</option>
                 </select>
               </div>
-              <div class="button-row">
-                <button id="newGameBtn" class="btn btn-primary" type="button">New Game</button>
-              </div>
-              <div id="statusLine" class="status-line">White to move.</div>
 
-              <section id="onlineBox" class="online-box hidden" aria-live="polite">
-                <div class="online-row"><span id="netStatus" class="online-pill">Offline</span></div>
+              <div style="margin-top:12px;">
+                <button id="newGameBtn" class="btn btn-primary" type="button" style="width:100%;">New Game</button>
+              </div>
+
+              <div id="statusLine" class="status-line" style="margin-top:10px;">White to move.</div>
+
+              <!-- Online lobby box (shown when online mode active) -->
+              <section id="onlineBox" class="online-box hidden" aria-live="polite" style="margin-top:12px;">
                 <div class="online-row">
-                  <input id="roomCode" class="online-input" type="text" maxlength="6" autocomplete="off" placeholder="Room code" />
+                  <span id="netStatus" class="online-pill">Offline</span>
+                </div>
+                <div class="online-row">
+                  <input id="roomCode" class="online-input" type="text" maxlength="6" autocomplete="off" placeholder="Room code" style="font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;" />
                   <input id="roomPassword" class="online-input" type="password" maxlength="32" autocomplete="off" placeholder="Password (optional)" />
                 </div>
                 <div class="online-row">
-                  <button id="createRoomBtn" class="btn btn-ghost" type="button">Create Room</button>
-                  <button id="joinRoomBtn" class="btn btn-ghost" type="button">Join Room</button>
-                  <button id="leaveRoomBtn" class="btn btn-ghost" type="button">Leave Room</button>
+                  <button id="createRoomBtn" class="btn btn-ghost btn-sm" type="button">Create Room</button>
+                  <button id="joinRoomBtn" class="btn btn-primary btn-sm" type="button">Join Room</button>
+                  <button id="leaveRoomBtn" class="btn btn-ghost btn-sm" type="button">Leave</button>
                 </div>
                 <div class="online-row">
                   <input id="playerName" class="online-input" type="text" maxlength="16" autocomplete="off" placeholder="Player name" />
-                  <button id="saveNameBtn" class="btn btn-ghost" type="button">Save Name</button>
-                  <button id="readyBtn" class="btn btn-ghost" type="button">Ready: Off</button>
+                  <button id="saveNameBtn" class="btn btn-ghost btn-sm" type="button">Save</button>
+                  <button id="readyBtn" class="btn btn-ghost btn-sm" type="button">Ready: Off</button>
                 </div>
-                <div class="status-line" id="lobbyState">Connect to a room.</div>
+                <div class="lobby-state-text" id="lobbyState">Connect to a room.</div>
                 <ul id="lobbyList" class="lobby-list"></ul>
               </section>
             </div>
 
-            <div class="panel-block">
-              <h3 style="font-family:'Sora','Segoe UI',sans-serif;font-size:20px;letter-spacing:-0.02em;">Captured Pieces</h3>
-              <div class="captured-row">
-                <span>White captured</span>
-                <div id="capturedByWhite" class="captured-pieces"></div>
-              </div>
-              <div class="captured-row">
-                <span>Black captured</span>
-                <div id="capturedByBlack" class="captured-pieces"></div>
+            <!-- Captured pieces -->
+            <div>
+              <p class="panel-section-label">Captured</p>
+              <div class="captured-section">
+                <div class="captured-row">
+                  <span class="captured-label">White captured</span>
+                  <div id="capturedByWhite" class="captured-pieces"></div>
+                </div>
+                <div class="captured-row">
+                  <span class="captured-label">Black captured</span>
+                  <div id="capturedByBlack" class="captured-pieces"></div>
+                </div>
               </div>
             </div>
 
-            <div class="panel-block">
-              <h3 style="font-family:'Sora','Segoe UI',sans-serif;font-size:20px;letter-spacing:-0.02em;">Move Log</h3>
+            <!-- Move log -->
+            <div>
+              <p class="panel-section-label">Move Log</p>
               <div id="moveLog" class="move-log" aria-live="polite"></div>
             </div>
 
-            <div class="game-note">Promotion auto-queens. Includes castling, en passant, check, checkmate, and stalemate detection. In online mode host plays White and guest plays Black.</div>
+            <div class="game-note">Click to select a piece, click again to move. Promotion auto-queens. Castling, en passant, check, checkmate, and stalemate included. In online mode host plays White, guest plays Black.</div>
+
           </aside>
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
   </div>
+
   <script src="/assets/site.js?v=6"></script>
   <script src="/assets/game-utils.js?v=2"></script>
-  <script src="/arcade/chess/game.js?v=2"></script>
+  <script>
+  /* Wire visual mode cards to the hidden modeSelect the game JS reads */
+  (function () {
+    var modeEl = document.getElementById("modeSelect");
+    var cards = {
+      multi:  document.getElementById("card-multi"),
+      bot:    document.getElementById("card-bot"),
+      online: document.getElementById("card-online")
+    };
+    var diffRow = document.getElementById("difficultyRow");
+
+    function activateCard(val) {
+      Object.keys(cards).forEach(function (k) {
+        cards[k].classList.toggle("active", k === val);
+        cards[k].setAttribute("aria-pressed", k === val ? "true" : "false");
+      });
+      diffRow.style.display = val === "bot" ? "flex" : "none";
+    }
+
+    Object.keys(cards).forEach(function (k) {
+      cards[k].addEventListener("click", function () {
+        modeEl.value = k;
+        modeEl.dispatchEvent(new Event("change", { bubbles: true }));
+        activateCard(k);
+      });
+      cards[k].addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); cards[k].click(); }
+      });
+    });
+
+    // Mirror if game JS sets modeSelect.value programmatically
+    modeEl.addEventListener("change", function () { activateCard(modeEl.value); });
+
+    /* Update game-header turn stat from statusLine mutations */
+    var statusEl = document.getElementById("statusLine");
+    var headerTurn = document.getElementById("headerTurn");
+    if (statusEl && headerTurn) {
+      var statusObs = new MutationObserver(function () {
+        var txt = statusEl.textContent || "";
+        if (txt.indexOf("White") >= 0 && txt.indexOf("move") >= 0) headerTurn.textContent = "White";
+        else if (txt.indexOf("Black") >= 0 && txt.indexOf("move") >= 0) headerTurn.textContent = "Black";
+        else if (txt.indexOf("Checkmate") >= 0 || txt.indexOf("Stalemate") >= 0 || txt.indexOf("resign") >= 0) headerTurn.textContent = txt.slice(0, 12);
+      });
+      statusObs.observe(statusEl, { childList: true, subtree: true, characterData: true });
+    }
+  })();
+  </script>
+  <script src="/arcade/chess/game.js?v=3"></script>
 </body>
 </html>

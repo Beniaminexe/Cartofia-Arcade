@@ -1,216 +1,277 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Bomber Raid - Cartofia Arcade</title>
+  <title>Bomber Raid — Cartofia Arcade</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
   <style>
-    .wrap { display: grid; gap: 14px; }
-    .board { position: relative; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-    #g { width: 100%; height: auto; aspect-ratio: 13/11; display: block; background: #071322; image-rendering: pixelated; touch-action: none; }
-    #ov { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; background: rgba(2,8,13,.72); color: #d8ecff; font-family: "Sora","Segoe UI",sans-serif; pointer-events: none; transition: opacity .2s ease; }
-    #ov.hide { opacity: 0; }
-    .joy-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
-    .inframe-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 4; transition: opacity .18s ease; }
-    .inframe-actions .btn { min-height: 32px; padding: 6px 10px; font-size: 12px; }
-    .inframe-actions.hidden { opacity: 0; pointer-events: none; }
-    .hud { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
-    .hud div { border: 1px solid var(--line); border-radius: 10px; padding: 8px; background: rgba(8,14,21,.72); color: var(--muted); font-size: 12px; }
-    .hud b { display: block; color: #cbe8ff; font-size: 16px; font-family: "Sora","Segoe UI",sans-serif; }
-    .row { display: flex; flex-wrap: wrap; gap: 8px; }
-    .ctl { border: 1px solid rgba(46,168,255,.36); border-radius: 10px; background: rgba(8,22,34,.95); color: #cbebff; min-height: 38px; min-width: 80px; padding: 8px 12px; font-weight: 700; cursor: pointer; touch-action: manipulation; }
-    .bomb { border-color: rgba(255,171,76,.55); background: linear-gradient(145deg, rgba(255,182,92,.35), rgba(140,70,26,.45)); color: #ffe0be; }
-    .touch-controls { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: end; }
-    .joystick-base {
-      position: absolute;
-      left: -9999px;
-      top: -9999px;
-      width: 112px;
-      height: 112px;
-      border-radius: 50%;
-      border: 1px solid rgba(93,183,255,.42);
-      background:
-        radial-gradient(circle at 32% 28%, rgba(130,196,244,.2), rgba(12,28,43,.46) 58%),
-        linear-gradient(180deg, rgba(8,22,34,.4), rgba(6,15,24,.34));
-      box-shadow: inset 0 0 0 1px rgba(191,228,255,.06);
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(.9);
-      transition: opacity .12s ease, transform .12s ease;
-      pointer-events: none;
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 620px) minmax(240px, 1fr);
+      gap: 16px;
+      align-items: start;
     }
-    .joystick-base::before,
-    .joystick-base::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(170,219,255,.15);
-      pointer-events: none;
+    .board-panel {
+      position: relative;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: radial-gradient(circle at 50% 0%, rgba(79,125,249,0.1), rgba(10,14,26,0.95) 62%);
+      padding: 12px;
     }
-    .joystick-base::before { width: 2px; height: 66%; }
-    .joystick-base::after { width: 66%; height: 2px; }
-    .joystick-thumb {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      border: 1px solid rgba(117,198,255,.68);
-      background:
-        radial-gradient(circle at 35% 32%, rgba(223,243,255,.5), rgba(77,146,201,.62) 64%),
-        linear-gradient(180deg, rgba(24,76,119,.58), rgba(14,47,74,.54));
-      box-shadow: 0 5px 12px rgba(0,0,0,.24);
-      transition: transform .08s ease;
-      pointer-events: none;
+    .board-frame {
+      position: relative;
+      border-radius: 10px;
+      border: 1px solid rgba(79,125,249,0.2);
+      background: #071322;
+      overflow: hidden;
     }
-    .joystick-base.active { opacity: .58; transform: translate(-50%, -50%) scale(1); }
-    .joystick-base.active .joystick-thumb { transition: none; }
-    .touch-action-stack { display: grid; gap: 8px; align-content: end; }
-    .touch-bomb { min-height: 56px; font-size: 16px; }
-    .room-input { min-width: 140px; max-width: 220px; cursor: text; }
-    .room-input::placeholder { color: #7aa0c3; }
-    .net { display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--line); padding: 0 10px; min-height: 38px; color: #a7c2df; font-size: 12px; background: rgba(9,16,25,.75); }
-    .net.ok { border-color: rgba(41,196,108,.5); color: #a7efc7; }
-    .net.warn { border-color: rgba(246,183,60,.55); color: #ffd89b; }
-    .lobby { border: 1px solid var(--line); border-radius: 10px; background: rgba(8,14,21,.72); padding: 10px; display: grid; gap: 8px; }
-    .lobby-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
-    .lobby-list { list-style: none; display: grid; gap: 6px; margin: 0; padding: 0; }
-    .lobby-list li { border: 1px solid rgba(46,168,255,.22); border-radius: 8px; padding: 7px 9px; display: flex; justify-content: space-between; gap: 8px; color: #d8ecff; font-size: 13px; background: rgba(7,18,30,.6); }
-    .lobby-ready { color: #9ad5b0; }
-    .lobby-not-ready { color: #ffcc98; }
-    .sync-opt { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
-    .sync-opt input[type="number"] { min-width: 86px; max-width: 110px; min-height: 34px; padding: 6px 8px; }
-    .sync-opt input[type="checkbox"] { width: 16px; height: 16px; }
-    .note { color: var(--muted); font-size: 14px; }
-    @media (max-width: 900px) {
-      .inframe-actions {
-        left: 8px;
-        right: 8px;
-        top: 8px;
-        justify-content: space-between;
-      }
-      .inframe-actions .btn {
-        flex: 1;
-        min-height: 34px;
-        font-size: 12px;
-        padding: 6px 8px;
-      }
-      .touch-controls {
-        grid-template-columns: 1fr;
-        position: sticky;
-        bottom: 8px;
-        z-index: 14;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        background: rgba(5, 12, 20, 0.86);
-        backdrop-filter: blur(6px);
-        padding: 10px;
-      }
-      .touch-bomb {
-        min-height: 60px;
-        font-size: 17px;
-      }
-      .sync-opt {
-        font-size: 12px;
-      }
+    #g { display:block; width:100%; height:auto; aspect-ratio:13/11; image-rendering:pixelated; touch-action:none; }
+    #ov { position:absolute; inset:0; display:grid; place-items:center; text-align:center; padding:16px; background:rgba(2,8,13,.72); color:var(--text-primary); font-family:var(--font-sans); pointer-events:none; transition:opacity .2s ease; }
+    #ov.hide { opacity:0; }
+    .joy-layer { position:absolute; inset:0; z-index:3; pointer-events:none; }
+    .joystick-base { position:absolute; left:-9999px; top:-9999px; width:112px; height:112px; border-radius:50%; border:1px solid rgba(93,183,255,.42); background:radial-gradient(circle at 32% 28%,rgba(130,196,244,.2),rgba(12,28,43,.46) 58%),linear-gradient(180deg,rgba(8,22,34,.4),rgba(6,15,24,.34)); box-shadow:inset 0 0 0 1px rgba(191,228,255,.06); opacity:0; transform:translate(-50%,-50%) scale(.9); transition:opacity .12s ease,transform .12s ease; pointer-events:none; }
+    .joystick-base::before,.joystick-base::after { content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); background:rgba(170,219,255,.15); pointer-events:none; }
+    .joystick-base::before { width:2px; height:66%; }
+    .joystick-base::after  { width:66%; height:2px; }
+    .joystick-thumb { position:absolute; left:50%; top:50%; width:44px; height:44px; border-radius:50%; transform:translate(-50%,-50%); border:1px solid rgba(117,198,255,.68); background:radial-gradient(circle at 35% 32%,rgba(223,243,255,.5),rgba(77,146,201,.62) 64%),linear-gradient(180deg,rgba(24,76,119,.58),rgba(14,47,74,.54)); box-shadow:0 5px 12px rgba(0,0,0,.24); transition:transform .08s ease; pointer-events:none; }
+    .joystick-base.active { opacity:.58; transform:translate(-50%,-50%) scale(1); }
+    .joystick-base.active .joystick-thumb { transition:none; }
+    .inframe-actions { position:absolute; top:10px; right:10px; display:flex; gap:6px; z-index:4; transition:opacity .18s ease; }
+    .inframe-actions .btn { min-height:32px; padding:6px 10px; font-size:12px; }
+    .inframe-actions.hidden { opacity:0; pointer-events:none; }
+    .game-panel { display:grid; gap:14px; }
+    .panel-section-label { font-family:var(--font-mono); font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:.14em; color:var(--text-accent); margin-bottom:10px; }
+    .stat-grid { display:grid; gap:8px; }
+    .stat-row { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid var(--border); padding-bottom:8px; font-size:14px; color:var(--text-secondary); }
+    .stat-row:last-child { border-bottom:none; padding-bottom:0; }
+    .stat-row b { color:var(--text-accent); font-family:var(--font-mono); font-size:18px; font-weight:500; }
+    .mode-cards { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:8px; }
+    .mode-card { border-radius:14px; border:1.5px solid var(--border); background:var(--bg-card); padding:18px 14px; cursor:pointer; transition:border-color .2s,background .2s,transform .18s; text-align:center; display:flex; flex-direction:column; gap:8px; align-items:center; }
+    .mode-card:hover { border-color:var(--border-h); background:var(--bg-card-h); transform:translateY(-2px); }
+    .mode-card.active { border-color:var(--accent); background:rgba(79,125,249,.08); }
+    .mode-card-icon  { font-size:26px; line-height:1; }
+    .mode-card-title { font-size:14px; font-weight:700; color:var(--text-primary); }
+    .mode-card-desc  { font-size:12px; color:var(--text-secondary); line-height:1.5; }
+    .lobby-section { border-radius:12px; border:1px solid var(--border); background:var(--bg-card); padding:12px; display:grid; gap:10px; }
+    .lobby-section.hidden { display:none; }
+    .lobby-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .lobby-input { background:rgba(255,255,255,.06); border:1px solid var(--border-h); border-radius:var(--radius-sm); color:var(--text-primary); padding:8px 12px; font-family:var(--font-sans); font-size:14px; min-height:36px; min-width:110px; flex:1; }
+    .lobby-input::placeholder { color:var(--text-muted); }
+    .net-pill { display:inline-flex; align-items:center; border-radius:999px; border:1px solid var(--border); padding:0 12px; min-height:32px; font-size:12px; font-family:var(--font-mono); color:var(--text-secondary); background:var(--bg-card); white-space:nowrap; }
+    .net-pill.ok   { border-color:rgba(41,196,108,.5); color:#a7efc7; }
+    .net-pill.warn { border-color:rgba(246,183,60,.55); color:#ffd89b; }
+    .lobby-list-panel { border-radius:10px; border:1px solid var(--border); background:rgba(10,14,26,.4); padding:10px; display:grid; gap:8px; }
+    .lobby-list-header { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .lobby-list-title { font-size:13px; font-weight:600; color:var(--text-primary); }
+    .lobby-list-state { font-size:12px; color:var(--text-muted); }
+    .lobby-list { list-style:none; display:grid; gap:6px; }
+    .lobby-list li { border:1px solid rgba(79,125,249,.2); border-radius:8px; padding:7px 10px; display:flex; justify-content:space-between; gap:8px; font-size:13px; color:var(--text-primary); background:rgba(7,18,30,.6); }
+    .lobby-ready     { color:#9ad5b0; }
+    .lobby-not-ready { color:#ffcc98; }
+    .sync-opts { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .sync-opt { display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); font-size:12px; }
+    .sync-opt input[type="number"] { background:rgba(255,255,255,.06); border:1px solid var(--border-h); border-radius:6px; color:var(--text-primary); padding:4px 8px; font-size:12px; min-width:74px; max-width:90px; min-height:28px; }
+    .sync-opt input[type="checkbox"] { width:14px; height:14px; accent-color:var(--accent); }
+    .touch-controls { border-radius:12px; border:1px solid var(--border); background:var(--bg-card); padding:10px; }
+    .touch-bomb { width:100%; min-height:52px; font-size:15px; }
+    .game-note { border-radius:10px; border:1px dashed var(--border); background:var(--bg-card); color:var(--text-muted); font-size:12px; padding:9px 10px; line-height:1.55; }
+    @media (max-width:960px) {
+      .game-layout { grid-template-columns:1fr; }
+      .inframe-actions { left:8px; right:8px; top:8px; justify-content:space-between; }
+      .inframe-actions .btn { flex:1; }
     }
+    @media (max-width:480px) { .mode-cards { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
-  <div class="site-shell" style="position:relative;z-index:1;">
-    <header class="nav">
-      <a class="nav-brand" href="/">
-        <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+
+  <!-- NAV -->
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
       Cartofia
-      </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="/">Home</a>
-        <a class="active" href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-      </nav>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+    </nav>
+    <div class="nav-right">
       <div class="account-menu" data-account-menu>
         <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-          <a class="account-item" href="/arcade/" role="menuitem">Back to Arcade</a>
         </div>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <main class="wrap">
-      <section class="hero-card reveal" data-delay="1">
-        <div class="hero-copy">
-          <p class="hero-kicker">Arcade Slot 4</p>
-          <h1 class="hero-title">Bomber Raid</h1>
-          <p class="hero-lead">Choose singleplayer or 2-player co-op, drop bombs, grab powerups, destroy crates, and clear enemy bots.</p>
-        </div>
-      </section>
+  <!-- GAME HEADER -->
+  <div class="game-header">
+    <a class="game-header-back" href="/arcade/">
+      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back to Arcade
+    </a>
+    <span class="game-header-title">Bomber Raid</span>
+    <div class="game-header-stats">
+      <div class="header-stat">
+        <span class="header-stat-label">Score</span>
+        <span class="header-stat-value" id="sc">0</span>
+      </div>
+      <div class="header-stat">
+        <span class="header-stat-label">Best</span>
+        <span class="header-stat-value" id="bs">0</span>
+      </div>
+    </div>
+  </div>
 
-      <section class="card reveal" data-delay="2">
-        <div class="board">
-          <canvas id="g" width="624" height="528" aria-label="Bomber Raid game board"></canvas>
-          <div id="ov">Choose a mode, then press Start.</div>
-          <div class="joy-layer" aria-hidden="true">
-            <div id="joy-base" class="joystick-base" aria-label="Movement joystick" role="application">
-              <div id="joy-thumb" class="joystick-thumb" aria-hidden="true"></div>
+  <!-- GAME PAGE -->
+  <div class="game-page">
+    <div class="game-container">
+      <div class="game-container-inner">
+        <div class="game-layout">
+
+          <!-- LEFT: board -->
+          <div class="board-panel">
+            <div class="board-frame">
+              <canvas id="g" width="624" height="528" aria-label="Bomber Raid game board"></canvas>
+              <div id="ov">Choose a mode, then press Start.</div>
+              <div class="joy-layer" aria-hidden="true">
+                <div id="joy-base" class="joystick-base" aria-label="Movement joystick" role="application">
+                  <div id="joy-thumb" class="joystick-thumb" aria-hidden="true"></div>
+                </div>
+              </div>
+              <div id="action-bar" class="inframe-actions" aria-label="Game actions">
+                <button id="start" class="btn btn-primary" type="button">Start</button>
+                <button id="pause" class="btn btn-ghost" type="button">Pause</button>
+                <button id="restart" class="btn btn-ghost" type="button">Restart</button>
+              </div>
             </div>
           </div>
-          <div id="action-bar" class="inframe-actions" aria-label="Game actions">
-            <button id="start" class="btn btn-primary" type="button">Start</button>
-            <button id="pause" class="btn btn-ghost" type="button">Pause</button>
-            <button id="restart" class="btn btn-ghost" type="button">Restart</button>
-          </div>
+
+          <!-- RIGHT: panel -->
+          <aside class="game-panel">
+
+            <!-- Mode select cards -->
+            <div>
+              <p class="panel-section-label">Game Mode</p>
+              <div class="mode-cards">
+                <div class="mode-card" id="mode-single-card" role="button" tabindex="0" aria-pressed="false">
+                  <span class="mode-card-icon">&#129302;</span>
+                  <span class="mode-card-title">Play with Bots</span>
+                  <span class="mode-card-desc">Quick solo match against AI opponents.</span>
+                </div>
+                <div class="mode-card active" id="mode-multi-card" role="button" tabindex="0" aria-pressed="true">
+                  <span class="mode-card-icon">&#127760;</span>
+                  <span class="mode-card-title">Play Online</span>
+                  <span class="mode-card-desc">Create a room or join an existing one.</span>
+                </div>
+              </div>
+              <!-- hidden mode buttons the game JS targets -->
+              <div style="display:none;" aria-hidden="true">
+                <button id="mode-single" class="btn btn-ghost" type="button">Singleplayer</button>
+                <button id="mode-multi" class="btn btn-primary" type="button">Online Multiplayer</button>
+              </div>
+              <p class="game-note" style="margin-top:8px;">WASD or arrows to move &middot; Space to drop bombs</p>
+            </div>
+
+            <!-- Live stats -->
+            <div>
+              <p class="panel-section-label">Live Stats</p>
+              <div class="stat-grid">
+                <div class="stat-row"><span>Enemies</span><b id="en">3</b></div>
+                <div class="stat-row"><span>Mode</span><b id="mode">Online</b></div>
+                <div class="stat-row"><span>P1 Kit</span><b id="p1k">—</b></div>
+                <div class="stat-row"><span>P2 Kit</span><b id="p2k">—</b></div>
+                <div class="stat-row"><span>Powerups</span><b id="pu">0</b></div>
+                <div class="stat-row"><span>Status</span><b id="st">Ready</b></div>
+              </div>
+            </div>
+
+            <!-- Online lobby panel -->
+            <div id="lobby-panel" class="lobby-section hidden" aria-live="polite">
+              <p class="panel-section-label" style="margin-bottom:0;">Online Room</p>
+              <div class="lobby-row">
+                <span id="net-status" class="net-pill warn">Disconnected</span>
+              </div>
+              <div class="lobby-row">
+                <input id="room-code" class="lobby-input" type="text" maxlength="6" autocomplete="off" placeholder="ROOM CODE" style="font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;" />
+                <input id="room-password" class="lobby-input" type="password" maxlength="32" autocomplete="off" placeholder="Password (optional)" />
+              </div>
+              <div class="lobby-row">
+                <button id="create-room" class="btn btn-ghost btn-sm" type="button">Create Room</button>
+                <button id="join-room" class="btn btn-primary btn-sm" type="button">Join Room</button>
+              </div>
+              <div class="lobby-row">
+                <input id="player-name" class="lobby-input" type="text" maxlength="16" autocomplete="off" placeholder="Player name" />
+                <button id="save-name" class="btn btn-ghost btn-sm" type="button">Save</button>
+                <button id="ready-toggle" class="btn btn-ghost btn-sm" type="button">Ready: Off</button>
+              </div>
+              <div class="lobby-list-panel">
+                <div class="lobby-list-header">
+                  <span class="lobby-list-title">Players</span>
+                  <span id="lobby-state" class="lobby-list-state">Connect to a room.</span>
+                </div>
+                <ul id="lobby-list" class="lobby-list"></ul>
+              </div>
+              <div class="sync-opts">
+                <label class="sync-opt"><input id="sync-interp" type="checkbox" checked />Smooth interpolation</label>
+                <label class="sync-opt">Interp ms <input id="interp-ms" type="number" min="40" max="240" step="10" value="110" /></label>
+                <label class="sync-opt">Guest delay <input id="input-delay-ms" type="number" min="0" max="240" step="10" value="70" /></label>
+              </div>
+            </div>
+
+            <!-- Touch bomb -->
+            <div class="touch-controls" aria-label="Touch controls">
+              <button id="bomb" class="btn btn-ghost touch-bomb" type="button">Place Bomb</button>
+            </div>
+
+            <p id="control-note" class="game-note">Singleplayer: WASD/Arrows + Space/Enter. Online: create/join room, mark Ready, host is P1, guest is P2. Powerups: +Bomb, +Range, +Speed, +Shield.</p>
+
+          </aside>
         </div>
-        <div class="hud">
-          <div>Score<b id="sc">0</b></div>
-          <div>Best<b id="bs">0</b></div>
-          <div>Enemies<b id="en">3</b></div>
-          <div>Mode<b id="mode">Online</b></div>
-        </div>
-        <div class="row">
-          <button id="mode-single" class="btn btn-ghost" type="button">Singleplayer</button>
-          <button id="mode-multi" class="btn btn-primary" type="button">Online Multiplayer</button>
-        </div>
-        <div class="row">
-          <input id="room-code" class="ctl room-input" type="text" maxlength="6" autocomplete="off" placeholder="ROOM" />
-          <input id="room-password" class="ctl room-input" type="password" maxlength="32" autocomplete="off" placeholder="Password (optional)" />
-          <button id="create-room" class="btn btn-ghost" type="button">Create Room</button>
-          <button id="join-room" class="btn btn-ghost" type="button">Join Room</button>
-          <span id="net-status" class="net">Offline</span>
-        </div>
-        <div class="row">
-          <input id="player-name" class="ctl room-input" type="text" maxlength="16" autocomplete="off" placeholder="Player name" />
-          <button id="save-name" class="btn btn-ghost" type="button">Save Name</button>
-          <button id="ready-toggle" class="btn btn-ghost" type="button">Ready: Off</button>
-        </div>
-        <section id="lobby-panel" class="lobby hidden" aria-live="polite">
-          <div class="lobby-head">
-            <strong>Lobby</strong>
-            <span id="lobby-state" class="note">Connect to an online room.</span>
-          </div>
-          <ul id="lobby-list" class="lobby-list"></ul>
-        </section>
-        <div class="row">
-          <label class="sync-opt"><input id="sync-interp" type="checkbox" checked />Smooth guest interpolation</label>
-          <label class="sync-opt">Interp ms <input id="interp-ms" class="ctl" type="number" min="40" max="240" step="10" value="110" /></label>
-          <label class="sync-opt">Guest input delay <input id="input-delay-ms" class="ctl" type="number" min="0" max="240" step="10" value="70" /></label>
-        </div>
-        <div class="touch-controls" aria-label="Touch controls">
-          <div class="touch-action-stack">
-            <button id="bomb" class="ctl bomb touch-bomb" type="button">Bomb</button>
-          </div>
-        </div>
-        <p id="control-note" class="note">Singleplayer: WASD/Arrows + Space/Enter, or use the floating touch joystick + Bomb. Online mode: set room + optional password, mark Ready in lobby, host uses WASD/touch, guest uses Arrows/touch. Powerups: +Bomb, +Range, +Speed, +Shield.</p>
-      </section>
-    </main>
+      </div>
+    </div>
   </div>
 
   <script src="/assets/site.js?v=6"></script>
   <script src="/assets/game-utils.js?v=2"></script>
+  <script>
+  /* Wire visual mode cards to hidden JS buttons */
+  (function () {
+    const singleCard = document.getElementById("mode-single-card");
+    const multiCard  = document.getElementById("mode-multi-card");
+    const singleBtn  = document.getElementById("mode-single");
+    const multiBtn   = document.getElementById("mode-multi");
+    function syncCards() {
+      var singleActive = singleBtn.classList.contains("btn-primary");
+      singleCard.classList.toggle("active", singleActive);
+      multiCard.classList.toggle("active", !singleActive);
+      singleCard.setAttribute("aria-pressed", singleActive ? "true" : "false");
+      multiCard.setAttribute("aria-pressed",  singleActive ? "false" : "true");
+    }
+    singleCard.addEventListener("click", function () { singleBtn.click(); });
+    multiCard.addEventListener("click",  function () { multiBtn.click();  });
+    singleCard.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); singleCard.click(); } });
+    multiCard.addEventListener("keydown",  function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); multiCard.click();  } });
+    var obs = new MutationObserver(syncCards);
+    obs.observe(singleBtn, { attributes: true, attributeFilter: ["class"] });
+    obs.observe(multiBtn,  { attributes: true, attributeFilter: ["class"] });
+  })();
+  </script>
+  <script>
   <script>
 (() => {
   const g = document.getElementById("g");
@@ -2614,4 +2675,3 @@
   </script>
 </body>
 </html>
-

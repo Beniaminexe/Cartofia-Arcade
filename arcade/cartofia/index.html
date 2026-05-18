@@ -263,8 +263,236 @@ config = {
 
 
     <link rel="icon" type="image/png" href="favicon.png" sizes="16x16">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/site.css?v=4" />
+    <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
 
     <style>
+        /* === Cartofia arcade design system overlay === */
+        /* Override Pygbag body background */
+        body { background-color: #0a0e1a !important; font-family: 'Outfit', sans-serif !important; }
+
+        /* Splash loading screen */
+        .cartofia-splash {
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+            background: #0a0e1a;
+            transition: opacity 0.4s ease;
+        }
+        .cartofia-splash.hidden { opacity: 0; pointer-events: none; }
+        .splash-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: #7ca6ff;
+            background: rgba(79,125,249,0.12);
+            border: 1px solid rgba(79,125,249,0.3);
+            border-radius: 999px;
+            padding: 4px 12px;
+        }
+        .splash-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(36px,8vw,64px);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #eef2ff 0%, #b8d0ff 50%, #4f7df9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+            text-align: center;
+        }
+        .splash-desc {
+            color: rgba(238,242,255,0.56);
+            font-size: 15px;
+            text-align: center;
+            max-width: 38ch;
+            line-height: 1.6;
+        }
+        .splash-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .splash-dots {
+            display: flex;
+            gap: 8px;
+        }
+        .splash-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4f7df9;
+            animation: splash-pulse 1.2s ease-in-out infinite;
+        }
+        .splash-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .splash-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes splash-pulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50%       { opacity: 1;   transform: scale(1.1); }
+        }
+        .splash-loading-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: rgba(238,242,255,0.3);
+            letter-spacing: 0.06em;
+        }
+
+        /* Arcade nav overlay */
+        .arcade-nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 64px;
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 clamp(20px,4vw,52px);
+            background: rgba(10,14,26,0.82);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .arcade-nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.022em;
+            color: #eef2ff;
+            text-decoration: none;
+        }
+        .arcade-nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+        .arcade-nav-links a {
+            color: rgba(238,242,255,0.56);
+            font-family: 'Outfit', sans-serif;
+            font-size: 14.5px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .arcade-nav-links a:hover,
+        .arcade-nav-links a.active { color: #eef2ff; }
+        @media (max-width: 768px) { .arcade-nav-links { display: none; } }
+
+        /* Game header bar */
+        .arcade-game-header {
+            position: fixed;
+            top: 64px; left: 0; right: 0;
+            z-index: 299;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 12px clamp(20px,4vw,52px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            background: rgba(10,14,26,0.7);
+            backdrop-filter: blur(8px);
+        }
+        .arcade-header-back {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: rgba(238,242,255,0.56);
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .arcade-header-back:hover { color: #eef2ff; }
+        .arcade-header-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #eef2ff;
+        }
+        .flagship-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: #7ca6ff;
+            background: rgba(79,125,249,0.12);
+            border: 1px solid rgba(79,125,249,0.3);
+            border-radius: 999px;
+            padding: 3px 8px;
+            margin-left: 8px;
+        }
+        .arcade-header-right {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: rgba(238,242,255,0.3);
+        }
+
+        /* Controls hint below canvas area */
+        .canvas-hint {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: rgba(238,242,255,0.28);
+            background: rgba(10,14,26,0.6);
+            border-radius: 999px;
+            padding: 5px 14px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        @media (hover: none), (pointer: coarse) { .canvas-hint { display: none; } }
+
+        /* Push canvas content down to clear our nav + header */
+        canvas.emscripten {
+            top: 128px !important;
+            bottom: 0 !important;
+            height: calc(100% - 128px) !important;
+        }
+
+        /* Override Pygbag's default powderblue */
+        body { background-color: #0a0e1a; }
+
+        /* Account menu */
+        .arcade-account-menu { position: relative; }
+        .arcade-nav-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(238,242,255,0.56);
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        /* Keep Pygbag mobile controls above canvas but below our nav */
+        .mobile-controls { z-index: 200 !important; bottom: 30px !important; }
+        /* === end Cartofia arcade design system === */
+
         #status {
             display: inline-block;
             vertical-align: top;
@@ -457,7 +685,63 @@ config = {
 
 <body>
 
-    <a href="/arcade/" class="back-to-arcade" aria-label="Back to Arcade">Back to Arcade</a>
+    <!-- Cartofia Arcade Nav -->
+    <header class="arcade-nav">
+      <a class="arcade-nav-brand" href="/">
+        <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+          <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+          <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+          <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+          <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        </svg>
+        Cartofia
+      </a>
+      <nav aria-label="Primary">
+        <ul class="arcade-nav-links">
+          <li><a href="/">Home</a></li>
+          <li><a href="/arcade/" class="active">Arcade</a></li>
+          <li><a href="/minecraft/">Minecraft</a></li>
+        </ul>
+      </nav>
+      <div class="arcade-account-menu" data-account-menu>
+        <button class="arcade-nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Game Header -->
+    <div class="arcade-game-header">
+      <a class="arcade-header-back" href="/arcade/">
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back to Arcade
+      </a>
+      <div>
+        <span class="arcade-header-title">Cartofia</span>
+        <span class="flagship-badge">Flagship</span>
+      </div>
+      <span class="arcade-header-right">2D Platformer &middot; WebAssembly</span>
+    </div>
+
+    <!-- Loading Splash (hidden once WASM canvas is active) -->
+    <div id="cartofia-splash" class="cartofia-splash" aria-live="polite">
+      <span class="splash-badge">Flagship</span>
+      <h1 class="splash-title">Cartofia</h1>
+      <p class="splash-desc">A 2D platformer built in Python, running in your browser through WebAssembly.</p>
+      <div class="splash-loading">
+        <div class="splash-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <span class="splash-loading-text">Loading game engine&hellip;</span>
+      </div>
+    </div>
+
+    <!-- Controls hint -->
+    <div class="canvas-hint" aria-hidden="true">Arrow keys to move &middot; Space to jump &middot; Enter to confirm</div>
+
 
     <div id="mobile-controls" class="mobile-controls" aria-label="Mobile controls">
         <div class="mc-cluster mc-dpad">
@@ -743,5 +1027,45 @@ frameborder="1"
     })();
     </script>
 
+    <script src="/assets/site.js?v=6"></script>
+    <script src="/assets/game-utils.js?v=2"></script>
+    <script>
+    // Hide splash when canvas becomes visible / active
+    (function () {
+        var splash = document.getElementById('cartofia-splash');
+        if (!splash) return;
+
+        function hideSplash() {
+            splash.classList.add('hidden');
+            setTimeout(function () { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 500);
+        }
+
+        // Check if canvas has content by polling its visibility style
+        var canvas = document.getElementById('canvas');
+        if (!canvas) return;
+
+        // Method 1: MutationObserver on canvas style (Pygbag sets visibility: visible when ready)
+        var obs = new MutationObserver(function () {
+            if (canvas.style.visibility === 'visible') {
+                obs.disconnect();
+                setTimeout(hideSplash, 600);
+            }
+        });
+        obs.observe(canvas, { attributes: true, attributeFilter: ['style'] });
+
+        // Method 2: Fallback — hide after 12 seconds regardless
+        var fallbackTimer = setTimeout(function () {
+            obs.disconnect();
+            hideSplash();
+        }, 12000);
+
+        // Method 3: If canvas is already visible on load
+        if (canvas.style.visibility === 'visible') {
+            clearTimeout(fallbackTimer);
+            obs.disconnect();
+            hideSplash();
+        }
+    })();
+    </script>
 </body>
 </html>

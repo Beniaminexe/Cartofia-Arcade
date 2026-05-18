@@ -2,86 +2,311 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Blackjack | Cartofia Arcade</title>
+  <title>Blackjack — Cartofia Arcade</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
   <style>
-    .blackjack-layout { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr); gap:16px; align-items:start; }
-    .table-card { border-radius:22px; padding:16px; background:linear-gradient(180deg, rgba(12,31,28,.8), rgba(8,20,21,.72)); box-shadow:0 20px 34px rgba(1,8,17,.34); display:grid; gap:12px; }
-    .table-head { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; align-items:center; }
-    .table-status { color:#cce2d8; font-size:14px; min-height:22px; }
-    .dealer-zone { border-radius:14px; border:1px solid rgba(128,186,168,.3); background:rgba(5,13,14,.45); padding:12px; display:grid; gap:8px; }
-    .cards { display:flex; flex-wrap:wrap; gap:8px; }
-    .card-chip { border-radius:10px; border:1px solid rgba(173,214,206,.38); padding:8px 10px; background:rgba(13,31,32,.78); color:#e5fff7; font-family:"Sora","Segoe UI",sans-serif; font-size:14px; min-width:46px; text-align:center; }
-    .player-list { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
-    .player-item { border-radius:14px; border:1px solid rgba(143,191,176,.25); background:rgba(5,13,14,.55); padding:10px; display:grid; gap:8px; }
-    .player-item.active { border-color:rgba(84,217,178,.62); box-shadow:0 0 0 1px rgba(84,217,178,.18) inset; }
-    .player-head { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; color:#dbf6ec; font-size:13px; }
-    .player-meta { color:#accdbf; font-size:12px; }
-    .controls { display:flex; flex-wrap:wrap; gap:8px; }
-    .lobby-card { border-radius:18px; padding:14px; background:rgba(10,18,31,.62); box-shadow:0 12px 26px rgba(1,8,17,.28); display:grid; gap:10px; }
-    .online-row { display:flex; flex-wrap:wrap; gap:8px; }
-    .online-input { min-height:36px; border-radius:10px; border:1px solid rgba(148,180,216,.26); background:rgba(6,12,21,.85); color:#e0eeff; padding:8px 10px; min-width:120px; flex:1; }
-    .online-pill { border-radius:999px; border:1px solid rgba(148,180,216,.3); min-height:32px; display:inline-flex; align-items:center; padding:0 10px; font-size:12px; color:#bad1eb; background:rgba(8,14,24,.75); }
-    .online-pill.ok { border-color:rgba(57,203,123,.5); color:#b2efce; }
-    .online-pill.warn { border-color:rgba(245,186,77,.5); color:#ffe3b3; }
-    .lobby-list { list-style:none; margin:0; padding:0; display:grid; gap:6px; }
-    .lobby-list li { border-radius:8px; border:1px solid rgba(148,180,216,.2); background:rgba(8,14,24,.7); padding:6px 8px; display:flex; justify-content:space-between; gap:8px; color:#d5e9ff; font-size:13px; }
-    .ready-on { color:#9ddfb7; }
-    .ready-off { color:#ffcc98; }
-    @media (max-width:980px) { .blackjack-layout { grid-template-columns:1fr; } }
+    .blackjack-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    /* Table card (left) */
+    .table-card {
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(5,20,16,.9), rgba(4,14,12,.85));
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .table-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .table-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .table-status {
+      font-size: 14px;
+      color: var(--text-secondary);
+      min-height: 20px;
+    }
+
+    /* Dealer zone */
+    .dealer-zone {
+      border-radius: 12px;
+      border: 1px solid rgba(84,217,178,0.2);
+      background: rgba(3,12,10,.5);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .dealer-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: rgba(84,217,178,0.7);
+      font-weight: 500;
+    }
+
+    /* Cards area */
+    .cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 52px;
+    }
+
+    /* Individual card chips */
+    .card-chip {
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 8px 10px;
+      background: #f8f6f0;
+      color: #1a1a1a;
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 700;
+      min-width: 44px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.8);
+      letter-spacing: 0.02em;
+    }
+    .card-chip.red { color: #c41a1a; }
+    .card-chip.hidden-card { background: rgba(30,60,50,.6); color: var(--text-muted); border-color: rgba(84,217,178,.2); }
+
+    .dealer-total {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      min-height: 16px;
+    }
+
+    /* Player list */
+    .player-list {
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .player-item {
+      border-radius: 12px;
+      border: 1px solid rgba(84,217,178,0.15);
+      background: rgba(4,14,12,.55);
+      padding: 10px 12px;
+      display: grid;
+      gap: 8px;
+      transition: border-color 0.2s;
+    }
+    .player-item.active {
+      border-color: rgba(84,217,178,0.55);
+      box-shadow: 0 0 0 1px rgba(84,217,178,0.12) inset;
+    }
+
+    .player-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .player-name-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .player-result {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-accent);
+    }
+    .player-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* Action controls */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .controls .btn { min-height: 44px; flex: 1; min-width: 80px; justify-content: center; }
+
+    /* Phase pill */
+    .phase-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      padding: 0 12px;
+      min-height: 28px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--bg-card);
+    }
+    .phase-pill.playing { border-color: rgba(84,217,178,0.5); color: #a7f0db; }
+    .phase-pill.results { border-color: rgba(246,183,60,.5); color: #ffd89b; }
+
+    /* Lobby card (right) */
+    .lobby-card {
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel-section-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-accent);
+      margin-bottom: 6px;
+    }
+
+    .online-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    .online-input {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border-h);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 8px 12px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      min-height: 36px;
+      min-width: 110px;
+      flex: 1;
+    }
+    .online-input::placeholder { color: var(--text-muted); }
+
+    .online-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      padding: 0 12px;
+      min-height: 30px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      background: var(--bg-card);
+      white-space: nowrap;
+    }
+    .online-pill.ok   { border-color: rgba(41,196,108,.5); color: #a7efc7; }
+    .online-pill.warn { border-color: rgba(246,183,60,.55); color: #ffd89b; }
+
+    .lobby-state-text { font-size: 12px; color: var(--text-muted); }
+
+    .lobby-list { list-style: none; display: grid; gap: 6px; }
+    .lobby-list li { border: 1px solid rgba(79,125,249,.18); border-radius: 8px; padding: 7px 10px; display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-primary); background: rgba(7,18,30,.6); }
+    .ready-on  { color: #9ddfb7; }
+    .ready-off { color: #ffcc98; }
+
+    .game-note {
+      border-radius: 10px;
+      border: 1px dashed var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 9px 10px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 980px) {
+      .blackjack-layout { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <div class="site-shell" style="position:relative;z-index:1;">
-    <header class="nav">
-      <a class="nav-brand" href="/">
-        <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+
+  <!-- NAV -->
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
       Cartofia
-      </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="/">Home</a>
-        <a class="active" href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-      </nav>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+    </nav>
+    <div class="nav-right">
       <div class="account-menu" data-account-menu>
         <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
-          <a class="account-item" href="/arcade/" role="menuitem">Back to Arcade</a>
         </div>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <main>
-      <section class="hero-card reveal" data-delay="1">
-        <div class="hero-copy">
-          <p class="hero-kicker">Arcade Slot 9</p>
-          <h1 class="hero-title">Blackjack Rooms</h1>
-          <p class="hero-lead">Join a room with multiple players, ready up in lobby, then play host-synced blackjack rounds in your browser.</p>
-          <div class="pill-row">
-            <span class="pill"><strong>Mode</strong> Online room multiplayer</span>
-            <span class="pill"><strong>Players</strong> Multiple per room</span>
-            <span class="pill"><strong>Flow</strong> Lobby + ready + rounds</span>
-          </div>
-        </div>
-      </section>
+  <!-- GAME HEADER -->
+  <div class="game-header">
+    <a class="game-header-back" href="/arcade/">
+      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Leave Table
+    </a>
+    <span class="game-header-title">Blackjack</span>
+    <div class="game-header-stats">
+      <div class="header-stat">
+        <span class="header-stat-label">Phase</span>
+        <span class="header-stat-value" id="headerPhase">Lobby</span>
+      </div>
+    </div>
+  </div>
 
-      <section class="card reveal" data-delay="2">
+  <!-- GAME PAGE -->
+  <div class="game-page">
+    <div class="game-container">
+      <div class="game-container-inner">
         <div class="blackjack-layout">
+
+          <!-- LEFT: Table -->
           <section class="table-card">
             <div class="table-head">
-              <h2 class="card-title" style="margin:0;">Table</h2>
-              <div id="phasePill" class="online-pill">Lobby</div>
+              <span class="table-title">Table</span>
+              <div id="phasePill" class="phase-pill">Lobby</div>
             </div>
             <div id="tableStatus" class="table-status">Connect to a room and ready up.</div>
             <div class="dealer-zone">
-              <strong>Dealer</strong>
+              <span class="dealer-label">Dealer</span>
               <div id="dealerCards" class="cards"></div>
-              <div id="dealerTotal" class="player-meta"></div>
+              <div id="dealerTotal" class="dealer-total"></div>
             </div>
             <ul id="playersList" class="player-list"></ul>
             <div class="controls">
@@ -91,32 +316,60 @@
             </div>
           </section>
 
+          <!-- RIGHT: Lobby -->
           <aside class="lobby-card">
-            <h3 class="card-title" style="margin:0;">Room Lobby</h3>
-            <div class="online-row"><span id="netStatus" class="online-pill">Offline</span></div>
+            <div>
+              <p class="panel-section-label">Room Lobby</p>
+              <p class="game-note" style="margin-bottom:10px;">Hit, stand, or double down. Closest to 21 wins.</p>
+            </div>
+
             <div class="online-row">
-              <input id="roomCode" class="online-input" type="text" maxlength="6" autocomplete="off" placeholder="Room code" />
+              <span id="netStatus" class="online-pill">Offline</span>
+            </div>
+
+            <div class="online-row">
+              <input id="roomCode" class="online-input" type="text" maxlength="6" autocomplete="off" placeholder="Table code" style="font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;" />
               <input id="roomPassword" class="online-input" type="password" maxlength="32" autocomplete="off" placeholder="Password (optional)" />
             </div>
+
             <div class="online-row">
-              <button id="createRoomBtn" class="btn btn-ghost" type="button">Create Room</button>
-              <button id="joinRoomBtn" class="btn btn-ghost" type="button">Join Room</button>
-              <button id="leaveRoomBtn" class="btn btn-ghost" type="button">Leave Room</button>
+              <button id="createRoomBtn" class="btn btn-ghost btn-sm" type="button">Create Table</button>
+              <button id="joinRoomBtn" class="btn btn-primary btn-sm" type="button">Join Table</button>
+              <button id="leaveRoomBtn" class="btn btn-ghost btn-sm" type="button">Leave</button>
             </div>
+
             <div class="online-row">
               <input id="playerName" class="online-input" type="text" maxlength="16" autocomplete="off" placeholder="Player name" />
-              <button id="saveNameBtn" class="btn btn-ghost" type="button">Save Name</button>
-              <button id="readyBtn" class="btn btn-ghost" type="button">Ready: Off</button>
+              <button id="saveNameBtn" class="btn btn-ghost btn-sm" type="button">Save</button>
+              <button id="readyBtn" class="btn btn-ghost btn-sm" type="button">Ready: Off</button>
             </div>
-            <div id="lobbyState" class="table-status">Waiting for room connection.</div>
+
+            <div class="lobby-state-text" id="lobbyState">Waiting for room connection.</div>
             <ul id="lobbyList" class="lobby-list"></ul>
           </aside>
+
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
   </div>
+
   <script src="/assets/site.js?v=6"></script>
   <script src="/assets/game-utils.js?v=2"></script>
-  <script src="/arcade/blackjack/game.js?v=2"></script>
+  <script>
+  /* Mirror phase pill state to header */
+  (function () {
+    var phasePillEl = document.getElementById("phasePill");
+    var headerPhase = document.getElementById("headerPhase");
+    if (!phasePillEl || !headerPhase) return;
+    var obs = new MutationObserver(function () {
+      var txt = phasePillEl.textContent || "Lobby";
+      headerPhase.textContent = txt;
+      phasePillEl.classList.toggle("playing", txt === "Playing");
+      phasePillEl.classList.toggle("results", txt === "Results");
+    });
+    obs.observe(phasePillEl, { childList: true, subtree: true, characterData: true });
+  })();
+  </script>
+  <script src="/arcade/blackjack/game.js?v=3"></script>
 </body>
 </html>
