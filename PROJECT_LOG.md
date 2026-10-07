@@ -1370,4 +1370,29 @@ Planned behaviour:
 - `git submodule status` (validated broken submodule mapping no longer errors)
 - Encoding scan on repository text files (excluding large generated Cartofia bundle)
 
+---
+
+## 2026-10-07 - Cartofia mobile controls fix + fullscreen toggle
+
+**Summary**
+
+- Fixed phone controls on the Cartofia web wrapper: only `Jump` worked.
+- Added a fullscreen toggle; removed the dead `Up`, `Down` and `Select` buttons.
+
+**Details**
+
+- Root cause: the game (`main.py` in `cartofia-game.apk`) reads `K_a` / `K_d` / `K_SPACE` via `pygame.key.get_pressed()`, but the touch overlay sent arrow keys and `Enter`. Only `Space` matched.
+- Updated `arcade/cartofia/index.html`:
+  - Touch `Left/Right` now dispatch `KeyA` / `KeyD`; `Jump` still dispatches `Space`.
+  - D-pad reduced to two larger `Left` / `Right` buttons; `Up`, `Down`, `Select` removed (the game has no action for them).
+  - New fullscreen button (top-right of the play area). Fullscreens the whole page so the touch controls stay visible, hides the site nav/header while active, and tries to lock landscape on touch devices. Hidden on browsers without the Fullscreen API (e.g. iPhone Safari).
+  - Desktop hint corrected to `A / D to move · Space to jump`.
+- APK / pygbag build untouched.
+
+**Validation performed**
+
+- `node --check` on extracted inline scripts from `arcade/cartofia/index.html`.
+- Playwright (Chromium, mobile emulation): touch-holding each button dispatches the expected `keydown`/`keyup` codes; fullscreen enter/exit toggles the layout correctly.
+- Full in-game check not possible in the sandbox (pygbag CDN blocked); needs a real-phone test.
+
 *This log is updated as new milestones and design decisions are made.*

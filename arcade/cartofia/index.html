@@ -615,14 +615,14 @@ config = {
         }
 
         .mc-dpad {
-            width: 154px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
+            display: flex;
+            gap: 10px;
         }
 
-        .mc-empty {
-            visibility: hidden;
+        .mc-dpad .mc-btn {
+            min-width: 64px;
+            min-height: 64px;
+            font-size: 20px;
         }
 
         .mc-actions {
@@ -663,20 +663,44 @@ config = {
             letter-spacing: 0.05em;
         }
 
-        .mc-btn.confirm {
-            min-width: 84px;
-            min-height: 44px;
-            border-radius: 999px;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
         @media (hover: none), (pointer: coarse) {
             .mobile-controls {
                 display: flex;
             }
         }
+
+        .fs-toggle {
+            position: fixed;
+            top: 140px;
+            right: calc(12px + env(safe-area-inset-right, 0px));
+            z-index: 250;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border-radius: 12px;
+            border: 1px solid rgba(142, 198, 255, 0.46);
+            background: rgba(7, 18, 29, 0.45);
+            color: #e7f4ff;
+            cursor: pointer;
+            backdrop-filter: blur(2px);
+        }
+
+        .fs-toggle[hidden] { display: none; }
+        .fs-toggle .fs-icon-exit { display: none; }
+
+        /* Fullscreen: drop the site chrome and let the canvas fill the screen */
+        html.is-fullscreen .arcade-nav,
+        html.is-fullscreen .arcade-game-header { display: none; }
+        html.is-fullscreen canvas.emscripten {
+            top: 0 !important;
+            height: 100% !important;
+        }
+        html.is-fullscreen .fs-toggle { top: calc(12px + env(safe-area-inset-top, 0px)); }
+        html.is-fullscreen .fs-toggle .fs-icon-enter { display: none; }
+        html.is-fullscreen .fs-toggle .fs-icon-exit { display: block; }
     </style>
 
     <script src="https://pygame-web.github.io/archives/0.9//browserfs.min.js"></script>
@@ -740,26 +764,27 @@ config = {
     </div>
 
     <!-- Controls hint -->
-    <div class="canvas-hint" aria-hidden="true">Arrow keys to move &middot; Space to jump &middot; Enter to confirm</div>
+    <div class="canvas-hint" aria-hidden="true">A / D to move &middot; Space to jump</div>
 
 
     <div id="mobile-controls" class="mobile-controls" aria-label="Mobile controls">
         <div class="mc-cluster mc-dpad">
-            <div class="mc-empty"></div>
-            <button class="mc-btn" data-control="up" type="button" aria-label="Up">U</button>
-            <div class="mc-empty"></div>
-            <button class="mc-btn" data-control="left" type="button" aria-label="Left">L</button>
-            <div class="mc-empty"></div>
-            <button class="mc-btn" data-control="right" type="button" aria-label="Right">R</button>
-            <div class="mc-empty"></div>
-            <button class="mc-btn" data-control="down" type="button" aria-label="Down">D</button>
-            <div class="mc-empty"></div>
+            <button class="mc-btn" data-control="left" type="button" aria-label="Left">&#9664;</button>
+            <button class="mc-btn" data-control="right" type="button" aria-label="Right">&#9654;</button>
         </div>
         <div class="mc-cluster mc-actions">
             <button class="mc-btn jump" data-control="jump" type="button" aria-label="Jump">Jump</button>
-            <button class="mc-btn confirm" data-control="confirm" type="button" aria-label="Confirm">Select</button>
         </div>
     </div>
+
+    <button id="fs-toggle" class="fs-toggle" type="button" aria-label="Enter fullscreen" hidden>
+        <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true">
+          <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg class="fs-icon-exit" viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true">
+          <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </button>
 
     <div id="transfer" align=center>
 <!--        <div class="spinner" id='spinner'></div> -->
@@ -907,13 +932,12 @@ frameborder="1"
             return;
         }
 
+        // Must match what the game reads in Player.update() (main.py inside the APK):
+        // pygame.K_a / K_d to move, K_SPACE to jump. Arrow keys are ignored by the game.
         const KEY_BINDINGS = {
-            left: [{ key: "ArrowLeft", code: "ArrowLeft" }],
-            right: [{ key: "ArrowRight", code: "ArrowRight" }],
-            up: [{ key: "ArrowUp", code: "ArrowUp" }],
-            down: [{ key: "ArrowDown", code: "ArrowDown" }],
-            jump: [{ key: " ", code: "Space" }],
-            confirm: [{ key: "Enter", code: "Enter" }]
+            left: [{ key: "a", code: "KeyA" }],
+            right: [{ key: "d", code: "KeyD" }],
+            jump: [{ key: " ", code: "Space" }]
         };
 
         const keyCounts = Object.create(null);
@@ -1024,6 +1048,71 @@ frameborder="1"
             activePointers.forEach((btn) => deactivateButton(btn));
             activePointers.clear();
         });
+    })();
+
+    // Fullscreen toggle. Targets the whole page (not the canvas) so the
+    // touch controls, which sit outside the canvas, stay visible.
+    (() => {
+        const btn = document.getElementById("fs-toggle");
+        const root = document.documentElement;
+        if (!btn || !(document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
+            return;
+        }
+
+        function fullscreenElement() {
+            return document.fullscreenElement || document.webkitFullscreenElement || null;
+        }
+
+        async function enter() {
+            try {
+                if (root.requestFullscreen) {
+                    await root.requestFullscreen();
+                } else if (root.webkitRequestFullscreen) {
+                    root.webkitRequestFullscreen();
+                }
+            } catch (_e) {
+                return;
+            }
+            const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+            if (coarse && screen.orientation && screen.orientation.lock) {
+                try {
+                    await screen.orientation.lock("landscape");
+                } catch (_e) {
+                    // ignore lock failures (unsupported browsers)
+                }
+            }
+        }
+
+        async function exit() {
+            try {
+                if (document.exitFullscreen) {
+                    await document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            } catch (_e) {
+                // ignore exit failures
+            }
+        }
+
+        function sync() {
+            const active = Boolean(fullscreenElement());
+            root.classList.toggle("is-fullscreen", active);
+            btn.setAttribute("aria-label", active ? "Exit fullscreen" : "Enter fullscreen");
+            // Let Pygbag re-measure the canvas now that the layout has changed.
+            window.dispatchEvent(new Event("resize"));
+        }
+
+        btn.addEventListener("click", () => {
+            if (fullscreenElement()) {
+                exit();
+            } else {
+                enter();
+            }
+        });
+        document.addEventListener("fullscreenchange", sync);
+        document.addEventListener("webkitfullscreenchange", sync);
+        btn.hidden = false;
     })();
     </script>
 
