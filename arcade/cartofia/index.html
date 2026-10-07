@@ -669,11 +669,16 @@ config = {
             }
         }
 
-        .fs-toggle {
+        .game-tools {
             position: fixed;
             top: 140px;
             right: calc(12px + env(safe-area-inset-right, 0px));
             z-index: 250;
+            display: flex;
+            gap: 8px;
+        }
+
+        .tool-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -688,8 +693,11 @@ config = {
             backdrop-filter: blur(2px);
         }
 
-        .fs-toggle[hidden] { display: none; }
-        .fs-toggle .fs-icon-exit { display: none; }
+        .tool-btn[hidden] { display: none; }
+        .fs-icon-exit,
+        .music-icon-off { display: none; }
+        #music-toggle[aria-pressed="true"] .music-icon-on { display: none; }
+        #music-toggle[aria-pressed="true"] .music-icon-off { display: block; }
 
         /* Fullscreen: drop the site chrome and let the canvas fill the screen */
         html.is-fullscreen .arcade-nav,
@@ -698,9 +706,9 @@ config = {
             top: 0 !important;
             height: 100% !important;
         }
-        html.is-fullscreen .fs-toggle { top: calc(12px + env(safe-area-inset-top, 0px)); }
-        html.is-fullscreen .fs-toggle .fs-icon-enter { display: none; }
-        html.is-fullscreen .fs-toggle .fs-icon-exit { display: block; }
+        html.is-fullscreen .game-tools { top: calc(12px + env(safe-area-inset-top, 0px)); }
+        html.is-fullscreen .fs-icon-enter { display: none; }
+        html.is-fullscreen .fs-icon-exit { display: block; }
     </style>
 
     <script src="https://pygame-web.github.io/archives/0.9//browserfs.min.js"></script>
@@ -764,7 +772,7 @@ config = {
     </div>
 
     <!-- Controls hint -->
-    <div class="canvas-hint" aria-hidden="true">A / D to move &middot; Space to jump</div>
+    <div class="canvas-hint" aria-hidden="true">A / D to move &middot; Space to jump &middot; M to mute music</div>
 
 
     <div id="mobile-controls" class="mobile-controls" aria-label="Mobile controls">
@@ -777,14 +785,27 @@ config = {
         </div>
     </div>
 
-    <button id="fs-toggle" class="fs-toggle" type="button" aria-label="Enter fullscreen" hidden>
-        <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true">
-          <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <svg class="fs-icon-exit" viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true">
-          <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-    </button>
+    <div class="game-tools">
+        <!-- Shown once the game reports its music state via <html data-music> -->
+        <button id="music-toggle" class="tool-btn" data-control="mute" type="button" aria-label="Mute music" aria-pressed="false" hidden>
+            <svg class="music-icon-on" viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true">
+              <path d="M4 9h4l5-4v14l-5-4H4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <svg class="music-icon-off" viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true">
+              <path d="M4 9h4l5-4v14l-5-4H4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M17 9.5l5 5M22 9.5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+        <button id="fs-toggle" class="tool-btn" type="button" aria-label="Enter fullscreen" hidden>
+            <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true">
+              <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg class="fs-icon-exit" viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true">
+              <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </div>
 
     <div id="transfer" align=center>
 <!--        <div class="spinner" id='spinner'></div> -->
@@ -932,12 +953,13 @@ frameborder="1"
             return;
         }
 
-        // Must match what the game reads in Player.update() (main.py inside the APK):
-        // pygame.K_a / K_d to move, K_SPACE to jump. Arrow keys are ignored by the game.
+        // Must match the keys the game reads (main.py inside the APK):
+        // pygame.K_a / K_d to move, K_SPACE to jump, K_m to toggle music. Arrow keys are ignored.
         const KEY_BINDINGS = {
             left: [{ key: "a", code: "KeyA" }],
             right: [{ key: "d", code: "KeyD" }],
-            jump: [{ key: " ", code: "Space" }]
+            jump: [{ key: " ", code: "Space" }],
+            mute: [{ key: "m", code: "KeyM" }]
         };
 
         const keyCounts = Object.create(null);
@@ -1048,6 +1070,49 @@ frameborder="1"
             activePointers.forEach((btn) => deactivateButton(btn));
             activePointers.clear();
         });
+
+        // Music mute button. The game owns the state and mirrors it onto
+        // <html data-music="on|muted">; the button only reflects it, so it can't drift.
+        const musicBtn = document.getElementById("music-toggle");
+        const root = document.documentElement;
+        const MUTE_PREF = "cartofia-music-muted";
+        let prefApplied = false;
+
+        function syncMusicButton() {
+            const state = root.getAttribute("data-music");
+            if (!state) {
+                return;
+            }
+            const muted = state === "muted";
+            musicBtn.hidden = false;
+            musicBtn.setAttribute("aria-pressed", String(muted));
+            musicBtn.setAttribute("aria-label", muted ? "Unmute music" : "Mute music");
+            if (!prefApplied) {
+                // First report from the game: re-apply the player's saved choice.
+                prefApplied = true;
+                let savedMuted = false;
+                try {
+                    savedMuted = localStorage.getItem(MUTE_PREF) === "1";
+                } catch (_e) {
+                    // storage unavailable
+                }
+                if (savedMuted && !muted) {
+                    setLogicalControl("mute", true);
+                    setLogicalControl("mute", false);
+                    return;
+                }
+            }
+            try {
+                localStorage.setItem(MUTE_PREF, muted ? "1" : "0");
+            } catch (_e) {
+                // storage unavailable
+            }
+        }
+
+        if (musicBtn) {
+            new MutationObserver(syncMusicButton).observe(root, { attributes: true, attributeFilter: ["data-music"] });
+            syncMusicButton();
+        }
     })();
 
     // Fullscreen toggle. Targets the whole page (not the canvas) so the

@@ -1395,4 +1395,32 @@ Planned behaviour:
 - Playwright (Chromium, mobile emulation): touch-holding each button dispatches the expected `keydown`/`keyup` codes; fullscreen enter/exit toggles the layout correctly.
 - Full in-game check not possible in the sandbox (pygbag CDN blocked); needs a real-phone test.
 
+---
+
+## 2026-10-07 - Cartofia quieter music + mute toggle
+
+**Summary**
+
+- Lowered Cartofia background music volume and added a music mute toggle (keyboard `M` + on-page button).
+
+**Details**
+
+- Updated `arcade/cartofia/cartofia-game.apk`:
+  - Patched `assets/main.py` inside the packaged web build (only entry changed).
+  - `MUSIC_VOLUME = 0.3` (was the default 1.0; sound effects stay at 0.5).
+  - New `set_music_muted()`; `M` key toggles it in the main event loop. Uses `pygame.mixer.music.set_volume`, so sound effects are unaffected.
+  - On web, the game mirrors the state onto `<html data-music="on|muted">` via pygbag's `platform.document`.
+  - **Same change must be ported to the Cartofia game source repo**, or the next APK rebuild will drop it.
+- Updated `arcade/cartofia/index.html`:
+  - Mute button next to the fullscreen button (all devices). Sends `KeyM` through the existing touch-control key dispatch.
+  - Button stays hidden until the game reports `data-music`, and its icon follows that attribute, so it cannot drift from the real state.
+  - Choice persisted in `localStorage` (`cartofia-music-muted`) and re-applied when the game starts.
+  - Desktop hint now mentions `M to mute music`.
+
+**Validation performed**
+
+- Ran the patched `main.py` headless (pygame-ce 2.5.8, dummy SDL drivers): music starts at volume `0.3`; posting `K_m` through `Game.run()` mutes (`0.0`), a second press restores `0.3`.
+- `node --check` on extracted inline scripts from `arcade/cartofia/index.html`.
+- Playwright (Chromium, mobile emulation) with a stand-in game that mirrors SDL repeat handling: button hidden until the game reports; each tap toggles exactly once; keyboard `M` syncs the icon; mute survives reload; touch movement/jump and fullscreen still pass.
+
 *This log is updated as new milestones and design decisions are made.*
