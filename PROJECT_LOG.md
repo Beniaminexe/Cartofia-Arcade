@@ -1410,17 +1410,61 @@ Planned behaviour:
   - `MUSIC_VOLUME = 0.3` (was the default 1.0; sound effects stay at 0.5).
   - New `set_music_muted()`; `M` key toggles it in the main event loop. Uses `pygame.mixer.music.set_volume`, so sound effects are unaffected.
   - On web, the game mirrors the state onto `<html data-music="on|muted">` via pygbag's `platform.document`.
-  - **Same change must be ported to the Cartofia game source repo**, or the next APK rebuild will drop it.
+  - **Same change must be ported to the Cartofia game source repo**, or the next APK rebuild will drop it. Exact patch applied to `assets/main.py`:
+
+```diff
+@@ -136,6 +136,28 @@
+ exit_img = utils.load_image('exit_btn.png', alpha=True)
+ 
+ # --- Load sounds ---
++# Background music volume (0.0 - 1.0); sound effects play at 0.5
++MUSIC_VOLUME = 0.3
++music_muted = False
++
++
++def set_music_muted(muted):
++    """Mute or unmute the background music (M key, or the web page's mute button)."""
++    global music_muted
++    music_muted = muted
++    try:
++        pygame.mixer.music.set_volume(0.0 if muted else MUSIC_VOLUME)
++    except pygame.error:
++        return
++    if IS_WEB:
++        # WEB: mirror the state onto <html data-music> so the page's mute button can show it
++        try:
++            import platform
++            platform.document.documentElement.setAttribute("data-music", "muted" if muted else "on")
++        except Exception:
++            pass
++
++
+ # Prefer OGG for web, fallback to MP3
+@@ -144,6 +166,7 @@
+         pygame.mixer.music.load(music_path_ogg)
+     elif os.path.exists(music_path_mp3):
+         pygame.mixer.music.load(music_path_mp3)
++    set_music_muted(False)
+     pygame.mixer.music.play(-1, 0.0, 5000)
+@@ -548,6 +571,8 @@
+                         elif event.key == pygame.K_F11:
+                             pygame.display.toggle_fullscreen()
++                        elif event.key == pygame.K_m:
++                            set_music_muted(not music_muted)
+```
+
 - Updated `arcade/cartofia/index.html`:
-  - Mute button next to the fullscreen button (all devices). Sends `KeyM` through the existing touch-control key dispatch.
-  - Button stays hidden until the game reports `data-music`, and its icon follows that attribute, so it cannot drift from the real state.
+  - Mute button next to the fullscreen button (all devices). On `click` (mouse, touch, Enter, assistive tech) it sends one `KeyM` press through the touch-control key dispatch. It is deliberately not a hold control, so right-clicks and cancelled touches do nothing.
+  - Button stays hidden until the game reports `data-music`, and its icon/`aria-pressed` follow that attribute, so it cannot drift from the real state.
   - Choice persisted in `localStorage` (`cartofia-music-muted`) and re-applied when the game starts.
-  - Desktop hint now mentions `M to mute music`.
+  - Desktop hint mentions `M to mute music`, shown only once the game reports `data-music`.
+  - APK is now loaded as `cartofia-game.apk?v=20261007` (Pygbag's `MM.prepare` just `fetch`es the URL), so returning players can't pair the new page with a cached old APK. **Bump `?v=` whenever the APK changes.**
 
 **Validation performed**
 
 - Ran the patched `main.py` headless (pygame-ce 2.5.8, dummy SDL drivers): music starts at volume `0.3`; posting `K_m` through `Game.run()` mutes (`0.0`), a second press restores `0.3`.
 - `node --check` on extracted inline scripts from `arcade/cartofia/index.html`.
 - Playwright (Chromium, mobile emulation) with a stand-in game that mirrors SDL repeat handling: button hidden until the game reports; each tap toggles exactly once; keyboard `M` syncs the icon; mute survives reload; touch movement/jump and fullscreen still pass.
+- Adversarial multi-agent review of the whole PR (4 reviewers, 2 refuting skeptics per finding): 7 findings, none survived both skeptics. Acted on the cheap, real ones anyway: click-based mute activation, constant `aria-label`, conditional hint, versioned APK URL, exact diff in this log. Left as-is: fullscreen aspect on 4:3 screens (game art is a square surface stretched to 16:9, so no "correct" ratio to preserve) and pre-existing very-short-tap loss (watch for it in phone testing).
 
 *This log is updated as new milestones and design decisions are made.*

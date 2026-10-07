@@ -84,7 +84,8 @@ async def custom_site():
 
 
 
-    apk = "cartofia-game.apk"
+    # bump ?v= whenever the APK changes, so browsers don't pair this page with a cached old build
+    apk = "cartofia-game.apk?v=20261007"
 
     bundle = "cartofia-game"
 
@@ -690,10 +691,13 @@ config = {
             background: rgba(7, 18, 29, 0.45);
             color: #e7f4ff;
             cursor: pointer;
+            touch-action: manipulation;
             backdrop-filter: blur(2px);
         }
 
         .tool-btn[hidden] { display: none; }
+        /* The mute hint only applies once the running game reports its music state */
+        html:not([data-music]) .hint-mute { display: none; }
         .fs-icon-exit,
         .music-icon-off { display: none; }
         #music-toggle[aria-pressed="true"] .music-icon-on { display: none; }
@@ -772,7 +776,7 @@ config = {
     </div>
 
     <!-- Controls hint -->
-    <div class="canvas-hint" aria-hidden="true">A / D to move &middot; Space to jump &middot; M to mute music</div>
+    <div class="canvas-hint" aria-hidden="true">A / D to move &middot; Space to jump<span class="hint-mute"> &middot; M to mute music</span></div>
 
 
     <div id="mobile-controls" class="mobile-controls" aria-label="Mobile controls">
@@ -787,7 +791,7 @@ config = {
 
     <div class="game-tools">
         <!-- Shown once the game reports its music state via <html data-music> -->
-        <button id="music-toggle" class="tool-btn" data-control="mute" type="button" aria-label="Mute music" aria-pressed="false" hidden>
+        <button id="music-toggle" class="tool-btn" type="button" aria-label="Mute music" aria-pressed="false" hidden>
             <svg class="music-icon-on" viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true">
               <path d="M4 9h4l5-4v14l-5-4H4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
               <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -1078,6 +1082,12 @@ frameborder="1"
         const MUTE_PREF = "cartofia-music-muted";
         let prefApplied = false;
 
+        // One tap of the game's M key (it toggles on KEYDOWN).
+        function pressMuteKey() {
+            setLogicalControl("mute", true);
+            setLogicalControl("mute", false);
+        }
+
         function syncMusicButton() {
             const state = root.getAttribute("data-music");
             if (!state) {
@@ -1086,7 +1096,6 @@ frameborder="1"
             const muted = state === "muted";
             musicBtn.hidden = false;
             musicBtn.setAttribute("aria-pressed", String(muted));
-            musicBtn.setAttribute("aria-label", muted ? "Unmute music" : "Mute music");
             if (!prefApplied) {
                 // First report from the game: re-apply the player's saved choice.
                 prefApplied = true;
@@ -1097,8 +1106,7 @@ frameborder="1"
                     // storage unavailable
                 }
                 if (savedMuted && !muted) {
-                    setLogicalControl("mute", true);
-                    setLogicalControl("mute", false);
+                    pressMuteKey();
                     return;
                 }
             }
@@ -1110,6 +1118,12 @@ frameborder="1"
         }
 
         if (musicBtn) {
+            // A one-shot toggle, not a hold control: `click` covers mouse, touch, Enter and
+            // assistive tech, and never fires for right-clicks or cancelled touches.
+            musicBtn.addEventListener("click", () => {
+                focusCanvas();
+                pressMuteKey();
+            });
             new MutationObserver(syncMusicButton).observe(root, { attributes: true, attributeFilter: ["data-music"] });
             syncMusicButton();
         }
