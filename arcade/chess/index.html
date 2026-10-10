@@ -61,8 +61,26 @@
     .sq.capture::after { content: ""; width: 70%; height: 70%; border-radius: 50%; border: 3px solid rgba(255,117,145,0.8); position: absolute; box-sizing: border-box; }
     .sq.last-move { background: rgba(246,183,60,0.12); }
     .sq.in-check  { background: rgba(255,80,80,0.18); }
-    .piece-white { color: #f0f6ff; text-shadow: 0 2px 0 rgba(0,0,0,0.5), 0 0 8px rgba(0,0,0,0.3); }
-    .piece-black { color: #1a2840; text-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+    .piece-white {
+      color: #ffffff;
+      text-shadow:
+        -1px -1px 0 rgba(0,0,0,0.9),
+         1px -1px 0 rgba(0,0,0,0.9),
+        -1px  1px 0 rgba(0,0,0,0.9),
+         1px  1px 0 rgba(0,0,0,0.9),
+         0  2px 4px rgba(0,0,0,0.55);
+      font-weight: 600;
+    }
+    .piece-black {
+      color: #0a0d14;
+      text-shadow:
+        -1px -1px 0 rgba(255,255,255,0.95),
+         1px -1px 0 rgba(255,255,255,0.95),
+        -1px  1px 0 rgba(255,255,255,0.95),
+         1px  1px 0 rgba(255,255,255,0.95),
+         0  0  6px rgba(255,255,255,0.35);
+      font-weight: 600;
+    }
 
     /* Side panel */
     .game-panel { display: grid; gap: 14px; }

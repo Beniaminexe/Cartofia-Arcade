@@ -546,8 +546,14 @@
 
   function renderBoard() {
     boardEl.innerHTML = "";
-    for (let r = 0; r < 8; r += 1) {
-      for (let c = 0; c < 8; c += 1) {
+    // Flip the board for Same-Device mode so the side to move is always at
+    // the bottom. Click handling still uses the true (r, c) via dataset, so
+    // nothing downstream has to care about orientation.
+    const flip = st.mode === "multi" && st.pos.turn === "b";
+    for (let i = 0; i < 8; i += 1) {
+      for (let j = 0; j < 8; j += 1) {
+        const r = flip ? 7 - i : i;
+        const c = flip ? 7 - j : j;
         const b = document.createElement("button");
         b.type = "button";
         b.className = "sq " + (((r + c) % 2 === 0) ? "light" : "dark");
