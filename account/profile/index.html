@@ -1157,7 +1157,7 @@ function getToken() {
 
 /* ─────────────────────────────────────────────
    Toast
-───────────────────────────────────────────── */
+───────────────────────────────────────��───── */
 let _toastTimer = null;
 function showToast(msg, type) {
   const el = document.getElementById('toast');
@@ -1616,18 +1616,20 @@ function renderUserSearch(users) {
     return;
   }
   users.forEach(user => {
+    const username = user.username || user.username_slug || user.slug;
+    const normalizedUser = { ...user, username };
     let action;
-    const profileLink = { label: 'See profile', href: '/u/' + encodeURIComponent(user.username) };
-    if (friendData.friends.some(item => item.username === user.username)) {
+    const profileLink = { label: 'See profile', href: '/u/' + encodeURIComponent(username) };
+    if (friendData.friends.some(item => item.username === username)) {
       action = [profileLink, { label: 'Friends', disabled: true }];
-    } else if (friendData.outgoing_requests.some(item => item.username === user.username)) {
+    } else if (friendData.outgoing_requests.some(item => item.username === username)) {
       action = [profileLink, { label: 'Request sent', disabled: true }];
-    } else if (friendData.incoming_requests.some(item => item.username === user.username)) {
+    } else if (friendData.incoming_requests.some(item => item.username === username)) {
       action = [profileLink, { label: 'Request received', disabled: true }];
     } else {
       action = [profileLink, { action: 'add', label: 'Add friend' }];
     }
-    resultList.appendChild(renderFriendRow(user, action));
+    resultList.appendChild(renderFriendRow(normalizedUser, action));
   });
 }
 
