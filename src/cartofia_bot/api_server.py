@@ -103,6 +103,19 @@ PROFILE_BADGE_CATALOG: dict[str, dict[str, str]] = {
     },
 }
 
+ARCADE_GAMES: dict[str, str] = {
+    "blackjack": "Blackjack",
+    "bomber-raid": "Bomber Raid",
+    "brick-blitz": "Brick Blitz",
+    "cartofia": "Cartofia",
+    "chess": "Chess",
+    "maze-chase": "Maze Chase",
+    "minesweeper": "Minesweeper",
+    "snake": "Snake",
+    "word-puzzle": "Word Puzzle",
+    "zuma": "Zuma",
+}
+
 ROOM_CODE_LENGTH = 6
 PLAYER_NAME_MAX_LENGTH = 16
 
@@ -194,6 +207,40 @@ def init_storage() -> None:
             source TEXT NOT NULL DEFAULT 'auto',
             awarded_at TEXT NOT NULL,
             UNIQUE(username, badge_key)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS game_activity (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            game TEXT NOT NULL,
+            result TEXT NOT NULL DEFAULT '',
+            metadata_json TEXT NOT NULL DEFAULT '{}',
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_achievements (
+            username TEXT NOT NULL,
+            achievement_key TEXT NOT NULL,
+            earned_at TEXT NOT NULL,
+            PRIMARY KEY (username, achievement_key)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_friends (
+            username TEXT NOT NULL,
+            friend_username TEXT NOT NULL,
+            status TEXT NOT NULL CHECK (status IN ('pending', 'accepted')),
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE (username, friend_username)
         )
         """
     )
@@ -391,6 +438,17 @@ def _profile_payload(
 ) -> dict[str, object]:
     username = str(row["username"])
     badge_catalog, earned_badges = _profile_badge_payload(db, username)
+    achievements = _achievement_payload(db, username)
+    activity_rows = db.execute(
+        """
+        SELECT game, result, metadata_json, created_at
+        FROM game_activity
+        WHERE username = ?
+        ORDER BY id DESC
+        LIMIT 20
+        """,
+        (username,),
+    ).fetchall()
     payload: dict[str, object] = {
         "username": username,
         "display_name": row["display_name"] or username,
@@ -404,13 +462,139 @@ def _profile_payload(
         "stats": {
             "upload_count": _archive_upload_count(db, username),
             "badge_count": len(earned_badges),
+            "achievements_unlocked": sum(1 for item in achievements if item["earned"]),
         },
         "badges": earned_badges,
         "badge_catalog": badge_catalog,
+        "achievements": achievements,
+        "activity": [
+            {
+                "event_type": "played_game",
+                "metadata": json.loads(activity["metadata_json"]),
+                "created_at": activity["created_at"],
+            }
+            for activity in activity_rows
+        ],
     }
     if include_email:
         payload["email"] = row["email"] or ""
     return payload
+
+
+def _achievement_catalog() -> list[dict[str, str]]:
+    catalog = [
+        {"key": "arcade_first_game", "name": "First Steps", "description": "Play your first arcade game.", "icon": "🎮"},
+        {"key": "arcade_ten_games", "name": "Arcade Regular", "description": "Play 10 arcade games.", "icon": "🕹️"},
+        {"key": "arcade_five_games", "name": "All-Rounder", "description": "Try five different games.", "icon": "🌟"},
+    ]
+    for game, name in ARCADE_GAMES.items():
+        catalog.append(
+            {
+                "key": f"{game}_first_play",
+                "name": f"{name} Starter",
+                "description": f"Play {name} for the first time.",
+                "icon": "🎯",
+            }
+        )
+        catalog.append(
+            {
+                "key": f"{game}_first_win",
+                "name": f"{name} Champion",
+                "description": f"Win a round of {name}.",
+                "icon": "🏆",
+            }
+        )
+    return catalog
+
+
+def _achievement_payload(db: sqlite3.Connection, username: str) -> list[dict[str, object]]:
+    earned_rows = db.execute(
+        """
+        SELECT achievement_key, earned_at
+        FROM user_achievements
+        WHERE username = ?
+        """,
+        (username,),
+    ).fetchall()
+    earned = {str(row["achievement_key"]): row["earned_at"] for row in earned_rows}
+    return [
+        {
+            **achievement,
+            "earned": achievement["key"] in earned,
+            "earned_at": earned.get(achievement["key"]),
+        }
+        for achievement in _achievement_catalog()
+    ]
+
+
+def _award_achievement(db: sqlite3.Connection, username: str, key: str) -> bool:
+    if key not in {item["key"] for item in _achievement_catalog()}:
+        return False
+    cursor = db.execute(
+        """
+        INSERT OR IGNORE INTO user_achievements (username, achievement_key, earned_at)
+        VALUES (?, ?, ?)
+        """,
+        (username, key, _utc_now_iso()),
+    )
+    return cursor.rowcount > 0
+
+
+def _record_game_activity(
+    db: sqlite3.Connection, username: str, game: str, metadata: dict[str, object]
+) -> None:
+    result = str(metadata.get("result", "")).lower()
+    if result not in {"win", "loss", "draw"}:
+        result = ""
+    clean_metadata = {"game": game}
+    if result:
+        clean_metadata["result"] = result
+    for key in ("score", "level", "duration_seconds", "attempts", "round"):
+        value = metadata.get(key)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            clean_metadata[key] = max(0, min(int(value), 2_147_483_647))
+    now = _utc_now_iso()
+    db.execute(
+        """
+        INSERT INTO game_activity (username, game, result, metadata_json, created_at)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (username, game, result, json.dumps(clean_metadata), now),
+    )
+    db.execute(
+        "INSERT OR IGNORE INTO user_achievements (username, achievement_key, earned_at) VALUES (?, ?, ?)",
+        (username, "arcade_first_game", now),
+    )
+    game_count = db.execute(
+        "SELECT COUNT(*) AS n FROM game_activity WHERE username = ?", (username,)
+    ).fetchone()["n"]
+    if game_count >= 10:
+        _award_achievement(db, username, "arcade_ten_games")
+    game_types = db.execute(
+        "SELECT COUNT(DISTINCT game) AS n FROM game_activity WHERE username = ?",
+        (username,),
+    ).fetchone()["n"]
+    if game_types >= 5:
+        _award_achievement(db, username, "arcade_five_games")
+    _award_achievement(db, username, f"{game}_first_play")
+    if result == "win":
+        _award_achievement(db, username, f"{game}_first_win")
+    db.commit()
+
+
+def _public_profile_summary(db: sqlite3.Connection, username: str) -> dict[str, object]:
+    row = _fetch_profile_row(db, username)
+    if row is None:
+        return {}
+    return {
+        "username": str(row["username"]),
+        "display_name": str(row["display_name"] or row["username"]),
+        "avatar_url": _profile_avatar_url(
+            str(row["username"]),
+            str(row["picture_filename"] or ""),
+            str(row["picture_updated_at"] or ""),
+        ),
+    }
 
 
 def _resolve_oidc_user() -> dict | None:
@@ -663,6 +847,200 @@ def get_profile_by_username(username: str):
     payload = _profile_payload(db, row, include_email=include_email)
     payload["is_me"] = include_email
     return jsonify(payload), 200
+
+
+@app.route("/api/profile/me/activity", methods=["POST"])
+@auth_required
+def record_my_game_activity():
+    data = request.get_json(silent=True)
+    metadata = data.get("metadata") if isinstance(data, dict) else None
+    if not isinstance(metadata, dict):
+        return jsonify({"error": "Game metadata is required."}), 400
+    game = str(metadata.get("game", "")).strip().lower()
+    if game not in ARCADE_GAMES:
+        return jsonify({"error": "Unknown game."}), 400
+
+    db = get_db()
+    username = _clean_profile_username(g.user.get("username", ""))
+    if not username:
+        return jsonify({"error": "Missing username in token claims."}), 400
+    _ensure_profile_row(db, username, g.user.get("email", ""))
+    _record_game_activity(db, username, game, metadata)
+    return jsonify({"ok": True, "achievements": _achievement_payload(db, username)}), 201
+
+
+@app.route("/api/profile/search", methods=["GET"])
+@auth_required
+def search_profiles():
+    query = str(request.args.get("q", "")).strip()
+    if len(query) < 2:
+        return jsonify({"users": []}), 200
+    query = query[:64].replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    username = _clean_profile_username(g.user.get("username", ""))
+    rows = get_db().execute(
+        """
+        SELECT username, display_name, picture_filename, picture_updated_at
+        FROM user_profiles
+        WHERE username != ?
+          AND (username LIKE ? ESCAPE '\\' COLLATE NOCASE
+               OR display_name LIKE ? ESCAPE '\\' COLLATE NOCASE)
+        ORDER BY username COLLATE NOCASE
+        LIMIT 20
+        """,
+        (username, f"%{query}%", f"%{query}%"),
+    ).fetchall()
+    return jsonify(
+        {
+            "users": [
+                {
+                    "username": str(row["username"]),
+                    "display_name": str(row["display_name"] or row["username"]),
+                    "avatar_url": _profile_avatar_url(
+                        str(row["username"]),
+                        str(row["picture_filename"] or ""),
+                        str(row["picture_updated_at"] or ""),
+                    ),
+                }
+                for row in rows
+            ]
+        }
+    ), 200
+
+
+@app.route("/api/profile/me/friends", methods=["GET"])
+@auth_required
+def get_my_friends():
+    db = get_db()
+    username = _clean_profile_username(g.user.get("username", ""))
+    _ensure_profile_row(db, username, g.user.get("email", ""))
+    rows = db.execute(
+        """
+        SELECT username, friend_username, status
+        FROM user_friends
+        WHERE (username = ? OR friend_username = ?)
+        """,
+        (username, username),
+    ).fetchall()
+    friends: list[dict[str, object]] = []
+    incoming: list[dict[str, object]] = []
+    outgoing: list[dict[str, object]] = []
+    for row in rows:
+        owner = str(row["username"])
+        other = str(row["friend_username"])
+        status = str(row["status"])
+        if status == "accepted":
+            if owner == username:
+                friends.append(_public_profile_summary(db, other))
+        elif owner == username:
+            outgoing.append(_public_profile_summary(db, other))
+        else:
+            incoming.append(_public_profile_summary(db, owner))
+    return jsonify({"friends": friends, "incoming_requests": incoming, "outgoing_requests": outgoing}), 200
+
+
+@app.route("/api/profile/me/friends/<username>", methods=["POST", "PATCH", "DELETE"])
+@auth_required
+def manage_friend(username: str):
+    db = get_db()
+    current = _clean_profile_username(g.user.get("username", ""))
+    target = _clean_profile_username(username)
+    if not current or not target or current == target:
+        return jsonify({"error": "Invalid friend."}), 400
+    _ensure_profile_row(db, current, g.user.get("email", ""))
+    if _fetch_profile_row(db, target) is None:
+        return jsonify({"error": "User not found."}), 404
+    now = _utc_now_iso()
+
+    if request.method == "POST":
+        current_row = db.execute(
+            "SELECT status FROM user_friends WHERE username = ? AND friend_username = ?",
+            (current, target),
+        ).fetchone()
+        if current_row and current_row["status"] == "accepted":
+            return jsonify({"error": "Already friends."}), 409
+        if current_row:
+            return jsonify({"error": "Friend request already sent."}), 409
+        reverse = db.execute(
+            "SELECT status FROM user_friends WHERE username = ? AND friend_username = ?",
+            (target, current),
+        ).fetchone()
+        if reverse and reverse["status"] == "pending":
+            db.execute(
+                """
+                UPDATE user_friends SET status = 'accepted', updated_at = ?
+                WHERE (username = ? AND friend_username = ?)
+                   OR (username = ? AND friend_username = ?)
+                """,
+                (now, current, target, target, current),
+            )
+            db.execute(
+                """
+                INSERT OR IGNORE INTO user_friends
+                    (username, friend_username, status, created_at, updated_at)
+                VALUES (?, ?, 'accepted', ?, ?)
+                """,
+                (current, target, now, now),
+            )
+            db.commit()
+            return jsonify({"status": "accepted"}), 200
+        db.execute(
+            """
+            INSERT INTO user_friends
+                (username, friend_username, status, created_at, updated_at)
+            VALUES (?, ?, 'pending', ?, ?)
+            """,
+            (current, target, now, now),
+        )
+        db.commit()
+        return jsonify({"status": "pending"}), 201
+
+    if request.method == "DELETE":
+        db.execute(
+            """
+            DELETE FROM user_friends
+            WHERE (username = ? AND friend_username = ?)
+               OR (username = ? AND friend_username = ?)
+            """,
+            (current, target, target, current),
+        )
+        db.commit()
+        return jsonify({"status": "removed"}), 200
+
+    data = request.get_json(silent=True) or {}
+    action = str(data.get("action", "")).lower()
+    if action == "accept":
+        cursor = db.execute(
+            """
+            UPDATE user_friends SET status = 'accepted', updated_at = ?
+            WHERE username = ? AND friend_username = ? AND status = 'pending'
+            """,
+            (now, target, current),
+        )
+        if not cursor.rowcount:
+            return jsonify({"error": "Friend request not found."}), 404
+        db.execute(
+            """
+            INSERT OR IGNORE INTO user_friends
+                (username, friend_username, status, created_at, updated_at)
+            VALUES (?, ?, 'accepted', ?, ?)
+            """,
+            (current, target, now, now),
+        )
+    elif action in {"decline", "cancel"}:
+        requester, recipient = (target, current) if action == "decline" else (current, target)
+        cursor = db.execute(
+            """
+            DELETE FROM user_friends
+            WHERE username = ? AND friend_username = ? AND status = 'pending'
+            """,
+            (requester, recipient),
+        )
+        if not cursor.rowcount:
+            return jsonify({"error": "Friend request not found."}), 404
+    else:
+        return jsonify({"error": "Use accept, decline, or cancel."}), 400
+    db.commit()
+    return jsonify({"status": action}), 200
 
 
 @app.route("/api/profile/me", methods=["PATCH"])

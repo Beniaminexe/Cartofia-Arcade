@@ -596,6 +596,54 @@ body {
   font-size: 13px;
 }
 
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.achievement-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+}
+
+.achievement-item.locked { opacity: 0.55; }
+.achievement-icon { font-size: 20px; }
+.achievement-name { font-size: 13px; font-weight: 600; }
+.achievement-description { margin-top: 3px; color: var(--text-secondary); font-size: 11px; line-height: 1.4; }
+.achievement-status { margin-top: 5px; color: var(--text-accent); font-size: 10px; }
+
+.friend-search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.friend-search input {
+  min-width: 0;
+  flex: 1;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+
+.friend-list { display: grid; gap: 8px; }
+.friend-list + .friend-list { margin-top: 16px; }
+.friend-list-title { margin-bottom: 8px; color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.friend-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.friend-row img, .friend-avatar { width: 32px; height: 32px; flex: 0 0 32px; border-radius: 50%; object-fit: cover; background: var(--accent-soft); display: grid; place-items: center; color: var(--text-accent); font-size: 11px; font-weight: 700; }
+.friend-name { flex: 1; min-width: 0; color: var(--text-primary); font-size: 13px; overflow-wrap: anywhere; }
+.friend-name small { display: block; color: var(--text-muted); font-size: 11px; }
+.friend-empty { padding: 10px 0; color: var(--text-muted); font-size: 13px; }
+
 /* ── ACTIVITY FEED ── */
 .activity-list { display: flex; flex-direction: column; gap: 0; }
 
@@ -956,6 +1004,24 @@ body {
     <!-- SHOWCASES -->
     <div class="showcases" id="showcasesContainer"></div>
 
+    <div class="card animate-in">
+      <div class="card-label">Game Achievements</div>
+      <div class="achievement-grid" id="achievementList">
+        <div class="showcase-empty">Loading achievements…</div>
+      </div>
+    </div>
+
+    <div class="card animate-in">
+      <div class="card-label">Find Players</div>
+      <form class="friend-search" id="friendSearchForm">
+        <input id="friendSearchInput" type="search" minlength="2" maxlength="64" placeholder="Search by username or display name" aria-label="Search users">
+        <button class="btn btn-primary" type="submit">Search</button>
+      </form>
+      <div class="friend-list" id="userSearchResults" aria-live="polite"></div>
+      <div class="friend-list" id="friendRequests"></div>
+      <div class="friend-list" id="friendsList"></div>
+    </div>
+
     <!-- ACTIVITY FEED -->
     <div class="card animate-in delay-5">
       <div class="card-label">Recent Activity</div>
@@ -1113,6 +1179,41 @@ async function apiPut(url, body) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  return r.json();
+}
+
+async function apiPost(url, body) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + getToken(),
+      'Content-Type': 'application/json',
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  return r.json();
+}
+
+async function apiPatch(url, body) {
+  const r = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': 'Bearer ' + getToken(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  return r.json();
+}
+
+async function apiDelete(url) {
+  const r = await fetch(url, {
+    method: 'DELETE',
+    headers: { 'Authorization': 'Bearer ' + getToken() },
   });
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
   return r.json();
@@ -1392,6 +1493,163 @@ function renderStats(stats) {
   document.getElementById('profileViewsCount').textContent = (stats.profile_views || 0).toLocaleString();
 }
 
+function renderAchievements(items) {
+  const list = document.getElementById('achievementList');
+  if (!items || !items.length) {
+    list.innerHTML = '<div class="showcase-empty">Play a game to start earning achievements.</div>';
+    return;
+  }
+  list.innerHTML = items.map(item => `
+    <div class="achievement-item ${item.earned ? '' : 'locked'}">
+      <span class="achievement-icon" aria-hidden="true">${escHtml(item.icon || '🏅')}</span>
+      <div>
+        <div class="achievement-name">${escHtml(item.name)}</div>
+        <div class="achievement-description">${escHtml(item.description)}</div>
+        <div class="achievement-status">${item.earned ? 'Unlocked' : 'Not yet earned'}</div>
+      </div>
+    </div>`).join('');
+}
+
+let friendData = { friends: [], incoming_requests: [], outgoing_requests: [] };
+const friendBaseUrl = '/api/profile/me/friends';
+
+function renderFriendRow(user, actions) {
+  const row = document.createElement('div');
+  row.className = 'friend-row';
+  if (user.avatar_url) {
+    const avatar = document.createElement('img');
+    avatar.src = user.avatar_url;
+    avatar.alt = '';
+    row.appendChild(avatar);
+  } else {
+    const avatar = document.createElement('div');
+    avatar.className = 'friend-avatar';
+    avatar.textContent = (user.display_name || user.username || '?').slice(0, 2).toUpperCase();
+    row.appendChild(avatar);
+  }
+  const link = document.createElement('a');
+  link.className = 'friend-name';
+  link.href = '/u/' + encodeURIComponent(user.username);
+  link.textContent = user.display_name || user.username;
+  const handle = document.createElement('small');
+  handle.textContent = '@' + user.username;
+  link.appendChild(handle);
+  row.appendChild(link);
+  actions.forEach(action => {
+    if (action.disabled) {
+      const status = document.createElement('span');
+      status.className = 'achievement-status';
+      status.textContent = action.label;
+      row.appendChild(status);
+      return;
+    }
+    const button = document.createElement('button');
+    button.className = 'btn btn-secondary';
+    button.type = 'button';
+    button.textContent = action.label;
+    button.dataset.friendAction = action.action;
+    button.dataset.username = user.username;
+    row.appendChild(button);
+  });
+  return row;
+}
+
+function renderFriendSection(container, title, users, actions, emptyText) {
+  container.replaceChildren();
+  const heading = document.createElement('div');
+  heading.className = 'friend-list-title';
+  heading.textContent = title;
+  container.appendChild(heading);
+  if (!users || !users.length) {
+    const empty = document.createElement('div');
+    empty.className = 'friend-empty';
+    empty.textContent = emptyText;
+    container.appendChild(empty);
+    return;
+  }
+  users.forEach(user => container.appendChild(renderFriendRow(user, actions(user))));
+}
+
+function renderFriends(data) {
+  friendData = data || { friends: [], incoming_requests: [], outgoing_requests: [] };
+  renderFriendSection(document.getElementById('friendsList'), 'Friends', friendData.friends,
+    () => [{ action: 'remove', label: 'Remove' }], 'No friends yet.');
+  renderFriendSection(document.getElementById('friendRequests'), 'Friend Requests',
+    friendData.incoming_requests.concat(friendData.outgoing_requests),
+    user => friendData.incoming_requests.some(item => item.username === user.username)
+      ? [{ action: 'accept', label: 'Accept' }, { action: 'decline', label: 'Decline' }]
+      : [{ action: 'cancel', label: 'Cancel' }],
+    'No pending requests.');
+}
+
+function renderUserSearch(users) {
+  const resultList = document.getElementById('userSearchResults');
+  resultList.replaceChildren();
+  const heading = document.createElement('div');
+  heading.className = 'friend-list-title';
+  heading.textContent = 'Search Results';
+  resultList.appendChild(heading);
+  if (!users.length) {
+    const empty = document.createElement('div');
+    empty.className = 'friend-empty';
+    empty.textContent = 'No users found.';
+    resultList.appendChild(empty);
+    return;
+  }
+  users.forEach(user => {
+    let action;
+    if (friendData.friends.some(item => item.username === user.username)) {
+      action = [{ label: 'Friends', disabled: true }];
+    } else if (friendData.outgoing_requests.some(item => item.username === user.username)) {
+      action = [{ label: 'Request sent', disabled: true }];
+    } else if (friendData.incoming_requests.some(item => item.username === user.username)) {
+      action = [{ label: 'Request received', disabled: true }];
+    } else {
+      action = [{ action: 'add', label: 'Add friend' }];
+    }
+    resultList.appendChild(renderFriendRow(user, action));
+  });
+}
+
+document.getElementById('friendSearchForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const query = document.getElementById('friendSearchInput').value.trim();
+  const results = document.getElementById('userSearchResults');
+  if (query.length < 2) {
+    results.textContent = 'Enter at least two characters.';
+    return;
+  }
+  try {
+    const data = await apiGet('/api/profile/search?q=' + encodeURIComponent(query));
+    renderUserSearch(data.users || []);
+  } catch (error) {
+    results.textContent = 'Search failed: ' + error.message;
+  }
+});
+
+document.getElementById('friendRequests').addEventListener('click', handleFriendAction);
+document.getElementById('friendsList').addEventListener('click', handleFriendAction);
+document.getElementById('userSearchResults').addEventListener('click', handleFriendAction);
+
+async function handleFriendAction(event) {
+  const button = event.target.closest('[data-friend-action]');
+  if (!button) return;
+  const username = encodeURIComponent(button.dataset.username);
+  const action = button.dataset.friendAction;
+  button.disabled = true;
+  try {
+    if (action === 'add') await apiPost(friendBaseUrl + '/' + username);
+    else if (action === 'remove') await apiDelete(friendBaseUrl + '/' + username);
+    else await apiPatch(friendBaseUrl + '/' + username, { action });
+    renderFriends(await apiGet(friendBaseUrl));
+    document.getElementById('friendSearchForm').dispatchEvent(new Event('submit', { cancelable: true }));
+    showToast(action === 'add' ? 'Friend request sent' : 'Friends updated', 'ok');
+  } catch (error) {
+    button.disabled = false;
+    showToast(error.message, 'err');
+  }
+}
+
 /* ─────────────────────────────────────────────
    Full profile render
 ───────────────────────────────────────────── */
@@ -1451,6 +1709,7 @@ function renderProfile(data) {
 
   // Activity
   renderActivity(activity);
+  renderAchievements(data.achievements || []);
 }
 
 /* ─────────────────────────────────────────────
@@ -1595,12 +1854,14 @@ document.querySelectorAll('.animate-in').forEach(el => {
   } catch (_) {}
 
   try {
-    const [data, statsData] = await Promise.all([
+    const [data, statsData, friendsData] = await Promise.all([
       apiGet('/api/profile/me'),
       apiGet('/api/arcade/stats/me').catch(() => null),
+      apiGet(friendBaseUrl).catch(() => null),
     ]);
     arcadeStats = statsData;
     renderProfile(data);
+    renderFriends(friendsData);
   } catch (e) {
     showToast('Could not load profile: ' + e.message, 'err');
     document.getElementById('displayName').textContent = 'Error loading profile';
