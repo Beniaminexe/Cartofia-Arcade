@@ -2063,8 +2063,10 @@
     const blastSet = new Set(blastCells.map((c) => key(c.x, c.y)));
     const queue = [{ x: o.x, y: o.y, d: 0 }];
     const seen = new Set([key(o.x, o.y)]);
-    const maxDepth = 4;
-    const stepMs = 430;
+    // AI-safety-v2: pessimistic step time + shorter depth so the AI
+    // only drops if the escape is genuinely close.
+    const maxDepth = 3;
+    const stepMs = 500;
     const initialDelay = clamp(Number.isFinite(o.t) ? o.t : 320, 120, 520);
 
     while (queue.length) {
@@ -2075,7 +2077,7 @@
         const arrival = initialDelay + cur.d * stepMs;
         if (!blastSet.has(k) &&
             !hasActiveExplosionAt(cur.x, cur.y) &&
-            (!Number.isFinite(threat) || threat > arrival + 380)) {
+            (!Number.isFinite(threat) || threat > arrival + 700)) {
           return true;
         }
       }
@@ -2141,23 +2143,28 @@
         }
       }
     } else if (urgent) {
-      const escapeOpts = opts.filter((c) => !c.hot && (!Number.isFinite(c.threat) || c.threat > 520));
+      // AI-safety-v2: wider escape margin so a chosen cell actually
+      // survives the next tick.
+      const escapeOpts = opts.filter((c) => !c.hot && (!Number.isFinite(c.threat) || c.threat > 900));
       if (escapeOpts.length) {
         pool = escapeOpts;
       }
     } else {
-      const saferOpts = opts.filter((c) => !c.hot && (!Number.isFinite(c.threat) || c.threat > 720));
+      const saferOpts = opts.filter((c) => !c.hot && (!Number.isFinite(c.threat) || c.threat > 1100));
       if (saferOpts.length) {
         pool = saferOpts;
       }
     }
 
     let best = -Infinity;
+    const inDanger = fleeMode || urgent;
     for (let i = 0; i < pool.length; i += 1) {
       const c = pool[i];
       let score = 0;
-      if (c.dir === o.d) { score += 3; }
-      if (c.dir === R[o.d]) { score -= 4; }
+      // AI-safety-v2: don't reward keeping the same heading when under
+      // threat — that's how bots walked back into their own fuse.
+      if (!inDanger && c.dir === o.d) { score += 3; }
+      if (!inDanger && c.dir === R[o.d]) { score -= 4; }
       if (c.hot) { score -= 80; }
       if (Number.isFinite(c.dist) && !fleeMode) {
         score += Math.max(0, 10 - c.dist) * 1.2;
@@ -2209,7 +2216,8 @@
       return false;
     }
     const localThreat = earliestBlastMsAt(o.x, o.y);
-    if (hasActiveExplosionAt(o.x, o.y) || localThreat <= 680) {
+    // AI-safety-v2: wider "something's about to blow here" window
+    if (hasActiveExplosionAt(o.x, o.y) || localThreat <= 1200) {
       return false;
     }
 
