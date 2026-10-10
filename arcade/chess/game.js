@@ -549,13 +549,12 @@
     // Flip the board for Same-Device mode so the side to move is always at
     // the bottom. Click handling still uses the true (r, c) via dataset, so
     // nothing downstream has to care about orientation.
-    // Same-Device: keep the board fixed with White at the bottom and
-    // just rotate the piece glyphs on Black's turn (handled by the
-    // .pieces-rotated class below). Online as the Black player still
-    // flips the whole board so your own pieces are at your side.
+    // Same-Device: fixed board (White at bottom) with Black's pieces
+    // always rotated 180 degrees so the player across the table sees
+    // them upright, exactly like a physical chessboard. Online as the
+    // Black player still flips the whole board.
     const flip = (st.mode === "online" && localOnlineColor() === "b");
-    const rotatePieces = (st.mode === "multi" && st.pos.turn === "b");
-    boardEl.classList.toggle("pieces-rotated", rotatePieces);
+    boardEl.classList.toggle("same-device", st.mode === "multi");
     for (let i = 0; i < 8; i += 1) {
       for (let j = 0; j < 8; j += 1) {
         const r = flip ? 7 - i : i;

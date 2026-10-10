@@ -71,9 +71,11 @@
          0  2px 4px rgba(0,0,0,0.55);
       font-weight: 600;
     }
-    /* Same-Device mode: rotate every piece 180deg on Black's turn
-       so Black (sitting across from White) sees them upright. */
-    .board-grid.pieces-rotated .sq { transform: rotate(180deg); }
+    /* Same-Device mode: Black's pieces are always rotated 180 degrees,
+       like a real chessboard where each side's pieces face that player.
+       Scoped to the .same-device marker so the online/bot flows stay
+       untouched. */
+    .board-grid.same-device .sq.piece-black { transform: rotate(180deg); }
         .piece-black {
       color: #0a0d14;
       text-shadow:
