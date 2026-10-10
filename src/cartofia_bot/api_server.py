@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import json
 import logging
+import math
 import sqlite3
 import threading
 import uuid
@@ -562,7 +563,10 @@ def _record_game_activity(
         clean_metadata["result"] = result
     for key in ("score", "level", "duration_seconds", "attempts", "round"):
         value = metadata.get(key)
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if (
+            (isinstance(value, int) and not isinstance(value, bool))
+            or (isinstance(value, float) and math.isfinite(value))
+        ):
             clean_metadata[key] = max(0, min(int(value), 2_147_483_647))
     now = _utc_now_iso()
     db.execute(
@@ -872,10 +876,14 @@ def get_profile_by_username(username: str):
 @auth_required
 def record_my_game_activity():
     data = request.get_json(silent=True)
+    if not isinstance(data, dict) or data.get("event_type") != "played_game":
+        return jsonify({"error": "Unsupported activity event."}), 400
     metadata = data.get("metadata") if isinstance(data, dict) else None
     if not isinstance(metadata, dict):
         return jsonify({"error": "Game metadata is required."}), 400
     game = str(metadata.get("game", "")).strip().lower()
+    if game == "zuma-temple":
+        game = "zuma"
     if game not in ARCADE_GAMES:
         return jsonify({"error": "Unknown game."}), 400
 
@@ -1246,10 +1254,10 @@ def _build_feed_payload() -> dict:
                 ).isoformat()
                 row = db.execute(
                     """
-                    SELECT game_name, COUNT(*) AS plays
-                    FROM activity_log
-                    WHERE logged_at >= ? AND game_name IS NOT NULL AND game_name != ''
-                    GROUP BY game_name
+                    SELECT game AS game_name, COUNT(*) AS plays
+                    FROM game_activity
+                    WHERE created_at >= ? AND game IS NOT NULL AND game != ''
+                    GROUP BY game
                     ORDER BY plays DESC
                     LIMIT 1
                     """,

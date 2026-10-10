@@ -1296,8 +1296,8 @@ function setAvatar(url, initials) {
 function calcLevel(stats) {
   const xp = (stats.games_played || 0) * 50
            + (stats.achievements_unlocked || 0) * 100
-           + (stats.uploads || 0) * 25
-           + (stats.badges_earned || 0) * 75;
+           + (stats.uploads || stats.upload_count || 0) * 25
+           + (stats.badges_earned || stats.badge_count || 0) * 75;
   const level = Math.max(1, Math.floor(Math.sqrt(xp / 100)) + 1);
   const xpForLevel = Math.pow(level - 1, 2) * 100;
   const xpForNext  = Math.pow(level, 2) * 100;
@@ -1527,9 +1527,8 @@ function renderFriendRow(user, actions) {
     avatar.textContent = (user.display_name || user.username || '?').slice(0, 2).toUpperCase();
     row.appendChild(avatar);
   }
-  const link = document.createElement('a');
+  const link = document.createElement('div');
   link.className = 'friend-name';
-  link.href = '/u/' + encodeURIComponent(user.username);
   link.textContent = user.display_name || user.username;
   const handle = document.createElement('small');
   handle.textContent = '@' + user.username;
