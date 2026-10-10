@@ -42,6 +42,7 @@
     .joystick-base.active { opacity:.58; transform:translate(-50%,-50%) scale(1); }
     .joystick-base.active .joystick-thumb { transition:none; }
     .inframe-actions { position:absolute; top:10px; right:10px; display:flex; gap:6px; z-index:4; transition:opacity .18s ease; }
+    .inframe-actions .btn { text-align:center; justify-content:center; display:inline-flex; align-items:center; }
     .inframe-actions .btn { min-height:32px; padding:6px 10px; font-size:12px; }
     .inframe-actions.hidden { opacity:0; pointer-events:none; }
     .game-panel { display:grid; gap:14px; }
@@ -157,6 +158,46 @@
       canvas#g     { max-height:calc(100vh - 20px); width:auto; aspect-ratio:13/11; margin:0 auto; display:block; }
     }
 
+    /* Full-screen "please rotate to landscape" wall on narrow portrait
+       screens. The game is tuned for landscape play; portrait squeezes the
+       canvas and buries controls. */
+    .rotate-prompt {
+      position:fixed; inset:0; z-index:9999;
+      display:none;
+      flex-direction:column; align-items:center; justify-content:center;
+      gap:22px; padding:28px; text-align:center;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(79,125,249,.12), transparent 60%),
+        rgba(10,14,26,.98);
+      color:#e7f4ff;
+      font-family:var(--font-sans);
+      backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    }
+    .rotate-prompt-icon {
+      width:88px; height:88px;
+      display:inline-flex; align-items:center; justify-content:center;
+      border-radius:50%; border:1px solid rgba(142,198,255,.5);
+      background:rgba(7,18,29,.65);
+      color:#9fc9ff;
+      animation:rotate-swing 2.4s ease-in-out infinite;
+    }
+    .rotate-prompt-title {
+      font-size:22px; font-weight:700; letter-spacing:-.02em; margin:0;
+    }
+    .rotate-prompt-sub {
+      font-size:14px; color:rgba(238,242,255,.65); max-width:28ch; line-height:1.5; margin:0;
+    }
+    @keyframes rotate-swing {
+      0%, 100% { transform:rotate(-18deg); }
+      50%      { transform:rotate(72deg); }
+    }
+    @media (orientation: portrait) and (max-width: 900px) {
+      .rotate-prompt { display:flex; }
+      /* Keep the game stopped while they rotate — matters because the
+         keyboard key listeners are still live underneath. */
+      body { overflow:hidden; }
+    }
+
     @media (max-width:960px) {
       .game-layout { grid-template-columns:1fr; }
       .inframe-actions { left:8px; right:8px; top:8px; justify-content:space-between; }
@@ -166,6 +207,18 @@
   </style>
 </head>
 <body>
+
+  <div class="rotate-prompt" role="dialog" aria-live="polite">
+    <span class="rotate-prompt-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="2" width="12" height="20" rx="2"/>
+        <path d="M14 6l4 4-4 4"/>
+        <path d="M18 10h-6"/>
+      </svg>
+    </span>
+    <h2 class="rotate-prompt-title">Rotate your device</h2>
+    <p class="rotate-prompt-sub">Bomber Raid plays best in landscape. Turn your phone sideways to get the full board and reachable controls.</p>
+  </div>
 
   <!-- NAV -->
   <header class="nav" id="nav">
@@ -2485,15 +2538,48 @@
     }
     joyThumb.style.transform = "translate(calc(-50% + " + dx.toFixed(2) + "px), calc(-50% + " + dy.toFixed(2) + "px))";
 
-    const deadZone = joyBase.clientWidth * 0.12;
-    if (Math.hypot(dx, dy) < deadZone) {
-      setJoystickDirection(null);
-      return;
+    // Larger dead zone keeps tiny finger-jitter from spamming direction
+    // changes. Below the release zone we hold the current direction; only
+    // once the player actively re-centers do we clear it.
+    const deadZone    = joyBase.clientWidth * 0.22;
+    const releaseZone = joyBase.clientWidth * 0.10;
+    const dist = Math.hypot(dx, dy);
+    if (dist < releaseZone) { setJoystickDirection(null); return; }
+    if (dist < deadZone && joyHeldDir)       { return; }
+    if (dist < deadZone)                     { setJoystickDirection(null); return; }
+
+    // Angle-based direction with 10-degree hysteresis around the diagonals,
+    // so a direction only flips when the player clearly swings past the
+    // boundary — stops the jittery NE/N/E/N thrash.
+    const DEG = Math.PI / 180;
+    const angle = Math.atan2(dy, dx);                      // -PI..PI
+    const sectors = [
+      { d: "r", c: 0,              h: 45 * DEG },
+      { d: "d", c: 90 * DEG,       h: 45 * DEG },
+      { d: "l", c: 180 * DEG,      h: 45 * DEG },
+      { d: "l", c: -180 * DEG,     h: 45 * DEG },
+      { d: "u", c: -90 * DEG,      h: 45 * DEG },
+    ];
+    function angDist(a, b) {
+      let d = Math.abs(a - b) % (2 * Math.PI);
+      return d > Math.PI ? (2 * Math.PI - d) : d;
     }
-    const dir = Math.abs(dx) >= Math.abs(dy)
-      ? (dx > 0 ? "r" : "l")
-      : (dy > 0 ? "d" : "u");
-    setJoystickDirection(dir);
+    const HYST = 10 * DEG;
+    let best = null;
+    for (const s of sectors) {
+      const d = angDist(angle, s.c);
+      const limit = (joyHeldDir && s.d === joyHeldDir) ? (s.h + HYST) : (s.h - HYST);
+      if (d <= limit && (!best || d < best.d)) best = { dir: s.d, d };
+    }
+    if (!best) {
+      // In the hysteresis band — keep what we had.
+      if (joyHeldDir) return;
+      // No prior direction: fall back to the dominant axis.
+      best = { dir: Math.abs(dx) >= Math.abs(dy)
+        ? (dx > 0 ? "r" : "l")
+        : (dy > 0 ? "d" : "u") };
+    }
+    setJoystickDirection(best.dir);
   }
 
   function setJoystickCenterFromPointer(event) {
