@@ -162,16 +162,17 @@
        screens. The game is tuned for landscape play; portrait squeezes the
        canvas and buries controls. */
     .rotate-prompt {
-      position:fixed; inset:0; z-index:9999;
+      position:absolute; inset:0; z-index:10;
       display:none;
       flex-direction:column; align-items:center; justify-content:center;
-      gap:22px; padding:28px; text-align:center;
+      gap:16px; padding:22px; text-align:center;
+      border-radius:inherit;
       background:
-        radial-gradient(circle at 50% 30%, rgba(79,125,249,.12), transparent 60%),
-        rgba(10,14,26,.98);
+        radial-gradient(circle at 50% 35%, rgba(79,125,249,.14), transparent 65%),
+        rgba(10,14,26,.95);
       color:#e7f4ff;
       font-family:var(--font-sans);
-      backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+      backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
     }
     .rotate-prompt-icon {
       width:88px; height:88px;
@@ -193,9 +194,6 @@
     }
     @media (orientation: portrait) and (max-width: 900px) {
       .rotate-prompt { display:flex; }
-      /* Keep the game stopped while they rotate — matters because the
-         keyboard key listeners are still live underneath. */
-      body { overflow:hidden; }
     }
 
     @media (max-width:960px) {
@@ -207,18 +205,6 @@
   </style>
 </head>
 <body>
-
-  <div class="rotate-prompt" role="dialog" aria-live="polite">
-    <span class="rotate-prompt-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="4" y="2" width="12" height="20" rx="2"/>
-        <path d="M14 6l4 4-4 4"/>
-        <path d="M18 10h-6"/>
-      </svg>
-    </span>
-    <h2 class="rotate-prompt-title">Rotate your device</h2>
-    <p class="rotate-prompt-sub">Bomber Raid plays best in landscape. Turn your phone sideways to get the full board and reachable controls.</p>
-  </div>
 
   <!-- NAV -->
   <header class="nav" id="nav">
@@ -278,6 +264,17 @@
             <div class="board-frame">
               <canvas id="g" width="624" height="528" aria-label="Bomber Raid game board"></canvas>
               <div id="ov">Choose a mode, then press Start.</div>
+              <div class="rotate-prompt" role="dialog" aria-live="polite">
+                <span class="rotate-prompt-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="2" width="12" height="20" rx="2"/>
+                    <path d="M14 6l4 4-4 4"/>
+                    <path d="M18 10h-6"/>
+                  </svg>
+                </span>
+                <h2 class="rotate-prompt-title">Rotate your device</h2>
+                <p class="rotate-prompt-sub">Bomber Raid plays best in landscape.</p>
+              </div>
               <div class="joy-layer" aria-hidden="true">
                 <div id="joy-base" class="joystick-base" aria-label="Movement joystick" role="application">
                   <div id="joy-thumb" class="joystick-thumb" aria-hidden="true"></div>
@@ -420,6 +417,31 @@
         realBomb.click();
       }, { passive: false });
       overlayBomb.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    }
+
+    /* Auto-fullscreen when a touch device rotates to landscape.
+       Fullscreen APIs usually require a user gesture — on Chrome Android a
+       device-rotation event counts, so this works there. iOS Safari has no
+       fullscreen API for non-video elements, so the call is a silent no-op. */
+    function autoFullscreenOnLandscape() {
+      if (!board) return;
+      var touch = window.matchMedia("(pointer: coarse)").matches;
+      if (!touch) return;
+      var landscape = window.matchMedia("(orientation: landscape)").matches;
+      if (!landscape) return;
+      var inFs = document.fullscreenElement || document.webkitFullscreenElement;
+      if (inFs) return;
+      try {
+        var req = board.requestFullscreen
+          ? board.requestFullscreen()
+          : (board.webkitRequestFullscreen ? board.webkitRequestFullscreen() : null);
+        if (req && typeof req.catch === "function") req.catch(function () {});
+      } catch (_) {}
+    }
+    if (window.screen && window.screen.orientation && window.screen.orientation.addEventListener) {
+      window.screen.orientation.addEventListener("change", autoFullscreenOnLandscape);
+    } else {
+      window.addEventListener("orientationchange", autoFullscreenOnLandscape);
     }
   })();
   </script>
