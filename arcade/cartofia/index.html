@@ -1217,65 +1217,23 @@ frameborder="1"
     })();
     </script>
     <script>
-    /* ----------------------------------------------------------------------
-       Session logger — Cartofia has no in-game JS hook (Python/WASM), so we
-       bracket the user's visit here: start the clock when the splash goes
-       away, and on first pagehide / visibility-hidden flush a `played_game`
-       activity event. Fires at most once per page load.
-    ---------------------------------------------------------------------- */
-    (function cartofiaActivityLogger() {
-        var startedAt = null;
-        var flushed = false;
-        var MIN_SECONDS = 5;
-
-        function getToken() {
-            try {
-                return sessionStorage.getItem("oidc_access_token")
-                    || localStorage.getItem("oidc_access_token");
-            } catch (_) { return null; }
-        }
-
+    /* Cartofia takes a while to load — tell the shared session logger
+       in game-utils.js to start the clock when the splash actually
+       goes away, so the recorded duration is play time not load time. */
+    (function () {
         var splash = document.getElementById("cartofia-splash");
-        if (splash && !splash.classList.contains("hidden")) {
-            var o = new MutationObserver(function () {
-                if (splash.classList.contains("hidden") && !startedAt) {
-                    startedAt = Date.now();
-                    o.disconnect();
-                }
-            });
-            o.observe(splash, { attributes: true, attributeFilter: ["class"] });
-        } else {
-            /* no splash or already hidden on load — start immediately */
-            startedAt = Date.now();
+        if (!splash || typeof window.__markGameStart !== "function") return;
+        if (splash.classList.contains("hidden")) {
+            window.__markGameStart();
+            return;
         }
-
-        function flush() {
-            if (flushed || !startedAt) return;
-            var secs = Math.round((Date.now() - startedAt) / 1000);
-            if (secs < MIN_SECONDS) return;
-            var token = getToken();
-            if (!token) return;
-            flushed = true;
-            try {
-                fetch("/api/profile/me/activity", {
-                    method: "POST",
-                    keepalive: true,
-                    headers: {
-                        "Authorization": "Bearer " + token,
-                        "Content-Type":  "application/json"
-                    },
-                    body: JSON.stringify({
-                        event_type: "played_game",
-                        metadata: { game: "cartofia", duration_seconds: secs }
-                    })
-                }).catch(function () {});
-            } catch (_) {}
-        }
-
-        window.addEventListener("pagehide", flush);
-        document.addEventListener("visibilitychange", function () {
-            if (document.visibilityState === "hidden") flush();
+        var o = new MutationObserver(function () {
+            if (splash.classList.contains("hidden")) {
+                window.__markGameStart();
+                o.disconnect();
+            }
         });
+        o.observe(splash, { attributes: true, attributeFilter: ["class"] });
     })();
     </script>
 </body>
