@@ -1546,6 +1546,15 @@ function renderFriendRow(user, actions) {
   link.appendChild(handle);
   row.appendChild(link);
   actions.forEach(action => {
+    if (action.href) {
+      const link = document.createElement('a');
+      link.className = 'btn btn-secondary';
+      link.href = action.href;
+      link.textContent = action.label;
+      link.setAttribute('aria-label', action.label + ' for ' + (user.display_name || user.username));
+      row.appendChild(link);
+      return;
+    }
     if (action.disabled) {
       const status = document.createElement('span');
       status.className = 'achievement-status';
@@ -1608,14 +1617,15 @@ function renderUserSearch(users) {
   }
   users.forEach(user => {
     let action;
+    const profileLink = { label: 'See profile', href: '/u/' + encodeURIComponent(user.username) };
     if (friendData.friends.some(item => item.username === user.username)) {
-      action = [{ label: 'Friends', disabled: true }];
+      action = [profileLink, { label: 'Friends', disabled: true }];
     } else if (friendData.outgoing_requests.some(item => item.username === user.username)) {
-      action = [{ label: 'Request sent', disabled: true }];
+      action = [profileLink, { label: 'Request sent', disabled: true }];
     } else if (friendData.incoming_requests.some(item => item.username === user.username)) {
-      action = [{ label: 'Request received', disabled: true }];
+      action = [profileLink, { label: 'Request received', disabled: true }];
     } else {
-      action = [{ action: 'add', label: 'Add friend' }];
+      action = [profileLink, { action: 'add', label: 'Add friend' }];
     }
     resultList.appendChild(renderFriendRow(user, action));
   });
