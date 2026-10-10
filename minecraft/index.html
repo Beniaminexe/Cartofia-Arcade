@@ -199,6 +199,46 @@
     .status-value.players { font-size: 20px; font-weight: 500; }
 
     /* ===================================================
+       CONTROL PANEL (admin start/stop, request access)
+    =================================================== */
+    .mc-control-panel {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+    .mc-control-panel.ready { display: block; }
+    .mc-control-label {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .mc-control-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .mc-control-actions .btn {
+      flex: 1 1 auto;
+      min-width: 0;
+      justify-content: center;
+    }
+    .mc-control-feedback {
+      margin-top: 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      min-height: 1.3em;
+      word-break: break-word;
+    }
+    .mc-control-feedback.err { color: #fca5a5; }
+    .mc-control-feedback.ok  { color: #86efac; }
+
+    /* ===================================================
        SECTIONS
     =================================================== */
     .mc-section {
@@ -328,7 +368,7 @@
       <h1 class="mc-headline">A shared survival world.</h1>
       <p class="mc-lead">
         Vanilla Minecraft server — no mods, no whitelist, no rules beyond common sense.
-        The server sleeps when nobody's online and wakes up through Discord.
+        The server auto-shuts down when empty; approved players can wake it right from this page.
       </p>
       <div class="mc-hero-actions">
         <a class="btn btn-primary" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Join Discord</a>
@@ -337,7 +377,7 @@
       <div class="mc-info-tags">
         <span class="mc-info-tag">Java Edition</span>
         <span class="mc-info-tag">Vanilla Survival</span>
-        <span class="mc-info-tag">1.21.10</span>
+        <span class="mc-info-tag" id="mcVersionTag">Latest release</span>
       </div>
     </div>
 
@@ -361,6 +401,7 @@
           <span class="status-value">25565</span>
         </div>
       </div>
+      <div class="mc-control-panel" id="mcControlPanel" aria-live="polite"></div>
     </aside>
   </section>
 
@@ -394,7 +435,7 @@
       <div class="step">
         <div class="step-num">03</div>
         <h3 class="step-title">Server sleeping?</h3>
-        <p class="step-desc">Head to Discord and type the wake command (<strong class="mono">!mcup</strong>). The server starts in about 30 seconds.</p>
+        <p class="step-desc">If you have access, hit <strong class="mono">Start Server</strong> on this page. Otherwise, click <strong class="mono">Request Access</strong> and I'll get you in.</p>
       </div>
     </div>
   </section>
@@ -423,9 +464,9 @@
         <div class="mc-info-desc">Server sleeps when empty, saves resources.</div>
       </div>
       <div class="mc-info-item">
-        <span class="mc-info-icon" aria-hidden="true">💬</span>
-        <div class="mc-info-title">Discord powered</div>
-        <div class="mc-info-desc">Wake the server and coordinate with other players.</div>
+        <span class="mc-info-icon" aria-hidden="true">🎛️</span>
+        <div class="mc-info-title">Web control</div>
+        <div class="mc-info-desc">Approved players start and stop the server from this page.</div>
       </div>
       <div class="mc-info-item">
         <span class="mc-info-icon" aria-hidden="true">🔄</span>
@@ -442,8 +483,8 @@
   <div class="final-cta reveal" id="cta">
     <div class="final-cta-inner">
       <h2 class="final-cta-heading">Server sleeping?</h2>
-      <p class="final-cta-sub">Jump into Discord and wake it up — takes about 30 seconds.</p>
-      <a class="btn btn-primary" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Open Discord →</a>
+      <p class="final-cta-sub">Scroll up and use the control panel — approved players can start it in seconds.</p>
+      <a class="btn btn-primary" href="#statusCard">Go to Controls →</a>
     </div>
   </div>
 
@@ -549,6 +590,145 @@
       }
 
       btn.addEventListener("click", copy);
+    })();
+
+
+    /* ----------------------------------------------------------
+       Dynamic version tag from autoupdater state
+    ---------------------------------------------------------- */
+    (function () {
+      const tag = document.getElementById("mcVersionTag");
+      if (!tag) return;
+      fetch("/api/minecraft/info", { credentials: "same-origin" })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data && data.version) tag.textContent = data.version; })
+        .catch(() => {});
+    })();
+
+
+    /* ----------------------------------------------------------
+       Server control panel (admin start/stop + request access)
+    ---------------------------------------------------------- */
+    (function () {
+      const panel = document.getElementById("mcControlPanel");
+      if (!panel) return;
+      let state = null;
+
+      function makeBtn(cls, text, onClick, disabled) {
+        const b = document.createElement("button");
+        b.className = "btn " + cls;
+        b.type = "button";
+        b.textContent = text;
+        if (disabled) b.disabled = true;
+        if (onClick) b.addEventListener("click", onClick);
+        return b;
+      }
+
+      function render() {
+        if (!state) return;
+        panel.innerHTML = "";
+
+        const label = document.createElement("p");
+        label.className = "mc-control-label";
+        label.textContent = "Server Controls";
+        panel.appendChild(label);
+
+        const actions = document.createElement("div");
+        actions.className = "mc-control-actions";
+
+        const feedback = document.createElement("div");
+        feedback.className = "mc-control-feedback";
+
+        if (state.authorized) {
+          const running = state.running === true;
+          actions.appendChild(makeBtn("btn-primary",
+            running ? "Running" : "Start Server",
+            () => doAction("start", feedback), running));
+          actions.appendChild(makeBtn("btn-ghost",
+            "Stop Server",
+            () => doAction("stop", feedback), !running));
+          if (state.controller_error) {
+            feedback.textContent = "Controller: " + state.controller_error;
+            feedback.className = "mc-control-feedback err";
+          }
+        } else if (state.authenticated) {
+          actions.appendChild(makeBtn("btn-primary", "Request Access",
+            () => requestAccess(feedback), false));
+        } else {
+          const a = document.createElement("a");
+          a.className = "btn btn-primary";
+          a.href = "/account/";
+          a.textContent = "Sign in to request access";
+          actions.appendChild(a);
+        }
+
+        panel.appendChild(actions);
+        panel.appendChild(feedback);
+        panel.classList.add("ready");
+      }
+
+      async function fetchStatus() {
+        try {
+          const r = await fetch("/api/minecraft/control-status", { credentials: "same-origin" });
+          state = await r.json();
+        } catch (_) {
+          state = { authenticated: false, authorized: false };
+        }
+        render();
+      }
+
+      async function doAction(action, feedback) {
+        feedback.textContent = action === "start" ? "Starting server…" : "Stopping server…";
+        feedback.className = "mc-control-feedback";
+        panel.querySelectorAll("button").forEach(b => b.disabled = true);
+        try {
+          const r = await fetch("/api/minecraft/" + action, {
+            method: "POST", credentials: "same-origin",
+          });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok) {
+            feedback.textContent = data.error || ("HTTP " + r.status);
+            feedback.className = "mc-control-feedback err";
+          } else {
+            feedback.textContent = (data.running ? "Server is running." : "Server stopped.");
+            feedback.className = "mc-control-feedback ok";
+          }
+        } catch (_) {
+          feedback.textContent = "Request failed.";
+          feedback.className = "mc-control-feedback err";
+        }
+        setTimeout(fetchStatus, 1200);
+      }
+
+      async function requestAccess(feedback) {
+        feedback.textContent = "Sending request…";
+        feedback.className = "mc-control-feedback";
+        panel.querySelectorAll("button").forEach(b => b.disabled = true);
+        try {
+          const r = await fetch("/api/minecraft/request-access", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: "{}",
+          });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok) {
+            feedback.textContent = data.error || ("HTTP " + r.status);
+            feedback.className = "mc-control-feedback err";
+            panel.querySelectorAll("button").forEach(b => b.disabled = false);
+            return;
+          }
+          feedback.textContent = data.message || "Request sent — the admin will get back to you.";
+          feedback.className = "mc-control-feedback ok";
+        } catch (_) {
+          feedback.textContent = "Request failed.";
+          feedback.className = "mc-control-feedback err";
+          panel.querySelectorAll("button").forEach(b => b.disabled = false);
+        }
+      }
+
+      fetchStatus();
+      setInterval(fetchStatus, 30000);
     })();
 
 
