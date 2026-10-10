@@ -71,7 +71,10 @@
          0  2px 4px rgba(0,0,0,0.55);
       font-weight: 600;
     }
-    .piece-black {
+    /* Same-Device mode: rotate every piece 180deg on Black's turn
+       so Black (sitting across from White) sees them upright. */
+    .board-grid.pieces-rotated .sq { transform: rotate(180deg); }
+        .piece-black {
       color: #0a0d14;
       text-shadow:
         -1px -1px 0 rgba(255,255,255,0.95),
