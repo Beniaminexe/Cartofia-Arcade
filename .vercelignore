@@ -1,0 +1,9 @@
+# Homelab backend + dev files: not part of the static site, don't publish them
+src/
+requirements.txt
+init_bot_structure.sh
+templates/
+Docs/
+PROJECT_LOG.md
+TODO.md
+.github/

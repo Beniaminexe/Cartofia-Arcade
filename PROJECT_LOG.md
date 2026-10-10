@@ -1370,4 +1370,26 @@ Planned behaviour:
 - `git submodule status` (validated broken submodule mapping no longer errors)
 - Encoding scan on repository text files (excluding large generated Cartofia bundle)
 
+---
+
+## 2026-10-10 - Vercel: deploy the site as static files
+
+**Summary**
+
+- Vercel deployments failed on every branch (including `master`) with `No Flask entrypoint found ... src/cartofia_bot/api_server.py`.
+
+**Details**
+
+- Cause: the Vercel project's Framework Preset was auto-set to Flask (because `requirements.txt` lists `flask`), so Vercel tried to deploy the homelab API as the website.
+- The Flask API cannot run on Vercel anyway (SQLite + disk uploads on an ephemeral filesystem, `flask-sock` WebSocket rooms, Proxmox access on the private network) and serves none of the HTML pages.
+- Added `vercel.json` with `"framework": null` (Vercel's "Other" preset), no build/install step, output = repo root. This overrides the dashboard preset, so it can't drift back.
+- Added `.vercelignore` so backend code and dev files (`src/`, `requirements.txt`, `templates/`, `Docs/`, logs, CI config) are not published as static files.
+- Known limitation: pages call `/api/*`, `/application/o/*` (Authentik) and `/ws/*` with relative URLs. On a Vercel URL those have no backend, so login, profiles, online counts and multiplayer only work on the homelab domain. Single-player games work everywhere.
+
+**Validation performed**
+
+- Reproduced the exact error locally with Vercel CLI 62.7.0 (`vercel build`, project preset = flask, clean copy of `master`).
+- Same preset plus the new `vercel.json`: build succeeds, static output only (no functions), all 19 HTML pages and `cartofia-game.apk` present.
+- With `.vercelignore`: `src/`, `requirements.txt`, `templates/`, `Docs/`, `PROJECT_LOG.md`, `TODO.md`, `.github/`, `init_bot_structure.sh` absent from the output; no page references them.
+
 *This log is updated as new milestones and design decisions are made.*
