@@ -1173,7 +1173,7 @@ async function apiGet(url) {
 
 async function apiPut(url, body) {
   const r = await fetch(url, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: {
       'Authorization': 'Bearer ' + getToken(),
       'Content-Type': 'application/json',
@@ -1487,8 +1487,8 @@ function renderStats(stats) {
   document.getElementById('statGamesPlayed').textContent  = (stats.games_played || 0).toLocaleString();
   document.getElementById('statPlaytime').textContent     = fmtPlaytime(stats.total_playtime_seconds || 0);
   document.getElementById('statAchievements').textContent = (stats.achievements_unlocked || 0).toLocaleString();
-  document.getElementById('statUploads').textContent      = (stats.uploads || 0).toLocaleString();
-  document.getElementById('statBadges').textContent       = (stats.badges_earned || 0).toLocaleString();
+  document.getElementById('statUploads').textContent      = (stats.uploads || stats.upload_count || 0).toLocaleString();
+  document.getElementById('statBadges').textContent       = (stats.badges_earned || stats.badge_count || 0).toLocaleString();
   document.getElementById('statViews').textContent        = (stats.profile_views || 0).toLocaleString();
   document.getElementById('profileViewsCount').textContent = (stats.profile_views || 0).toLocaleString();
 }
@@ -1654,7 +1654,10 @@ async function handleFriendAction(event) {
    Full profile render
 ───────────────────────────────────────────── */
 function renderProfile(data) {
-  const { profile, showcases, stats, activity } = data;
+  const profile = data.profile || data;
+  const showcases = data.showcases || [];
+  const stats = data.stats || {};
+  const activity = data.activity || [];
 
   // Banner
   if (profile.banner_url) {
@@ -1665,13 +1668,14 @@ function renderProfile(data) {
   }
 
   // Avatar + nav avatar
-  const initials = (profile.display_name || profile.username_slug || '?').slice(0, 2).toUpperCase();
+  const profileUsername = profile.username_slug || profile.username || '';
+  const initials = (profile.display_name || profileUsername || '?').slice(0, 2).toUpperCase();
   setAvatar(profile.avatar_url, initials);
 
   // Identity
-  document.getElementById('displayName').textContent = profile.display_name || profile.username_slug || '—';
-  document.getElementById('usernameDisplay').textContent = '@' + (profile.username_slug || '—');
-  document.getElementById('tagline').textContent = profile.tagline || 'No tagline set.';
+  document.getElementById('displayName').textContent = profile.display_name || profileUsername || '—';
+  document.getElementById('usernameDisplay').textContent = '@' + (profileUsername || '—');
+  document.getElementById('tagline').textContent = profile.tagline || '';
   document.getElementById('bioText').textContent = profile.bio || 'No bio yet.';
 
   // Role badge from groups

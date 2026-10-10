@@ -217,6 +217,7 @@ def init_storage() -> None:
             username TEXT NOT NULL,
             game TEXT NOT NULL,
             result TEXT NOT NULL DEFAULT '',
+            duration_seconds INTEGER NOT NULL DEFAULT 0,
             metadata_json TEXT NOT NULL DEFAULT '{}',
             created_at TEXT NOT NULL
         )
@@ -449,6 +450,14 @@ def _profile_payload(
         """,
         (username,),
     ).fetchall()
+    play_stats = db.execute(
+        """
+        SELECT COUNT(*) AS games_played, COALESCE(SUM(duration_seconds), 0) AS playtime
+        FROM game_activity
+        WHERE username = ?
+        """,
+        (username,),
+    ).fetchone()
     payload: dict[str, object] = {
         "username": username,
         "display_name": row["display_name"] or username,
@@ -460,6 +469,8 @@ def _profile_payload(
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
         "stats": {
+            "games_played": int(play_stats["games_played"] or 0),
+            "total_playtime_seconds": int(play_stats["playtime"] or 0),
             "upload_count": _archive_upload_count(db, username),
             "badge_count": len(earned_badges),
             "achievements_unlocked": sum(1 for item in achievements if item["earned"]),
@@ -556,10 +567,18 @@ def _record_game_activity(
     now = _utc_now_iso()
     db.execute(
         """
-        INSERT INTO game_activity (username, game, result, metadata_json, created_at)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO game_activity
+            (username, game, result, duration_seconds, metadata_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
         """,
-        (username, game, result, json.dumps(clean_metadata), now),
+        (
+            username,
+            game,
+            result,
+            int(clean_metadata.get("duration_seconds", 0)),
+            json.dumps(clean_metadata),
+            now,
+        ),
     )
     db.execute(
         "INSERT OR IGNORE INTO user_achievements (username, achievement_key, earned_at) VALUES (?, ?, ?)",
@@ -1025,6 +1044,13 @@ def manage_friend(username: str):
             VALUES (?, ?, 'accepted', ?, ?)
             """,
             (current, target, now, now),
+        )
+        db.execute(
+            """
+            UPDATE user_friends SET status = 'accepted', updated_at = ?
+            WHERE username = ? AND friend_username = ?
+            """,
+            (now, current, target),
         )
     elif action in {"decline", "cancel"}:
         requester, recipient = (target, current) if action == "decline" else (current, target)
