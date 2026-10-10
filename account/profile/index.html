@@ -1174,7 +1174,11 @@ async function apiGet(url) {
   const r = await fetch(url, {
     headers: { 'Authorization': 'Bearer ' + getToken() },
   });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  if (!r.ok) {
+    const error = new Error((await r.json().catch(() => ({}))).error || r.statusText);
+    error.status = r.status;
+    throw error;
+  }
   return r.json();
 }
 
@@ -1626,10 +1630,19 @@ document.getElementById('friendSearchForm').addEventListener('submit', async eve
     return;
   }
   try {
-    const data = await apiGet('/api/profile/search?q=' + encodeURIComponent(query));
+    let data;
+    try {
+      data = await apiGet('/api/profile/search?q=' + encodeURIComponent(query));
+    } catch (error) {
+      // Older API deployments may not expose the search route yet. Fall back
+      // to the public profile endpoint so an exact username remains discoverable.
+      if (error.status !== 404) throw error;
+      const profile = await apiGet('/api/profile/' + encodeURIComponent(query));
+      data = { users: [profile.profile || profile] };
+    }
     renderUserSearch(data.users || []);
   } catch (error) {
-    results.textContent = 'Search failed: ' + error.message;
+    results.textContent = error.status === 404 ? 'No users found.' : 'Search failed: ' + error.message;
   }
 });
 
