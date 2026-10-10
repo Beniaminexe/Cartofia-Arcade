@@ -80,6 +80,83 @@
     .touch-controls { border-radius:12px; border:1px solid var(--border); background:var(--bg-card); padding:10px; }
     .touch-bomb { width:100%; min-height:52px; font-size:15px; }
     .game-note { border-radius:10px; border:1px dashed var(--border); background:var(--bg-card); color:var(--text-muted); font-size:12px; padding:9px 10px; line-height:1.55; }
+    /* Floating overlay buttons on the canvas (touch primary, visible always) */
+    .overlay-icon-btn {
+      position:absolute; z-index:5;
+      width:40px; height:40px; border-radius:50%;
+      border:1px solid rgba(142,198,255,.46);
+      background:rgba(7,18,29,.65);
+      color:#e7f4ff;
+      display:inline-flex; align-items:center; justify-content:center;
+      cursor:pointer;
+      -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+      transition:background .15s ease,border-color .15s ease;
+    }
+    .overlay-icon-btn:hover,
+    .overlay-icon-btn:active { background:rgba(40,108,179,.55); border-color:rgba(177,220,255,.78); }
+    .fs-overlay { top:10px; left:10px; }
+
+    .overlay-bomb-btn {
+      position:absolute;
+      right:16px;
+      bottom:16px;
+      z-index:5;
+      width:88px; height:88px; border-radius:50%;
+      border:1.5px solid rgba(255,180,120,.6);
+      background:radial-gradient(circle at 32% 30%, rgba(255,220,180,.35), rgba(120,40,20,.72) 68%);
+      color:#fff5e5;
+      display:none;
+      align-items:center; justify-content:center;
+      cursor:pointer;
+      box-shadow:0 10px 24px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,220,180,.22);
+      touch-action:none; user-select:none; -webkit-user-select:none;
+      transition:transform .08s ease, box-shadow .15s ease;
+    }
+    .overlay-bomb-btn:active {
+      transform:translateY(2px) scale(.97);
+      box-shadow:0 4px 10px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,220,180,.22);
+    }
+    .overlay-bomb-icon { font-size:40px; line-height:1; }
+
+    /* Show floating bomb on touch devices (where the inline panel bomb is
+       pages below the canvas and unreachable mid-game) and hide the panel
+       version to avoid the duplicate. */
+    @media (hover: none), (pointer: coarse) {
+      .overlay-bomb-btn { display:inline-flex; }
+      .touch-controls   { display:none; }
+    }
+
+    /* While the game is in fullscreen the side panel is pointless — give the
+       canvas every pixel. */
+    .board-panel:fullscreen,
+    .board-panel:-webkit-full-screen {
+      display:flex; align-items:center; justify-content:center;
+      width:100vw; height:100vh;
+      padding:env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+              env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+      background:#0a0e1a;
+    }
+    .board-panel:fullscreen .board-frame,
+    .board-panel:-webkit-full-screen .board-frame {
+      width:100%; height:100%;
+      max-width:none; max-height:none;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .board-panel:fullscreen canvas,
+    .board-panel:-webkit-full-screen canvas {
+      width:auto; height:100%;
+      max-width:100vw; max-height:100vh;
+    }
+
+    /* Phone landscape — ditch the side panel so the canvas can be the whole
+       viewport. Users can rotate to portrait for lobby / stats. */
+    @media (orientation: landscape) and (max-height: 520px) {
+      .game-layout { grid-template-columns:1fr !important; }
+      .game-panel  { display:none !important; }
+      .board-frame { max-width:none; }
+      canvas#g     { max-height:calc(100vh - 20px); width:auto; aspect-ratio:13/11; margin:0 auto; display:block; }
+    }
+
     @media (max-width:960px) {
       .game-layout { grid-template-columns:1fr; }
       .inframe-actions { left:8px; right:8px; top:8px; justify-content:space-between; }
@@ -158,6 +235,12 @@
                 <button id="pause" class="btn btn-ghost" type="button">Pause</button>
                 <button id="restart" class="btn btn-ghost" type="button">Restart</button>
               </div>
+              <button id="fs-btn" class="overlay-icon-btn fs-overlay" type="button" aria-label="Fullscreen" title="Fullscreen">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V3h6"/><path d="M21 9V3h-6"/><path d="M3 15v6h6"/><path d="M21 15v6h-6"/></svg>
+              </button>
+              <button id="bomb-overlay" class="overlay-bomb-btn" type="button" aria-label="Place bomb">
+                <span class="overlay-bomb-icon" aria-hidden="true">💣</span>
+              </button>
             </div>
           </div>
 
@@ -248,6 +331,45 @@
 
   <script src="/assets/site.js?v=6"></script>
   <script src="/assets/game-utils.js?v=2"></script>
+  <script>
+  /* Floating overlays: fullscreen + big bomb. Bomb mirrors clicks onto the
+     real #bomb button so the game's existing bomb handler fires. */
+  (function () {
+    var board  = document.querySelector(".board-panel");
+    var fsBtn  = document.getElementById("fs-btn");
+    var realBomb    = document.getElementById("bomb");
+    var overlayBomb = document.getElementById("bomb-overlay");
+
+    function fsElement() {
+      return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+    if (fsBtn && board) {
+      fsBtn.addEventListener("click", function () {
+        try {
+          if (fsElement()) {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          } else if (board.requestFullscreen) {
+            board.requestFullscreen();
+          } else if (board.webkitRequestFullscreen) {
+            board.webkitRequestFullscreen();
+          }
+        } catch (_) {}
+      });
+    }
+
+    if (overlayBomb && realBomb) {
+      /* Translate pointerdown/up on the overlay into clicks on the real
+         bomb button. We don't do a plain click() because the game's logic
+         treats bomb as fire-on-press, so we want the native pointer flow. */
+      overlayBomb.addEventListener("pointerdown", function (e) {
+        e.preventDefault();
+        realBomb.click();
+      }, { passive: false });
+      overlayBomb.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    }
+  })();
+  </script>
   <script>
   /* Wire visual mode cards to hidden JS buttons */
   (function () {
