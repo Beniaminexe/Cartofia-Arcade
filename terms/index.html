@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Terms of Service — Cartofia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=3" />
+  <style>
+    button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }
+    .legal-page {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: calc(var(--nav-h, 64px) + 48px) var(--gutter, 24px) 80px;
+      color: var(--text-primary);
+      line-height: 1.65;
+    }
+    .legal-kicker {
+      font-family: var(--font-mono);
+      font-size: 11.5px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-accent); margin: 0 0 6px;
+    }
+    .legal-title {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 700; letter-spacing: -0.03em; margin: 0 0 10px;
+    }
+    .legal-updated { color: var(--text-muted); font-family: var(--font-mono); font-size: 12px; }
+    .legal-page h2 {
+      margin: 32px 0 10px;
+      font-size: 20px; font-weight: 700; letter-spacing: -0.015em;
+    }
+    .legal-page p, .legal-page li { color: var(--text-secondary); font-size: 15px; }
+    .legal-page ul { padding-left: 22px; }
+    .legal-page li { margin-bottom: 6px; }
+    .legal-page a { color: var(--text-accent); }
+  </style>
+</head>
+<body>
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
+      Cartofia
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+    </nav>
+    <div class="nav-right">
+      <div class="account-menu" data-account-menu>
+        <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="legal-page">
+    <p class="legal-kicker">Terms</p>
+    <h1 class="legal-title">Terms of Service</h1>
+    <p class="legal-updated">Last updated: October 2026</p>
+
+    <h2>About this service</h2>
+    <p>
+      Cartofia is a personal homelab platform run as a hobby project — a browser
+      arcade, a shared Minecraft world, a forum, and (soon) direct messages, all
+      hosted on one person's hardware. There is no company behind it. By using
+      the service you agree to these terms.
+    </p>
+
+    <h2>Accounts</h2>
+    <ul>
+      <li>You must provide an accurate email when registering.</li>
+      <li>You are responsible for anything that happens under your account.</li>
+      <li>You may not share your account credentials with others.</li>
+      <li>One account per person. Multiple accounts for ban evasion or vote-stuffing is cause for all of them to be removed.</li>
+    </ul>
+
+    <h2>Acceptable use</h2>
+    <p>You agree not to use Cartofia to:</p>
+    <ul>
+      <li>Harass, threaten, or dox other users.</li>
+      <li>Post illegal content, child exploitation material, or incitements to violence.</li>
+      <li>Spam, phish, or scam.</li>
+      <li>Attempt to break into other users' accounts or the underlying infrastructure.</li>
+      <li>Deliberately overload the server, break the auto-scaling guardrails, or evade bans.</li>
+      <li>Use the Minecraft servers to distribute pirated software, modified clients that cheat, or crack-launcher skins designed to impersonate others.</li>
+    </ul>
+    <p>
+      The operator may remove content, suspend accounts, or ban users at any
+      time for any reason, with or without notice.
+    </p>
+
+    <h2>Your content</h2>
+    <p>
+      You keep ownership of what you post (profile text, forum threads, Minecraft
+      builds in your personal server world). By posting, you grant Cartofia a
+      non-exclusive right to display and store your content for as long as the
+      service runs or until you delete it.
+    </p>
+
+    <h2>Personal Minecraft servers</h2>
+    <ul>
+      <li>One personal server per Cartofia account.</li>
+      <li>Servers auto-shut-down when nobody is connected for 5 minutes to save resources.</li>
+      <li>Servers (and their worlds) are permanently deleted after 90 days of inactivity. A compressed world backup is kept for an additional 90 days.</li>
+      <li>The operator may stop or delete servers that break the acceptable-use rules.</li>
+    </ul>
+
+    <h2>Availability and warranty</h2>
+    <p>
+      This service is provided "as is" with no uptime guarantee, no warranty, and
+      no SLA. It runs in someone's garage; power, internet, or hardware can fail.
+      Back up anything you care about. The operator is not liable for data loss,
+      downtime, or inconvenience arising from use of the service.
+    </p>
+
+    <h2>Changes</h2>
+    <p>
+      These terms may change. Material changes will be noted on the homepage.
+      Continued use after changes means you accept the new terms. If you don't,
+      you can request your account be deleted.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      Email <a href="mailto:manolachestefan13@gmail.com">manolachestefan13@gmail.com</a>
+      with questions, complaints, or legal process.
+    </p>
+  </main>
+
+  <script src="/assets/theme.js?v=1"></script>
+  <script src="/assets/site.js?v=7"></script>
+  <script src="/assets/notifications.js?v=1" defer></script>
+</body>
+</html>

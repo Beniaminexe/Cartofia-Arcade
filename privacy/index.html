@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Privacy Policy — Cartofia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=3" />
+  <style>
+    button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }
+    .legal-page {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: calc(var(--nav-h, 64px) + 48px) var(--gutter, 24px) 80px;
+      color: var(--text-primary);
+      line-height: 1.65;
+    }
+    .legal-kicker {
+      font-family: var(--font-mono);
+      font-size: 11.5px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-accent); margin: 0 0 6px;
+    }
+    .legal-title {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 700; letter-spacing: -0.03em; margin: 0 0 10px;
+    }
+    .legal-updated { color: var(--text-muted); font-family: var(--font-mono); font-size: 12px; }
+    .legal-page h2 {
+      margin: 32px 0 10px;
+      font-size: 20px; font-weight: 700; letter-spacing: -0.015em;
+    }
+    .legal-page p, .legal-page li { color: var(--text-secondary); font-size: 15px; }
+    .legal-page ul { padding-left: 22px; }
+    .legal-page li { margin-bottom: 6px; }
+    .legal-page a { color: var(--text-accent); }
+  </style>
+</head>
+<body>
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
+      Cartofia
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+    </nav>
+    <div class="nav-right">
+      <div class="account-menu" data-account-menu>
+        <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="legal-page">
+    <p class="legal-kicker">Privacy</p>
+    <h1 class="legal-title">Privacy Policy</h1>
+    <p class="legal-updated">Last updated: October 2026</p>
+
+    <h2>What this is</h2>
+    <p>
+      Cartofia is a personal homelab project. The site, the arcade, the Minecraft
+      server, the forum, and the account system all run on a single server owned
+      and operated by one person. This policy describes what information is
+      collected, why, and how it is handled.
+    </p>
+
+    <h2>Information we collect</h2>
+    <ul>
+      <li>
+        <strong>Account data from your identity provider.</strong> When you sign in
+        — directly with a Cartofia password, or through Google — the identity
+        provider gives us your email, display name, profile picture URL, and
+        a stable account identifier.
+      </li>
+      <li>
+        <strong>Profile content you create.</strong> Avatar, banner, bio, chosen
+        theme, forum posts, achievements earned, and anything else you put on your
+        public profile.
+      </li>
+      <li>
+        <strong>Game activity.</strong> Which browser games you played, roughly how
+        long, win / loss outcomes, and achievements unlocked. Used to populate your
+        public profile and stats.
+      </li>
+      <li>
+        <strong>Minecraft server activity.</strong> If you create a personal
+        Minecraft server, we record its slug, assigned port, and timestamps for
+        creation / last-activity. Minecraft worlds are stored on the host.
+      </li>
+      <li>
+        <strong>Linked third-party IDs.</strong> If you choose to link your Discord
+        account, we store your Discord user ID so the bot can send you a direct
+        message when your server is up.
+      </li>
+      <li>
+        <strong>Server logs.</strong> Standard web-server logs (IP address, URL,
+        user-agent, timestamp) retained for a short rotation. Used for debugging
+        and spam prevention.
+      </li>
+    </ul>
+
+    <h2>How we use it</h2>
+    <ul>
+      <li>To let you sign in and keep you signed in across sessions.</li>
+      <li>To render your public profile and let other users find you.</li>
+      <li>To route Minecraft traffic to the right backend server.</li>
+      <li>To send a Discord DM when your personal server comes online, if you linked Discord.</li>
+      <li>To keep the service running and detect abuse.</li>
+    </ul>
+
+    <h2>What we do not do</h2>
+    <ul>
+      <li>We do not sell your data to anyone.</li>
+      <li>We do not run third-party advertising or trackers.</li>
+      <li>We do not share your email with other users.</li>
+      <li>We do not use your data to train machine learning models.</li>
+    </ul>
+
+    <h2>Third parties</h2>
+    <ul>
+      <li>
+        <strong>Authentik</strong> — self-hosted identity provider on the same
+        infrastructure. Handles passwords, OIDC flows, and group membership.
+      </li>
+      <li>
+        <strong>Google</strong> — only if you sign in with Google. We receive the
+        standard OIDC claims (email, name, profile picture) and nothing else.
+      </li>
+      <li>
+        <strong>Cloudflare</strong> — DNS and CDN for cartofia.com. Can see request
+        metadata (IP, path) but not account content.
+      </li>
+      <li>
+        <strong>Discord</strong> — only if you link your Discord account. The bot
+        sends you a direct message when your personal Minecraft server starts.
+      </li>
+      <li>
+        <strong>playit.gg</strong> — forwards Minecraft TCP traffic from the public
+        internet into the homelab. Can see connection metadata (IP, bytes).
+      </li>
+    </ul>
+
+    <h2>Deletion</h2>
+    <p>
+      You can delete your personal Minecraft server at any time from
+      <a href="/minecraft/">the Minecraft page</a>. User accounts and all
+      associated profile content can be deleted on request — email
+      <a href="mailto:manolachestefan13@gmail.com">manolachestefan13@gmail.com</a>
+      from the address attached to your Cartofia account and the account plus all
+      content will be removed within 14 days.
+    </p>
+    <p>
+      Personal Minecraft servers that have had no activity for 90 days are
+      automatically removed by the nightly cleanup job; the world is archived
+      for an additional 90 days then deleted.
+    </p>
+
+    <h2>Security</h2>
+    <p>
+      Cartofia runs on a single homelab server. Reasonable care is taken — HTTPS
+      everywhere, OIDC-authenticated APIs, secrets kept out of source control —
+      but this is a personal project, not an enterprise. If a serious incident
+      happens, affected users will be contacted by email.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      Questions, data requests, bug reports: email
+      <a href="mailto:manolachestefan13@gmail.com">manolachestefan13@gmail.com</a>.
+    </p>
+  </main>
+
+  <script src="/assets/theme.js?v=1"></script>
+  <script src="/assets/site.js?v=7"></script>
+  <script src="/assets/notifications.js?v=1" defer></script>
+</body>
+</html>
