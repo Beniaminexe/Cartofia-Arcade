@@ -271,6 +271,27 @@ config = {
     <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
 
     <style>
+
+        /* iOS pseudo-fullscreen: Safari refuses the Fullscreen API on
+           non-video elements, so we fake it by hiding chrome + stretching
+           the canvas across the whole viewport. */
+        body.pseudo-fs { overflow: hidden; }
+        body.pseudo-fs .arcade-nav,
+        body.pseudo-fs .arcade-game-header,
+        body.pseudo-fs .canvas-hint { display: none !important; }
+        body.pseudo-fs canvas.emscripten {
+            position: fixed !important;
+            top: 0 !important; left: 0 !important;
+            right: 0 !important; bottom: 0 !important;
+            width: 100vw !important; height: 100vh !important;
+        }
+        body.pseudo-fs .mobile-controls {
+            bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+        }
+        body.pseudo-fs .back-to-arcade {
+            display: none !important;
+        }
+
         /* === Cartofia arcade design system overlay === */
         /* Override Pygbag body background */
         body { background-color: #0a0e1a !important; font-family: 'Outfit', sans-serif !important; }
@@ -1151,16 +1172,40 @@ frameborder="1"
         function fsElement() {
             return document.fullscreenElement || document.webkitFullscreenElement || null;
         }
+        function nativeSupported() {
+            return !!(target.requestFullscreen || target.webkitRequestFullscreen);
+        }
+        function pseudoActive() {
+            return document.body.classList.contains("pseudo-fs");
+        }
         function enter() {
-            if (target.requestFullscreen) return target.requestFullscreen();
-            if (target.webkitRequestFullscreen) return target.webkitRequestFullscreen();
+            try {
+                if (target.requestFullscreen) {
+                    var p = target.requestFullscreen();
+                    if (p && p.catch) p.catch(function () { enterPseudo(); });
+                    return;
+                }
+                if (target.webkitRequestFullscreen) {
+                    target.webkitRequestFullscreen();
+                    return;
+                }
+            } catch (_e) {}
+            // iOS Safari lands here
+            enterPseudo();
         }
         function exit() {
-            if (document.exitFullscreen) return document.exitFullscreen();
-            if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+            try {
+                if (document.exitFullscreen && fsElement()) { document.exitFullscreen(); return; }
+                if (document.webkitExitFullscreen && fsElement()) { document.webkitExitFullscreen(); return; }
+            } catch (_e) {}
+            exitPseudo();
         }
+        function enterPseudo() { document.body.classList.add("pseudo-fs"); window.dispatchEvent(new Event("resize")); }
+        function exitPseudo()  { document.body.classList.remove("pseudo-fs"); window.dispatchEvent(new Event("resize")); }
+
         btn.addEventListener("click", function () {
-            try { fsElement() ? exit() : enter(); } catch (_e) {}
+            if (fsElement() || pseudoActive()) exit();
+            else                               enter();
         });
     })();
 
@@ -1186,7 +1231,7 @@ frameborder="1"
             return false;
         }
 
-        function setVolume(v) {
+        function setPygameVolume(v) {
             return runPy(
                 "import pygame\n" +
                 "try:\n" +
@@ -1196,14 +1241,41 @@ frameborder="1"
             );
         }
 
-        /* Keep trying to apply the default volume for ~45s after load. The
-           Python runtime, pygame import, and music.play() all come up on
-           their own schedule. */
+        // iOS fallbacks: mute every <audio>/<video> and (resume|suspend) any
+        // AudioContext we can find. Pygbag's SDL mixer uses one of these
+        // under the hood, and both are safe to toggle alongside the pygame
+        // call that may not have taken effect yet.
+        function muteDomAudio(muteIt) {
+            document.querySelectorAll("audio, video").forEach(function (el) {
+                try {
+                    el.muted = muteIt;
+                    if (!muteIt && el.volume < 0.05) el.volume = DEFAULT_VOL;
+                } catch (_) {}
+            });
+        }
+        function controlAudioContext(muteIt) {
+            // Pygbag parks its context on Module.audioContext or SDL2.audioContext
+            var candidates = [];
+            if (window.Module) {
+                if (window.Module.audioContext) candidates.push(window.Module.audioContext);
+                if (window.Module.SDL && window.Module.SDL.audioContext) candidates.push(window.Module.SDL.audioContext);
+            }
+            if (window.SDL && window.SDL.audioContext) candidates.push(window.SDL.audioContext);
+            candidates.forEach(function (ctx) {
+                try {
+                    if (muteIt) { if (ctx.state === "running") ctx.suspend(); }
+                    else        { if (ctx.state !== "running") ctx.resume(); }
+                } catch (_) {}
+            });
+        }
+
+        // Try to lower the default volume once pygame mixer is up. Harmless
+        // on iOS even if runPy keeps failing — the DOM/context fallbacks
+        // keep the mute button working regardless.
         var tries = 0;
         var tick = setInterval(function () {
             tries += 1;
-            if (!muted && setVolume(DEFAULT_VOL)) {
-                /* keep applying for a bit — mixer may be re-initialised */
+            if (!muted && setPygameVolume(DEFAULT_VOL)) {
                 if (tries >= 20) clearInterval(tick);
             } else if (tries >= 90) {
                 clearInterval(tick);
@@ -1212,7 +1284,9 @@ frameborder="1"
 
         btn.addEventListener("click", function () {
             muted = !muted;
-            setVolume(muted ? 0 : DEFAULT_VOL);
+            setPygameVolume(muted ? 0 : DEFAULT_VOL);  // best-effort
+            muteDomAudio(muted);                        // DOM audio tags
+            controlAudioContext(muted);                 // WebAudio context
             btn.classList.toggle("is-muted", muted);
             btn.setAttribute("aria-label", muted ? "Unmute music" : "Mute music");
             btn.title = muted ? "Unmute music" : "Mute music";
