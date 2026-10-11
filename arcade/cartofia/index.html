@@ -305,19 +305,46 @@ config = {
          on Module. The Mute button walks __cartofiaAudioContexts and
          suspend()s / resume()s each one. */
       (function () {
+        // AudioContext — WebAudio graph (pygbag/SDL2 use it on desktop/Android).
         var Ctor = window.AudioContext || window.webkitAudioContext;
-        if (!Ctor) return;
-        var list = window.__cartofiaAudioContexts = [];
-        function Wrapped(options) {
-          var ctx = new Ctor(options);
-          list.push(ctx);
-          return ctx;
+        if (Ctor) {
+          var ctxList = window.__cartofiaAudioContexts = [];
+          function WrappedCtx(options) {
+            var ctx = new Ctor(options);
+            ctxList.push(ctx);
+            return ctx;
+          }
+          WrappedCtx.prototype = Ctor.prototype;
+          try {
+            window.AudioContext = WrappedCtx;
+            if (window.webkitAudioContext) window.webkitAudioContext = WrappedCtx;
+          } catch (_e) {}
         }
-        Wrapped.prototype = Ctor.prototype;
-        try {
-          window.AudioContext = Wrapped;
-          if (window.webkitAudioContext) window.webkitAudioContext = Wrapped;
-        } catch (_e) {}
+
+        // Audio constructor — pygbag's music + sound effects on iOS Safari
+        // flow through HTMLAudioElement, often detached from the DOM.
+        // Track every element the game creates.
+        var mediaList = window.__cartofiaMediaEls = new Set();
+        var AudioCtor = window.Audio;
+        if (AudioCtor) {
+          function WrappedAudio() {
+            var el = Reflect.construct(AudioCtor, arguments);
+            mediaList.add(el);
+            return el;
+          }
+          WrappedAudio.prototype = AudioCtor.prototype;
+          try { window.Audio = WrappedAudio; } catch (_e) {}
+        }
+
+        // Also catch anything that calls .play() on a media element — covers
+        // document.createElement('audio') and any wrapper libs.
+        if (window.HTMLMediaElement) {
+          var origPlay = HTMLMediaElement.prototype.play;
+          HTMLMediaElement.prototype.play = function () {
+            mediaList.add(this);
+            return origPlay.apply(this, arguments);
+          };
+        }
       })();
     </script>
 
@@ -1351,12 +1378,22 @@ frameborder="1"
         // under the hood, and both are safe to toggle alongside the pygame
         // call that may not have taken effect yet.
         function muteDomAudio(muteIt) {
+            // Attached elements the DOM knows about.
             document.querySelectorAll("audio, video").forEach(function (el) {
                 try {
                     el.muted = muteIt;
                     if (!muteIt && el.volume < 0.05) el.volume = DEFAULT_VOL;
                 } catch (_) {}
             });
+            // Detached elements pygbag created via `new Audio()` / createElement.
+            if (window.__cartofiaMediaEls) {
+                window.__cartofiaMediaEls.forEach(function (el) {
+                    try {
+                        el.muted = muteIt;
+                        if (!muteIt && el.volume < 0.05) el.volume = DEFAULT_VOL;
+                    } catch (_) {}
+                });
+            }
         }
         function controlAudioContext(muteIt) {
             // Primary: contexts we intercepted at construction time (see
