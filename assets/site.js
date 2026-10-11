@@ -141,28 +141,37 @@
     else            scheduleProactiveRefresh(tok);
   })();
 
-  /* Global fetch wrapper — on any 401 from /api/* with Authorization: Bearer,
-     silently refresh the token and retry once. Pages that use `fetch()`
-     normally keep working across token expiry without having to know. */
+  /* Global fetch wrapper — two jobs:
+     1. Automatically include credentials (the cartofia_session cookie) on any
+        /api/* request, so cookie auth works everywhere without each caller
+        having to opt in with { credentials: "include" }.
+     2. Legacy: on 401 from an Authorization: Bearer request, silently
+        refresh the stored JWT and retry once. Preserved so pages that still
+        use the old flow keep working during migration. */
   (function wrapFetchFor401() {
     var orig = window.fetch;
     if (!orig || orig.__cartofiaWrapped) return;
     async function wrapped(input, init) {
+      var url = typeof input === "string" ? input : (input && input.url) || "";
+      var isApi = url.indexOf("/api/") === 0 || url.indexOf("/api/") > 0 && url.indexOf("://") > 0;
+      if (isApi) {
+        init = Object.assign({}, init || {});
+        if (!init.credentials) init.credentials = "include";
+      }
       var resp = await orig(input, init);
       try {
         if (resp.status !== 401) return resp;
-        var url = typeof input === "string" ? input : (input && input.url) || "";
-        if (!url.startsWith("/api/")) return resp;
+        if (!isApi) return resp;
         var hadAuth = !!(init && init.headers &&
           (init.headers.Authorization || init.headers.authorization));
         if (!hadAuth) return resp;
         var newToken = await refreshTokensSilently();
         if (!newToken) return resp;
-        /* Shallow-clone init with the new header. */
         var retryInit = Object.assign({}, init || {});
         retryInit.headers = Object.assign({}, (init && init.headers) || {}, {
           Authorization: "Bearer " + newToken,
         });
+        if (!retryInit.credentials) retryInit.credentials = "include";
         return await orig(input, retryInit);
       } catch (_) {
         return resp;
@@ -206,9 +215,33 @@
   }
 
   async function fetchSession() {
+    /* Preferred path: ask the backend who we are via the session cookie.
+       No token round-trip, works even if localStorage is empty. */
+    try {
+      var meResp = await fetch("/api/auth/me", { credentials: "include" });
+      if (meResp.ok) {
+        var meData = await meResp.json();
+        if (meData && meData.authenticated && meData.user) {
+          return {
+            authenticated: true,
+            user: {
+              username: meData.user.username || meData.user.user_id || "",
+              email:    meData.user.email || "",
+              groups:   meData.user.groups || [],
+            },
+          };
+        }
+        /* /api/auth/me returned {authenticated:false} — user has no cookie
+           session. Fall through to legacy Bearer flow for backward compat. */
+      }
+    } catch (_e) {
+      /* network error — fall through to legacy flow */
+    }
+
     try {
       var token = getStoredToken("oidc_access_token");
-      var headers = token ? { "Authorization": "Bearer " + token } : {};
+      if (!token) return { authenticated: false };
+      var headers = { "Authorization": "Bearer " + token };
       var response = await fetch(OIDC_USERINFO_URL, {
         credentials: "include",
         headers: headers,
@@ -383,11 +416,13 @@
       var action = event.target && event.target.closest("[data-logout]");
       if (action) {
         event.preventDefault();
+        /* Clear legacy JWT storage, then hit the backend logout which clears
+           the session cookie and redirects through Authentik's end-session. */
         clearStoredTokens();
         document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure";
         renderAccountDropdown(menu, { authenticated: false });
         setExpanded(button, dropdown, false);
-        window.location.href = OIDC_LOGOUT_URL;
+        window.location.href = "/api/auth/logout";
       }
     });
 

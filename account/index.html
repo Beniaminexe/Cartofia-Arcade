@@ -605,7 +605,7 @@
 
 
   <script src="/assets/theme.js?v=1"></script>
-  <script src="/assets/site.js?v=7"></script>
+  <script src="/assets/site.js?v=8"></script>
   <script src="/assets/notifications.js?v=1" defer></script>
   <script>
     /* ============================================================
@@ -797,36 +797,11 @@
 
     /* Start login (PKCE) */
     async function startLogin() {
-      try {
-        const remember = refs.rememberMe ? refs.rememberMe.checked : false;
-        if (remember) localStorage.setItem("cartofia_remember", "true");
-        else          localStorage.removeItem("cartofia_remember");
-
-        const disc = await discover();
-        const pkce = await generatePKCE();
-        const state = randomString(16);
-
-        sessionStorage.setItem("oidc_pkce_verifier", pkce.verifier);
-        sessionStorage.setItem("oidc_state", state);
-
-        // Always request offline_access so Authentik issues a refresh token.
-        // Without it, access tokens expire silently and the user is logged out.
-        let scope = "openid profile email groups offline_access";
-
-        const params = new URLSearchParams({
-          response_type:        "code",
-          client_id:            OIDC.CLIENT_ID,
-          redirect_uri:         OIDC.REDIRECT_URI,
-          scope:                scope,
-          code_challenge:       pkce.challenge,
-          code_challenge_method:"S256",
-          state:                state,
-        });
-        window.location.href = disc.authorization_endpoint + "?" + params.toString();
-      } catch (err) {
-        console.error("startLogin failed:", err);
-        showView("error");
-      }
+      /* New flow: let the backend own the PKCE round-trip. The browser just
+         gets a httpOnly session cookie at the end. No tokens in storage, no
+         refresh dance, no multi-tab races. */
+      const next = "/account/";
+      window.location.href = "/api/auth/start?next=" + encodeURIComponent(next);
     }
 
     /* Callback handler — runs on /account/callback/ */
@@ -888,18 +863,12 @@
     /* Logout */
     async function doLogout(ev) {
       if (ev) ev.preventDefault();
-      const idToken = getIdToken();
-      clearTokens();
-      try {
-        const disc = await discover();
-        const params = new URLSearchParams({
-          post_logout_redirect_uri: OIDC.POST_LOGOUT_REDIRECT_URI,
-        });
-        if (idToken) params.set("id_token_hint", idToken);
-        window.location.href = disc.end_session_endpoint + "?" + params.toString();
-      } catch (_err) {
-        window.location.href = OIDC.POST_LOGOUT_REDIRECT_URI;
-      }
+      /* Clear any legacy localStorage tokens so a stale JWT can't resurrect
+         the old flow after a cookie logout. */
+      try { clearTokens(); } catch (_) {}
+      /* GET /api/auth/logout clears the cookie and redirects to Authentik's
+         end-session, which then redirects back to /. */
+      window.location.href = "/api/auth/logout";
     }
 
     /* Populate dashboard with userinfo + profile data */
