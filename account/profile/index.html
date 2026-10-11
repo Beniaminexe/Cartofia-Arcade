@@ -966,8 +966,7 @@ body {
         <span class="display-name" id="displayName">Loading…</span>
         <span class="username" id="usernameDisplay">@—</span>
         <div class="status-badges">
-          <span class="status-badge badge-online">● Online</span>
-          <span class="status-badge badge-role" id="roleBadge">Member</span>
+          <span id="profileStatusBadges" class="status-badges"></span>
         </div>
       </div>
       <div class="tagline" id="tagline">—</div>
@@ -1241,6 +1240,39 @@ async function apiUpload(url, file) {
   });
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
   return r.json();
+}
+
+
+/* Status badges (ONLINE + groups) rendered from /api/profile/me so what
+   the owner sees matches what strangers see on /u/<slug>. */
+const _ME_GROUP_DISPLAY = {
+  "member":           "Member",
+  "archive_view":     "Archive Viewer",
+  "archive_upload":   "Uploader",
+  "archive_admin":    "Archive Admin",
+  "arcade_player":    "Player",
+  "arcade_admin":     "Arcade Admin",
+  "minecraft_admin":  "MC Admin",
+};
+function renderOwnerBadges(me) {
+  const host = document.getElementById('profileStatusBadges');
+  if (!host) return;
+  host.innerHTML = '';
+  if (me && (me.is_online === undefined || me.is_online)) {
+    const p = document.createElement('span');
+    p.className = 'status-badge badge-online';
+    p.textContent = '● ONLINE';
+    host.appendChild(p);
+  }
+  const groups = (me && (me.groups || (me.user && me.user.groups))) || [];
+  groups.forEach(g => {
+    const label = _ME_GROUP_DISPLAY[g];
+    if (!label) return;
+    const p = document.createElement('span');
+    p.className = 'status-badge badge-role';
+    p.textContent = label.toUpperCase();
+    host.appendChild(p);
+  });
 }
 
 /* ─────────────────────────────────────────────
@@ -1708,6 +1740,7 @@ function renderProfile(data) {
 
   // Theme
   applyTheme(profile.theme || 'ocean', false);
+  renderOwnerBadges({ ...profile, is_online: true, groups: (profileData && profileData.user && profileData.user.groups) || profile.groups || [] });
 
   // Stats
   renderStats(stats || {});

@@ -739,9 +739,7 @@
         <div class="identity-top">
           <span class="display-name" id="displayName">Loading…</span>
           <a class="username-link" id="usernameDisplay" href="#" title="Public profile link">@—</a>
-          <div class="status-badges">
-            <span class="status-badge badge-role" id="roleBadge">Member</span>
-          </div>
+          <div class="status-badges" id="statusBadges"></div>
         </div>
         <div class="tagline" id="tagline">—</div>
       </div>
@@ -912,6 +910,38 @@ const THEMES = {
 };
 
 const THEME_NAMES = { ocean:'Deep Ocean', neon:'Neon Night', ember:'Ember', matrix:'Matrix', synthwave:'Synthwave' };
+
+
+/* Render ONLINE + group pills from the public profile data. */
+const _U_GROUP_DISPLAY = {
+  "member":           "Member",
+  "archive_view":     "Archive Viewer",
+  "archive_upload":   "Uploader",
+  "archive_admin":    "Archive Admin",
+  "arcade_player":    "Player",
+  "arcade_admin":     "Arcade Admin",
+  "minecraft_admin":  "MC Admin",
+};
+function renderStatusBadges(profile) {
+  const host = document.getElementById('statusBadges');
+  if (!host) return;
+  host.innerHTML = '';
+  if (profile && profile.is_online) {
+    const p = document.createElement('span');
+    p.className = 'status-badge badge-online';
+    p.textContent = '● ONLINE';
+    host.appendChild(p);
+  }
+  const groups = (profile && profile.groups) || [];
+  groups.forEach(g => {
+    const label = _U_GROUP_DISPLAY[g];
+    if (!label) return;
+    const p = document.createElement('span');
+    p.className = 'status-badge badge-role';
+    p.textContent = label.toUpperCase();
+    host.appendChild(p);
+  });
+}
 
 function applyTheme(name) {
   const t = THEMES[name] || THEMES.ocean;
@@ -1168,6 +1198,7 @@ function renderProfile(data) {
 
   // Theme (read-only: apply owner's theme)
   applyTheme(profile.theme || 'ocean');
+  renderStatusBadges(profile);
 
   // Stats & level
   renderStats(stats || {});
