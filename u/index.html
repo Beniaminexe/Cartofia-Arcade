@@ -1213,7 +1213,7 @@ function renderProfile(data) {
   // Theme (read-only: apply owner's theme)
   applyTheme(profile.theme || 'ocean');
   renderStatusBadges(profile);
-  fetch('/api/profile/' + encodeURIComponent(username) + '/achievements')
+  fetch('/api/profile/' + encodeURIComponent(profile.username_slug || '') + '/achievements')
     .then(r => r.ok ? r.json() : null)
     .then(d => {
       window.achievements_data = (d && d.achievements) || [];
