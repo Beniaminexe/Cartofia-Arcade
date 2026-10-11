@@ -1258,13 +1258,14 @@ function renderOwnerBadges(me) {
   const host = document.getElementById('profileStatusBadges');
   if (!host) return;
   host.innerHTML = '';
-  if (me && (me.is_online === undefined || me.is_online)) {
+  if (!me) return;
+  if (me.is_online !== false) {
     const p = document.createElement('span');
     p.className = 'status-badge badge-online';
     p.textContent = '● ONLINE';
     host.appendChild(p);
   }
-  const groups = (me && (me.groups || (me.user && me.user.groups))) || [];
+  const groups = me.groups || [];
   groups.forEach(g => {
     const label = _ME_GROUP_DISPLAY[g];
     if (!label) return;
@@ -1723,12 +1724,6 @@ function renderProfile(data) {
   document.getElementById('tagline').textContent = profile.tagline || '';
   document.getElementById('bioText').textContent = profile.bio || 'No bio yet.';
 
-  // Role badge from groups
-  const groups = (window._profileGroups || []);
-  document.getElementById('roleBadge').textContent =
-    groups.includes('archive_admin') ? 'Admin' :
-    groups.includes('archive_upload') ? 'Contributor' : 'Member';
-
   // Bio meta
   document.getElementById('joinedDate').textContent = joinedFmt(profile.created_at);
 
@@ -1740,7 +1735,7 @@ function renderProfile(data) {
 
   // Theme
   applyTheme(profile.theme || 'ocean', false);
-  renderOwnerBadges({ ...profile, is_online: true, groups: (profileData && profileData.user && profileData.user.groups) || profile.groups || [] });
+  renderOwnerBadges(profileData || {});
 
   // Stats
   renderStats(stats || {});
