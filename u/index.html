@@ -1333,21 +1333,17 @@ async function wireFriendButton(profileSlug) {
     if (state === 'friends') {
       btn.innerHTML = CHECK_ICON + ' Friends';
       btn.classList.add('is-friend');
-      btn.title = 'Remove friend';
       btn.onclick = () => act('remove');
     } else if (state === 'outgoing') {
       btn.innerHTML = FRIEND_ICON + ' Cancel request';
       btn.classList.add('is-pending');
-      btn.title = 'Cancel outgoing friend request';
       btn.onclick = () => act('cancel');
     } else if (state === 'incoming') {
       btn.innerHTML = CHECK_ICON + ' Accept request';
       btn.classList.add('is-pending');
-      btn.title = 'Accept this friend request';
       btn.onclick = () => act('accept');
     } else {
       btn.innerHTML = FRIEND_ICON + ' Add Friend';
-      btn.title = 'Send a friend request';
       btn.onclick = () => act('add');
     }
   }
