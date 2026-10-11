@@ -1145,7 +1145,8 @@ body {
   <div class="theme-dot" style="background:linear-gradient(135deg,#e11d48,#9333ea);" data-theme="synthwave" title="Synthwave"></div>
 </div>
 
-<script src="/assets/site.js?v=6"></script>
+<script src="/assets/theme.js?v=1"></script>
+  <script src="/assets/site.js?v=6"></script>
 <script>
 /* ─────────────────────────────────────────────
    Token helpers — same storage site.js uses
@@ -1243,37 +1244,18 @@ async function apiUpload(url, file) {
 }
 
 /* ─────────────────────────────────────────────
-   Theme system
+   Theme system — thin wrapper around the shared
+   window.CartofiaTheme defined in /assets/theme.js
 ───────────────────────────────────────────── */
-const THEMES = {
-  ocean:     { accent:'#3b82f6', accentGlow:'rgba(59,130,246,0.4)',  accentSoft:'rgba(59,130,246,0.15)',  accent2:'#06b6d4', accent3:'#8b5cf6', textAccent:'#7cb3ff' },
-  neon:      { accent:'#a855f7', accentGlow:'rgba(168,85,247,0.4)',  accentSoft:'rgba(168,85,247,0.15)',  accent2:'#ec4899', accent3:'#f472b6', textAccent:'#d8b4fe' },
-  ember:     { accent:'#f59e0b', accentGlow:'rgba(245,158,11,0.4)',  accentSoft:'rgba(245,158,11,0.15)',  accent2:'#ef4444', accent3:'#f97316', textAccent:'#fcd34d' },
-  matrix:    { accent:'#22c55e', accentGlow:'rgba(34,197,94,0.4)',   accentSoft:'rgba(34,197,94,0.15)',   accent2:'#06b6d4', accent3:'#10b981', textAccent:'#86efac' },
-  synthwave: { accent:'#e11d48', accentGlow:'rgba(225,29,72,0.4)',   accentSoft:'rgba(225,29,72,0.15)',   accent2:'#9333ea', accent3:'#ec4899', textAccent:'#fda4af' },
-};
-
-const THEME_NAMES = { ocean:'Deep Ocean', neon:'Neon Night', ember:'Ember', matrix:'Matrix', synthwave:'Synthwave' };
+const THEME_NAMES = window.CartofiaTheme.THEME_NAMES;
 
 function applyTheme(name, save) {
-  const t = THEMES[name] || THEMES.ocean;
-  const r = document.documentElement;
-  r.style.setProperty('--accent', t.accent);
-  r.style.setProperty('--accent-glow', t.accentGlow);
-  r.style.setProperty('--accent-soft', t.accentSoft);
-  r.style.setProperty('--accent-2', t.accent2);
-  r.style.setProperty('--accent-3', t.accent3);
-  r.style.setProperty('--text-accent', t.textAccent);
-
+  window.CartofiaTheme.apply(name, !!save);
   document.querySelectorAll('.theme-dot').forEach(d => {
     d.classList.toggle('active', d.dataset.theme === name);
   });
-
-  document.getElementById('metaTheme').textContent = THEME_NAMES[name] || name;
-
-  if (save) {
-    apiPut('/api/profile/me', { theme: name }).catch(() => {});
-  }
+  var meta = document.getElementById('metaTheme');
+  if (meta) meta.textContent = THEME_NAMES[name] || name;
 }
 
 document.querySelectorAll('.theme-dot').forEach(dot => {
