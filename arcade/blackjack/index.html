@@ -71,27 +71,100 @@
     .cards {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      min-height: 52px;
+      gap: 10px;
+      min-height: 92px;
+      align-items: center;
     }
 
-    /* Individual card chips */
-    .card-chip {
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.18);
-      padding: 8px 10px;
-      background: #f8f6f0;
+    /* === Casino-style playing cards === */
+    .pcard {
+      --pc-w: 56px;
+      --pc-h: 80px;
+      position: relative;
+      width: var(--pc-w);
+      height: var(--pc-h);
+      border-radius: 7px;
+      background: linear-gradient(180deg, #fdfbf3, #ece7d6);
       color: #1a1a1a;
-      font-family: var(--font-mono);
-      font-size: 15px;
+      box-shadow:
+        0 3px 8px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.9),
+        inset 0 -1px 0 rgba(0,0,0,.08);
+      border: 1px solid rgba(0,0,0,0.12);
+      font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
       font-weight: 700;
-      min-width: 44px;
-      text-align: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.8);
-      letter-spacing: 0.02em;
+      overflow: hidden;
+      transform-origin: center bottom;
+      user-select: none;
     }
-    .card-chip.red { color: #c41a1a; }
-    .card-chip.hidden-card { background: rgba(30,60,50,.6); color: var(--text-muted); border-color: rgba(84,217,178,.2); }
+    .pcard-red   { color: #c41a1a; }
+    .pcard-black { color: #0d1620; }
+
+    .pcard .pcard-corner {
+      position: absolute;
+      font-size: 13px;
+      line-height: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+    }
+    .pcard .pcard-corner.tl { top: 5px;    left: 5px; }
+    .pcard .pcard-corner.br { bottom: 5px; right: 5px; transform: rotate(180deg); }
+    .pcard .pcard-suit { font-size: 11px; line-height: 1; }
+
+    .pcard .pcard-pip {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      line-height: 1;
+      opacity: 0.9;
+    }
+
+    /* Empty slot (dashed outline, no shadow) */
+    .pcard-empty {
+      background: transparent;
+      border: 1px dashed rgba(255,255,255,0.14);
+      box-shadow: none;
+    }
+
+    /* Face-down back pattern */
+    .pcard-back {
+      background:
+        repeating-linear-gradient(45deg,
+          rgba(255,255,255,0.08) 0 6px,
+          rgba(255,255,255,0.0)  6px 12px),
+        linear-gradient(180deg, #163252, #0d2037);
+      border-color: rgba(79,125,249,0.35);
+      box-shadow:
+        0 3px 8px rgba(0,0,0,.5),
+        inset 0 0 0 2px rgba(79,125,249,0.25);
+    }
+    .pcard-back::after {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(79,125,249,0.5);
+    }
+
+    /* Deal animation (newly added cards slide + fade in) */
+    @keyframes pcard-deal {
+      from { transform: translateY(-14px) rotate(-8deg); opacity: 0; }
+      to   { transform: translateY(0)    rotate(0deg);   opacity: 1; }
+    }
+    .pcard-fresh { animation: pcard-deal 220ms cubic-bezier(.25,.9,.3,1.2) both; }
+
+    /* Larger cards in the dealer zone */
+    .dealer-zone .pcard {
+      --pc-w: 64px;
+      --pc-h: 92px;
+    }
+    .dealer-zone .pcard .pcard-pip { font-size: 36px; }
+    .dealer-zone .pcard .pcard-corner { font-size: 14px; }
 
     .dealer-total {
       font-family: var(--font-mono);
@@ -144,6 +217,27 @@
       color: var(--text-muted);
       font-family: var(--font-mono);
     }
+    .player-item-empty { color: var(--text-muted); font-size: 13px; text-align: center; padding: 14px; }
+
+    /* Round result banner */
+    .round-result {
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      font-weight: 600;
+      text-align: center;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      letter-spacing: 0.02em;
+    }
+    .round-result.win  { border-color: rgba(74,222,128,.55); background: rgba(74,222,128,.08);  color: #a7f0c7; }
+    .round-result.lose { border-color: rgba(246,88,88,.55);  background: rgba(246,88,88,.08);   color: #ff9c9c; }
+    .round-result.push { border-color: rgba(246,183,60,.55); background: rgba(246,183,60,.08);  color: #ffd89b; }
+    .round-result.warn { border-color: rgba(246,183,60,.55); color: #ffd89b; }
+    .round-result.ok   { border-color: rgba(74,222,128,.55); color: #a7f0c7; }
+    .round-result[hidden] { display: none; }
 
     /* Action controls */
     .controls {
@@ -151,7 +245,95 @@
       flex-wrap: wrap;
       gap: 8px;
     }
-    .controls .btn { min-height: 44px; flex: 1; min-width: 80px; justify-content: center; }
+    .controls .btn { min-height: 44px; flex: 1; min-width: 90px; justify-content: center; }
+
+    /* Wallet pills */
+    .wallet-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid rgba(79,125,249,0.22);
+      background: linear-gradient(180deg, rgba(79,125,249,0.08), rgba(79,125,249,0.02));
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .wallet-chip-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffd368;
+    }
+    .wallet-chip-pill::before {
+      content: "";
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffe29b 0%, #ffb331 55%, #a66f10 100%);
+      box-shadow: 0 0 6px rgba(255,180,50,0.5), inset 0 0 0 1px rgba(255,255,255,0.3);
+      flex-shrink: 0;
+    }
+    .wallet-stats { font-size: 11.5px; color: var(--text-muted); font-family: var(--font-mono); flex: 1 1 100%; }
+    #walletBanner {
+      font-size: 12px;
+      color: #ffd89b;
+      border: 1px dashed rgba(246,183,60,0.4);
+      background: rgba(246,183,60,0.06);
+      padding: 7px 10px;
+      border-radius: 8px;
+    }
+    #walletBanner[hidden] { display: none; }
+
+    /* Bet input row */
+    .bet-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .bet-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+    .bet-stepper {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--border-h);
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.04);
+    }
+    .bet-stepper button {
+      background: transparent;
+      color: var(--text-primary);
+      border: 0;
+      width: 36px;
+      height: 36px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .bet-stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
+    .bet-stepper input {
+      width: 72px;
+      background: transparent;
+      border: 0;
+      color: #ffd368;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      text-align: center;
+      height: 36px;
+      outline: none;
+    }
+    .bet-stepper input::-webkit-outer-spin-button,
+    .bet-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
     /* Phase pill */
     .phase-pill {
@@ -244,6 +426,32 @@
     @media (max-width: 980px) {
       .blackjack-layout { grid-template-columns: 1fr; }
     }
+    @media (max-width: 540px) {
+      .pcard { --pc-w: 48px; --pc-h: 70px; }
+      .pcard .pcard-pip { font-size: 26px; }
+      .dealer-zone .pcard { --pc-w: 56px; --pc-h: 82px; }
+      .dealer-zone .pcard .pcard-pip { font-size: 30px; }
+      .cards { gap: 8px; }
+      .controls .btn { flex: 1 1 100px; min-height: 48px; }
+      .bet-stepper button { width: 40px; height: 40px; }
+      .bet-stepper input { width: 68px; height: 40px; font-size: 15px; }
+      .wallet-chip-pill { font-size: 17px; }
+      /* Sticky action bar on narrow screens so hit/stand/double are always
+         reachable even on a long table. */
+      .table-card .controls {
+        position: sticky;
+        bottom: 0;
+        padding: 10px 12px;
+        margin: 0 -16px -16px;
+        background: linear-gradient(180deg, rgba(5,20,16,0) 0%, rgba(4,14,12,0.95) 40%, rgba(4,14,12,0.98) 100%);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border-top: 1px solid rgba(84,217,178,0.18);
+        border-radius: 0 0 18px 18px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        z-index: 5;
+      }
+    }
   </style>
 </head>
 <body>
@@ -310,18 +518,42 @@
               <div id="dealerTotal" class="dealer-total"></div>
             </div>
             <ul id="playersList" class="player-list"></ul>
+            <div id="roundResult" class="round-result" hidden></div>
             <div class="controls">
               <button id="startRoundBtn" class="btn btn-primary" type="button">Start Round</button>
               <button id="hitBtn" class="btn btn-ghost" type="button">Hit</button>
               <button id="standBtn" class="btn btn-ghost" type="button">Stand</button>
+              <button id="doubleBtn" class="btn btn-ghost" type="button" title="Double your bet, take one card, then stand">Double</button>
             </div>
           </section>
 
           <!-- RIGHT: Lobby -->
           <aside class="lobby-card">
             <div>
+              <p class="panel-section-label">Bankroll</p>
+              <div class="wallet-row">
+                <span class="wallet-chip-pill"><span id="walletChips">—</span></span>
+                <button id="topupBtn" class="btn btn-ghost btn-sm" type="button" hidden>Claim free chips</button>
+                <span id="walletStats" class="wallet-stats">Sign in to play for chips.</span>
+              </div>
+              <div id="walletBanner" hidden></div>
+            </div>
+
+            <div>
+              <p class="panel-section-label">Your Bet</p>
+              <div class="bet-row">
+                <span class="bet-label">Chips per hand</span>
+                <div class="bet-stepper">
+                  <button id="betDown" type="button" aria-label="Decrease bet">−</button>
+                  <input id="betInput" type="number" min="10" max="10000" step="10" value="100" inputmode="numeric" />
+                  <button id="betUp" type="button" aria-label="Increase bet">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div>
               <p class="panel-section-label">Room Lobby</p>
-              <p class="game-note" style="margin-bottom:10px;">Hit, stand, or double down. Closest to 21 wins.</p>
+              <p class="game-note" style="margin-bottom:10px;">Hit, stand, or double down. Dealer stands on all 17s. Blackjack pays 3:2.</p>
             </div>
 
             <div class="online-row">
@@ -373,6 +605,6 @@
     obs.observe(phasePillEl, { childList: true, subtree: true, characterData: true });
   })();
   </script>
-  <script src="/arcade/blackjack/game.js?v=3"></script>
+  <script src="/arcade/blackjack/game.js?v=4"></script>
 </body>
 </html>
