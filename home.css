@@ -1423,3 +1423,25 @@ header, main, section, div.stats-strip, div.final-cta, footer {
   cursor: not-allowed;
   pointer-events: none;
 }
+
+
+/* ===================================================================
+   Mobile: shrink the hero so the fold doesn't swallow the stats strip
+   =================================================================== */
+@media (max-width: 768px) {
+  .hero {
+    min-height: auto;
+    padding-top: calc(var(--nav-h) + 20px);
+    padding-bottom: 32px;
+  }
+  .hero-headline { font-size: clamp(30px, 9vw, 44px); }
+  .hero-lead     { font-size: 14.5px; max-width: 42ch; }
+  .hero-actions  { margin-bottom: 14px; }
+  .hero-pillars  { margin-top: 16px; font-size: 10.5px; gap: 10px; }
+  .hero-card     { margin-top: 24px; }
+  .stats-strip   { padding: 20px var(--gutter); }
+  .stats-inner.four-pillars { gap: 14px; }
+}
+@media (max-width: 420px) {
+  .hero-headline { font-size: clamp(26px, 8.4vw, 36px); }
+}
