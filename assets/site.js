@@ -58,34 +58,119 @@
   /* Silently exchange a stored refresh token for a new access token.
      Writes the new tokens back to the same storage tier (local or session).
      Returns the new access token string, or null on failure. */
+  /* Decode a JWT access token and return seconds until exp, or null. */
+  function tokenSecondsLeft(token) {
+    if (!token || typeof token !== "string") return null;
+    var parts = token.split(".");
+    if (parts.length < 2) return null;
+    try {
+      var payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (payload.length % 4) payload += "=";
+      var claims = JSON.parse(atob(payload));
+      if (!claims.exp) return null;
+      return Math.max(0, claims.exp - Math.floor(Date.now() / 1000));
+    } catch (_) { return null; }
+  }
+
+  var _refreshTimer = null;
+  var _inFlightRefresh = null;
+
+  function scheduleProactiveRefresh(accessToken) {
+    if (_refreshTimer) { clearTimeout(_refreshTimer); _refreshTimer = null; }
+    var secsLeft = tokenSecondsLeft(accessToken);
+    if (secsLeft == null) return;
+    /* Refresh 60s before expiry; clamp to a reasonable window */
+    var delayMs = Math.max(10, secsLeft - 60) * 1000;
+    _refreshTimer = setTimeout(function () { refreshTokensSilently(); }, delayMs);
+  }
+
   async function refreshTokensSilently() {
+    /* Collapse concurrent refresh attempts into one in-flight promise. */
+    if (_inFlightRefresh) return _inFlightRefresh;
     var stored = getStoredRefreshToken();
     if (!stored) return null;
-    try {
-      var resp = await fetch(OIDC_TOKEN_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          grant_type:    "refresh_token",
-          client_id:     OIDC_CLIENT_ID,
-          refresh_token: stored.token,
-        }),
-      });
-      if (!resp.ok) {
-        clearStoredTokens();
+    _inFlightRefresh = (async function () {
+      try {
+        var resp = await fetch(OIDC_TOKEN_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            grant_type:    "refresh_token",
+            client_id:     OIDC_CLIENT_ID,
+            refresh_token: stored.token,
+            scope:         "openid profile email groups offline_access",
+          }),
+        });
+        if (!resp.ok) {
+          var body = await resp.text().catch(function () { return ""; });
+          console.warn("[cartofia] refresh failed:", resp.status, body);
+          /* Only clear tokens if the refresh token itself is dead.
+             invalid_grant / 400 / 401 = user must re-login. */
+          if (resp.status === 400 || resp.status === 401) clearStoredTokens();
+          return null;
+        }
+        var tokens = await resp.json();
+        var store = stored.storage === "local" ? localStorage : sessionStorage;
+        store.setItem("oidc_access_token", tokens.access_token);
+        if (tokens.id_token) store.setItem("oidc_id_token", tokens.id_token);
+        if (tokens.refresh_token) store.setItem("oidc_refresh_token", tokens.refresh_token);
+        /* Mirror the cookie that server-side auth reads. */
+        document.cookie = "access_token=" + tokens.access_token
+          + "; path=/; SameSite=Strict; Secure";
+        scheduleProactiveRefresh(tokens.access_token);
+        return tokens.access_token;
+      } catch (err) {
+        console.warn("[cartofia] refresh threw:", err);
         return null;
+      } finally {
+        _inFlightRefresh = null;
       }
-      var tokens = await resp.json();
-      var store = stored.storage === "local" ? localStorage : sessionStorage;
-      store.setItem("oidc_access_token", tokens.access_token);
-      if (tokens.id_token) store.setItem("oidc_id_token", tokens.id_token);
-      if (tokens.refresh_token) store.setItem("oidc_refresh_token", tokens.refresh_token);
-      return tokens.access_token;
-    } catch (_) {
-      clearStoredTokens();
-      return null;
-    }
+    })();
+    return _inFlightRefresh;
   }
+
+  /* On load, kick off a proactive refresh schedule from whatever access
+     token is already stored. If the token has already expired, this does
+     a refresh immediately so API calls on the page start out valid. */
+  (function bootstrapRefresh() {
+    var tok = getStoredToken("oidc_access_token");
+    if (!tok) return;
+    var left = tokenSecondsLeft(tok);
+    if (left == null) return;
+    if (left < 120) refreshTokensSilently();
+    else            scheduleProactiveRefresh(tok);
+  })();
+
+  /* Global fetch wrapper — on any 401 from /api/* with Authorization: Bearer,
+     silently refresh the token and retry once. Pages that use `fetch()`
+     normally keep working across token expiry without having to know. */
+  (function wrapFetchFor401() {
+    var orig = window.fetch;
+    if (!orig || orig.__cartofiaWrapped) return;
+    async function wrapped(input, init) {
+      var resp = await orig(input, init);
+      try {
+        if (resp.status !== 401) return resp;
+        var url = typeof input === "string" ? input : (input && input.url) || "";
+        if (!url.startsWith("/api/")) return resp;
+        var hadAuth = !!(init && init.headers &&
+          (init.headers.Authorization || init.headers.authorization));
+        if (!hadAuth) return resp;
+        var newToken = await refreshTokensSilently();
+        if (!newToken) return resp;
+        /* Shallow-clone init with the new header. */
+        var retryInit = Object.assign({}, init || {});
+        retryInit.headers = Object.assign({}, (init && init.headers) || {}, {
+          Authorization: "Bearer " + newToken,
+        });
+        return await orig(input, retryInit);
+      } catch (_) {
+        return resp;
+      }
+    }
+    wrapped.__cartofiaWrapped = true;
+    window.fetch = wrapped;
+  })();
 
   function initialsFrom(username) {
     var value = username ? String(username).trim() : "";
