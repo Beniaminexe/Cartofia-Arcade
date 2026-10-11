@@ -1465,3 +1465,58 @@ html {
 @supports not (overflow-x: clip) {
   html, body { overflow-x: hidden; }
 }
+
+
+/* ===================================================================
+   Mobile layout containment for the four-pillar showcase.
+   The tab panels are moved into .showcase-tabs by JS at <=768px;
+   their flex/grid children default to min-width: auto which lets a
+   long paragraph or chip row push the parent past the viewport.
+   Reset min-width: 0 and anchor every container to 100% width.
+   =================================================================== */
+@media (max-width: 768px) {
+  .section.showcase,
+  .section.showcase * {
+    min-width: 0;
+  }
+  .section.showcase .showcase-wrap,
+  .section.showcase .showcase-tabs,
+  .section.showcase .tab-btn,
+  .section.showcase .tab-panel,
+  .section.showcase .tab-info,
+  .section.showcase .tab-visual,
+  .section.showcase .mini-arcade-grid,
+  .section.showcase .mini-game-card {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  /* Tab buttons need a shrinkable label so the Live/Soon chip
+     stays inside the button regardless of label length. */
+  .section.showcase .tab-btn .tab-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .section.showcase .tab-btn .tab-status { flex-shrink: 0; }
+  /* .btn has white-space: nowrap by default — on narrow screens let it
+     wrap rather than overflow. */
+  .section.showcase .tab-panel .btn {
+    white-space: normal;
+    width: 100%;
+    text-align: center;
+  }
+  /* .tab-desc had max-width: 40ch which can exceed the viewport at some
+     font-sizes; cap it to 100% instead. */
+  .section.showcase .tab-desc { max-width: 100%; word-wrap: break-word; }
+  /* The forum / minecraft panels have long mock headers — allow wrap. */
+  .section.showcase .mock-thread-title,
+  .section.showcase .mock-thread-meta { white-space: normal; }
+  /* Reduce the pillar panel inner padding so the content gets more room. */
+  .section.showcase .tab-panel {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
