@@ -682,6 +682,21 @@
   .profile-content { padding: 0 16px; }
   .identity-section { padding: 0 16px; }
 }
+
+
+/* ===== Add Friend button states ===== */
+.btn-friend.is-friend {
+  color: #86efac;
+  border-color: rgba(74,222,128,0.45);
+  background: rgba(74,222,128,0.08);
+}
+.btn-friend.is-pending {
+  color: #ffd89b;
+  border-color: rgba(246,183,60,0.45);
+  background: rgba(246,183,60,0.08);
+}
+.btn-friend[disabled] { opacity: 0.6; cursor: wait; }
+
 </style>
 </head>
 <body>
@@ -750,11 +765,7 @@
       </div>
 
       <div class="identity-actions">
-        <button class="btn-friend" type="button" disabled aria-disabled="true">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 8c3.3 0 6 1.3 6 3v1H2v-1c0-1.7 2.7-3 6-3z" fill="currentColor" opacity="0.6"/><path d="M13 5v4M11 7h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          Add Friend
-          <span class="coming-soon-tip">Coming soon</span>
-        </button>
+        <button class="btn-friend" type="button" id="friendBtn" hidden></button>
         <button class="btn-share" type="button" id="shareBtn">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="12" cy="3" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 9l4 3M10 4L6 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           Share
@@ -1255,6 +1266,144 @@ function renderProfile(data) {
   });
 }
 
+
+/* ─────────────────────────────────────────────
+   Add Friend button — real wiring against /api/profile/me/friends
+───────────────────────────────────────────── */
+const FRIEND_ICON =
+  "<svg width='14' height='14' viewBox='0 0 16 16' fill='none'><path d='M8 1a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 8c3.3 0 6 1.3 6 3v1H2v-1c0-1.7 2.7-3 6-3z' fill='currentColor' opacity='0.6'/><path d='M13 5v4M11 7h4' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/></svg>";
+const CHECK_ICON =
+  "<svg width='14' height='14' viewBox='0 0 16 16' fill='none'><path d='M3 8l3 3 7-7' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>";
+
+async function wireFriendButton(profileSlug) {
+  const btn = document.getElementById('friendBtn');
+  if (!btn || !profileSlug) return;
+
+  const slug = profileSlug.toLowerCase();
+  const token = sessionStorage.getItem('oidc_access_token')
+             || localStorage.getItem('oidc_access_token');
+
+  // Not signed in — invite them to sign in to add friends.
+  if (!token) {
+    btn.hidden = false;
+    btn.innerHTML = FRIEND_ICON + ' Sign in to add';
+    btn.disabled = false;
+    btn.onclick = () => { window.location.href = '/account/'; };
+    return;
+  }
+
+  // Pull viewer identity + current friend state. If either request fails
+  // we just leave the button hidden rather than show a confusing state.
+  let viewerSlug = '';
+  try {
+    const r = await fetch('/application/o/userinfo/', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (r.ok) {
+      const claims = await r.json();
+      viewerSlug = (claims.preferred_username || '').toLowerCase();
+    }
+  } catch (_) { return; }
+
+  if (viewerSlug && viewerSlug === slug) {
+    // Own profile — the "This is you" banner already covers it.
+    btn.hidden = true;
+    return;
+  }
+
+  async function pullState() {
+    try {
+      const r = await fetch('/api/profile/me/friends', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch (_) { return null; }
+  }
+
+  function matches(list, s) {
+    return (list || []).some(u => (u.username || '').toLowerCase() === s);
+  }
+
+  function render(state) {
+    btn.hidden = false;
+    btn.disabled = false;
+    btn.classList.remove('is-friend', 'is-pending');
+
+    if (state === 'friends') {
+      btn.innerHTML = CHECK_ICON + ' Friends';
+      btn.classList.add('is-friend');
+      btn.title = 'Remove friend';
+      btn.onclick = () => act('remove');
+    } else if (state === 'outgoing') {
+      btn.innerHTML = FRIEND_ICON + ' Cancel request';
+      btn.classList.add('is-pending');
+      btn.title = 'Cancel outgoing friend request';
+      btn.onclick = () => act('cancel');
+    } else if (state === 'incoming') {
+      btn.innerHTML = CHECK_ICON + ' Accept request';
+      btn.classList.add('is-pending');
+      btn.title = 'Accept this friend request';
+      btn.onclick = () => act('accept');
+    } else {
+      btn.innerHTML = FRIEND_ICON + ' Add Friend';
+      btn.title = 'Send a friend request';
+      btn.onclick = () => act('add');
+    }
+  }
+
+  async function act(what) {
+    btn.disabled = true;
+    const encoded = encodeURIComponent(slug);
+    try {
+      let resp;
+      if (what === 'add') {
+        resp = await fetch('/api/profile/me/friends/' + encoded, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+      } else if (what === 'remove') {
+        if (!confirm('Remove this friend?')) { btn.disabled = false; return; }
+        resp = await fetch('/api/profile/me/friends/' + encoded, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+      } else {
+        resp = await fetch('/api/profile/me/friends/' + encoded, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ action: what })
+        });
+      }
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || ('HTTP ' + resp.status));
+      }
+      await refresh();
+    } catch (e) {
+      alert(e.message || 'Failed');
+      await refresh();
+    }
+  }
+
+  async function refresh() {
+    const data = await pullState();
+    if (!data) {
+      btn.hidden = true;
+      return;
+    }
+    if (matches(data.friends, slug))                return render('friends');
+    if (matches(data.outgoing_requests, slug))      return render('outgoing');
+    if (matches(data.incoming_requests, slug))      return render('incoming');
+    render('none');
+  }
+
+  await refresh();
+}
+
 /* ─────────────────────────────────────────────
    Show "This is you" banner if viewer owns profile
 ───────────────────────────────────────────── */
@@ -1338,6 +1487,7 @@ document.getElementById('shareBtn').addEventListener('click', () => {
       .catch(() => null);
     renderProfile(data);
     checkOwnProfile(data.profile.username_slug || username);
+    wireFriendButton(data.profile.username_slug || username);
 
   } catch (err) {
     document.getElementById('notFound').style.display = 'flex';
