@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
-  <link rel="stylesheet" href="/forum/forum.css?v=1" />
+  <link rel="stylesheet" href="/forum/forum.css?v=2" />
   <style>button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }</style>
 </head>
 <body>
@@ -43,28 +43,26 @@
       <div class="forum-header-copy">
         <p class="forum-kicker">Forum</p>
         <h1 class="forum-title">Threads</h1>
-        <p class="forum-sub">Share updates, ask questions, start a thread. Lightweight — no karma, no algorithm.</p>
+        <p class="forum-sub">Markdown supported — bold, italic, code, links, @mentions, lists, quotes.</p>
       </div>
       <div class="forum-header-actions">
         <button class="btn btn-primary" id="newThreadBtn" type="button">+ New Thread</button>
       </div>
     </header>
 
-    <!-- Compose panel -->
-    <section class="forum-compose hidden" id="composePanel" aria-live="polite">
+    <section class="forum-compose hidden" id="composePanel">
       <div class="compose-head">
         <h2>Start a new thread</h2>
         <button class="btn btn-ghost btn-sm" type="button" id="composeCancel">Cancel</button>
       </div>
       <input id="composeTitle" class="compose-input" type="text" maxlength="200" placeholder="Title (required)" />
-      <textarea id="composeBody" class="compose-textarea" maxlength="10000" placeholder="Say more… (optional)"></textarea>
+      <textarea id="composeBody" class="compose-textarea" maxlength="10000" placeholder="Markdown welcome…"></textarea>
       <div class="compose-foot">
         <div id="composeHint" class="compose-hint"></div>
         <button class="btn btn-primary" id="composeSubmit" type="button">Post thread</button>
       </div>
     </section>
 
-    <!-- Thread list -->
     <section class="thread-list" id="threadList" aria-live="polite">
       <div class="thread-skeleton"><div class="skel-row"></div><div class="skel-row"></div><div class="skel-row"></div></div>
     </section>
@@ -76,51 +74,46 @@
 
   <script src="/assets/theme.js?v=1"></script>
   <script src="/assets/site.js?v=6"></script>
+  <script src="/forum/forum-md.js?v=1"></script>
   <script>
-    const listEl   = document.getElementById('threadList');
-    const compose  = document.getElementById('composePanel');
-    const openBtn  = document.getElementById('newThreadBtn');
+    const listEl = document.getElementById('threadList');
+    const compose = document.getElementById('composePanel');
+    const openBtn = document.getElementById('newThreadBtn');
     const cancelBt = document.getElementById('composeCancel');
     const submitBt = document.getElementById('composeSubmit');
-    const titleEl  = document.getElementById('composeTitle');
-    const bodyEl   = document.getElementById('composeBody');
-    const hintEl   = document.getElementById('composeHint');
-    const moreBtn  = document.getElementById('loadMoreBtn');
+    const titleEl = document.getElementById('composeTitle');
+    const bodyEl = document.getElementById('composeBody');
+    const hintEl = document.getElementById('composeHint');
+    const moreBtn = document.getElementById('loadMoreBtn');
 
     let cursor = null;
+    const esc = CartofiaMarkdown.escapeHtml;
 
     function token() {
       try { return sessionStorage.getItem('oidc_access_token') || localStorage.getItem('oidc_access_token'); }
       catch (_) { return null; }
     }
-
-    function esc(s) {
-      return String(s == null ? '' : s)
-        .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
-    }
-
     function relative(ts) {
       if (!ts) return '';
       const d = new Date(ts.replace(' ', 'T') + (ts.endsWith('Z') ? '' : 'Z'));
       const secs = (Date.now() - d.getTime()) / 1000;
-      if (secs < 60)    return 'just now';
-      if (secs < 3600)  return Math.floor(secs / 60) + 'm ago';
+      if (secs < 60) return 'just now';
+      if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
       if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
       if (secs < 604800) return Math.floor(secs / 86400) + 'd ago';
       return d.toLocaleDateString();
     }
-
-    function avatarMarkup(author) {
-      if (author.avatar_url) return `<img src="${esc(author.avatar_url)}" alt="" class="thread-avatar"/>`;
-      const initial = (author.display_name || author.username || '?').slice(0, 2).toUpperCase();
-      return `<div class="thread-avatar thread-avatar-fallback">${esc(initial)}</div>`;
+    function avatarMarkup(a) {
+      if (a.avatar_url) return '<img src="' + esc(a.avatar_url) + '" alt="" class="thread-avatar"/>';
+      const initial = (a.display_name || a.username || '?').slice(0, 2).toUpperCase();
+      return '<div class="thread-avatar thread-avatar-fallback">' + esc(initial) + '</div>';
     }
-
     function threadCard(t) {
       const name = t.author.display_name || t.author.username || 'Unknown';
       const slug = t.author.username || '';
-      const authorLink = slug ? `<a class="thread-author" href="/u/${encodeURIComponent(slug)}">${esc(name)}</a>` : esc(name);
+      const authorLink = slug
+        ? '<a class="thread-author" href="/u/' + encodeURIComponent(slug) + '">' + esc(name) + '</a>'
+        : esc(name);
       return `
         <article class="thread-card">
           ${avatarMarkup(t.author)}
@@ -139,12 +132,12 @@
 
     async function loadThreads(reset) {
       if (reset) { cursor = null; listEl.innerHTML = ''; }
-      const q = cursor ? `?before_id=${cursor}` : '';
+      const q = cursor ? ('?before_id=' + cursor) : '';
       try {
         const r = await fetch('/api/forum/threads' + q);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const data = await r.json();
-        if (!cursor && (!data.threads || data.threads.length === 0)) {
+        if (!cursor && (!data.threads || !data.threads.length)) {
           listEl.innerHTML = '<div class="forum-empty">No threads yet. Be the first to post!</div>';
           moreBtn.hidden = true;
           return;
@@ -154,7 +147,7 @@
         if (data.threads.length) cursor = data.threads[data.threads.length - 1].id;
         moreBtn.hidden = !data.has_more;
       } catch (e) {
-        listEl.innerHTML = '<div class="forum-error">Couldn\\'t load threads: ' + esc(e.message) + '</div>';
+        listEl.innerHTML = '<div class="forum-error">Could not load threads: ' + esc(e.message) + '</div>';
       }
     }
 
@@ -170,7 +163,7 @@
 
     submitBt.addEventListener('click', async () => {
       const title = titleEl.value.trim();
-      const body  = bodyEl.value.trim();
+      const body = bodyEl.value.trim();
       if (!title) { hintEl.textContent = 'Give it a title.'; return; }
       submitBt.disabled = true; hintEl.textContent = '';
       try {
@@ -178,7 +171,7 @@
           method: 'POST',
           headers: {
             'Authorization': 'Bearer ' + token(),
-            'Content-Type':  'application/json'
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({ title, body })
         });
@@ -192,7 +185,6 @@
     });
 
     moreBtn.addEventListener('click', () => loadThreads(false));
-
     loadThreads(true);
   </script>
 </body>

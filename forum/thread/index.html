@@ -8,16 +8,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
-  <link rel="stylesheet" href="/forum/forum.css?v=1" />
+  <link rel="stylesheet" href="/forum/forum.css?v=2" />
   <style>button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }</style>
 </head>
 <body>
   <header class="nav" id="nav">
     <a class="nav-brand" href="/">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
-        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
-        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
-        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
         <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
       </svg>
       Cartofia
@@ -48,10 +48,13 @@
       <div class="thread-skeleton"><div class="skel-row"></div><div class="skel-row"></div></div>
     </section>
 
-    <!-- Reply form -->
+    <div class="forum-pager thread-pager">
+      <button class="btn btn-ghost btn-sm" id="loadMorePosts" type="button" hidden>Load more replies</button>
+    </div>
+
     <section class="reply-form hidden" id="replyForm" aria-label="Reply">
-      <h3>Reply to thread</h3>
-      <textarea id="replyBody" maxlength="10000" placeholder="Say something…"></textarea>
+      <h3>Reply</h3>
+      <textarea id="replyBody" maxlength="10000" placeholder="Markdown welcome…"></textarea>
       <div class="reply-foot">
         <div id="replyHint" class="compose-hint"></div>
         <button class="btn btn-primary" id="replySubmit" type="button">Post reply</button>
@@ -66,27 +69,38 @@
 
   <script src="/assets/theme.js?v=1"></script>
   <script src="/assets/site.js?v=6"></script>
+  <script src="/forum/forum-md.js?v=1"></script>
   <script>
-    const container  = document.getElementById('threadContainer');
-    const replyForm  = document.getElementById('replyForm');
-    const replyCta   = document.getElementById('replyCta');
-    const replyBody  = document.getElementById('replyBody');
-    const replyBtn   = document.getElementById('replySubmit');
-    const replyHint  = document.getElementById('replyHint');
+    const container = document.getElementById('threadContainer');
+    const replyForm = document.getElementById('replyForm');
+    const replyCta = document.getElementById('replyCta');
+    const replyBody = document.getElementById('replyBody');
+    const replyBtn = document.getElementById('replySubmit');
+    const replyHint = document.getElementById('replyHint');
+    const loadMorePosts = document.getElementById('loadMorePosts');
 
     const params = new URLSearchParams(location.search);
     const threadId = parseInt(params.get('id') || '0', 10);
+
+    let currentUser = null;         // { sub, groups: [...] }
+    let currentThread = null;
+    let lastPostId = 0;             // for pagination
+
+    const esc = CartofiaMarkdown.escapeHtml;
+    const md  = CartofiaMarkdown.render;
 
     function token() {
       try { return sessionStorage.getItem('oidc_access_token') || localStorage.getItem('oidc_access_token'); }
       catch (_) { return null; }
     }
-    function esc(s) {
-      return String(s == null ? '' : s)
-        .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+    function isAdmin() {
+      if (!currentUser) return false;
+      const groups = currentUser.groups || [];
+      return groups.includes('forum_admin') || groups.includes('authentik Admins');
     }
-    function nl2br(s) { return esc(s).replace(/\n/g, '<br/>'); }
+    function canEdit(authorId) {
+      return currentUser && (currentUser.sub === authorId || isAdmin());
+    }
     function relative(ts) {
       if (!ts) return '';
       const d = new Date(ts.replace(' ', 'T') + (ts.endsWith('Z') ? '' : 'Z'));
@@ -99,92 +113,126 @@
     }
     function avatarMarkup(a, big) {
       const cls = big ? 'thread-avatar thread-avatar-lg' : 'thread-avatar';
-      if (a.avatar_url) return `<img src="${esc(a.avatar_url)}" alt="" class="${cls}"/>`;
+      if (a.avatar_url) return '<img src="' + esc(a.avatar_url) + '" alt="" class="' + cls + '"/>';
       const initial = (a.display_name || a.username || '?').slice(0, 2).toUpperCase();
-      return `<div class="${cls} thread-avatar-fallback">${esc(initial)}</div>`;
+      return '<div class="' + cls + ' thread-avatar-fallback">' + esc(initial) + '</div>';
     }
     function authorLink(a) {
       const name = a.display_name || a.username || 'Unknown';
       return a.username
-        ? `<a class="thread-author" href="/u/${encodeURIComponent(a.username)}">${esc(name)}</a>`
+        ? '<a class="thread-author" href="/u/' + encodeURIComponent(a.username) + '">' + esc(name) + '</a>'
         : esc(name);
     }
 
+    function postToolbar(id, authorId, kind) {
+      if (!canEdit(authorId)) return '';
+      return `<div class="post-tools">
+        <button class="post-tool" data-act="edit"   data-kind="${kind}" data-id="${id}">Edit</button>
+        <button class="post-tool post-tool-danger" data-act="delete" data-kind="${kind}" data-id="${id}">Delete</button>
+      </div>`;
+    }
+
     function postMarkup(p) {
+      const edited = p.updated_at && p.updated_at !== p.created_at
+        ? '<span class="edited-mark" title="edited">(edited)</span>' : '';
       return `
-        <article class="thread-post">
+        <article class="thread-post" data-post-id="${p.id}">
           ${avatarMarkup(p.author)}
           <div class="thread-post-main">
             <div class="thread-meta">
               ${authorLink(p.author)}
               <span>·</span>
               <span>${esc(relative(p.created_at))}</span>
+              ${edited}
             </div>
-            <div class="thread-post-body">${nl2br(p.body)}</div>
+            <div class="thread-post-body md-content">${md(p.body)}</div>
+            ${postToolbar(p.id, p.author_id, 'post')}
           </div>
         </article>`;
     }
 
-    function renderThread(data) {
-      const t = data.thread;
-      const posts = data.posts || [];
+    function renderThread(t, posts, hasMore) {
+      currentThread = t;
       document.title = t.title + ' — Cartofia Forum';
+      const editedThread = t.updated_at && t.updated_at !== t.created_at
+        ? '<span class="edited-mark" title="edited">(edited)</span>' : '';
       container.innerHTML = `
-        <article class="thread-op">
+        <article class="thread-op" data-thread-id="${t.id}">
           <header class="thread-op-head">
             ${avatarMarkup(t.author, true)}
-            <div>
-              <h1 class="thread-op-title">${esc(t.title)}</h1>
+            <div style="flex:1;">
+              <div class="thread-op-title-row">
+                <h1 class="thread-op-title">${esc(t.title)}</h1>
+                ${t.locked ? '<span class="thread-flag thread-flag-locked">🔒 Locked</span>' : ''}
+              </div>
               <div class="thread-meta">
                 ${authorLink(t.author)}
                 <span>·</span>
                 <span>${esc(relative(t.created_at))}</span>
                 <span>·</span>
                 <span>${t.reply_count} ${t.reply_count === 1 ? 'reply' : 'replies'}</span>
+                ${editedThread}
               </div>
             </div>
           </header>
-          ${t.body ? `<div class="thread-op-body">${nl2br(t.body)}</div>` : ''}
+          ${t.body ? '<div class="thread-op-body md-content">' + md(t.body) + '</div>' : ''}
+          ${postToolbar(t.id, t.author_id, 'thread')}
         </article>
         <div class="thread-posts" id="postsHost">
           ${posts.map(postMarkup).join('')}
         </div>`;
 
-      if (token()) replyForm.classList.remove('hidden');
-      else         replyCta.classList.remove('hidden');
+      if (posts.length) lastPostId = posts[posts.length - 1].id;
+      loadMorePosts.hidden = !hasMore;
+
+      if (token() && !t.locked)                     replyForm.classList.remove('hidden');
+      else if (t.locked)                            replyCta.innerHTML = '<p>This thread is locked.</p>';
+      else if (!token())                            replyCta.classList.remove('hidden');
     }
 
     async function loadThread() {
-      if (!threadId) {
-        container.innerHTML = '<div class="forum-error">No thread id provided.</div>';
-        return;
-      }
+      if (!threadId) { container.innerHTML = '<div class="forum-error">No thread id provided.</div>'; return; }
       try {
         const r = await fetch('/api/forum/threads/' + threadId);
         if (!r.ok) throw new Error(r.status === 404 ? 'Thread not found.' : 'HTTP ' + r.status);
-        renderThread(await r.json());
+        const data = await r.json();
+        renderThread(data.thread, data.posts || [], !!data.has_more);
       } catch (e) {
         container.innerHTML = '<div class="forum-error">' + esc(e.message) + '</div>';
       }
     }
 
+    async function loadMorePostsFn() {
+      try {
+        const r = await fetch('/api/forum/threads/' + threadId + '?after_id=' + lastPostId);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        const host = document.getElementById('postsHost');
+        (data.posts || []).forEach(p => {
+          host.insertAdjacentHTML('beforeend', postMarkup(p));
+          lastPostId = Math.max(lastPostId, p.id);
+        });
+        loadMorePosts.hidden = !data.has_more;
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    loadMorePosts.addEventListener('click', loadMorePostsFn);
+
     replyBtn.addEventListener('click', async () => {
       const body = replyBody.value.trim();
-      if (!body) { replyHint.textContent = 'Reply can\\'t be empty.'; return; }
+      if (!body) { replyHint.textContent = 'Reply cannot be empty.'; return; }
       replyBtn.disabled = true; replyHint.textContent = '';
       try {
         const r = await fetch('/api/forum/threads/' + threadId + '/posts', {
           method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + token(),
-            'Content-Type':  'application/json'
-          },
+          headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ body })
         });
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
-        const host = document.getElementById('postsHost');
-        host.insertAdjacentHTML('beforeend', postMarkup(data.post));
+        document.getElementById('postsHost').insertAdjacentHTML('beforeend', postMarkup(data.post));
+        lastPostId = Math.max(lastPostId, data.post.id);
         replyBody.value = '';
         replyBtn.disabled = false;
       } catch (e) {
@@ -193,7 +241,121 @@
       }
     });
 
-    loadThread();
+    // --- Edit/delete tool handling (event delegation) -------------------
+    container.addEventListener('click', async (ev) => {
+      const btn = ev.target.closest('.post-tool');
+      if (!btn) return;
+      const act = btn.dataset.act;
+      const kind = btn.dataset.kind;
+      const id = parseInt(btn.dataset.id, 10);
+
+      if (act === 'delete') {
+        if (!confirm(kind === 'thread'
+          ? 'Delete this entire thread? This cannot be undone.'
+          : 'Delete this reply?')) return;
+        try {
+          const url = kind === 'thread'
+            ? '/api/forum/threads/' + id
+            : '/api/forum/posts/' + id;
+          const r = await fetch(url, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token() }
+          });
+          if (!r.ok) throw new Error('Delete failed');
+          if (kind === 'thread') {
+            window.location.href = '/forum/';
+          } else {
+            document.querySelector('[data-post-id="' + id + '"]')?.remove();
+          }
+        } catch (e) { alert(e.message); }
+        return;
+      }
+
+      if (act === 'edit') {
+        if (kind === 'thread') beginEditThread(id);
+        else                    beginEditPost(id);
+      }
+    });
+
+    function beginEditThread(id) {
+      const art = document.querySelector('[data-thread-id="' + id + '"]');
+      if (!art) return;
+      const curTitle = currentThread.title;
+      const curBody  = currentThread.body || '';
+      art.innerHTML = `
+        <div class="edit-form">
+          <input class="compose-input" id="editThreadTitle" type="text" maxlength="200" value="${esc(curTitle)}" />
+          <textarea class="compose-textarea" id="editThreadBody" maxlength="10000">${esc(curBody)}</textarea>
+          <div class="edit-foot">
+            <button class="btn btn-ghost btn-sm" type="button" id="editThreadCancel">Cancel</button>
+            <button class="btn btn-primary btn-sm" type="button" id="editThreadSave">Save</button>
+          </div>
+        </div>`;
+      document.getElementById('editThreadCancel').onclick = () => loadThread();
+      document.getElementById('editThreadSave').onclick = async () => {
+        const title = document.getElementById('editThreadTitle').value.trim();
+        const body  = document.getElementById('editThreadBody').value;
+        try {
+          const r = await fetch('/api/forum/threads/' + id, {
+            method: 'PATCH',
+            headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, body })
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.error || 'Save failed');
+          loadThread();
+        } catch (e) { alert(e.message); }
+      };
+    }
+
+    function beginEditPost(id) {
+      const art = document.querySelector('[data-post-id="' + id + '"]');
+      if (!art) return;
+      const bodyEl = art.querySelector('.thread-post-body');
+      const originalHtml = bodyEl.innerHTML;
+      const originalText = bodyEl.dataset.rawBody || '';   // may be unset
+      bodyEl.innerHTML = `
+        <div class="edit-form">
+          <textarea class="compose-textarea" maxlength="10000">${esc(originalText || bodyEl.textContent)}</textarea>
+          <div class="edit-foot">
+            <button class="btn btn-ghost btn-sm" type="button" data-cancel>Cancel</button>
+            <button class="btn btn-primary btn-sm" type="button" data-save>Save</button>
+          </div>
+        </div>`;
+      bodyEl.querySelector('[data-cancel]').onclick = () => { bodyEl.innerHTML = originalHtml; };
+      bodyEl.querySelector('[data-save]').onclick = async () => {
+        const body = bodyEl.querySelector('textarea').value;
+        try {
+          const r = await fetch('/api/forum/posts/' + id, {
+            method: 'PATCH',
+            headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ body })
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.error || 'Save failed');
+          bodyEl.innerHTML = md(data.post.body);
+          const meta = art.querySelector('.thread-meta');
+          if (meta && !meta.querySelector('.edited-mark')) {
+            meta.insertAdjacentHTML('beforeend', ' <span class="edited-mark" title="edited">(edited)</span>');
+          }
+        } catch (e) { alert(e.message); }
+      };
+    }
+
+    async function loadMe() {
+      if (!token()) return;
+      try {
+        const r = await fetch('/api/profile/me', { headers: { 'Authorization': 'Bearer ' + token() }});
+        if (!r.ok) return;
+        const d = await r.json();
+        currentUser = {
+          sub: (d.profile && d.profile.user_id) || null,
+          groups: d.groups || []
+        };
+      } catch (_) {}
+    }
+
+    (async () => { await loadMe(); await loadThread(); })();
   </script>
 </body>
 </html>
