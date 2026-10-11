@@ -205,6 +205,22 @@
       .rotate-prompt { display:flex; }
     }
 
+
+    /* iOS pseudo-fullscreen fallback for the Bomber Raid board */
+    body.pseudo-fs { overflow: hidden; }
+    body.pseudo-fs .nav,
+    body.pseudo-fs .game-container-inner > .game-layout > .game-panel,
+    body.pseudo-fs .mc-section,
+    body.pseudo-fs .final-cta,
+    body.pseudo-fs .site-footer { display: none !important; }
+    body.pseudo-fs .game-page,
+    body.pseudo-fs .game-container,
+    body.pseudo-fs .game-container-inner,
+    body.pseudo-fs .game-layout { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+    body.pseudo-fs .board-panel { width: 100vw !important; height: 100vh !important; display: flex; align-items: center; justify-content: center; }
+    body.pseudo-fs .board-frame { width: 100%; height: 100%; max-width: none; display: flex; align-items: center; justify-content: center; }
+    body.pseudo-fs canvas#g { width: auto !important; height: 100% !important; max-width: 100vw !important; max-height: 100vh !important; aspect-ratio: 13/11; }
+
     @media (max-width:960px) {
       .game-layout { grid-template-columns:1fr; }
       .inframe-actions { left:8px; right:8px; top:8px; justify-content:space-between; }
@@ -405,17 +421,29 @@
       return document.fullscreenElement || document.webkitFullscreenElement || null;
     }
     if (fsBtn && board) {
+      function pseudoActive() { return document.body.classList.contains("pseudo-fs"); }
+      function enterPseudo()  { document.body.classList.add("pseudo-fs"); window.dispatchEvent(new Event("resize")); }
+      function exitPseudo()   { document.body.classList.remove("pseudo-fs"); window.dispatchEvent(new Event("resize")); }
+
       fsBtn.addEventListener("click", function () {
         try {
-          if (fsElement()) {
-            if (document.exitFullscreen) document.exitFullscreen();
-            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-          } else if (board.requestFullscreen) {
-            board.requestFullscreen();
-          } else if (board.webkitRequestFullscreen) {
-            board.webkitRequestFullscreen();
+          if (fsElement() || pseudoActive()) {
+            if (document.exitFullscreen && fsElement()) { document.exitFullscreen(); return; }
+            if (document.webkitExitFullscreen && fsElement()) { document.webkitExitFullscreen(); return; }
+            exitPseudo();
+            return;
           }
-        } catch (_) {}
+          if (board.requestFullscreen) {
+            var p = board.requestFullscreen();
+            if (p && p.catch) p.catch(function () { enterPseudo(); });
+            return;
+          }
+          if (board.webkitRequestFullscreen) { board.webkitRequestFullscreen(); return; }
+          // iOS Safari: no API available — pseudo-fs fallback.
+          enterPseudo();
+        } catch (_) {
+          enterPseudo();
+        }
       });
     }
 
