@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=1">
+  <link rel="stylesheet" href="/assets/notifications.css?v=2">
   <link rel="stylesheet" href="/forum/forum.css?v=4" />
   <style>button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }</style>
 </head>
@@ -28,6 +28,7 @@
       <a href="/arcade/">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
       <a href="/forum/" class="active">Forum</a>
+      <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
     <div class="nav-right">
       <div class="account-menu" data-account-menu>
@@ -137,6 +138,17 @@
       </div>`;
     }
 
+    // Admin-only pin/lock controls for the thread OP.
+    function adminTools(t) {
+      if (!isAdmin()) return '';
+      const pinLabel  = t.pinned ? 'Unpin' : 'Pin to top';
+      const lockLabel = t.locked ? 'Unlock' : 'Lock';
+      return `<div class="post-tools admin-tools">
+        <button class="post-tool" data-act="pin"  data-id="${t.id}">${pinLabel}</button>
+        <button class="post-tool" data-act="lock" data-id="${t.id}">${lockLabel}</button>
+      </div>`;
+    }
+
     function postMarkup(p) {
       const edited = p.updated_at && p.updated_at !== p.created_at
         ? '<span class="edited-mark" title="edited">(edited)</span>' : '';
@@ -182,6 +194,7 @@
           </header>
           ${t.body ? '<div class="thread-op-body md-content">' + md(t.body) + '</div>' : ''}
           ${postToolbar(t.id, t.author_id, 'thread')}
+          ${adminTools(t)}
         </article>
         <div class="thread-posts" id="postsHost">
           ${posts.map(postMarkup).join('')}
@@ -279,6 +292,22 @@
       if (act === 'edit') {
         if (kind === 'thread') beginEditThread(id);
         else                    beginEditPost(id);
+        return;
+      }
+
+      if (act === 'pin' || act === 'lock') {
+        const field = act === 'pin' ? 'pinned' : 'locked';
+        const value = !(currentThread && currentThread[field]);
+        try {
+          const r = await fetch('/api/forum/threads/' + id, {
+            method: 'PATCH',
+            headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [field]: value })
+          });
+          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Toggle failed');
+          loadThread();   // re-render to pick up the new flag + label
+        } catch (e) { alert(e.message); }
+        return;
       }
     });
 
