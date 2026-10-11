@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Thread — Cartofia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/forum/forum.css?v=1" />
+  <style>button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }</style>
+</head>
+<body>
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
+      Cartofia
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/" class="active">Forum</a>
+    </nav>
+    <div class="nav-right">
+      <div class="account-menu" data-account-menu>
+        <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="forum-page">
+    <a class="thread-back" href="/forum/">
+      <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      All threads
+    </a>
+
+    <section id="threadContainer" aria-live="polite">
+      <div class="thread-skeleton"><div class="skel-row"></div><div class="skel-row"></div></div>
+    </section>
+
+    <!-- Reply form -->
+    <section class="reply-form hidden" id="replyForm" aria-label="Reply">
+      <h3>Reply to thread</h3>
+      <textarea id="replyBody" maxlength="10000" placeholder="Say something…"></textarea>
+      <div class="reply-foot">
+        <div id="replyHint" class="compose-hint"></div>
+        <button class="btn btn-primary" id="replySubmit" type="button">Post reply</button>
+      </div>
+    </section>
+
+    <section class="reply-cta hidden" id="replyCta">
+      <p>Sign in to reply.</p>
+      <a class="btn btn-primary btn-sm" href="/account/">Sign in →</a>
+    </section>
+  </main>
+
+  <script src="/assets/theme.js?v=1"></script>
+  <script src="/assets/site.js?v=6"></script>
+  <script>
+    const container  = document.getElementById('threadContainer');
+    const replyForm  = document.getElementById('replyForm');
+    const replyCta   = document.getElementById('replyCta');
+    const replyBody  = document.getElementById('replyBody');
+    const replyBtn   = document.getElementById('replySubmit');
+    const replyHint  = document.getElementById('replyHint');
+
+    const params = new URLSearchParams(location.search);
+    const threadId = parseInt(params.get('id') || '0', 10);
+
+    function token() {
+      try { return sessionStorage.getItem('oidc_access_token') || localStorage.getItem('oidc_access_token'); }
+      catch (_) { return null; }
+    }
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+    }
+    function nl2br(s) { return esc(s).replace(/\n/g, '<br/>'); }
+    function relative(ts) {
+      if (!ts) return '';
+      const d = new Date(ts.replace(' ', 'T') + (ts.endsWith('Z') ? '' : 'Z'));
+      const secs = (Date.now() - d.getTime()) / 1000;
+      if (secs < 60) return 'just now';
+      if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
+      if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
+      if (secs < 604800) return Math.floor(secs / 86400) + 'd ago';
+      return d.toLocaleDateString();
+    }
+    function avatarMarkup(a, big) {
+      const cls = big ? 'thread-avatar thread-avatar-lg' : 'thread-avatar';
+      if (a.avatar_url) return `<img src="${esc(a.avatar_url)}" alt="" class="${cls}"/>`;
+      const initial = (a.display_name || a.username || '?').slice(0, 2).toUpperCase();
+      return `<div class="${cls} thread-avatar-fallback">${esc(initial)}</div>`;
+    }
+    function authorLink(a) {
+      const name = a.display_name || a.username || 'Unknown';
+      return a.username
+        ? `<a class="thread-author" href="/u/${encodeURIComponent(a.username)}">${esc(name)}</a>`
+        : esc(name);
+    }
+
+    function postMarkup(p) {
+      return `
+        <article class="thread-post">
+          ${avatarMarkup(p.author)}
+          <div class="thread-post-main">
+            <div class="thread-meta">
+              ${authorLink(p.author)}
+              <span>·</span>
+              <span>${esc(relative(p.created_at))}</span>
+            </div>
+            <div class="thread-post-body">${nl2br(p.body)}</div>
+          </div>
+        </article>`;
+    }
+
+    function renderThread(data) {
+      const t = data.thread;
+      const posts = data.posts || [];
+      document.title = t.title + ' — Cartofia Forum';
+      container.innerHTML = `
+        <article class="thread-op">
+          <header class="thread-op-head">
+            ${avatarMarkup(t.author, true)}
+            <div>
+              <h1 class="thread-op-title">${esc(t.title)}</h1>
+              <div class="thread-meta">
+                ${authorLink(t.author)}
+                <span>·</span>
+                <span>${esc(relative(t.created_at))}</span>
+                <span>·</span>
+                <span>${t.reply_count} ${t.reply_count === 1 ? 'reply' : 'replies'}</span>
+              </div>
+            </div>
+          </header>
+          ${t.body ? `<div class="thread-op-body">${nl2br(t.body)}</div>` : ''}
+        </article>
+        <div class="thread-posts" id="postsHost">
+          ${posts.map(postMarkup).join('')}
+        </div>`;
+
+      if (token()) replyForm.classList.remove('hidden');
+      else         replyCta.classList.remove('hidden');
+    }
+
+    async function loadThread() {
+      if (!threadId) {
+        container.innerHTML = '<div class="forum-error">No thread id provided.</div>';
+        return;
+      }
+      try {
+        const r = await fetch('/api/forum/threads/' + threadId);
+        if (!r.ok) throw new Error(r.status === 404 ? 'Thread not found.' : 'HTTP ' + r.status);
+        renderThread(await r.json());
+      } catch (e) {
+        container.innerHTML = '<div class="forum-error">' + esc(e.message) + '</div>';
+      }
+    }
+
+    replyBtn.addEventListener('click', async () => {
+      const body = replyBody.value.trim();
+      if (!body) { replyHint.textContent = 'Reply can\\'t be empty.'; return; }
+      replyBtn.disabled = true; replyHint.textContent = '';
+      try {
+        const r = await fetch('/api/forum/threads/' + threadId + '/posts', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token(),
+            'Content-Type':  'application/json'
+          },
+          body: JSON.stringify({ body })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+        const host = document.getElementById('postsHost');
+        host.insertAdjacentHTML('beforeend', postMarkup(data.post));
+        replyBody.value = '';
+        replyBtn.disabled = false;
+      } catch (e) {
+        replyHint.textContent = e.message;
+        replyBtn.disabled = false;
+      }
+    });
+
+    loadThread();
+  </script>
+</body>
+</html>

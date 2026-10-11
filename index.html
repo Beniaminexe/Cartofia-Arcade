@@ -39,7 +39,7 @@
       <a href="/" class="active">Home</a>
       <a href="/arcade/">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
-      <a href="#tab-forum" class="has-soon">Forum<span class="nav-soon-pill">soon</span></a>
+      <a href="/forum/">Forum</a>
       <a href="#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
 
@@ -75,7 +75,7 @@
         <ul class="hero-pillars" aria-label="What's inside">
           <li><span class="pillar-dot live" aria-hidden="true"></span>Arcade</li>
           <li><span class="pillar-dot live" aria-hidden="true"></span>Minecraft</li>
-          <li><span class="pillar-dot soon" aria-hidden="true"></span>Forum</li>
+          <li><span class="pillar-dot live" aria-hidden="true"></span>Forum</li>
           <li><span class="pillar-dot soon" aria-hidden="true"></span>Messages</li>
         </ul>
       </div>
@@ -117,7 +117,7 @@
       </div>
       <div class="stat-item">
         <span class="stat-icon" aria-hidden="true">💬</span>
-        <span class="stat-value stat-badge soon">Soon</span>
+        <span class="stat-value stat-badge live">Live</span>
         <span class="stat-label">Forum</span>
         <span class="stat-sub">Threaded discussions</span>
       </div>
@@ -171,7 +171,7 @@
                 aria-controls="tab-forum" data-tab="forum" id="tabctrl-forum">
           <span class="tab-icon" aria-hidden="true">💬</span>
           <span class="tab-label">Forum</span>
-          <span class="tab-status soon">Soon</span>
+          <span class="tab-status live">Live</span>
           <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
             <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -248,14 +248,14 @@
         </div>
 
         <!-- FORUM (coming soon) -->
-        <div class="tab-panel pillar-forum tab-panel-soon" id="tab-forum" role="tabpanel" aria-labelledby="tabctrl-forum">
+        <div class="tab-panel pillar-forum" id="tab-forum" role="tabpanel" aria-labelledby="tabctrl-forum">
           <div class="tab-info">
             <p class="tab-tagline">A place to think out loud.</p>
             <p class="tab-desc">
               Lightweight threaded discussions — share updates, start a thread about a game you're
               hooked on, drop screenshots. No karma, no algorithm, no infinite scroll trap.
             </p>
-            <button class="btn btn-ghost btn-sm" type="button" disabled aria-disabled="true">Coming soon</button>
+            <a class="btn btn-primary btn-sm" href="/forum/">Open Forum →</a>
           </div>
           <div class="tab-visual">
             <div class="mock-forum-card" aria-hidden="true">

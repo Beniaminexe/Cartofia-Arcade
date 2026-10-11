@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Forum — Cartofia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/forum/forum.css?v=1" />
+  <style>button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }</style>
+</head>
+<body>
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
+      Cartofia
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/" class="active">Forum</a>
+    </nav>
+    <div class="nav-right">
+      <div class="account-menu" data-account-menu>
+        <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="forum-page">
+    <header class="forum-header">
+      <div class="forum-header-copy">
+        <p class="forum-kicker">Forum</p>
+        <h1 class="forum-title">Threads</h1>
+        <p class="forum-sub">Share updates, ask questions, start a thread. Lightweight — no karma, no algorithm.</p>
+      </div>
+      <div class="forum-header-actions">
+        <button class="btn btn-primary" id="newThreadBtn" type="button">+ New Thread</button>
+      </div>
+    </header>
+
+    <!-- Compose panel -->
+    <section class="forum-compose hidden" id="composePanel" aria-live="polite">
+      <div class="compose-head">
+        <h2>Start a new thread</h2>
+        <button class="btn btn-ghost btn-sm" type="button" id="composeCancel">Cancel</button>
+      </div>
+      <input id="composeTitle" class="compose-input" type="text" maxlength="200" placeholder="Title (required)" />
+      <textarea id="composeBody" class="compose-textarea" maxlength="10000" placeholder="Say more… (optional)"></textarea>
+      <div class="compose-foot">
+        <div id="composeHint" class="compose-hint"></div>
+        <button class="btn btn-primary" id="composeSubmit" type="button">Post thread</button>
+      </div>
+    </section>
+
+    <!-- Thread list -->
+    <section class="thread-list" id="threadList" aria-live="polite">
+      <div class="thread-skeleton"><div class="skel-row"></div><div class="skel-row"></div><div class="skel-row"></div></div>
+    </section>
+
+    <div class="forum-pager">
+      <button class="btn btn-ghost btn-sm" id="loadMoreBtn" type="button" hidden>Load more</button>
+    </div>
+  </main>
+
+  <script src="/assets/theme.js?v=1"></script>
+  <script src="/assets/site.js?v=6"></script>
+  <script>
+    const listEl   = document.getElementById('threadList');
+    const compose  = document.getElementById('composePanel');
+    const openBtn  = document.getElementById('newThreadBtn');
+    const cancelBt = document.getElementById('composeCancel');
+    const submitBt = document.getElementById('composeSubmit');
+    const titleEl  = document.getElementById('composeTitle');
+    const bodyEl   = document.getElementById('composeBody');
+    const hintEl   = document.getElementById('composeHint');
+    const moreBtn  = document.getElementById('loadMoreBtn');
+
+    let cursor = null;
+
+    function token() {
+      try { return sessionStorage.getItem('oidc_access_token') || localStorage.getItem('oidc_access_token'); }
+      catch (_) { return null; }
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+    }
+
+    function relative(ts) {
+      if (!ts) return '';
+      const d = new Date(ts.replace(' ', 'T') + (ts.endsWith('Z') ? '' : 'Z'));
+      const secs = (Date.now() - d.getTime()) / 1000;
+      if (secs < 60)    return 'just now';
+      if (secs < 3600)  return Math.floor(secs / 60) + 'm ago';
+      if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
+      if (secs < 604800) return Math.floor(secs / 86400) + 'd ago';
+      return d.toLocaleDateString();
+    }
+
+    function avatarMarkup(author) {
+      if (author.avatar_url) return `<img src="${esc(author.avatar_url)}" alt="" class="thread-avatar"/>`;
+      const initial = (author.display_name || author.username || '?').slice(0, 2).toUpperCase();
+      return `<div class="thread-avatar thread-avatar-fallback">${esc(initial)}</div>`;
+    }
+
+    function threadCard(t) {
+      const name = t.author.display_name || t.author.username || 'Unknown';
+      const slug = t.author.username || '';
+      const authorLink = slug ? `<a class="thread-author" href="/u/${encodeURIComponent(slug)}">${esc(name)}</a>` : esc(name);
+      return `
+        <article class="thread-card">
+          ${avatarMarkup(t.author)}
+          <div class="thread-main">
+            <a class="thread-title" href="/forum/thread/?id=${t.id}">${esc(t.title)}</a>
+            <div class="thread-meta">
+              ${authorLink}
+              <span>·</span>
+              <span>${t.reply_count} ${t.reply_count === 1 ? 'reply' : 'replies'}</span>
+              <span>·</span>
+              <span>${esc(relative(t.last_post_at))}</span>
+            </div>
+          </div>
+        </article>`;
+    }
+
+    async function loadThreads(reset) {
+      if (reset) { cursor = null; listEl.innerHTML = ''; }
+      const q = cursor ? `?before_id=${cursor}` : '';
+      try {
+        const r = await fetch('/api/forum/threads' + q);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        if (!cursor && (!data.threads || data.threads.length === 0)) {
+          listEl.innerHTML = '<div class="forum-empty">No threads yet. Be the first to post!</div>';
+          moreBtn.hidden = true;
+          return;
+        }
+        if (reset) listEl.innerHTML = '';
+        data.threads.forEach(t => listEl.insertAdjacentHTML('beforeend', threadCard(t)));
+        if (data.threads.length) cursor = data.threads[data.threads.length - 1].id;
+        moreBtn.hidden = !data.has_more;
+      } catch (e) {
+        listEl.innerHTML = '<div class="forum-error">Couldn\\'t load threads: ' + esc(e.message) + '</div>';
+      }
+    }
+
+    openBtn.addEventListener('click', () => {
+      if (!token()) { window.location.href = '/account/'; return; }
+      compose.classList.remove('hidden');
+      titleEl.focus();
+    });
+    cancelBt.addEventListener('click', () => {
+      compose.classList.add('hidden');
+      titleEl.value = ''; bodyEl.value = ''; hintEl.textContent = '';
+    });
+
+    submitBt.addEventListener('click', async () => {
+      const title = titleEl.value.trim();
+      const body  = bodyEl.value.trim();
+      if (!title) { hintEl.textContent = 'Give it a title.'; return; }
+      submitBt.disabled = true; hintEl.textContent = '';
+      try {
+        const r = await fetch('/api/forum/threads', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token(),
+            'Content-Type':  'application/json'
+          },
+          body: JSON.stringify({ title, body })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+        window.location.href = '/forum/thread/?id=' + data.thread.id;
+      } catch (e) {
+        hintEl.textContent = e.message;
+        submitBt.disabled = false;
+      }
+    });
+
+    moreBtn.addEventListener('click', () => loadThreads(false));
+
+    loadThreads(true);
+  </script>
+</body>
+</html>
