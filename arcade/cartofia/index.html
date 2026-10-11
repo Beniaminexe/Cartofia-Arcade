@@ -269,8 +269,69 @@ config = {
     <link rel="stylesheet" href="/assets/site.css?v=4" />
   <link rel="stylesheet" href="/assets/notifications.css?v=3">
     <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
+    <script>
+      /* Hook AudioContext before pygbag loads so we can mute every audio
+         context the SDL/pygame mixer creates, no matter where it's parked
+         on Module. The Mute button walks __cartofiaAudioContexts and
+         suspend()s / resume()s each one. */
+      (function () {
+        var Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) return;
+        var list = window.__cartofiaAudioContexts = [];
+        function Wrapped(options) {
+          var ctx = new Ctor(options);
+          list.push(ctx);
+          return ctx;
+        }
+        Wrapped.prototype = Ctor.prototype;
+        try {
+          window.AudioContext = Wrapped;
+          if (window.webkitAudioContext) window.webkitAudioContext = Wrapped;
+        } catch (_e) {}
+      })();
+    </script>
+
 
     <style>
+
+
+        /* Rotate-to-landscape curtain (phone portrait only) */
+        .rotate-curtain {
+          position: fixed; inset: 0; z-index: 10000;
+          display: none;
+          flex-direction: column;
+          align-items: center; justify-content: center;
+          gap: 18px; padding: 28px;
+          text-align: center;
+          background:
+            radial-gradient(circle at 50% 30%, rgba(79,125,249,0.14), transparent 60%),
+            rgba(10,14,26,0.98);
+          color: #e7f3ff;
+          font-family: 'Outfit', sans-serif;
+        }
+        .rotate-curtain-icon {
+          width: 92px; height: 92px;
+          display: inline-flex; align-items: center; justify-content: center;
+          border-radius: 50%; border: 1px solid rgba(142,198,255,0.5);
+          background: rgba(7,18,29,0.65);
+          color: #9fc9ff;
+          animation: rc-swing 2.4s ease-in-out infinite;
+        }
+        @keyframes rc-swing {
+          0%, 100% { transform: rotate(-18deg); }
+          50%      { transform: rotate(72deg); }
+        }
+        .rotate-curtain-title {
+          font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin: 0;
+        }
+        .rotate-curtain-sub {
+          font-size: 14px; color: rgba(238,242,255,0.65);
+          max-width: 28ch; line-height: 1.5; margin: 0;
+        }
+        @media (orientation: portrait) and (max-width: 900px) {
+          .rotate-curtain { display: flex; }
+          body { overflow: hidden; }
+        }
 
         /* iOS pseudo-fullscreen: Safari refuses the Fullscreen API on
            non-video elements, so we fake it by hiding chrome + stretching
@@ -767,6 +828,20 @@ config = {
 
 <body>
 
+    <!-- Rotate-to-landscape curtain (phone portrait only) -->
+    <div class="rotate-curtain" role="dialog" aria-live="polite">
+      <span class="rotate-curtain-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="2" width="12" height="20" rx="2"/>
+          <path d="M14 6l4 4-4 4"/>
+          <path d="M18 10h-6"/>
+        </svg>
+      </span>
+      <h2 class="rotate-curtain-title">Rotate your device</h2>
+      <p class="rotate-curtain-sub">Cartofia plays best in landscape. Turn your phone sideways.</p>
+    </div>
+
+
     <!-- Cartofia Arcade Nav -->
     <header class="arcade-nav">
       <a class="arcade-nav-brand" href="/">
@@ -1254,19 +1329,23 @@ frameborder="1"
             });
         }
         function controlAudioContext(muteIt) {
-            // Pygbag parks its context on Module.audioContext or SDL2.audioContext
-            var candidates = [];
-            if (window.Module) {
-                if (window.Module.audioContext) candidates.push(window.Module.audioContext);
-                if (window.Module.SDL && window.Module.SDL.audioContext) candidates.push(window.Module.SDL.audioContext);
-            }
-            if (window.SDL && window.SDL.audioContext) candidates.push(window.SDL.audioContext);
-            candidates.forEach(function (ctx) {
+            // Primary: contexts we intercepted at construction time (see
+            // <head> script). Secondary: whatever pygbag may have exposed.
+            var seen = new Set();
+            function visit(ctx) {
+                if (!ctx || seen.has(ctx)) return;
+                seen.add(ctx);
                 try {
                     if (muteIt) { if (ctx.state === "running") ctx.suspend(); }
                     else        { if (ctx.state !== "running") ctx.resume(); }
                 } catch (_) {}
-            });
+            }
+            (window.__cartofiaAudioContexts || []).forEach(visit);
+            if (window.Module) {
+                visit(window.Module.audioContext);
+                if (window.Module.SDL) visit(window.Module.SDL.audioContext);
+            }
+            if (window.SDL) visit(window.SDL.audioContext);
         }
 
         // Try to lower the default volume once pygame mixer is up. Harmless
