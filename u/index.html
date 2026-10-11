@@ -1128,7 +1128,15 @@ function renderShowcase(s) {
     }
 
   } else if (s.showcase_type === 'achievements') {
-    body = '<div class="showcase-empty" style="padding:20px 24px;">Achievements coming soon.</div>';
+    const items = (window.achievements_data || []).filter(a => a.earned);
+    body = items.length
+      ? '<div class="achievement-row" style="padding:16px 24px;gap:10px;">'
+          + items.map(a => `<div class="achievement-item" title="${escHtml(a.name)} — ${escHtml(a.description)}">`
+              + `<span style="font-size:22px;line-height:1">${escHtml(a.icon || '🏅')}</span>`
+              + `<div class="achievement-tooltip"><strong>${escHtml(a.name)}</strong><br>${escHtml(a.description)}</div>`
+            + '</div>').join('')
+          + '</div>'
+      : '<div class="showcase-empty" style="padding:20px 24px;">No achievements earned yet.</div>';
 
   } else if (s.showcase_type === 'badge_case') {
     const cfg = s.config || {};
@@ -1201,6 +1209,17 @@ function renderProfile(data) {
   // Theme (read-only: apply owner's theme)
   applyTheme(profile.theme || 'ocean');
   renderStatusBadges(profile);
+  fetch('/api/profile/' + encodeURIComponent(username) + '/achievements')
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      window.achievements_data = (d && d.achievements) || [];
+      /* re-render the showcases now that data is available */
+      const sc2 = document.getElementById('showcasesContainer');
+      if (sc2 && Array.isArray(window._u_last_showcases) && window._u_last_showcases.length) {
+        sc2.innerHTML = window._u_last_showcases.map(renderShowcase).join('');
+      }
+    })
+    .catch(() => {});
 
   // Stats & level
   renderStats(stats || {});
@@ -1213,6 +1232,7 @@ function renderProfile(data) {
     : '<div style="font-size:13px;color:var(--text-muted);">No badges yet</div>';
 
   // Showcases
+  window._u_last_showcases = showcases || [];
   const sc = document.getElementById('showcasesContainer');
   sc.innerHTML = (showcases && showcases.length)
     ? showcases.map(renderShowcase).join('')

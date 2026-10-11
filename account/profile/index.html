@@ -1901,14 +1901,16 @@ document.querySelectorAll('.animate-in').forEach(el => {
   } catch (_) {}
 
   try {
-    const [data, statsData, friendsData] = await Promise.all([
+    const [data, statsData, friendsData, achvData] = await Promise.all([
       apiGet('/api/profile/me'),
       apiGet('/api/arcade/stats/me').catch(() => null),
       apiGet(friendBaseUrl).catch(() => null),
+      apiGet('/api/profile/me/achievements').catch(() => null),
     ]);
     arcadeStats = statsData;
     renderProfile(data);
     renderFriends(friendsData);
+    renderAchievements((achvData && achvData.achievements) || []);
   } catch (e) {
     showToast('Could not load profile: ' + e.message, 'err');
     document.getElementById('displayName').textContent = 'Error loading profile';
