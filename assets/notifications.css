@@ -176,3 +176,13 @@
   border-radius: 999px;
   line-height: 1;
 }
+
+
+/* Ensure the primary nav right-side cluster always lays out horizontally
+   so the bell sits beside the avatar instead of stacking above it on
+   pages where no page-specific CSS defines .nav-right. */
+.nav-right {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+}
