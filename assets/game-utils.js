@@ -76,7 +76,25 @@
   window.addEventListener("keydown",     markInteraction, { once: true });
   window.addEventListener("touchstart",  markInteraction, { once: true, passive: true });
 
-  window.addEventListener("pagehide", sessionFlush);
+
+  // Fire an achievement unlock. Server dedupes, so this is safe to call
+  // on every death / win — only the first ever lands a new entry.
+  window.unlockAchievement = function (achievementId) {
+    var token = getToken();
+    if (!token) return;
+    try {
+      fetch("/api/profile/me/achievements/" + encodeURIComponent(achievementId), {
+        method: "POST",
+        keepalive: true,
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type":  "application/json"
+        }
+      }).catch(function () {});
+    } catch (_) {}
+  };
+
+    window.addEventListener("pagehide", sessionFlush);
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "hidden") sessionFlush();
   });

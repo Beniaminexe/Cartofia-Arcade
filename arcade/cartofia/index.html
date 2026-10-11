@@ -1237,5 +1237,15 @@ frameborder="1"
         o.observe(splash, { attributes: true, attributeFilter: ["class"] });
     })();
     </script>
+    <script>
+    /* Called from Python (main.py in the APK) whenever the player dies.
+       Reports the first-death achievement — server dedupes, so firing on
+       every death is fine. */
+    window.cartofiaOnDeath = function (totalDeaths) {
+      if (typeof window.unlockAchievement === "function") {
+        window.unlockAchievement("cartofia_first_death");
+      }
+    };
+    </script>
 </body>
 </html>
