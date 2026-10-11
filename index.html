@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
-  <link rel="stylesheet" href="/home.css?v=2" />
+  <link rel="stylesheet" href="/home.css?v=3" />
   <style>
     /* Make the nav-avatar button reset so home.css styles apply cleanly */
     button.nav-avatar {
@@ -39,6 +39,8 @@
       <a href="/" class="active">Home</a>
       <a href="/arcade/">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
+      <a href="#tab-forum" class="has-soon">Forum<span class="nav-soon-pill">soon</span></a>
+      <a href="#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
 
     <div class="nav-right">
@@ -60,16 +62,22 @@
 
       <!-- Left: main copy -->
       <div class="hero-copy">
-        <p class="hero-kicker">Cartofia Platform</p>
-        <h1 class="hero-headline">Your arcade.<br>Your server.<br>Your rules.</h1>
+        <p class="hero-kicker">The Cartofia Platform</p>
+        <h1 class="hero-headline">Play.<br>Build.<br>Hang out.</h1>
         <p class="hero-lead">
-          Browser games, a Minecraft world, and a community — all self-hosted on one machine.
-          No accounts required to start playing.
+          A homelab-hosted hangout: a browser arcade, a shared Minecraft world, and —
+          soon — a forum and direct messages between friends. One account, no apps.
         </p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="/arcade/">Enter the Arcade</a>
           <a class="btn btn-ghost"   href="/minecraft/">Explore the Server</a>
         </div>
+        <ul class="hero-pillars" aria-label="What's inside">
+          <li><span class="pillar-dot live" aria-hidden="true"></span>Arcade</li>
+          <li><span class="pillar-dot live" aria-hidden="true"></span>Minecraft</li>
+          <li><span class="pillar-dot soon" aria-hidden="true"></span>Forum</li>
+          <li><span class="pillar-dot soon" aria-hidden="true"></span>Messages</li>
+        </ul>
       </div>
 
       <!-- Right: "Tonight on Cartofia" feed card -->
@@ -94,28 +102,34 @@
        STATS STRIP — platform at a glance
   ================================================= -->
   <div class="stats-strip" id="stats" aria-label="Platform at a glance">
-    <div class="stats-inner">
+    <div class="stats-inner four-pillars">
       <div class="stat-item">
-        <span class="stat-icon" aria-hidden="true">🎮</span>
-        <span class="stat-value">9</span>
-        <span class="stat-label">games in the arcade</span>
+        <span class="stat-icon" aria-hidden="true">🕹️</span>
+        <span class="stat-value stat-badge live">Live</span>
+        <span class="stat-label">Arcade</span>
+        <span class="stat-sub">10+ browser games</span>
       </div>
       <div class="stat-item">
         <span class="stat-icon" aria-hidden="true">⛏️</span>
-        <span class="stat-value">1</span>
-        <span class="stat-label">survival world</span>
+        <span class="stat-value stat-badge live">Live</span>
+        <span class="stat-label">Minecraft</span>
+        <span class="stat-sub">Shared survival world</span>
       </div>
       <div class="stat-item">
-        <span class="stat-icon" aria-hidden="true">👤</span>
-        <span class="stat-value" id="online-count">0</span>
-        <span class="stat-label">players online</span>
+        <span class="stat-icon" aria-hidden="true">💬</span>
+        <span class="stat-value stat-badge soon">Soon</span>
+        <span class="stat-label">Forum</span>
+        <span class="stat-sub">Threaded discussions</span>
       </div>
       <div class="stat-item">
-        <span class="stat-icon" aria-hidden="true">🏠</span>
-        <span class="stat-value">1</span>
-        <span class="stat-label">homelab server</span>
+        <span class="stat-icon" aria-hidden="true">✉️</span>
+        <span class="stat-value stat-badge soon">Soon</span>
+        <span class="stat-label">Messages</span>
+        <span class="stat-sub">Friend-to-friend chat</span>
       </div>
     </div>
+  </div>
+
   </div>
 
 
@@ -131,12 +145,13 @@
     <div class="showcase-wrap">
 
       <!-- Tab selector buttons -->
-      <div class="showcase-tabs" role="tablist" aria-label="Features">
+      <div class="showcase-tabs" role="tablist" aria-label="Sections of Cartofia">
 
         <button class="tab-btn active" role="tab" aria-selected="true"
                 aria-controls="tab-arcade" data-tab="arcade" id="tabctrl-arcade">
           <span class="tab-icon" aria-hidden="true">🕹️</span>
           <span class="tab-label">Arcade</span>
+          <span class="tab-status live">Live</span>
           <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
             <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -146,24 +161,27 @@
                 aria-controls="tab-minecraft" data-tab="minecraft" id="tabctrl-minecraft">
           <span class="tab-icon" aria-hidden="true">⛏️</span>
           <span class="tab-label">Minecraft</span>
+          <span class="tab-status live">Live</span>
           <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
             <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
 
         <button class="tab-btn" role="tab" aria-selected="false"
-                aria-controls="tab-account" data-tab="account" id="tabctrl-account">
-          <span class="tab-icon" aria-hidden="true">👤</span>
-          <span class="tab-label">Account</span>
-          <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
-            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-
-        <button class="tab-btn" role="tab" aria-selected="false"
-                aria-controls="tab-community" data-tab="community" id="tabctrl-community">
+                aria-controls="tab-forum" data-tab="forum" id="tabctrl-forum">
           <span class="tab-icon" aria-hidden="true">💬</span>
-          <span class="tab-label">Community</span>
+          <span class="tab-label">Forum</span>
+          <span class="tab-status soon">Soon</span>
+          <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button class="tab-btn" role="tab" aria-selected="false"
+                aria-controls="tab-messages" data-tab="messages" id="tabctrl-messages">
+          <span class="tab-icon" aria-hidden="true">✉️</span>
+          <span class="tab-label">Messages</span>
+          <span class="tab-status soon">Soon</span>
           <svg class="tab-arrow" viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">
             <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -174,13 +192,13 @@
       <div class="showcase-content">
 
         <!-- ARCADE -->
-        <div class="tab-panel active" id="tab-arcade" role="tabpanel" aria-labelledby="tabctrl-arcade">
+        <div class="tab-panel active pillar-arcade" id="tab-arcade" role="tabpanel" aria-labelledby="tabctrl-arcade">
           <div class="tab-info">
             <p class="tab-tagline">No downloads. No installs. Just play.</p>
             <p class="tab-desc">
-              Jump into browser games instantly — Zuma Temple, Snake, Bomber Raid, Minesweeper,
-              Maze Chase, and more. Works on desktop and mobile. Some games support multiplayer
-              through live WebSocket rooms.
+              Browser games you can play on any device: Zuma Temple, Snake, Bomber Raid,
+              Minesweeper, Chess, Maze Chase, and more. Several support multiplayer rooms over
+              WebSockets.
             </p>
             <a class="btn btn-primary btn-sm" href="/arcade/">Browse Games →</a>
           </div>
@@ -197,106 +215,100 @@
         </div>
 
         <!-- MINECRAFT -->
-        <div class="tab-panel" id="tab-minecraft" role="tabpanel" aria-labelledby="tabctrl-minecraft">
+        <div class="tab-panel pillar-minecraft" id="tab-minecraft" role="tabpanel" aria-labelledby="tabctrl-minecraft">
           <div class="tab-info">
             <p class="tab-tagline">A shared survival world.</p>
             <p class="tab-desc">
-              Vanilla Minecraft server that sleeps when nobody's on and wakes up through Discord.
-              Check the status, grab the server address, and jump in. No whitelist.
+              Vanilla Minecraft server, always on the latest release. Auto-shuts down when empty;
+              approved players wake it from the browser. No whitelist beyond that.
             </p>
-            <a class="btn btn-primary btn-sm" href="/minecraft/">View Server →</a>
+            <a class="btn btn-primary btn-sm" href="/minecraft/">Server Page →</a>
           </div>
           <div class="tab-visual">
             <div class="mc-status-card">
               <div class="mc-status-header">
-                <span class="status-dot sleeping" aria-label="Sleeping"></span>
-                <span class="status-label">Server Sleeping</span>
+                <span class="status-dot sleeping" aria-label="Status"></span>
+                <span class="status-label">Live Status</span>
               </div>
               <div class="mc-detail">
                 <span class="mc-detail-label">Address</span>
-                <span class="mc-detail-value">mc.cartofia.com</span>
+                <span class="mc-detail-value">answers-advertising.gl.joinmc.link</span>
               </div>
               <div class="mc-detail">
-                <span class="mc-detail-label">Version</span>
-                <span class="mc-detail-value">1.21.x Vanilla</span>
+                <span class="mc-detail-label">Edition</span>
+                <span class="mc-detail-value">Java · Vanilla</span>
               </div>
               <div class="mc-detail">
                 <span class="mc-detail-label">Mode</span>
                 <span class="mc-detail-value">Survival</span>
               </div>
-              <div class="mc-wake-hint">💤 Wake it up via Discord</div>
+              <div class="mc-wake-hint">🎛️ Approved players wake it from the control panel.</div>
             </div>
           </div>
         </div>
 
-        <!-- ACCOUNT -->
-        <div class="tab-panel" id="tab-account" role="tabpanel" aria-labelledby="tabctrl-account">
+        <!-- FORUM (coming soon) -->
+        <div class="tab-panel pillar-forum tab-panel-soon" id="tab-forum" role="tabpanel" aria-labelledby="tabctrl-forum">
           <div class="tab-info">
-            <p class="tab-tagline">One login. Everything connected.</p>
+            <p class="tab-tagline">A place to think out loud.</p>
             <p class="tab-desc">
-              Create a profile, track which games you've played, upload to the file archive, and
-              customize your presence across Cartofia. Sign in once and you're set everywhere.
+              Lightweight threaded discussions — share updates, start a thread about a game you're
+              hooked on, drop screenshots. No karma, no algorithm, no infinite scroll trap.
             </p>
-            <a class="btn btn-primary btn-sm" href="/account/">Open Account →</a>
+            <button class="btn btn-ghost btn-sm" type="button" disabled aria-disabled="true">Coming soon</button>
           </div>
           <div class="tab-visual">
-            <div class="mock-profile-card">
-              <div class="mock-profile-banner"></div>
-              <div class="mock-profile-body">
-                <div class="mock-avatar-wrap">
-                  <div class="mock-avatar" aria-hidden="true">P1</div>
+            <div class="mock-forum-card" aria-hidden="true">
+              <div class="mock-thread">
+                <div class="mock-thread-avatar" style="background:linear-gradient(135deg,#4f7df9,#8b5cf6);">A</div>
+                <div class="mock-thread-body">
+                  <div class="mock-thread-title">What's your highest Snake score?</div>
+                  <div class="mock-thread-meta">@ajba · 12 replies · 3h ago</div>
                 </div>
-                <div class="mock-username">player_one</div>
-                <div class="mock-tagline-text">Joined Cartofia</div>
-                <div class="mock-badges">
-                  <span class="mock-badge">🎮 Gamer</span>
-                  <span class="mock-badge">📦 Archivist</span>
-                  <span class="mock-badge">⭐ OG</span>
+              </div>
+              <div class="mock-thread">
+                <div class="mock-thread-avatar" style="background:linear-gradient(135deg,#22c55e,#06b6d4);">B</div>
+                <div class="mock-thread-body">
+                  <div class="mock-thread-title">New dungeon in the MC world — screenshots inside</div>
+                  <div class="mock-thread-meta">@beniamin · 7 replies · yesterday</div>
+                </div>
+              </div>
+              <div class="mock-thread">
+                <div class="mock-thread-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">C</div>
+                <div class="mock-thread-body">
+                  <div class="mock-thread-title">Tournament bracket for Bomber Raid?</div>
+                  <div class="mock-thread-meta">@cosmin · 2 replies · 2d ago</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- COMMUNITY -->
-        <div class="tab-panel" id="tab-community" role="tabpanel" aria-labelledby="tabctrl-community">
+        <!-- MESSAGES (coming soon) -->
+        <div class="tab-panel pillar-messages tab-panel-soon" id="tab-messages" role="tabpanel" aria-labelledby="tabctrl-messages">
           <div class="tab-info">
-            <p class="tab-tagline">See how it's built.</p>
+            <p class="tab-tagline">Chat without leaving.</p>
             <p class="tab-desc">
-              Cartofia is fully open source. Join the Discord to suggest features, report bugs, or
-              just hang out. Check the GitHub to see the code, infrastructure, and everything that
-              makes this run.
+              Direct messages between friends, right in the browser. No app, no install, no second
+              login — just open the chat and go.
             </p>
-            <a class="btn btn-primary btn-sm" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Join Discord →</a>
+            <button class="btn btn-ghost btn-sm" type="button" disabled aria-disabled="true">Coming soon</button>
           </div>
           <div class="tab-visual">
-            <div class="mock-commits" aria-label="Recent commits">
-              <div class="commit-row">
-                <span class="commit-dot" aria-hidden="true"></span>
-                <div class="commit-info">
-                  <span class="commit-msg">feat: homepage feed + game activity logging</span>
-                  <span class="commit-meta">main · recent</span>
+            <div class="mock-chat" aria-hidden="true">
+              <div class="mock-chat-head">
+                <div class="mock-chat-avatar" style="background:linear-gradient(135deg,#22c55e,#06b6d4);">B</div>
+                <div class="mock-chat-identity">
+                  <span class="mock-chat-name">beniamin</span>
+                  <span class="mock-chat-status">online</span>
                 </div>
               </div>
-              <div class="commit-row">
-                <span class="commit-dot" aria-hidden="true"></span>
-                <div class="commit-info">
-                  <span class="commit-msg">fix: OIDC token refresh on expiry</span>
-                  <span class="commit-meta">main · recent</span>
-                </div>
-              </div>
-              <div class="commit-row">
-                <span class="commit-dot" aria-hidden="true"></span>
-                <div class="commit-info">
-                  <span class="commit-msg">feat: profile system with badges</span>
-                  <span class="commit-meta">main · recent</span>
-                </div>
-              </div>
-              <div class="commit-row">
-                <span class="commit-dot" aria-hidden="true"></span>
-                <div class="commit-info">
-                  <span class="commit-msg">feat: multiplayer rooms for chess, blackjack</span>
-                  <span class="commit-meta">main · recent</span>
+              <div class="mock-chat-body">
+                <div class="mock-bubble incoming">yo you around?</div>
+                <div class="mock-bubble outgoing">yeah, just got on the server</div>
+                <div class="mock-bubble incoming">brb joining</div>
+                <div class="mock-bubble outgoing typing">
+                  <span></span><span></span><span></span>
                 </div>
               </div>
             </div>
@@ -320,27 +332,24 @@
     <div class="steps-strip">
       <div class="step">
         <div class="step-num">01</div>
-        <h3 class="step-title">Pick something</h3>
-        <p class="step-desc">Browse the arcade, check the Minecraft server, or explore the archive.</p>
-        <p class="step-desc-extra">Everything's right here — no external links, no redirects.</p>
+        <h3 class="step-title">Pick a section</h3>
+        <p class="step-desc">Jump into the arcade, log into the Minecraft server, or (soon) start a forum thread or DM a friend.</p>
       </div>
 
       <div class="step-connector" aria-hidden="true"></div>
 
       <div class="step">
         <div class="step-num">02</div>
-        <h3 class="step-title">Play or explore</h3>
-        <p class="step-desc">Everything runs in your browser. No downloads, no setup.</p>
-        <p class="step-desc-extra">Games work on desktop and mobile. Some even support multiplayer.</p>
+        <h3 class="step-title">Sign in once</h3>
+        <p class="step-desc">One Cartofia account unlocks everything: profile, achievements, friends, server access.</p>
       </div>
 
       <div class="step-connector" aria-hidden="true"></div>
 
       <div class="step">
         <div class="step-num">03</div>
-        <h3 class="step-title">Make it yours</h3>
-        <p class="step-desc">Create an account to track stats, earn badges, and unlock more.</p>
-        <p class="step-desc-extra">Your profile, your stats, your archive access — all in one place.</p>
+        <h3 class="step-title">Hang out</h3>
+        <p class="step-desc">Rack up high scores, make friends, build in survival, and (soon) keep the conversation going on the forum.</p>
       </div>
     </div>
   </section>
@@ -371,8 +380,8 @@
   ================================================= -->
   <div class="final-cta" id="cta">
     <div class="final-cta-inner">
-      <h2 class="final-cta-heading">Ready to play?</h2>
-      <p class="final-cta-sub">Jump into the arcade — no account needed to start.</p>
+      <h2 class="final-cta-heading">Ready to hang out?</h2>
+      <p class="final-cta-sub">Start in the arcade — no account needed. Sign in later for Minecraft, friends, and the sections coming next.</p>
       <a class="btn btn-primary" href="/arcade/">Enter the Arcade →</a>
     </div>
   </div>
@@ -395,6 +404,6 @@
 
   <script src="/assets/theme.js?v=1"></script>
   <script src="/assets/site.js?v=6"></script>
-  <script src="/home.js?v=3"></script>
+  <script src="/home.js?v=4"></script>
 </body>
 </html>
