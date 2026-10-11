@@ -8,7 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
-  <link rel="stylesheet" href="/forum/forum.css?v=2" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=1">
+  <link rel="stylesheet" href="/forum/forum.css?v=3" />
   <style>button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }</style>
 </head>
 <body>
@@ -69,6 +70,7 @@
 
   <script src="/assets/theme.js?v=1"></script>
   <script src="/assets/site.js?v=6"></script>
+  <script src="/assets/notifications.js?v=1" defer></script>
   <script src="/forum/forum-md.js?v=1"></script>
   <script>
     const container = document.getElementById('threadContainer');
@@ -103,7 +105,10 @@
     }
     function relative(ts) {
       if (!ts) return '';
-      const d = new Date(ts.replace(' ', 'T') + (ts.endsWith('Z') ? '' : 'Z'));
+      let s = String(ts).replace(' ', 'T');
+      if (!/Z$|[+-]\d{2}:?\d{2}$/.test(s)) s += 'Z';
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return '';
       const secs = (Date.now() - d.getTime()) / 1000;
       if (secs < 60) return 'just now';
       if (secs < 3600) return Math.floor(secs / 60) + 'm ago';

@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=1">
   <link rel="stylesheet" href="/home.css?v=2" />
   <style>
     /* nav-avatar button reset (matches homepage) */
@@ -604,6 +605,7 @@
 
   <script src="/assets/theme.js?v=1"></script>
   <script src="/assets/site.js?v=6"></script>
+  <script src="/assets/notifications.js?v=1" defer></script>
   <script>
     /* ============================================================
        OIDC PKCE auth — same logic as the previous account page.
@@ -803,8 +805,9 @@
         sessionStorage.setItem("oidc_pkce_verifier", pkce.verifier);
         sessionStorage.setItem("oidc_state", state);
 
-        let scope = "openid profile email groups";
-        if (remember) scope += " offline_access";
+        // Always request offline_access so Authentik issues a refresh token.
+        // Without it, access tokens expire silently and the user is logged out.
+        let scope = "openid profile email groups offline_access";
 
         const params = new URLSearchParams({
           response_type:        "code",

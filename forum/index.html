@@ -8,16 +8,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
-  <link rel="stylesheet" href="/forum/forum.css?v=2" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=1">
+  <link rel="stylesheet" href="/forum/forum.css?v=3" />
   <style>button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }</style>
 </head>
 <body>
   <header class="nav" id="nav">
     <a class="nav-brand" href="/">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
-        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
-        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
-        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
         <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
       </svg>
       Cartofia
@@ -50,12 +51,22 @@
       </div>
     </header>
 
+    <!-- Search + category filter row -->
+    <div class="forum-toolbar">
+      <div class="forum-search">
+        <input id="searchInput" class="compose-input" type="search" placeholder="Search threads and posts…" aria-label="Search forum" />
+      </div>
+      <div class="forum-cats" id="categoryTabs" aria-label="Categories"></div>
+    </div>
+
+    <!-- Compose panel -->
     <section class="forum-compose hidden" id="composePanel">
       <div class="compose-head">
         <h2>Start a new thread</h2>
         <button class="btn btn-ghost btn-sm" type="button" id="composeCancel">Cancel</button>
       </div>
       <input id="composeTitle" class="compose-input" type="text" maxlength="200" placeholder="Title (required)" />
+      <select id="composeCategory" class="compose-input" aria-label="Category"></select>
       <textarea id="composeBody" class="compose-textarea" maxlength="10000" placeholder="Markdown welcome…"></textarea>
       <div class="compose-foot">
         <div id="composeHint" class="compose-hint"></div>
@@ -63,6 +74,10 @@
       </div>
     </section>
 
+    <!-- Search results section -->
+    <section id="searchResults" class="search-results hidden" aria-live="polite"></section>
+
+    <!-- Thread list -->
     <section class="thread-list" id="threadList" aria-live="polite">
       <div class="thread-skeleton"><div class="skel-row"></div><div class="skel-row"></div><div class="skel-row"></div></div>
     </section>
@@ -74,19 +89,27 @@
 
   <script src="/assets/theme.js?v=1"></script>
   <script src="/assets/site.js?v=6"></script>
+  <script src="/assets/notifications.js?v=1" defer></script>
   <script src="/forum/forum-md.js?v=1"></script>
   <script>
-    const listEl = document.getElementById('threadList');
-    const compose = document.getElementById('composePanel');
-    const openBtn = document.getElementById('newThreadBtn');
+    const listEl   = document.getElementById('threadList');
+    const compose  = document.getElementById('composePanel');
+    const openBtn  = document.getElementById('newThreadBtn');
     const cancelBt = document.getElementById('composeCancel');
     const submitBt = document.getElementById('composeSubmit');
-    const titleEl = document.getElementById('composeTitle');
-    const bodyEl = document.getElementById('composeBody');
-    const hintEl = document.getElementById('composeHint');
-    const moreBtn = document.getElementById('loadMoreBtn');
+    const titleEl  = document.getElementById('composeTitle');
+    const bodyEl   = document.getElementById('composeBody');
+    const hintEl   = document.getElementById('composeHint');
+    const moreBtn  = document.getElementById('loadMoreBtn');
+    const catTabs  = document.getElementById('categoryTabs');
+    const catSel   = document.getElementById('composeCategory');
+    const searchEl = document.getElementById('searchInput');
+    const resultsEl = document.getElementById('searchResults');
 
     let cursor = null;
+    let categories = [];
+    let activeCategory = new URLSearchParams(location.search).get('category') || '';
+
     const esc = CartofiaMarkdown.escapeHtml;
 
     function token() {
@@ -95,7 +118,10 @@
     }
     function relative(ts) {
       if (!ts) return '';
-      const d = new Date(ts.replace(' ', 'T') + (ts.endsWith('Z') ? '' : 'Z'));
+      let s = String(ts).replace(' ', 'T');
+      if (!/Z$|[+-]\d{2}:?\d{2}$/.test(s)) s += 'Z';
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return '';
       const secs = (Date.now() - d.getTime()) / 1000;
       if (secs < 60) return 'just now';
       if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
@@ -108,17 +134,29 @@
       const initial = (a.display_name || a.username || '?').slice(0, 2).toUpperCase();
       return '<div class="thread-avatar thread-avatar-fallback">' + esc(initial) + '</div>';
     }
+    function categoryName(id) {
+      if (id == null) return '';
+      const c = categories.find(c => c.id === id);
+      return c ? c.name : '';
+    }
     function threadCard(t) {
       const name = t.author.display_name || t.author.username || 'Unknown';
       const slug = t.author.username || '';
       const authorLink = slug
         ? '<a class="thread-author" href="/u/' + encodeURIComponent(slug) + '">' + esc(name) + '</a>'
         : esc(name);
+      const pin = t.pinned ? '<span class="thread-flag thread-flag-pinned">📌 Pinned</span>' : '';
+      const lock = t.locked ? '<span class="thread-flag thread-flag-locked">🔒 Locked</span>' : '';
+      const catName = categoryName(t.category_id);
+      const catChip = catName ? '<span class="thread-cat-chip">' + esc(catName) + '</span>' : '';
       return `
-        <article class="thread-card">
+        <article class="thread-card${t.pinned ? ' pinned' : ''}">
           ${avatarMarkup(t.author)}
           <div class="thread-main">
-            <a class="thread-title" href="/forum/thread/?id=${t.id}">${esc(t.title)}</a>
+            <div class="thread-title-row">
+              <a class="thread-title" href="/forum/thread/?id=${t.id}">${esc(t.title)}</a>
+              ${pin}${lock}${catChip}
+            </div>
             <div class="thread-meta">
               ${authorLink}
               <span>·</span>
@@ -130,15 +168,50 @@
         </article>`;
     }
 
+    async function loadCategories() {
+      try {
+        const r = await fetch('/api/forum/categories');
+        if (!r.ok) throw new Error();
+        const data = await r.json();
+        categories = data.categories || [];
+      } catch (_) { categories = []; }
+      renderCategoryTabs();
+      renderCategorySelect();
+    }
+
+    function renderCategoryTabs() {
+      const items = [{ slug: '', name: 'All' }].concat(categories);
+      catTabs.innerHTML = items.map(c => `
+        <button class="forum-cat-tab${activeCategory === c.slug ? ' active' : ''}" data-slug="${esc(c.slug)}" type="button">${esc(c.name)}</button>
+      `).join('');
+    }
+    function renderCategorySelect() {
+      catSel.innerHTML = '<option value="">General</option>'
+        + categories.map(c => `<option value="${esc(c.slug)}">${esc(c.name)}</option>`).join('');
+    }
+
+    catTabs.addEventListener('click', (e) => {
+      const b = e.target.closest('.forum-cat-tab');
+      if (!b) return;
+      activeCategory = b.dataset.slug;
+      renderCategoryTabs();
+      const url = new URL(location.href);
+      if (activeCategory) url.searchParams.set('category', activeCategory); else url.searchParams.delete('category');
+      history.replaceState(null, '', url);
+      loadThreads(true);
+    });
+
     async function loadThreads(reset) {
       if (reset) { cursor = null; listEl.innerHTML = ''; }
-      const q = cursor ? ('?before_id=' + cursor) : '';
+      const q = new URLSearchParams();
+      if (cursor) q.set('before_id', cursor);
+      if (activeCategory) q.set('category', activeCategory);
       try {
-        const r = await fetch('/api/forum/threads' + q);
+        const r = await fetch('/api/forum/threads' + (q.toString() ? '?' + q : ''));
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const data = await r.json();
         if (!cursor && (!data.threads || !data.threads.length)) {
-          listEl.innerHTML = '<div class="forum-empty">No threads yet. Be the first to post!</div>';
+          listEl.innerHTML = '<div class="forum-empty">No threads here yet.</div>';
           moreBtn.hidden = true;
           return;
         }
@@ -151,29 +224,86 @@
       }
     }
 
+    /* ---------------- SEARCH ---------------- */
+    let searchTimer = null;
+    searchEl.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      const q = searchEl.value.trim();
+      if (q.length < 2) {
+        resultsEl.classList.add('hidden'); resultsEl.innerHTML = '';
+        return;
+      }
+      searchTimer = setTimeout(() => doSearch(q), 250);
+    });
+
+    async function doSearch(q) {
+      try {
+        const r = await fetch('/api/forum/search?q=' + encodeURIComponent(q));
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        renderSearchResults(data, q);
+      } catch (e) {
+        resultsEl.classList.remove('hidden');
+        resultsEl.innerHTML = '<div class="forum-error">Search failed: ' + esc(e.message) + '</div>';
+      }
+    }
+    function hilite(text, q) {
+      const safe = esc(text);
+      if (!q) return safe;
+      const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\\\]/g, '\\\\$&') + ')', 'ig');
+      return safe.replace(re, '<mark>$1</mark>');
+    }
+    function renderSearchResults(data, q) {
+      resultsEl.classList.remove('hidden');
+      const threads = data.threads || [];
+      const posts   = data.posts   || [];
+      let html = `<h2 class="search-head">Results for "${esc(q)}"</h2>`;
+      if (!threads.length && !posts.length) {
+        html += '<div class="forum-empty">Nothing matched.</div>';
+      } else {
+        if (threads.length) {
+          html += '<div class="search-group-title">Threads</div>';
+          html += threads.map(t => `
+            <a class="search-row" href="/forum/thread/?id=${t.id}">
+              <span class="search-row-title">${hilite(t.title, q)}</span>
+              <span class="search-row-meta">${t.reply_count} replies · ${esc(relative(t.last_post_at))}</span>
+            </a>`).join('');
+        }
+        if (posts.length) {
+          html += '<div class="search-group-title">Posts</div>';
+          html += posts.map(p => `
+            <a class="search-row" href="/forum/thread/?id=${p.thread_id}">
+              <span class="search-row-title">${esc(p.thread_title || '')}</span>
+              <span class="search-row-body">${hilite(p.body.slice(0, 240), q)}</span>
+            </a>`).join('');
+        }
+      }
+      resultsEl.innerHTML = html;
+    }
+
+    /* ---------------- COMPOSE ---------------- */
     openBtn.addEventListener('click', () => {
       if (!token()) { window.location.href = '/account/'; return; }
       compose.classList.remove('hidden');
+      // pre-select active category if one is active
+      if (activeCategory) catSel.value = activeCategory;
       titleEl.focus();
     });
     cancelBt.addEventListener('click', () => {
       compose.classList.add('hidden');
       titleEl.value = ''; bodyEl.value = ''; hintEl.textContent = '';
     });
-
     submitBt.addEventListener('click', async () => {
       const title = titleEl.value.trim();
-      const body = bodyEl.value.trim();
+      const body  = bodyEl.value.trim();
+      const category = catSel.value || null;
       if (!title) { hintEl.textContent = 'Give it a title.'; return; }
       submitBt.disabled = true; hintEl.textContent = '';
       try {
         const r = await fetch('/api/forum/threads', {
           method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + token(),
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ title, body })
+          headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, body, category })
         });
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
@@ -185,7 +315,8 @@
     });
 
     moreBtn.addEventListener('click', () => loadThreads(false));
-    loadThreads(true);
+
+    (async () => { await loadCategories(); await loadThreads(true); })();
   </script>
 </body>
 </html>
