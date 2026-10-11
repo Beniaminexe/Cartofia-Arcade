@@ -330,6 +330,88 @@
       .mc-info-inner { grid-template-columns: 1fr; }
       .status-row { grid-template-columns: 80px 1fr; }
     }
+
+    /* ===== MY SERVER section ===== */
+    .my-server-card {
+      border-radius: 20px;
+      padding: clamp(20px, 3vw, 28px);
+      background:
+        radial-gradient(420px 220px at 100% 0%, rgba(79,125,249,0.10), transparent 65%),
+        linear-gradient(180deg, rgba(15,26,42,0.78), rgba(10,17,29,0.6));
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 52px rgba(1,9,19,0.42);
+    }
+    .my-server-card.hidden,
+    .my-server-empty.hidden { display: none; }
+    .my-server-card h3 {
+      margin: 0 0 10px;
+      font-size: clamp(20px, 2.6vw, 26px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+    .my-server-card p {
+      color: var(--text-secondary);
+      font-size: 14.5px;
+      line-height: 1.6;
+      margin: 0 0 16px;
+    }
+    .my-server-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+    .my-server-label {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin: 0 0 4px !important;
+    }
+    .my-server-address {
+      font-family: var(--font-mono);
+      font-size: clamp(14px, 2vw, 18px);
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      padding: 3px 10px;
+      border-radius: 6px;
+      word-break: break-all;
+    }
+    .my-server-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .my-server-grid span {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    .my-server-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .my-server-actions .btn { flex: 1 1 auto; justify-content: center; min-width: 0; }
+    .my-server-note {
+      margin-top: 10px !important;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      min-height: 1.3em;
+    }
+    .my-server-note.err { color: #fca5a5 !important; }
+    .my-server-note.ok  { color: #86efac !important; }
+    .mc-danger { color: #fca5a5 !important; border-color: rgba(252,165,165,0.4) !important; }
+    .mc-danger:hover { background: rgba(252,165,165,0.08) !important; }
+
   </style>
 </head>
 <body>
@@ -406,6 +488,51 @@
       </div>
       <div class="mc-control-panel" id="mcControlPanel" aria-live="polite"></div>
     </aside>
+  </section>
+
+
+  <!-- ================================================
+       YOUR OWN SERVER (visible to users in minecraft_creator)
+  ================================================= -->
+  <section class="mc-section reveal" id="myServerSection" hidden>
+    <div class="mc-section-head">
+      <p class="mc-section-label">Your Server</p>
+      <h2 class="mc-section-title">Your private world</h2>
+    </div>
+
+    <!-- Empty state -->
+    <div class="my-server-empty hidden" id="myServerEmpty">
+      <div class="my-server-card">
+        <h3>Spin up a server just for you</h3>
+        <p>One private vanilla Minecraft server attached to your account. We handle
+        the hosting, the subdomain, and the latest-release upgrades. Auto-shuts
+        down when nobody is on. Deleted after 3 months of inactivity.</p>
+        <button id="myServerCreateBtn" class="btn btn-primary" type="button">+ Create my server</button>
+        <p class="my-server-note" id="myServerCreateHint"></p>
+      </div>
+    </div>
+
+    <!-- Status card -->
+    <div class="my-server-card hidden" id="myServerCard">
+      <div class="my-server-head">
+        <div>
+          <p class="my-server-label">Address</p>
+          <code class="my-server-address" id="myServerAddress"></code>
+        </div>
+        <span class="server-dot" id="myServerDot" aria-hidden="true"></span>
+      </div>
+      <div class="my-server-grid">
+        <div><p class="my-server-label">Status</p><span id="myServerStatus">—</span></div>
+        <div><p class="my-server-label">Created</p><span id="myServerCreated">—</span></div>
+        <div><p class="my-server-label">Last active</p><span id="myServerLastActive">—</span></div>
+      </div>
+      <div class="my-server-actions">
+        <button id="myServerStart"  class="btn btn-primary" type="button">Start</button>
+        <button id="myServerStop"   class="btn btn-ghost"   type="button">Stop</button>
+        <button id="myServerDelete" class="btn btn-ghost mc-danger" type="button">Delete</button>
+      </div>
+      <p class="my-server-note" id="myServerFeedback"></p>
+    </div>
   </section>
 
 
@@ -766,6 +893,132 @@
       const el = document.querySelector(".footer-copy");
       if (el) el.textContent = "© " + new Date().getFullYear() + " Cartofia. Built on a homelab.";
     })();
+
+    /* ----------------------------------------------------------
+       MY SERVER panel — list / create / start / stop / delete
+    ---------------------------------------------------------- */
+    (function () {
+      var section       = document.getElementById("myServerSection");
+      if (!section) return;
+      var emptyWrap     = document.getElementById("myServerEmpty");
+      var card          = document.getElementById("myServerCard");
+      var createBtn     = document.getElementById("myServerCreateBtn");
+      var createHint    = document.getElementById("myServerCreateHint");
+      var address       = document.getElementById("myServerAddress");
+      var dot           = document.getElementById("myServerDot");
+      var statusEl      = document.getElementById("myServerStatus");
+      var createdEl     = document.getElementById("myServerCreated");
+      var lastEl        = document.getElementById("myServerLastActive");
+      var startBtn      = document.getElementById("myServerStart");
+      var stopBtn       = document.getElementById("myServerStop");
+      var delBtn        = document.getElementById("myServerDelete");
+      var feedback      = document.getElementById("myServerFeedback");
+
+      function token() {
+        try { return sessionStorage.getItem("oidc_access_token") || localStorage.getItem("oidc_access_token"); }
+        catch (_) { return null; }
+      }
+
+      function relative(ts) {
+        if (!ts) return "—";
+        var d = new Date(ts);
+        if (isNaN(d.getTime())) return ts;
+        var secs = Math.round((Date.now() - d.getTime()) / 1000);
+        if (secs < 60)    return "just now";
+        if (secs < 3600)  return Math.floor(secs / 60) + "m ago";
+        if (secs < 86400) return Math.floor(secs / 3600) + "h ago";
+        if (secs < 2592000) return Math.floor(secs / 86400) + "d ago";
+        return d.toLocaleDateString();
+      }
+
+      function setFeedback(msg, cls) {
+        feedback.textContent = msg || "";
+        feedback.className = "my-server-note" + (cls ? " " + cls : "");
+      }
+
+      async function fetchState() {
+        if (!token()) { section.hidden = true; return; }
+        try {
+          var r = await fetch("/api/minecraft/servers/me", {
+            headers: { "Authorization": "Bearer " + token() }
+          });
+          if (!r.ok) { section.hidden = true; return; }
+          var data = await r.json();
+          render(data);
+        } catch (_) { section.hidden = true; }
+      }
+
+      function render(data) {
+        if (!data.server && !data.can_create) { section.hidden = true; return; }
+        section.hidden = false;
+        if (!data.server) {
+          emptyWrap.classList.remove("hidden");
+          card.classList.add("hidden");
+          createBtn.disabled = !data.can_create;
+          createHint.textContent = data.can_create
+            ? ""
+            : "You need the minecraft_creator group in Authentik to create a server.";
+          return;
+        }
+        emptyWrap.classList.add("hidden");
+        card.classList.remove("hidden");
+        var s = data.server;
+        address.textContent    = s.address;
+        statusEl.textContent   = s.running === true ? "Online" : (s.running === false ? "Offline" : "Unknown");
+        dot.className          = "server-dot" + (s.running ? " online" : "");
+        createdEl.textContent  = relative(s.created_at);
+        lastEl.textContent     = relative(s.last_active_at);
+        startBtn.disabled      = s.running === true;
+        stopBtn.disabled       = s.running !== true;
+        delBtn.disabled        = false;
+      }
+
+      async function call(url, method) {
+        setFeedback("Working…");
+        document.querySelectorAll("#myServerCard button").forEach(function (b) { b.disabled = true; });
+        try {
+          var r = await fetch(url, {
+            method: method,
+            headers: { "Authorization": "Bearer " + token() }
+          });
+          var data = await r.json().catch(function () { return {}; });
+          if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+          setFeedback("Done.", "ok");
+          await fetchState();
+        } catch (e) {
+          setFeedback(e.message, "err");
+          await fetchState();
+        }
+      }
+
+      createBtn.addEventListener("click", async function () {
+        createBtn.disabled = true;
+        createHint.textContent = "Spinning up your server…";
+        try {
+          var r = await fetch("/api/minecraft/servers/me", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + token() }
+          });
+          var data = await r.json().catch(function () { return {}; });
+          if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+          createHint.textContent = "";
+          await fetchState();
+        } catch (e) {
+          createHint.textContent = e.message;
+          createBtn.disabled = false;
+        }
+      });
+
+      startBtn.addEventListener("click", function () { call("/api/minecraft/servers/me/start", "POST"); });
+      stopBtn.addEventListener("click",  function () { call("/api/minecraft/servers/me/stop",  "POST"); });
+      delBtn.addEventListener("click", function () {
+        if (!confirm("Delete your server? Your world will be archived on the host but removed from DNS and auto-start.")) return;
+        call("/api/minecraft/servers/me", "DELETE");
+      });
+
+      fetchState();
+    })();
+
   </script>
 </body>
 </html>
