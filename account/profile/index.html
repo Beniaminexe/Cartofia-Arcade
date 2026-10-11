@@ -1735,7 +1735,7 @@ function renderProfile(data) {
 
   // Theme
   applyTheme(profile.theme || 'ocean', false);
-  renderOwnerBadges(profileData || {});
+  renderOwnerBadges(data || {});
 
   // Stats
   renderStats(stats || {});
