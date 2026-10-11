@@ -397,7 +397,7 @@
         </div>
         <div class="status-row">
           <span class="status-label">Address</span>
-          <span class="status-value" id="serverIp">answers-advertising.gl.joinmc.link</span>
+          <span class="status-value" id="serverIp">mc.cartofia.com</span>
         </div>
         <div class="status-row">
           <span class="status-label">Port</span>
@@ -430,7 +430,7 @@
       <div class="step">
         <div class="step-num">02</div>
         <h3 class="step-title">Add the server</h3>
-        <p class="step-desc">Click "Add Server" and paste the address: <strong class="mono">answers-advertising.gl.joinmc.link</strong></p>
+        <p class="step-desc">Click "Add Server" and paste the address: <strong class="mono">mc.cartofia.com</strong></p>
       </div>
 
       <div class="step-connector" aria-hidden="true"></div>
@@ -518,9 +518,9 @@
        "Offline" is shown as "Sleeping" to match the friendlier copy.
     ---------------------------------------------------------- */
     const CONFIG = {
-      serverHost: "answers-advertising.gl.joinmc.link",
+      serverHost: "mc.cartofia.com",
       serverPort: 25565,
-      statusApi:  "https://api.mcstatus.io/v2/status/java/answers-advertising.gl.joinmc.link:25565"
+      statusApi:  "https://api.mcstatus.io/v2/status/java/mc.cartofia.com:25565"
     };
 
     async function refreshMinecraftStatus() {
@@ -568,7 +568,7 @@
     (function () {
       const btn = document.getElementById("copyAddressBtn");
       if (!btn) return;
-      const ADDRESS = "answers-advertising.gl.joinmc.link";
+      const ADDRESS = "mc.cartofia.com";
       const ORIGINAL = btn.textContent;
 
       async function copy() {
