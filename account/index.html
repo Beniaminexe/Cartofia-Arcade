@@ -712,16 +712,19 @@
     function getRefreshToken() { return sessionStorage.getItem("oidc_refresh_token")  || localStorage.getItem("oidc_refresh_token");  }
 
     function storeTokens(tokens) {
-      const remember = localStorage.getItem("cartofia_remember") === "true";
-      const store = remember ? localStorage : sessionStorage;
-      const other = remember ? sessionStorage : localStorage;
-      store.setItem("oidc_access_token", tokens.access_token);
-      if (tokens.id_token)      store.setItem("oidc_id_token",     tokens.id_token);
-      if (tokens.refresh_token) store.setItem("oidc_refresh_token", tokens.refresh_token);
-      other.removeItem("oidc_access_token");
-      other.removeItem("oidc_id_token");
-      other.removeItem("oidc_refresh_token");
-      document.cookie = "access_token=" + tokens.access_token + "; path=/; SameSite=Strict; Secure";
+      // Always persist to localStorage so a tab/browser close does not log
+      // the user out. Session ends only when they click Logout, which calls
+      // clearTokens() explicitly.
+      localStorage.setItem("oidc_access_token", tokens.access_token);
+      if (tokens.id_token)      localStorage.setItem("oidc_id_token",     tokens.id_token);
+      if (tokens.refresh_token) localStorage.setItem("oidc_refresh_token", tokens.refresh_token);
+      sessionStorage.removeItem("oidc_access_token");
+      sessionStorage.removeItem("oidc_id_token");
+      sessionStorage.removeItem("oidc_refresh_token");
+      // Mark as remembered (legacy flag — reads still find it).
+      localStorage.setItem("cartofia_remember", "true");
+      // Mirror cookie the Flask backend reads for cookie-based auth.
+      document.cookie = "access_token=" + tokens.access_token + "; path=/; max-age=31536000; SameSite=Strict; Secure";
     }
 
     function clearTokens() {
