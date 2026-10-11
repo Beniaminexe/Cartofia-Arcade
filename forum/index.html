@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
   <link rel="stylesheet" href="/assets/notifications.css?v=1">
-  <link rel="stylesheet" href="/forum/forum.css?v=3" />
+  <link rel="stylesheet" href="/forum/forum.css?v=4" />
   <style>button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }</style>
 </head>
 <body>
@@ -186,8 +186,11 @@
       `).join('');
     }
     function renderCategorySelect() {
-      catSel.innerHTML = '<option value="">General</option>'
-        + categories.map(c => `<option value="${esc(c.slug)}">${esc(c.name)}</option>`).join('');
+      // No placeholder — the first real category (sort_order 0 → General) is
+      // the default selection, so we don't need a duplicate empty option.
+      catSel.innerHTML = categories
+        .map(c => `<option value="${esc(c.slug)}">${esc(c.name)}</option>`)
+        .join('');
     }
 
     catTabs.addEventListener('click', (e) => {
