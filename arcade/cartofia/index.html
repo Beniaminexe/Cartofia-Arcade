@@ -269,6 +269,36 @@ config = {
     <link rel="stylesheet" href="/assets/site.css?v=4" />
   <link rel="stylesheet" href="/assets/notifications.css?v=3">
     <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
+
+    <script>
+      /* Mark the body as game-ready the moment the WASM load splash goes
+         away. The rotate curtain CSS is gated on this class so the curtain
+         does not cover the loading screen. */
+      (function () {
+        function markReady() { document.body.classList.add("game-ready"); }
+        document.addEventListener("DOMContentLoaded", function () {
+          var splash = document.getElementById("cartofia-splash");
+          if (!splash) { markReady(); return; }
+          if (splash.classList.contains("hidden")) { markReady(); return; }
+          var obs = new MutationObserver(function () {
+            if (!splash.isConnected || splash.classList.contains("hidden")) {
+              markReady();
+              obs.disconnect();
+            }
+          });
+          obs.observe(splash, { attributes: true, attributeFilter: ["class"] });
+          var bodyObs = new MutationObserver(function () {
+            if (!splash.isConnected) {
+              markReady();
+              bodyObs.disconnect();
+            }
+          });
+          bodyObs.observe(document.body, { childList: true, subtree: true });
+          setTimeout(markReady, 20000);
+        });
+      })();
+    </script>
+
     <script>
       /* Hook AudioContext before pygbag loads so we can mute every audio
          context the SDL/pygame mixer creates, no matter where it's parked
@@ -329,8 +359,8 @@ config = {
           max-width: 28ch; line-height: 1.5; margin: 0;
         }
         @media (orientation: portrait) and (max-width: 900px) {
-          .rotate-curtain { display: flex; }
-          body { overflow: hidden; }
+          body.game-ready .rotate-curtain { display: flex; }
+          body.game-ready { overflow: hidden; }
         }
 
         /* iOS pseudo-fullscreen: Safari refuses the Fullscreen API on
