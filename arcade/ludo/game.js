@@ -236,6 +236,7 @@
     emoteReadyAt: 0,
     gen: 0,
     seatStatus: {},
+    achExpanded: false,
     syncing: false,
   };
 
@@ -1892,7 +1893,8 @@
     const ach = Array.isArray(mine.new_achievements) ? mine.new_achievements : [];
     if (ach.length) {
       box.appendChild(h("p", { class: "field-label", text: "Achievements unlocked" }));
-      box.appendChild(h("div", { class: "ach-new" }, ach.map((a) => h("span", { class: "ach-chip" }, h("span", { class: "ach-chip-icon", "aria-hidden": "true", text: a.icon || "🏅" }), a.name || a.id))));
+      box.appendChild(h("div", { class: "ach-new" }, ach.map((a) => h("span", { class: "ach-chip r-" + (a.rarity || "common"), title: a.description || "" },
+        h("span", { class: "ach-chip-icon", "aria-hidden": "true", text: a.icon || "🏅" }), a.name || a.id, a.rarity ? h("span", { class: "rarity", text: a.rarity }) : null))));
     }
   }
 
@@ -2027,18 +2029,55 @@
     cols.appendChild(recentPanel);
     body.appendChild(cols);
 
-    // Achievements
-    const ach = (Array.isArray(data.achievements) ? data.achievements : []).slice()
-      .sort((a, b) => (b.earned ? 1 : 0) - (a.earned ? 1 : 0) || (RARITY_ORDER[a.rarity] || 0) - (RARITY_ORDER[b.rarity] || 0));
+    // Achievements — kept in the server's (category) order.
+    const ach = Array.isArray(data.achievements) ? data.achievements : [];
     const earned = ach.filter((a) => a.earned).length;
-    body.appendChild(h("div", { class: "glass panel" },
-      h("div", { class: "card-head" }, h("p", { class: "field-label", text: "Achievements" }), h("span", { class: "hint", text: earned + " / " + ach.length + " unlocked" })),
-      ach.length ? h("ul", { class: "ach-grid" }, ach.map((a) => h("li", { class: "ach" + (a.earned ? " earned" : " locked") + " r-" + (a.rarity || "common") },
-        h("span", { class: "ach-icon", "aria-hidden": "true", text: a.earned ? (a.icon || "🏅") : "🔒" }),
+    const ratio = (a) => (a.progress && num(a.progress.target, 0) > 0 ? num(a.progress.current, 0) / num(a.progress.target, 1) : -1);
+    const compact = !app.achExpanded && window.matchMedia && window.matchMedia("(max-width: 640px)").matches && ach.length > 10;
+    let shown = ach;
+    if (compact) {
+      // Phones: everything earned + the 6 locked ones closest to unlocking.
+      const near = new Set(ach.filter((a) => !a.earned).slice().sort((a, b) => ratio(b) - ratio(a)).slice(0, 6));
+      shown = ach.filter((a) => a.earned || near.has(a));
+    }
+    const panel = h("div", { class: "glass panel" },
+      h("div", { class: "card-head" }, h("p", { class: "field-label", text: "Achievements" }), h("span", { class: "ach-count", text: earned + " / " + ach.length })));
+    if (!ach.length) panel.appendChild(h("p", { class: "hint", text: "No achievements available yet." }));
+    else {
+      // Group under category headings, in the order the server returns them.
+      const CAT = { wins: "Wins", played: "Games played", combat: "Combat", skill: "Skill", power: "Power-ups", social: "Social" };
+      const groups = [];
+      shown.forEach((a) => {
+        const c = a.category || "other";
+        let g = groups.find((x) => x.c === c);
+        if (!g) { g = { c, items: [] }; groups.push(g); }
+        g.items.push(a);
+      });
+      groups.forEach((g) => {
+        const all = ach.filter((a) => (a.category || "other") === g.c);
+        if (groups.length > 1 || g.c !== "other") panel.appendChild(h("p", { class: "ach-cat" }, CAT[g.c] || (g.c.charAt(0).toUpperCase() + g.c.slice(1)), h("span", { text: all.filter((a) => a.earned).length + " / " + all.length })));
+        panel.appendChild(achList(g.items));
+      });
+    }
+    function achList(items) { return h("ul", { class: "ach-grid" }, items.map((a) => {
+      const pr = !a.earned && a.progress && num(a.progress.target, 0) > 0 ? a.progress : null;
+      const cur = pr ? Math.min(num(pr.current, 0), num(pr.target, 1)) : 0;
+      return h("li", { class: "ach" + (a.earned ? " earned" : " locked") + " r-" + (a.rarity || "common") },
+        h("span", { class: "ach-icon", "aria-hidden": "true", text: a.earned ? (a.icon || "🏅") : (a.icon || "🔒") }),
         h("span", { class: "ach-body" },
           h("span", { class: "ach-name" }, a.name || a.id, h("span", { class: "rarity", text: a.rarity || "common" })),
           h("span", { class: "ach-desc", text: a.description || "" }),
-          a.earned && a.unlocked_at ? h("span", { class: "ach-when", text: "Unlocked " + relTime(a.unlocked_at) }) : null)))) : h("p", { class: "hint", text: "No achievements available yet." })));
+          pr ? h("span", { class: "ach-prog" },
+            h("span", { class: "ach-prog-bar", role: "progressbar", "aria-label": (a.name || a.id) + " progress", "aria-valuemin": "0", "aria-valuemax": String(pr.target), "aria-valuenow": String(cur) },
+              h("span", { class: "ach-prog-fill", style: { width: Math.round((cur / num(pr.target, 1)) * 100) + "%" } })),
+            h("span", { class: "ach-prog-txt", text: fmtInt(cur) + " / " + fmtInt(pr.target) })) : null,
+          a.earned && a.unlocked_at ? h("span", { class: "ach-when", text: "Unlocked " + relTime(a.unlocked_at) }) : null));
+    })); }
+    if (compact || app.achExpanded) {
+      panel.appendChild(h("button", { type: "button", class: "btn btn-ghost btn-sm ach-toggle", "aria-expanded": app.achExpanded ? "true" : "false",
+        onclick: () => { app.achExpanded = !app.achExpanded; renderStats(data); } }, app.achExpanded ? "Show fewer" : "Show all " + ach.length));
+    }
+    body.appendChild(panel);
   }
 
   // ---------------------------------------------------------------------------
