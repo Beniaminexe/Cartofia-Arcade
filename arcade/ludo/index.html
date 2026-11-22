@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Ludo — Cartofia Arcade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="Online Ludo for 2–4 players on Cartofia. Play bots instantly, quick match strangers or invite friends to a private room. Classic rules or Power mode with crates and power-ups." />
+  <meta name="theme-color" content="#0a0e1a" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=4" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=3">
+  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
+  <link rel="stylesheet" href="/arcade/ludo/render.css?v=1" />
+  <link rel="stylesheet" href="/arcade/ludo/ui.css?v=1" />
+</head>
+<body class="ludo-body" data-screen="home">
+
+  <a class="ludo-skip" href="#ludoMain">Skip to game</a>
+
+  <!-- NAV -->
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
+      Cartofia
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+    </nav>
+    <div class="nav-right">
+      <div class="account-menu" data-account-menu>
+        <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+        <div class="account-dropdown hidden" data-account-dropdown role="menu">
+          <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- GAME HEADER -->
+  <div class="game-header ludo-header">
+    <a class="game-header-back" href="/arcade/">
+      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="back-text">Back to Arcade</span>
+    </a>
+    <span class="game-header-title">Ludo</span>
+    <div class="game-header-stats">
+      <span class="net-pill" id="netPill" data-state="idle" title="Connection status"><span class="net-dot" aria-hidden="true"></span><span id="netPillText">Offline</span></span>
+      <div class="header-stat">
+        <span class="header-stat-label">Status</span>
+        <span class="header-stat-value" id="headerStatus">Home</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="net-banner hidden" id="netBanner" role="status" aria-live="polite">
+    <span class="net-spinner" aria-hidden="true"></span>
+    <span id="netBannerText">Connection lost — reconnecting…</span>
+  </div>
+
+  <!-- GAME PAGE -->
+  <div class="game-page ludo-page">
+    <div class="game-container">
+      <main class="game-container-inner ludo-inner" id="ludoMain" tabindex="-1">
+
+        <!-- Tabs (home / stats / leaderboard) -->
+        <div class="ludo-tabs" id="ludoTabs" role="tablist" aria-label="Ludo sections">
+          <button class="ludo-tab" type="button" role="tab" id="tab-play" aria-controls="screenHome" aria-selected="true" data-tab="play">Play</button>
+          <button class="ludo-tab" type="button" role="tab" id="tab-stats" aria-controls="screenStats" aria-selected="false" data-tab="stats" tabindex="-1">My Stats</button>
+          <button class="ludo-tab" type="button" role="tab" id="tab-leaderboard" aria-controls="screenLeaderboard" aria-selected="false" data-tab="leaderboard" tabindex="-1">Leaderboard</button>
+        </div>
+
+        <!-- ============ HOME ============ -->
+        <section class="ludo-screen" id="screenHome" data-screen="home" role="tabpanel" aria-labelledby="tab-play">
+          <div class="home-grid">
+
+            <div class="home-hero glass">
+              <div class="hero-emblem" aria-hidden="true">
+                <span class="em-q em-0"></span><span class="em-q em-1"></span>
+                <span class="em-q em-3"></span><span class="em-q em-2"></span>
+                <span class="em-core"></span>
+              </div>
+              <p class="eyebrow">Board game · 2–4 players · Online</p>
+              <h1 class="home-title">Ludo</h1>
+              <p class="home-lead">Race all four tokens home before anyone else. Roll a six to leave your yard, land on rivals to send them back, and in <strong>Power</strong> mode crack open crates for game-changing power-ups.</p>
+
+              <div class="mode-block">
+                <p class="field-label" id="modeLabel">Game mode</p>
+                <div class="mode-toggle" role="radiogroup" aria-labelledby="modeLabel" id="modeToggle">
+                  <button type="button" role="radio" class="mode-opt" data-mode="power" aria-checked="true">
+                    <span class="mode-opt-icon" aria-hidden="true">⚡</span>
+                    <span class="mode-opt-body"><span class="mode-opt-title">Power</span><span class="mode-opt-desc">Crates, power-ups, chaos</span></span>
+                  </button>
+                  <button type="button" role="radio" class="mode-opt" data-mode="classic" aria-checked="false" tabindex="-1">
+                    <span class="mode-opt-icon" aria-hidden="true">🎲</span>
+                    <span class="mode-opt-body"><span class="mode-opt-title">Classic</span><span class="mode-opt-desc">Pure dice and tactics</span></span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="power-explainer" id="powerExplainer">
+                <div class="power-explainer-head">
+                  <p class="field-label">Power-ups</p>
+                  <p class="power-explainer-note" id="powerExplainerNote">Land exactly on a crate to grab one. Hold up to 2, use 1 per turn.</p>
+                </div>
+                <ul class="power-list" id="powerList"></ul>
+              </div>
+            </div>
+
+            <div class="home-side">
+              <!-- Account card -->
+              <div class="account-card glass" id="accountCard" aria-live="polite">
+                <div class="acct-loading">Checking your account…</div>
+              </div>
+
+              <!-- Play card -->
+              <div class="play-card glass">
+                <div class="play-block play-block-bots">
+                  <div class="play-block-head">
+                    <span class="play-icon" aria-hidden="true">🤖</span>
+                    <div>
+                      <h2 class="play-title">Play vs Bots</h2>
+                      <p class="play-desc">Starts instantly. You play red.</p>
+                    </div>
+                  </div>
+                  <div class="bots-row">
+                    <span class="field-label" id="botsLabel">Opponents</span>
+                    <div class="seg" role="radiogroup" aria-labelledby="botsLabel" id="botsSeg">
+                      <button type="button" role="radio" class="seg-opt" data-bots="1" aria-checked="false" tabindex="-1">1 bot</button>
+                      <button type="button" role="radio" class="seg-opt" data-bots="2" aria-checked="false" tabindex="-1">2 bots</button>
+                      <button type="button" role="radio" class="seg-opt" data-bots="3" aria-checked="true">3 bots</button>
+                    </div>
+                  </div>
+                  <button type="button" class="btn btn-primary btn-big" id="btnPlayBots">
+                    <span>Play vs 3 bots</span>
+                  </button>
+                </div>
+
+                <div class="play-divider" aria-hidden="true"><span>or play people</span></div>
+
+                <div class="play-grid">
+                  <button type="button" class="play-tile" id="btnQuick">
+                    <span class="play-tile-icon" aria-hidden="true">🌐</span>
+                    <span class="play-tile-title">Quick Match</span>
+                    <span class="play-tile-desc" id="quickDesc">Join the public queue. Bots fill empty seats.</span>
+                  </button>
+                  <button type="button" class="play-tile" id="btnCreate">
+                    <span class="play-tile-icon" aria-hidden="true">🔒</span>
+                    <span class="play-tile-title">Create Room</span>
+                    <span class="play-tile-desc">Private table with an invite link.</span>
+                  </button>
+                </div>
+
+                <form class="join-form" id="joinForm" autocomplete="off">
+                  <label class="field-label" for="joinCode">Have a room code?</label>
+                  <div class="join-row">
+                    <input id="joinCode" class="ludo-input code-input" type="text" inputmode="text" maxlength="6" placeholder="ABCD" autocapitalize="characters" spellcheck="false" aria-describedby="joinHint" />
+                    <button type="submit" class="btn btn-ghost" id="btnJoin">Join</button>
+                  </div>
+                  <p class="hint" id="joinHint">Codes are 4 characters. Friends can also just open your invite link.</p>
+                </form>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ============ QUEUE ============ -->
+        <section class="ludo-screen hidden" id="screenQueue" data-screen="queue" aria-labelledby="queueTitle">
+          <div class="queue-card glass">
+            <div class="queue-radar" aria-hidden="true">
+              <span class="radar-ring"></span><span class="radar-ring r2"></span><span class="radar-ring r3"></span>
+              <span class="radar-dot d0"></span><span class="radar-dot d1"></span><span class="radar-dot d2"></span><span class="radar-dot d3"></span>
+              <span class="radar-die">🎲</span>
+            </div>
+            <p class="eyebrow" id="queueMode">Power mode · Quick Match</p>
+            <h2 class="queue-title" id="queueTitle">Finding players…</h2>
+            <div class="queue-slots" id="queueSlots" aria-hidden="true"></div>
+            <p class="queue-info" id="queueInfo" aria-live="polite">Connecting…</p>
+            <p class="hint">If the table isn’t full when the timer runs out, bots take the empty seats.</p>
+            <button type="button" class="btn btn-ghost" id="btnCancelQueue">Cancel</button>
+          </div>
+        </section>
+
+        <!-- ============ LOBBY ============ -->
+        <section class="ludo-screen hidden" id="screenLobby" data-screen="lobby" aria-labelledby="lobbyTitle">
+          <div class="lobby-head glass">
+            <div class="lobby-code-block">
+              <p class="eyebrow" id="lobbyTitle">Private room</p>
+              <div class="room-code-row">
+                <span class="room-code" id="roomCode" aria-label="Room code">----</span>
+                <span class="mode-chip" id="lobbyMode">⚡ Power</span>
+              </div>
+            </div>
+            <div class="invite-block">
+              <label class="field-label" for="inviteLink">Invite link</label>
+              <div class="invite-row">
+                <input id="inviteLink" class="ludo-input invite-input" type="text" readonly />
+                <button type="button" class="btn btn-primary" id="btnCopyInvite">Copy link</button>
+              </div>
+              <p class="hint">Anyone who opens the link joins this room.</p>
+            </div>
+          </div>
+
+          <div class="seat-grid" id="seatGrid" aria-label="Seats"></div>
+
+          <div class="lobby-foot glass">
+            <p class="lobby-hint" id="lobbyHint" aria-live="polite">Waiting for players…</p>
+            <div class="lobby-actions">
+              <button type="button" class="btn btn-ghost" id="btnLeaveLobby">Leave room</button>
+              <button type="button" class="btn btn-ghost ready-btn" id="btnReady" aria-pressed="false">I’m ready</button>
+              <button type="button" class="btn btn-primary" id="btnStart">Start game</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ GAME ============ -->
+        <section class="ludo-screen hidden" id="screenGame" data-screen="game" aria-label="Match">
+          <div class="game-layout">
+            <div class="board-col">
+              <div class="board-host" id="boardHost" aria-label="Ludo board"></div>
+            </div>
+
+            <aside class="game-side" aria-label="Match controls">
+              <div class="turn-card glass" id="turnCard" data-mine="false">
+                <div class="turn-row">
+                  <span class="turn-dot" id="turnDot" aria-hidden="true"></span>
+                  <div class="turn-text-wrap">
+                    <p class="turn-title" id="turnTitle">Waiting…</p>
+                    <p class="turn-sub" id="turnSub"></p>
+                  </div>
+                  <span class="turn-clock" id="turnClock" aria-hidden="true"></span>
+                </div>
+
+                <div class="action-row" id="actionRow">
+                  <button type="button" class="btn btn-primary act-roll" id="btnRoll" disabled>
+                    <span aria-hidden="true">🎲</span> Roll <kbd>Space</kbd>
+                  </button>
+                  <div class="choose-row hidden" id="chooseRow" role="group" aria-label="Choose a die"></div>
+                  <button type="button" class="btn btn-ghost hidden" id="btnPass">Pass turn</button>
+                </div>
+
+                <div class="target-bar hidden" id="targetBar" role="group" aria-labelledby="targetText">
+                  <p class="target-text" id="targetText">Choose a target</p>
+                  <div class="target-options" id="targetOptions"></div>
+                  <button type="button" class="btn btn-ghost btn-sm" id="btnCancelTarget">Cancel <kbd>Esc</kbd></button>
+                </div>
+
+                <div class="autopilot-note hidden" id="autopilotNote">
+                  🤖 Autopilot is playing for you. Take any action to get control back.
+                </div>
+              </div>
+
+              <div class="power-card glass" id="powerCard">
+                <div class="card-head">
+                  <p class="field-label">Your power-ups</p>
+                  <span class="power-used-note hidden" id="powerUsedNote">Used this turn</span>
+                </div>
+                <div class="power-bar" id="powerBar" role="group" aria-label="Your power-ups"></div>
+              </div>
+
+              <div class="tools-card glass">
+                <div class="emote-wrap">
+                  <button type="button" class="tool-btn" id="btnEmote" aria-haspopup="true" aria-expanded="false" aria-controls="emotePop" title="Send an emote">
+                    <span aria-hidden="true">😀</span><span class="tool-label">Emote</span>
+                  </button>
+                  <div class="emote-pop hidden" id="emotePop" role="group" aria-label="Emotes"></div>
+                </div>
+                <button type="button" class="tool-btn" id="btnMute" aria-pressed="false" title="Mute sounds">
+                  <span aria-hidden="true" id="muteIcon">🔊</span><span class="tool-label" id="muteLabel">Sound on</span>
+                </button>
+                <button type="button" class="tool-btn" id="btnAuto" aria-pressed="false" title="Let a bot play your turns (tap again to take back control)">
+                  <span aria-hidden="true">🤖</span><span class="tool-label" id="autoLabel">Autopilot</span>
+                </button>
+                <button type="button" class="tool-btn" id="btnResign" title="Resign this match">
+                  <span aria-hidden="true">🏳️</span><span class="tool-label">Resign</span>
+                </button>
+                <button type="button" class="tool-btn" id="btnLeaveGame" title="Leave the match">
+                  <span aria-hidden="true">🚪</span><span class="tool-label">Leave</span>
+                </button>
+              </div>
+
+              <div class="log-card glass">
+                <div class="card-head">
+                  <p class="field-label" id="logLabel">Match log</p>
+                  <span class="hint" id="matchMeta"></span>
+                </div>
+                <ol class="event-log" id="eventLog" aria-labelledby="logLabel"></ol>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- ============ STATS ============ -->
+        <section class="ludo-screen hidden" id="screenStats" data-screen="stats" role="tabpanel" aria-labelledby="tab-stats">
+          <div id="statsBody" class="stats-body" aria-live="polite"></div>
+        </section>
+
+        <!-- ============ LEADERBOARD ============ -->
+        <section class="ludo-screen hidden" id="screenLeaderboard" data-screen="leaderboard" role="tabpanel" aria-labelledby="tab-leaderboard">
+          <div class="lb-card glass">
+            <div class="lb-head">
+              <div>
+                <p class="eyebrow">Hall of fame</p>
+                <h2 class="section-h">Leaderboard</h2>
+              </div>
+              <div class="seg" role="radiogroup" aria-label="Sort leaderboard by" id="lbSort">
+                <button type="button" role="radio" class="seg-opt" data-sort="wins" aria-checked="true">Wins</button>
+                <button type="button" role="radio" class="seg-opt" data-sort="rating" aria-checked="false" tabindex="-1">Rating</button>
+                <button type="button" role="radio" class="seg-opt" data-sort="xp" aria-checked="false" tabindex="-1">Level</button>
+              </div>
+            </div>
+            <div id="lbBody" class="lb-body" aria-live="polite"></div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Results modal -->
+  <div class="ludo-modal hidden" id="resultsModal" role="dialog" aria-modal="true" aria-labelledby="resultsTitle">
+    <div class="modal-card results-card" id="resultsCard"></div>
+  </div>
+
+  <!-- Confirm modal -->
+  <div class="ludo-modal hidden" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmText">
+    <div class="modal-card confirm-card">
+      <h2 class="confirm-title" id="confirmTitle">Are you sure?</h2>
+      <p class="confirm-text" id="confirmText"></p>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-ghost" id="confirmNo">Cancel</button>
+        <button type="button" class="btn btn-primary btn-danger" id="confirmYes">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-host" id="toastHost" aria-live="assertive" aria-atomic="false"></div>
+  <div class="sr-only" id="srLive" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="/assets/theme.js?v=1"></script>
+  <script src="/assets/site.js?v=8"></script>
+  <script src="/assets/notifications.js?v=1" defer></script>
+  <script src="/arcade/ludo/sfx.js?v=1"></script>
+  <script src="/arcade/ludo/render.js?v=1"></script>
+  <script src="/arcade/ludo/game.js?v=1"></script>
+</body>
+</html>

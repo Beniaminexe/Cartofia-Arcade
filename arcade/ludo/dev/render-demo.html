@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Ludo renderer demo — Cartofia (dev)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../render.css?v=1" />
+  <style>
+    :root { --accent: #4f7df9; --accent-2: #7c5bf5; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: #0a0e1a; color: #eef2ff; font-family: 'Outfit', system-ui, sans-serif;
+      background-image: radial-gradient(ellipse 900px 650px at 15% 10%, rgba(124, 91, 245, .14), transparent 70%), radial-gradient(ellipse 600px 400px at 85% 65%, rgba(79, 125, 249, .1), transparent 65%);
+    }
+    .wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; padding: 12px; height: 100vh; }
+    #board { position: relative; min-height: 0; height: calc(100vh - 24px); }
+    .panel { overflow: auto; background: rgba(255, 255, 255, .03); border: 1px solid rgba(255, 255, 255, .08); border-radius: 14px; padding: 12px; font-size: 13px; }
+    .panel h1 { font-size: 15px; margin-bottom: 4px; }
+    .panel h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: rgba(238, 242, 255, .5); margin: 12px 0 6px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 5px; }
+    button { font: 600 12px 'Outfit', sans-serif; color: #eef2ff; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); border-radius: 8px; padding: 6px 9px; cursor: pointer; }
+    button:hover { background: rgba(79, 125, 249, .25); border-color: rgba(79, 125, 249, .6); }
+    button.on { background: var(--accent); border-color: var(--accent); }
+    #log { font: 11px/1.45 'JetBrains Mono', monospace; color: rgba(238, 242, 255, .7); max-height: 220px; overflow: auto; white-space: pre-wrap; margin-top: 6px; }
+    #status { font: 11px 'JetBrains Mono', monospace; color: #7ca6ff; margin-top: 4px; }
+    @media (max-width: 760px) {
+      .wrap { grid-template-columns: 1fr; height: auto; padding: 0; gap: 8px; }
+      #board { height: auto; }
+      .panel { margin: 0 8px 8px; }
+    }
+    body.shot .panel { display: none; }
+    body.shot .wrap { grid-template-columns: 1fr; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="board"></div>
+    <div class="panel">
+      <h1>Ludo renderer harness</h1>
+      <div id="status">idle</div>
+      <h2>Scenarios</h2>
+      <div id="scen"></div>
+      <h2>Real engine replay</h2>
+      <div class="btns">
+        <button data-real="real-game.json">Replay power game</button>
+        <button data-real="real-game-classic.json">Replay classic game</button>
+        <button data-validate="real-game.json">Validate power (fast)</button>
+        <button data-validate="real-game-classic.json">Validate classic (fast)</button>
+      </div>
+      <h2>View seat (rotation)</h2>
+      <div class="btns" id="views"></div>
+      <h2>Options</h2>
+      <div class="btns">
+        <button id="rm">Reduced motion</button>
+        <button id="mute">Mute</button>
+        <button id="slow">Slow-mo ×3</button>
+        <button id="sfxall">Play all sounds</button>
+        <button id="auto">Run everything</button>
+      </div>
+      <div id="log"></div>
+    </div>
+  </div>
+  <script src="../sfx.js?v=1"></script>
+  <script src="../render.js?v=1"></script>
+  <script src="scenarios.js?v=1"></script>
+  <script>
+  (function () {
+    'use strict';
+    const qs = new URLSearchParams(location.search);
+    const D = window.LudoDemo;
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const logEl = document.getElementById('log'), statusEl = document.getElementById('status');
+    const log = (s) => { logEl.textContent = (s + '\n' + logEl.textContent).slice(0, 6000); };
+    const setStatus = (s) => { statusEl.textContent = s; };
+    if (qs.get('shot')) document.body.classList.add('shot');
+
+    const r = new LudoRenderer(document.getElementById('board'), {
+      viewSeat: +(qs.get('view') || 0), reducedMotion: qs.get('rm') === '1', timeScale: +(qs.get('slow') || 1)
+    });
+    window.r = r;
+    ['token', 'square', 'seat', 'dice', 'pod'].forEach((ev) => r.on(ev, (d) => log('on ' + ev + ' ' + JSON.stringify(d))));
+    r.setState(D.scenarios.midgame.state);
+
+    let runId = 0;
+    async function run(name) {
+      const sc = D.scenarios[name];
+      if (!sc) throw new Error('no scenario ' + name);
+      const id = ++runId;
+      setStatus('running: ' + sc.title);
+      r.setSelectable([]); r.setTargeting(null); r.setTimer(null);
+      let st = JSON.parse(JSON.stringify(sc.state));
+      r.setState(st);
+      await sleep(250);
+      for (const step of sc.steps) {
+        if (id !== runId) return;
+        if (step.before) await step.before(r, sleep);
+        if (step.events && step.events.length) {
+          const fin = D.reduce(st, step.events);
+          log(step.events.map((e) => e.type).join(', '));
+          await r.playEvents(step.events, fin);
+          st = fin;
+        }
+        if (step.after) await step.after(r, sleep);
+        await sleep(step.pause || 250);
+      }
+      if (id === runId) setStatus('done: ' + sc.title);
+      return true;
+    }
+
+    function cmp(ws, fin) {
+      const bad = [];
+      const key = (o) => JSON.stringify(o);
+      if (key(ws.tokens) !== key(fin.tokens)) bad.push('tokens ' + key(ws.tokens) + ' vs ' + key(fin.tokens));
+      const set = (a) => key((a || []).map((x) => ((x % 52) + 52) % 52).sort((p, q) => p - q));
+      if (set(ws.crates) !== set(fin.crates)) bad.push('crates ' + set(ws.crates) + ' vs ' + set(fin.crates));
+      const bset = (a) => key((a || []).map((b) => b.seat + '@' + b.abs).sort());
+      if (bset(ws.bombs) !== bset(fin.bombs)) bad.push('bombs ' + bset(ws.bombs) + ' vs ' + bset(fin.bombs));
+      const sset = (a) => key((a || []).map((b) => b.seat + '-' + b.token).sort());
+      if (sset(ws.shields) !== sset(fin.shields)) bad.push('shields ' + sset(ws.shields) + ' vs ' + sset(fin.shields));
+      for (let s = 0; s < 4; s++) {
+        const a = ws.players[s] || {}, b = fin.players[s] || {};
+        if (key((a.inventory || []).slice().sort()) !== key((b.inventory || []).slice().sort())) bad.push('inv' + s + ' ' + key(a.inventory) + ' vs ' + key(b.inventory));
+        if (!!a.frozen !== !!b.frozen) bad.push('frozen' + s);
+      }
+      if ((ws.turn && ws.turn.seat) !== (fin.turn && fin.turn.seat) && fin.status === 'playing') bad.push('turn seat ' + (ws.turn && ws.turn.seat) + ' vs ' + fin.turn.seat);
+      if (ws.status === 'finished' !== (fin.status === 'finished')) bad.push('status');
+      return bad;
+    }
+
+    async function loadReal(file) {
+      const res = await fetch('fixtures/' + file + '?v=1', { cache: 'no-store' });
+      if (!res.ok) throw new Error('fixture ' + file + ' missing (' + res.status + ')');
+      return res.json();
+    }
+    async function replay(file, opts) {
+      opts = opts || {};
+      const id = ++runId;
+      const g = await loadReal(file);
+      setStatus('replay ' + file + ' seed=' + g.seed + ' (' + g.steps.length + ' applies)');
+      r.setSelectable([]); r.setTargeting(null);
+      r.setViewSeat(0);
+      r.setState(g.steps[0].state);
+      const limit = opts.limit || g.steps.length;
+      let mism = 0, checked = 0;
+      r.debugSequenceEnd = (ws, fin) => {
+        checked++;
+        const bad = cmp(ws, fin);
+        if (bad.length) { mism++; if (mism <= 12) log('MISMATCH #' + checked + ': ' + bad.join(' | ')); }
+      };
+      const jobs = [];
+      for (let i = 1; i < Math.min(limit, g.steps.length); i++) {
+        if (id !== runId) break;
+        const step = g.steps[i];
+        const fin = step.state;
+        if (opts.fast) { jobs.push(r.playEvents(step.events, fin)); continue; }
+        if (step.seat === 0 && step.state.turn && step.state.turn.seat === 0) r.setTimer(0, Date.now() + 15000, 20000);
+        await r.playEvents(step.events, fin);
+        await sleep(opts.gap == null ? 120 : opts.gap);
+      }
+      await Promise.all(jobs);
+      r.debugSequenceEnd = null;
+      const msg = 'replay ' + file + ': ' + checked + ' sequences checked, ' + mism + ' mismatches';
+      log(msg); setStatus(msg);
+      window.__lastValidation = { file: file, checked: checked, mismatches: mism };
+      return window.__lastValidation;
+    }
+
+    // build scenario buttons grouped
+    const scen = document.getElementById('scen');
+    const groups = {};
+    Object.keys(D.scenarios).forEach((k) => { const g = D.scenarios[k].group || 'Other'; (groups[g] = groups[g] || []).push(k); });
+    Object.keys(groups).forEach((g) => {
+      const h = document.createElement('div'); h.style.cssText = 'font-size:11px;color:rgba(238,242,255,.45);margin:6px 0 4px'; h.textContent = g; scen.appendChild(h);
+      const b = document.createElement('div'); b.className = 'btns'; scen.appendChild(b);
+      groups[g].forEach((k) => { const bt = document.createElement('button'); bt.textContent = D.scenarios[k].title; bt.onclick = () => run(k); b.appendChild(bt); });
+    });
+    const views = document.getElementById('views');
+    [0, 1, 2, 3].forEach((s) => { const b = document.createElement('button'); b.textContent = ['Red', 'Green', 'Yellow', 'Blue'][s]; b.onclick = () => r.setViewSeat(s); views.appendChild(b); });
+    document.querySelectorAll('[data-real]').forEach((b) => { b.onclick = () => replay(b.dataset.real, {}); });
+    document.querySelectorAll('[data-validate]').forEach((b) => { b.onclick = () => replay(b.dataset.validate, { fast: true }); });
+    document.getElementById('rm').onclick = (e) => { e.target.classList.toggle('on'); r.setReducedMotion(e.target.classList.contains('on')); };
+    const muteB = document.getElementById('mute');
+    muteB.classList.toggle('on', LudoSfx.muted);
+    muteB.onclick = () => { LudoSfx.setMuted(!LudoSfx.muted); muteB.classList.toggle('on', LudoSfx.muted); };
+    document.getElementById('slow').onclick = (e) => { e.target.classList.toggle('on'); r.opts.timeScale = e.target.classList.contains('on') ? 3 : 1; };
+    document.getElementById('sfxall').onclick = async () => { for (const n of LudoSfx.names) { LudoSfx.play(n); log('sfx ' + n); await sleep(n === 'win' || n === 'bomb' || n === 'lose' ? 1500 : 650); } };
+
+    async function runAll() {
+      setStatus('auto: running every scenario');
+      for (const k of Object.keys(D.scenarios)) { await run(k); await sleep(500); }
+      for (let v = 0; v < 4; v++) { r.setViewSeat(v); await sleep(600); }
+      r.setViewSeat(0);
+      const a = await replay('real-game.json', { fast: true });
+      const b = await replay('real-game-classic.json', { fast: true });
+      setStatus('auto done; validation ' + a.mismatches + '/' + b.mismatches + ' mismatches');
+      window.__autoDone = true;
+    }
+    document.getElementById('auto').onclick = runAll;
+    window.demo = { run: run, replay: replay, runAll: runAll, r: r, D: D, sleep: sleep };
+    if (qs.get('auto') === '1') setTimeout(runAll, 400);
+    else if (qs.get('scenario')) setTimeout(() => run(qs.get('scenario')), 300);
+  })();
+  </script>
+</body>
+</html>
