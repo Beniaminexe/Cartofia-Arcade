@@ -5,6 +5,8 @@
    ========================================================================== */
 
 .ludo-body {
+  /* WCAG AA: game-common.css muted text (0.3 alpha) is ~2.5:1 on these backgrounds */
+  --text-muted: rgba(238, 242, 255, 0.62);
   --seat-red: #f0524f;
   --seat-green: #2fc27a;
   --seat-yellow: #f4c430;

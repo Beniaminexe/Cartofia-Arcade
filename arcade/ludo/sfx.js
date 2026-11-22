@@ -17,6 +17,14 @@
   var volume = 0.8;
   var lastAt = Object.create(null);
   var muted = readMuted();
+  function applyGain() {
+    if (!master || !ctx) return;
+    var target = muted ? 0 : volume;
+    try {
+      master.gain.cancelScheduledValues(ctx.currentTime);
+      master.gain.setTargetAtTime(target, ctx.currentTime, 0.015);
+    } catch (_) { master.gain.value = target; }
+  }
 
   function readMuted() {
     try { return window.localStorage.getItem(KEY) === '1'; } catch (e) { return false; }
@@ -43,7 +51,7 @@
       comp.threshold.value = -14; comp.knee.value = 10; comp.ratio.value = 4;
       comp.attack.value = 0.003; comp.release.value = 0.18;
       master = ctx.createGain();
-      master.gain.value = volume;
+      master.gain.value = muted ? 0 : volume;
       master.connect(comp); comp.connect(ctx.destination);
       var len = Math.floor(ctx.sampleRate * 2.5);
       noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -253,12 +261,13 @@
     setMuted: function (v) {
       muted = !!v; writeMuted(muted);
       if (!muted && hasGesture()) ensure();
+      applyGain();
       return muted;
     },
     toggle: function () { return api.setMuted(!muted); },
     setVolume: function (v) {
       volume = Math.max(0, Math.min(1, +v || 0));
-      if (master) master.gain.value = volume;
+      applyGain();
     },
     unlock: function () { gestured = true; return !!ensure(); }
   };
