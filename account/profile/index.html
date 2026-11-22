@@ -1213,6 +1213,22 @@ function getToken() {
   return sessionStorage.getItem('oidc_access_token') ||
          localStorage.getItem('oidc_access_token') || '';
 }
+/* Cookie session is primary (site.js adds credentials to /api/*); a legacy
+   JWT is attached only if one is still stored. */
+function authHeaders() {
+  const t = getToken();
+  return t ? { 'Authorization': 'Bearer ' + t } : {};
+}
+let _authMe;
+async function cookieSession() {
+  if (_authMe !== undefined) return _authMe;
+  try {
+    const r = await fetch('/api/auth/me', { credentials: 'include' });
+    const d = r.ok ? await r.json() : null;
+    _authMe = (d && d.authenticated && d.user) ? d.user : null;
+  } catch (_) { _authMe = null; }
+  return _authMe;
+}
 
 /* ─────────────────────────────────────────────
    Toast
@@ -1231,7 +1247,7 @@ function showToast(msg, type) {
 ───────────────────────────────────────────── */
 async function apiGet(url) {
   const r = await fetch(url, {
-    headers: { 'Authorization': 'Bearer ' + getToken() },
+    headers: authHeaders(),
   });
   if (!r.ok) {
     const error = new Error((await r.json().catch(() => ({}))).error || r.statusText);
@@ -1245,7 +1261,7 @@ async function apiPut(url, body) {
   const r = await fetch(url, {
     method: 'PATCH',
     headers: {
-      'Authorization': 'Bearer ' + getToken(),
+      ...authHeaders(),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
@@ -1258,7 +1274,7 @@ async function apiPost(url, body) {
   const r = await fetch(url, {
     method: 'POST',
     headers: {
-      'Authorization': 'Bearer ' + getToken(),
+      ...authHeaders(),
       'Content-Type': 'application/json',
     },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -1271,7 +1287,7 @@ async function apiPatch(url, body) {
   const r = await fetch(url, {
     method: 'PATCH',
     headers: {
-      'Authorization': 'Bearer ' + getToken(),
+      ...authHeaders(),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
@@ -1283,7 +1299,7 @@ async function apiPatch(url, body) {
 async function apiDelete(url) {
   const r = await fetch(url, {
     method: 'DELETE',
-    headers: { 'Authorization': 'Bearer ' + getToken() },
+    headers: authHeaders(),
   });
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
   return r.json();
@@ -1294,7 +1310,7 @@ async function apiUpload(url, file) {
   fd.append('file', file);
   const r = await fetch(url, {
     method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + getToken() },
+    headers: authHeaders(),
     body: fd,
   });
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
@@ -1942,21 +1958,26 @@ document.querySelectorAll('.animate-in').forEach(el => {
 ───────────────────────────────────────────── */
 (async function init() {
   const token = getToken();
-  if (!token) {
+  const me = await cookieSession();
+  if (!me && !token) {
     window.location.href = '/account/?next=' + encodeURIComponent(window.location.pathname);
     return;
   }
 
-  // Grab groups from userinfo so we can show role badge
-  try {
-    const info = await fetch('/application/o/userinfo/', {
-      headers: { 'Authorization': 'Bearer ' + token },
-    });
-    if (info.ok) {
-      const claims = await info.json();
-      window._profileGroups = claims.groups || [];
-    }
-  } catch (_) {}
+  // Groups for the role badge: from the cookie session, else legacy userinfo
+  if (me) {
+    window._profileGroups = me.groups || [];
+  } else {
+    try {
+      const info = await fetch('/application/o/userinfo/', {
+        headers: { 'Authorization': 'Bearer ' + token },
+      });
+      if (info.ok) {
+        const claims = await info.json();
+        window._profileGroups = claims.groups || [];
+      }
+    } catch (_) {}
+  }
 
   try {
     const [data, statsData, friendsData, achvData] = await Promise.all([
@@ -1990,12 +2011,12 @@ document.querySelectorAll('.animate-in').forEach(el => {
     return sessionStorage.getItem('oidc_access_token')
         || localStorage.getItem('oidc_access_token');
   }
-  if (!tok()) return;
+  if (!tok() && !(await cookieSession())) return;
 
   async function refresh() {
     try {
       const r = await fetch('/api/discord/me', {
-        headers: { 'Authorization': 'Bearer ' + tok() }
+        headers: authHeaders()
       });
       if (!r.ok) return;
       const d = await r.json();
@@ -2017,7 +2038,7 @@ document.querySelectorAll('.animate-in').forEach(el => {
     linkBtn.disabled = true;
     try {
       const r = await fetch('/api/discord/link/start', {
-        headers: { 'Authorization': 'Bearer ' + tok() }
+        headers: authHeaders()
       });
       const d = await r.json();
       if (d.redirect) window.location.href = d.redirect;
@@ -2031,7 +2052,7 @@ document.querySelectorAll('.animate-in').forEach(el => {
     try {
       const r = await fetch('/api/discord/link/disconnect', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + tok() }
+        headers: authHeaders()
       });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       showToast('Discord disconnected', 'ok');

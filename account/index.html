@@ -756,10 +756,29 @@
     async function fetchProfile(token) {
       try {
         const resp = await fetch("/api/profile/me", {
-          headers: { "Authorization": "Bearer " + token },
+          credentials: "include",
+          headers: token ? { "Authorization": "Bearer " + token } : {},
         });
         if (!resp.ok) return null;
         return await resp.json();
+      } catch (_) {
+        return null;
+      }
+    }
+
+    /* Server-side session (httpOnly cartofia_session cookie) — the primary
+       auth path since the Oct 2026 cookie migration. */
+    async function fetchCookieSession() {
+      try {
+        const resp = await fetch("/api/auth/me", { credentials: "include" });
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        if (!data || !data.authenticated || !data.user) return null;
+        return {
+          username: data.user.username || "",
+          email:    data.user.email || "",
+          groups:   data.user.groups || [],
+        };
       } catch (_) {
         return null;
       }
@@ -952,10 +971,27 @@
         return;
       }
 
-      /* OAuth callback */
+      /* OAuth callback (legacy client-side flow) */
       if (await handleCallback()) return;
 
-      /* Existing token? */
+      /* Cookie session (current flow) */
+      const cookieUser = await fetchCookieSession();
+      if (cookieUser) {
+        if (new URLSearchParams(window.location.search).has("auth_error")) {
+          history.replaceState({}, document.title, "/account/");
+        }
+        const nextParam = new URLSearchParams(window.location.search).get("next");
+        if (nextParam && /^\/(?![\/\\])/.test(nextParam)) {  /* same-origin paths only: no //host or /\host */
+          window.location.replace(nextParam);
+          return;
+        }
+        showView("dash");
+        const profileData = await fetchProfile(null);
+        applyDashboard(cookieUser, profileData);
+        return;
+      }
+
+      /* Existing legacy token? */
       const token = getToken();
       if (token) {
         await loadSession(token);
