@@ -285,12 +285,14 @@
   }
 
   async function fetchProfile() {
+    /* Cookie session is primary (credentials: include); a legacy JWT is
+       attached only if one is still stored. Previously this bailed out with
+       no stored token, so cookie-session users never got their avatar. */
     try {
       var token = getStoredToken("oidc_access_token");
-      if (!token) return null;
       var response = await fetch(PROFILE_ME_URL, {
         credentials: "include",
-        headers: { "Authorization": "Bearer " + token },
+        headers: token ? { "Authorization": "Bearer " + token } : {},
       });
       if (!response.ok) return null;
       return await response.json();
