@@ -30,15 +30,21 @@
     } catch (_) { return null; }
   }
 
-  function post(payload, useKeepalive) {
+  // Auth: the httpOnly cartofia_session cookie (sent via credentials) is the
+  // primary path since the Oct 2026 cookie migration. A legacy stored JWT is
+  // still attached as a Bearer header when present. Guests get a silent 401.
+  function authHeaders() {
+    var headers = { "Content-Type": "application/json" };
     var token = getToken();
-    if (!token) return;
+    if (token) headers["Authorization"] = "Bearer " + token;
+    return headers;
+  }
+
+  function post(payload, useKeepalive) {
     var init = {
       method: "POST",
-      headers: {
-        "Authorization": "Bearer " + token,
-        "Content-Type":  "application/json"
-      },
+      credentials: "include",
+      headers: authHeaders(),
       body: JSON.stringify(payload)
     };
     if (useKeepalive) init.keepalive = true;
@@ -80,16 +86,12 @@
   // Fire an achievement unlock. Server dedupes, so this is safe to call
   // on every death / win — only the first ever lands a new entry.
   window.unlockAchievement = function (achievementId) {
-    var token = getToken();
-    if (!token) return;
     try {
       fetch("/api/profile/me/achievements/" + encodeURIComponent(achievementId), {
         method: "POST",
         keepalive: true,
-        headers: {
-          "Authorization": "Bearer " + token,
-          "Content-Type":  "application/json"
-        }
+        credentials: "include",
+        headers: authHeaders()
       }).catch(function () {});
     } catch (_) {}
   };
