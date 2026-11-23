@@ -634,9 +634,9 @@
   </footer>
 
 
-  <script src="/assets/theme.js?v=1"></script>
+  <script src="/assets/theme.js?v=2"></script>
   <script src="/assets/site.js?v=9"></script>
-  <script src="/assets/notifications.js?v=1" defer></script>
+  <script src="/assets/notifications.js?v=2" defer></script>
   <script>
     /* ----------------------------------------------------------
        Minecraft server status — preserved from the old page,
@@ -937,10 +937,16 @@
       }
 
       async function fetchState() {
-        if (!token()) { section.hidden = true; return; }
+        if (!token()) {
+          window.__cartofiaSignedIn = window.__cartofiaSignedIn || fetch('/api/auth/me', { credentials: 'include' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { return !!(d && d.authenticated); })
+      .catch(function () { return false; });
+          if (!(await window.__cartofiaSignedIn)) { section.hidden = true; return; }
+        }
         try {
           var r = await fetch("/api/minecraft/servers/me", {
-            headers: { "Authorization": "Bearer " + token() }
+            headers: (token() ? { "Authorization": "Bearer " + token() } : {})
           });
           if (!r.ok) { section.hidden = true; return; }
           var data = await r.json();
@@ -979,7 +985,7 @@
         try {
           var r = await fetch(url, {
             method: method,
-            headers: { "Authorization": "Bearer " + token() }
+            headers: (token() ? { "Authorization": "Bearer " + token() } : {})
           });
           var data = await r.json().catch(function () { return {}; });
           if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
@@ -997,7 +1003,7 @@
         try {
           var r = await fetch("/api/minecraft/servers/me", {
             method: "POST",
-            headers: { "Authorization": "Bearer " + token() }
+            headers: (token() ? { "Authorization": "Bearer " + token() } : {})
           });
           var data = await r.json().catch(function () { return {}; });
           if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));

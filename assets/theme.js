@@ -62,9 +62,15 @@
   function syncFromServer() {
     if (location.pathname.indexOf("/u/") === 0) return;
     var tok = getToken();
-    if (!tok) return;
-    fetch("/api/profile/me", { headers: { "Authorization": "Bearer " + tok } })
+    window.__cartofiaSignedIn = window.__cartofiaSignedIn || fetch('/api/auth/me', { credentials: 'include' })
       .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { return !!(d && d.authenticated); })
+      .catch(function () { return false; });
+    window.__cartofiaSignedIn.then(function (signedIn) {
+      if (!tok && !signedIn) return null;
+      return fetch("/api/profile/me", { credentials: "include", headers: tok ? { "Authorization": "Bearer " + tok } : {} });
+    })
+      .then(function (r) { return r && r.ok ? r.json() : null; })
       .then(function (data) {
         if (!data) return;
         var p = data.profile || data;
@@ -94,14 +100,13 @@
       document.dispatchEvent(new CustomEvent("cartofia:theme-changed", { detail: { theme: name } }));
       if (save) {
         var tok = getToken();
-        if (!tok) return;
         try {
+          var hdrs = { "Content-Type": "application/json" };
+          if (tok) hdrs["Authorization"] = "Bearer " + tok;
           fetch("/api/profile/me", {
             method: "PUT",
-            headers: {
-              "Authorization": "Bearer " + tok,
-              "Content-Type":  "application/json"
-            },
+            credentials: "include",
+            headers: hdrs,
             body: JSON.stringify({ theme: name })
           }).catch(function () {});
         } catch (_) {}

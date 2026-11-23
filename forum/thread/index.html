@@ -69,9 +69,9 @@
     </section>
   </main>
 
-  <script src="/assets/theme.js?v=1"></script>
+  <script src="/assets/theme.js?v=2"></script>
   <script src="/assets/site.js?v=9"></script>
-  <script src="/assets/notifications.js?v=1" defer></script>
+  <script src="/assets/notifications.js?v=2" defer></script>
   <script src="/forum/forum-md.js?v=1"></script>
   <script>
     const container = document.getElementById('threadContainer');
@@ -203,9 +203,10 @@
       if (posts.length) lastPostId = posts[posts.length - 1].id;
       loadMorePosts.hidden = !hasMore;
 
-      if (token() && !t.locked)                     replyForm.classList.remove('hidden');
+      const signedIn = !!(token() || currentUser);
+      if (signedIn && !t.locked)                    replyForm.classList.remove('hidden');
       else if (t.locked)                            replyCta.innerHTML = '<p>This thread is locked.</p>';
-      else if (!token())                            replyCta.classList.remove('hidden');
+      else if (!signedIn)                           replyCta.classList.remove('hidden');
     }
 
     async function loadThread() {
@@ -244,7 +245,7 @@
       try {
         const r = await fetch('/api/forum/threads/' + threadId + '/posts', {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
+          headers: Object.assign({ 'Content-Type': 'application/json' }, token() ? { 'Authorization': 'Bearer ' + token() } : {}),
           body: JSON.stringify({ body })
         });
         const data = await r.json().catch(() => ({}));
@@ -277,7 +278,7 @@
             : '/api/forum/posts/' + id;
           const r = await fetch(url, {
             method: 'DELETE',
-            headers: { 'Authorization': 'Bearer ' + token() }
+            headers: (token() ? { 'Authorization': 'Bearer ' + token() } : {})
           });
           if (!r.ok) throw new Error('Delete failed');
           if (kind === 'thread') {
@@ -301,7 +302,7 @@
         try {
           const r = await fetch('/api/forum/threads/' + id, {
             method: 'PATCH',
-            headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
+            headers: Object.assign({ 'Content-Type': 'application/json' }, token() ? { 'Authorization': 'Bearer ' + token() } : {}),
             body: JSON.stringify({ [field]: value })
           });
           if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Toggle failed');
@@ -332,7 +333,7 @@
         try {
           const r = await fetch('/api/forum/threads/' + id, {
             method: 'PATCH',
-            headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
+            headers: Object.assign({ 'Content-Type': 'application/json' }, token() ? { 'Authorization': 'Bearer ' + token() } : {}),
             body: JSON.stringify({ title, body })
           });
           const data = await r.json();
@@ -362,7 +363,7 @@
         try {
           const r = await fetch('/api/forum/posts/' + id, {
             method: 'PATCH',
-            headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
+            headers: Object.assign({ 'Content-Type': 'application/json' }, token() ? { 'Authorization': 'Bearer ' + token() } : {}),
             body: JSON.stringify({ body })
           });
           const data = await r.json();
@@ -377,9 +378,14 @@
     }
 
     async function loadMe() {
-      if (!token()) return;
+      // Cookie session or legacy JWT: /api/profile/me answers 401 for guests.
       try {
-        const r = await fetch('/api/profile/me', { headers: { 'Authorization': 'Bearer ' + token() }});
+        const r = await fetch('/api/auth/me', { credentials: 'include' });
+        const me = r.ok ? await r.json() : null;
+        if (!token() && !(me && me.authenticated)) return;
+      } catch (_) { if (!token()) return; }
+      try {
+        const r = await fetch('/api/profile/me', { credentials: 'include', headers: (token() ? { 'Authorization': 'Bearer ' + token() } : {})});
         if (!r.ok) return;
         const d = await r.json();
         currentUser = {

@@ -902,9 +902,9 @@
   </div>
 </div><!-- #profileContent -->
 
-<script src="/assets/theme.js?v=1"></script>
+<script src="/assets/theme.js?v=2"></script>
   <script src="/assets/site.js?v=9"></script>
-  <script src="/assets/notifications.js?v=1" defer></script>
+  <script src="/assets/notifications.js?v=2" defer></script>
 <script>
 /* ─────────────────────────────────────────────
    URL parsing — extract username from /u/<username>
@@ -1284,8 +1284,16 @@ async function wireFriendButton(profileSlug) {
   const token = sessionStorage.getItem('oidc_access_token')
              || localStorage.getItem('oidc_access_token');
 
-  // Not signed in — invite them to sign in to add friends.
+  // Not signed in (no cookie session and no legacy JWT) — invite them to sign in.
+  let cookieSignedIn = false;
   if (!token) {
+    try {
+      const r = await fetch('/api/auth/me', { credentials: 'include' });
+      const d = r.ok ? await r.json() : null;
+      cookieSignedIn = !!(d && d.authenticated);
+    } catch (_) {}
+  }
+  if (!token && !cookieSignedIn) {
     btn.hidden = false;
     btn.innerHTML = FRIEND_ICON + ' Sign in to add';
     btn.disabled = false;
@@ -1298,7 +1306,7 @@ async function wireFriendButton(profileSlug) {
   let viewerSlug = '';
   try {
     const r = await fetch('/application/o/userinfo/', {
-      headers: { 'Authorization': 'Bearer ' + token }
+      headers: (token ? { 'Authorization': 'Bearer ' + token } : {})
     });
     if (r.ok) {
       const claims = await r.json();
@@ -1315,7 +1323,7 @@ async function wireFriendButton(profileSlug) {
   async function pullState() {
     try {
       const r = await fetch('/api/profile/me/friends', {
-        headers: { 'Authorization': 'Bearer ' + token }
+        headers: (token ? { 'Authorization': 'Bearer ' + token } : {})
       });
       if (!r.ok) return null;
       return await r.json();
@@ -1357,19 +1365,19 @@ async function wireFriendButton(profileSlug) {
       if (what === 'add') {
         resp = await fetch('/api/profile/me/friends/' + encoded, {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token }
+          headers: (token ? { 'Authorization': 'Bearer ' + token } : {})
         });
       } else if (what === 'remove') {
         if (!confirm('Remove this friend?')) { btn.disabled = false; return; }
         resp = await fetch('/api/profile/me/friends/' + encoded, {
           method: 'DELETE',
-          headers: { 'Authorization': 'Bearer ' + token }
+          headers: (token ? { 'Authorization': 'Bearer ' + token } : {})
         });
       } else {
         resp = await fetch('/api/profile/me/friends/' + encoded, {
           method: 'PATCH',
           headers: {
-            'Authorization': 'Bearer ' + token,
+            ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ action: what })
@@ -1406,17 +1414,19 @@ async function wireFriendButton(profileSlug) {
 ───────────────────────────────────────────── */
 function checkOwnProfile(profileSlug) {
   // Use site.js's stored token to silently check userinfo
+  // Works for cookie sessions and legacy JWTs: /api/profile/me returns the
+  // viewer's own profile (401 for guests), whose slug we compare.
   const token = sessionStorage.getItem('oidc_access_token')
               || localStorage.getItem('oidc_access_token');
-  if (!token) return;
-
-  fetch('/application/o/userinfo/', {
-    headers: { 'Authorization': 'Bearer ' + token },
-  })
+  fetch('/api/auth/me', { credentials: 'include' })
     .then(r => r.ok ? r.json() : null)
-    .then(claims => {
-      if (!claims) return;
-      const viewerSlug = (claims.preferred_username || '').toLowerCase();
+    .then(me => (token || (me && me.authenticated))
+      ? fetch('/api/profile/me', { credentials: 'include', headers: (token ? { 'Authorization': 'Bearer ' + token } : {}) })
+      : null)
+    .then(r => r && r.ok ? r.json() : null)
+    .then(d => {
+      if (!d || !d.profile) return;
+      const viewerSlug = (d.profile.username_slug || '').toLowerCase();
       if (viewerSlug && viewerSlug === profileSlug.toLowerCase()) {
         document.getElementById('ownProfileNotice').classList.add('visible');
       }

@@ -6,12 +6,20 @@
   the bell to toggle the popover; click a notification row to mark it read
   and jump to the referenced thread/post.
 */
-(function () {
+(async function () {
   function token() {
     try { return sessionStorage.getItem('oidc_access_token') || localStorage.getItem('oidc_access_token'); }
     catch (_) { return null; }
   }
-  if (!token()) return;
+  /* Cookie session (shared /api/auth/me probe) or a legacy stored JWT. */
+  function authHeaders() { const t = token(); return t ? { 'Authorization': 'Bearer ' + t } : {}; }
+  if (!token()) {
+    window.__cartofiaSignedIn = window.__cartofiaSignedIn || fetch('/api/auth/me', { credentials: 'include' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { return !!(d && d.authenticated); })
+        .catch(function () { return false; });
+    if (!(await window.__cartofiaSignedIn)) return;
+  }
 
   const navRight = document.querySelector('.nav-right');
   if (!navRight || document.getElementById('cartofiaNotif')) return;
@@ -79,7 +87,7 @@
   async function fetchNotifs() {
     try {
       const r = await fetch('/api/notifications', {
-        headers: { 'Authorization': 'Bearer ' + token() }
+        headers: authHeaders()
       });
       if (!r.ok) throw new Error();
       const data = await r.json();
@@ -139,7 +147,7 @@
     try {
       await fetch('/api/notifications/' + id + '/read', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token() }
+        headers: authHeaders()
       });
     } catch (_) {}
     // Let the native navigation proceed (href on <a>).
@@ -150,7 +158,7 @@
     try {
       await fetch('/api/notifications/read-all', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token() }
+        headers: authHeaders()
       });
       fetchNotifs();
     } catch (_) {}

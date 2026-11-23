@@ -88,9 +88,9 @@
     </div>
   </main>
 
-  <script src="/assets/theme.js?v=1"></script>
+  <script src="/assets/theme.js?v=2"></script>
   <script src="/assets/site.js?v=9"></script>
-  <script src="/assets/notifications.js?v=1" defer></script>
+  <script src="/assets/notifications.js?v=2" defer></script>
   <script src="/forum/forum-md.js?v=1"></script>
   <script>
     const listEl   = document.getElementById('threadList');
@@ -286,8 +286,14 @@
     }
 
     /* ---------------- COMPOSE ---------------- */
-    openBtn.addEventListener('click', () => {
-      if (!token()) { window.location.href = '/account/'; return; }
+    openBtn.addEventListener('click', async () => {
+      if (!token()) {
+        window.__cartofiaSignedIn = window.__cartofiaSignedIn || fetch('/api/auth/me', { credentials: 'include' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { return !!(d && d.authenticated); })
+      .catch(function () { return false; });
+        if (!(await window.__cartofiaSignedIn)) { window.location.href = '/account/'; return; }
+      }
       compose.classList.remove('hidden');
       // pre-select active category if one is active
       if (activeCategory) catSel.value = activeCategory;
@@ -306,7 +312,7 @@
       try {
         const r = await fetch('/api/forum/threads', {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
+          headers: Object.assign({ 'Content-Type': 'application/json' }, token() ? { 'Authorization': 'Bearer ' + token() } : {}),
           body: JSON.stringify({ title, body, category })
         });
         const data = await r.json().catch(() => ({}));
