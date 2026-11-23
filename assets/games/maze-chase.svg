@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200" role="img" aria-hidden="true">
+<defs>
+<radialGradient id="mazechasebg" cx="50%" cy="38%" r="80%"><stop offset="0" stop-color="#4f46e5"/><stop offset="1" stop-color="#090826"/></radialGradient>
+<pattern id="mazechasedots" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.1" fill="#fff" opacity=".16"/></pattern>
+<radialGradient id="mazechasevig" cx="50%" cy="45%" r="75%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient>
+
+</defs>
+<rect width="320" height="200" fill="url(#mazechasebg)"/>
+<rect width="320" height="200" fill="url(#mazechasedots)"/>
+<g stroke="#1b1230" stroke-linejoin="round" stroke-linecap="round">
+
+<filter id="mazeglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter>
+<path d="M20 20 H300 V180 H20 Z M60 60 H120 M160 20 V70 M200 60 H260 V100 M60 100 V140 H110 M150 110 H210 V150 M250 140 H300 M110 60 V100" fill="none" stroke="#38bdf8" stroke-width="10" opacity=".55" filter="url(#mazeglow)"/>
+<path d="M20 20 H300 V180 H20 Z M60 60 H120 M160 20 V70 M200 60 H260 V100 M60 100 V140 H110 M150 110 H210 V150 M250 140 H300 M110 60 V100" fill="none" stroke="#7dd3fc" stroke-width="5"/>
+<circle cx="40" cy="40" r="3" fill="#fff6e5" stroke="none"/><circle cx="60" cy="40" r="3" fill="#fff6e5" stroke="none"/><circle cx="80" cy="40" r="3" fill="#fff6e5" stroke="none"/><circle cx="100" cy="40" r="3" fill="#fff6e5" stroke="none"/><circle cx="120" cy="40" r="3" fill="#fff6e5" stroke="none"/><circle cx="140" cy="40" r="3" fill="#fff6e5" stroke="none"/><circle cx="180" cy="40" r="3" fill="#fff6e5" stroke="none"/><circle cx="200" cy="40" r="3" fill="#fff6e5" stroke="none"/><circle cx="220" cy="40" r="3" fill="#fff6e5" stroke="none"/><circle cx="240" cy="40" r="3" fill="#fff6e5" stroke="none"/><circle cx="280" cy="40" r="3" fill="#fff6e5" stroke="none"/><circle cx="280" cy="60" r="3" fill="#fff6e5" stroke="none"/><circle cx="280" cy="80" r="3" fill="#fff6e5" stroke="none"/><circle cx="280" cy="100" r="3" fill="#fff6e5" stroke="none"/><circle cx="280" cy="120" r="3" fill="#fff6e5" stroke="none"/><circle cx="40" cy="80" r="3" fill="#fff6e5" stroke="none"/><circle cx="80" cy="80" r="3" fill="#fff6e5" stroke="none"/><circle cx="130" cy="80" r="3" fill="#fff6e5" stroke="none"/><circle cx="180" cy="90" r="3" fill="#fff6e5" stroke="none"/><circle cx="230" cy="120" r="3" fill="#fff6e5" stroke="none"/><circle cx="250" cy="120" r="3" fill="#fff6e5" stroke="none"/><circle cx="130" cy="160" r="3" fill="#fff6e5" stroke="none"/><circle cx="150" cy="160" r="3" fill="#fff6e5" stroke="none"/><circle cx="170" cy="160" r="3" fill="#fff6e5" stroke="none"/><circle cx="190" cy="160" r="3" fill="#fff6e5" stroke="none"/><circle cx="230" cy="160" r="3" fill="#fff6e5" stroke="none"/><circle cx="40" cy="160" r="3" fill="#fff6e5" stroke="none"/>
+<circle cx="40" cy="120" r="8" fill="#ff7ad9" stroke="none"/>
+<ellipse cx="90" cy="168" rx="24" ry="4" fill="#000" opacity=".3" stroke="none"/>
+<circle cx="88" cy="150" r="20" fill="#ffd93d" stroke-width="4"/>
+<circle cx="82" cy="145" r="3" fill="#1b1230" stroke="none"/><circle cx="96" cy="145" r="3" fill="#1b1230" stroke="none"/>
+<path d="M79 154 q9 9 18 0" fill="none" stroke-width="3.5"/>
+<g transform="translate(196 58)"><path d="M18 -10 q-2 -8 4 -10" fill="none" stroke-width="3"/><circle cx="22" cy="-21" r="3.5" fill="#ff6fae" stroke-width="2.5"/>
+<path d="M0 22 C0 -4 36 -4 36 22 C36 34 30 36 18 36 C6 36 0 34 0 22 Z" fill="#ff6fae" stroke-width="4"/>
+<circle cx="18" cy="16" r="8" fill="#fff6e5" stroke-width="2.5"/><circle cx="20" cy="17" r="3.4" fill="#1b1230" stroke="none"/>
+<path d="M11 28 q7 4 14 0" fill="none" stroke-width="2.5"/></g>
+<g transform="translate(232 110)"><path d="M10 -8 l-4 -9 M26 -8 l4 -9" fill="none" stroke-width="3"/>
+<path d="M0 22 C0 -4 36 -4 36 22 C36 34 30 36 18 36 C6 36 0 34 0 22 Z" fill="#5ef0ff" stroke-width="4"/>
+<circle cx="18" cy="16" r="8" fill="#fff6e5" stroke-width="2.5"/><circle cx="16" cy="17" r="3.4" fill="#1b1230" stroke="none"/>
+<path d="M11 28 q7 -3 14 0" fill="none" stroke-width="2.5"/></g>
+
+</g>
+<rect width="320" height="200" fill="url(#mazechasevig)"/>
+</svg>

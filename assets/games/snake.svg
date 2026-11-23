@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200" role="img" aria-hidden="true">
+<defs>
+<radialGradient id="snakebg" cx="50%" cy="38%" r="80%"><stop offset="0" stop-color="#93de52"/><stop offset="1" stop-color="#123d20"/></radialGradient>
+<pattern id="snakedots" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.1" fill="#fff" opacity=".16"/></pattern>
+<radialGradient id="snakevig" cx="50%" cy="45%" r="75%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient>
+
+</defs>
+<rect width="320" height="200" fill="url(#snakebg)"/>
+<rect width="320" height="200" fill="url(#snakedots)"/>
+<g stroke="#1b1230" stroke-linejoin="round" stroke-linecap="round">
+
+<pattern id="snakechk" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#000" opacity=".04"/><rect width="20" height="20" fill="#000" opacity=".1"/><rect x="20" y="20" width="20" height="20" fill="#000" opacity=".1"/></pattern><rect width="320" height="200" fill="url(#snakechk)" stroke="none"/>
+<ellipse cx="160" cy="176" rx="130" ry="10" fill="#000" opacity=".18" stroke="none"/>
+<path d="M30 160 H110 V100 H190 V62 H236" fill="none" stroke="#1b1230" stroke-width="30"/>
+<path d="M30 160 H110 V100 H190 V62 H236" fill="none" stroke="#4fd06a" stroke-width="20"/>
+<path d="M30 160 H110 V100 H190 V62 H236" fill="none" stroke="#b8f58a" stroke-width="6" stroke-dasharray="2 18"/>
+<path d="M266 56 l12 -4 m-12 4 l12 5" fill="none" stroke="#ff4d6d" stroke-width="3"/>
+<circle cx="248" cy="62" r="19" fill="#4fd06a" stroke-width="4"/>
+<circle cx="252" cy="54" r="6" fill="#fff6e5" stroke-width="2.5"/><circle cx="254" cy="54" r="2.6" fill="#1b1230" stroke="none"/>
+<circle cx="252" cy="71" r="6" fill="#fff6e5" stroke-width="2.5"/><circle cx="254" cy="71" r="2.6" fill="#1b1230" stroke="none"/>
+<path d="M270 128 q2 -12 10 -16" fill="none" stroke-width="4"/>
+<path d="M280 112 q12 -6 16 4 q-10 6 -16 -4z" fill="#5fd35b" stroke-width="3"/>
+<circle cx="268" cy="142" r="17" fill="#ff4d4d" stroke-width="4"/>
+<path d="M258 136 q3 -6 9 -6" fill="none" stroke="#fff6e5" stroke-width="3.5"/>
+
+</g>
+<rect width="320" height="200" fill="url(#snakevig)"/>
+</svg>

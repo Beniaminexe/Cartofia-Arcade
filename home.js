@@ -15,76 +15,96 @@
 
   var tabBtns   = document.querySelectorAll('.tab-btn');
   var tabPanels = document.querySelectorAll('.tab-panel');
+  var showcaseTabs    = document.querySelector('.showcase-tabs');
+  var showcaseContent = document.querySelector('.showcase-content');
+  /* ≤768px the tabs become an accordion (panels sit under their button). */
+  var accordionMQ     = window.matchMedia('(max-width: 768px)');
 
-  /**
-   * Activate a specific tab by its data-tab value.
-   * @param {string} targetId  e.g. "arcade", "minecraft"
-   */
-  function activateTab(targetId) {
-    // Deactivate every button and panel
+  function isAccordion() { return accordionMQ.matches; }
+
+  /* Keep ARIA in step with the current mode:
+     - desktop: tablist / tab (aria-selected, roving tabindex) / tabpanel
+     - accordion: plain disclosure buttons (aria-expanded) / region */
+  function syncAria() {
+    var acc = isAccordion();
+    if (showcaseTabs) {
+      if (acc) showcaseTabs.removeAttribute('role');
+      else showcaseTabs.setAttribute('role', 'tablist');
+    }
     tabBtns.forEach(function (btn) {
-      btn.classList.remove('active');
-      btn.setAttribute('aria-selected', 'false');
-      btn.setAttribute('tabindex', '-1');
+      var on = btn.classList.contains('active');
+      if (acc) {
+        btn.removeAttribute('role');
+        btn.removeAttribute('aria-selected');
+        btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+        btn.setAttribute('tabindex', '0');
+      } else {
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        btn.removeAttribute('aria-expanded');
+        btn.setAttribute('tabindex', on ? '0' : '-1');
+      }
     });
     tabPanels.forEach(function (panel) {
-      panel.classList.remove('active');
+      panel.setAttribute('role', acc ? 'region' : 'tabpanel');
+      if (acc) panel.setAttribute('aria-hidden', panel.classList.contains('active') ? 'false' : 'true');
+      else panel.removeAttribute('aria-hidden');
     });
-
-    // Activate the target
-    var targetBtn   = document.querySelector('.tab-btn[data-tab="' + targetId + '"]');
-    var targetPanel = document.getElementById('tab-' + targetId);
-
-    if (targetBtn) {
-      targetBtn.classList.add('active');
-      targetBtn.setAttribute('aria-selected', 'true');
-      targetBtn.setAttribute('tabindex', '0');
-    }
-    if (targetPanel) {
-      targetPanel.classList.add('active');
-    }
   }
 
-  // Click handler
+  /**
+   * Activate a specific tab by its data-tab value (or close everything
+   * when targetId is null — accordion mode only).
+   * @param {string|null} targetId  e.g. "arcade", "minecraft"
+   */
+  function activateTab(targetId) {
+    tabBtns.forEach(function (btn) { btn.classList.remove('active'); });
+    tabPanels.forEach(function (panel) { panel.classList.remove('active'); });
+
+    if (targetId) {
+      var targetBtn   = document.querySelector('.tab-btn[data-tab="' + targetId + '"]');
+      var targetPanel = document.getElementById('tab-' + targetId);
+      if (targetBtn) targetBtn.classList.add('active');
+      if (targetPanel) targetPanel.classList.add('active');
+    }
+    syncAria();
+  }
+
+  // Click: tabs on desktop; toggle open/closed in accordion mode
   tabBtns.forEach(function (btn) {
     btn.addEventListener('click', function () {
-      activateTab(btn.dataset.tab);
-    });
-  });
-
-  // Keyboard: Left/Up = previous tab, Right/Down = next tab
-  tabBtns.forEach(function (btn, index) {
-    btn.addEventListener('keydown', function (e) {
-      var count = tabBtns.length;
-      var next;
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        next = (index + 1) % count;
-        tabBtns[next].focus();
-        activateTab(tabBtns[next].dataset.tab);
-        e.preventDefault();
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        next = (index - 1 + count) % count;
-        tabBtns[next].focus();
-        activateTab(tabBtns[next].dataset.tab);
-        e.preventDefault();
-      } else if (e.key === 'Home') {
-        tabBtns[0].focus();
-        activateTab(tabBtns[0].dataset.tab);
-        e.preventDefault();
-      } else if (e.key === 'End') {
-        tabBtns[count - 1].focus();
-        activateTab(tabBtns[count - 1].dataset.tab);
-        e.preventDefault();
+      if (isAccordion() && btn.classList.contains('active')) {
+        activateTab(null);
+      } else {
+        activateTab(btn.dataset.tab);
       }
     });
   });
 
-  // Initialise tabindex: only active tab in focus order
-  tabBtns.forEach(function (btn) {
-    if (!btn.classList.contains('active')) {
-      btn.setAttribute('tabindex', '-1');
-    }
+  // Keyboard (desktop tabs only): Left/Up = previous, Right/Down = next.
+  // In accordion mode the buttons are ordinary buttons (Tab + Enter/Space).
+  tabBtns.forEach(function (btn, index) {
+    btn.addEventListener('keydown', function (e) {
+      if (isAccordion()) return;
+      var count = tabBtns.length;
+      var next = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (index + 1) % count;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (index - 1 + count) % count;
+      else if (e.key === 'Home') next = 0;
+      else if (e.key === 'End') next = count - 1;
+      if (next === null) return;
+      tabBtns[next].focus();
+      activateTab(tabBtns[next].dataset.tab);
+      e.preventDefault();
+    });
   });
+
+  /* Deep links like #tab-messages open the matching section. */
+  function openFromHash() {
+    var m = /^#tab-([\w-]+)$/.exec(window.location.hash || '');
+    if (m && document.getElementById('tab-' + m[1])) activateTab(m[1]);
+  }
+  window.addEventListener('hashchange', openFromHash);
 
 
   /* --------------------------------------------------
@@ -97,13 +117,9 @@
      layout stays correct after rotation or window resize.
   -------------------------------------------------- */
 
-  var showcaseTabs    = document.querySelector('.showcase-tabs');
-  var showcaseContent = document.querySelector('.showcase-content');
-  var accordionMQ     = window.matchMedia('(max-width: 768px)');
-
   function arrangePanels() {
     if (!showcaseTabs || !showcaseContent) return;
-    if (accordionMQ.matches) {
+    if (isAccordion()) {
       // Mobile: nest each panel directly after its tab button
       tabBtns.forEach(function (btn) {
         var panel = document.getElementById('tab-' + btn.dataset.tab);
@@ -119,10 +135,17 @@
           showcaseContent.appendChild(panel);
         }
       });
+      // Tabs always show one panel — reopen the first if all were closed
+      if (!document.querySelector('.tab-btn.active') && tabBtns.length) {
+        activateTab(tabBtns[0].dataset.tab);
+        return;
+      }
     }
+    syncAria();
   }
 
   arrangePanels();
+  openFromHash();
   // matchMedia.addEventListener is the modern API; addListener fallback for old Safari
   if (accordionMQ.addEventListener) {
     accordionMQ.addEventListener('change', arrangePanels);

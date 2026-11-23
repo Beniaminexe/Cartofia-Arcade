@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200" role="img" aria-hidden="true">
+<defs>
+<radialGradient id="cartofiabg" cx="50%" cy="38%" r="80%"><stop offset="0" stop-color="#a6e0ff"/><stop offset="1" stop-color="#2a62b0"/></radialGradient>
+<pattern id="cartofiadots" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.1" fill="#fff" opacity=".16"/></pattern>
+<radialGradient id="cartofiavig" cx="50%" cy="45%" r="75%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient>
+
+</defs>
+<rect width="320" height="200" fill="url(#cartofiabg)"/>
+<rect width="320" height="200" fill="url(#cartofiadots)"/>
+<g stroke="#1b1230" stroke-linejoin="round" stroke-linecap="round">
+
+<g stroke="none" fill="#fff" opacity=".85"><circle cx="58" cy="42" r="14"/><circle cx="76" cy="36" r="18"/><circle cx="96" cy="44" r="12"/><rect x="50" y="42" width="56" height="14" rx="7"/>
+<circle cx="236" cy="30" r="10"/><circle cx="250" cy="25" r="14"/><circle cx="266" cy="31" r="9"/><rect x="230" y="30" width="42" height="10" rx="5"/></g>
+<path d="M-10 200 Q40 120 110 160 T230 150 T340 170 V210 H-10 Z" fill="#3fa65a" stroke="none" opacity=".55"/>
+<path d="M-10 210 Q70 160 150 185 T340 180 V210 Z" fill="#2f8a49" stroke="none"/>
+<rect x="30" y="140" width="86" height="22" rx="6" fill="#9a6235" stroke-width="4"/><path d="M30 148 a6 6 0 0 1 6 -8 H110 a6 6 0 0 1 6 8 Z" fill="#5fd35b" stroke-width="4"/>
+<rect x="150" y="104" width="70" height="22" rx="6" fill="#9a6235" stroke-width="4"/><path d="M150 112 a6 6 0 0 1 6 -8 H214 a6 6 0 0 1 6 8 Z" fill="#5fd35b" stroke-width="4"/>
+<rect x="244" y="70" width="64" height="22" rx="6" fill="#9a6235" stroke-width="4"/><path d="M244 78 a6 6 0 0 1 6 -8 H302 a6 6 0 0 1 6 8 Z" fill="#5fd35b" stroke-width="4"/>
+<circle cx="170" cy="84" r="8" fill="#ffd93d" stroke-width="3"/><path d="M170 80 V88" stroke="#c98a12" stroke-width="2.5"/><circle cx="192" cy="84" r="8" fill="#ffd93d" stroke-width="3"/><path d="M192 80 V88" stroke="#c98a12" stroke-width="2.5"/><circle cx="262" cy="50" r="8" fill="#ffd93d" stroke-width="3"/><path d="M262 46 V54" stroke="#c98a12" stroke-width="2.5"/><circle cx="286" cy="50" r="8" fill="#ffd93d" stroke-width="3"/><path d="M286 46 V54" stroke="#c98a12" stroke-width="2.5"/>
+<line x1="292" y1="70" x2="292" y2="30" stroke-width="4"/><path d="M292 30 L312 37 L292 44 Z" fill="#ff4d4d" stroke-width="3"/>
+<ellipse cx="96" cy="136" rx="16" ry="3" fill="#000" opacity=".25" stroke="none"/>
+<g transform="rotate(-10 104 98)">
+<path d="M88 118 l-4 8 M110 118 l4 8" stroke-width="5"/>
+<path d="M104 72 C124 72 128 92 124 108 C120 124 88 126 84 110 C80 94 84 72 104 72 Z" fill="#d9a35b" stroke-width="4"/>
+<circle cx="96" cy="88" r="2" fill="#a8743a" stroke="none"/><circle cx="116" cy="104" r="2.4" fill="#a8743a" stroke="none"/><circle cx="92" cy="110" r="1.8" fill="#a8743a" stroke="none"/>
+<circle cx="102" cy="92" r="5.5" fill="#fff6e5" stroke-width="2.5"/><circle cx="116" cy="92" r="5.5" fill="#fff6e5" stroke-width="2.5"/>
+<circle cx="104" cy="93" r="2.4" fill="#1b1230" stroke="none"/><circle cx="118" cy="93" r="2.4" fill="#1b1230" stroke="none"/>
+<path d="M104 102 q6 6 12 0" fill="none" stroke-width="3"/>
+<path d="M84 100 l-12 -10 M124 98 l12 -12" stroke-width="5"/>
+</g>
+<path d="M70 118 l-10 4 M72 108 l-12 -2" stroke="#fff" stroke-width="3" opacity=".7"/>
+
+</g>
+<rect width="320" height="200" fill="url(#cartofiavig)"/>
+</svg>
