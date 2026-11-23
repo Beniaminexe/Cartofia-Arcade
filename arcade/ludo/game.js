@@ -25,7 +25,7 @@
   const LOG_MAX = 80;
   const POWER_ORDER = ["double_dice", "reroll", "boost", "shield", "freeze", "bomb", "swap"];
   const FALLBACK_META = {
-    double_dice: { name: "Double Dice", emoji: "🎲", color: "#a78bfa", description: "Before rolling: throw two dice and keep the one you like." },
+    double_dice: { name: "Double Dice", emoji: "🎲", color: "#a78bfa", description: "Before rolling: throw two dice and move the total. A 6 on either die brings a token out." },
     reroll:      { name: "Re-roll",     emoji: "🔄", color: "#38bdf8", description: "After rolling: throw the die again." },
     boost:       { name: "Rocket",      emoji: "🚀", color: "#fb923c", description: "After rolling: +3 squares for a token already on the board." },
     shield:      { name: "Shield",      emoji: "🛡️", color: "#34d399", description: "Protect one token from captures and bombs for 2 rounds." },
@@ -34,6 +34,17 @@
     swap:        { name: "Swap",        emoji: "🌀", color: "#f472b6", description: "Before rolling: trade places with a rival token." },
   };
   const RARITY_ORDER = { common: 0, rare: 1, epic: 2, legendary: 3 };
+  const THROW_ITEMS = ["tomato", "egg", "rose", "potato", "water", "confetti"];
+  const THROW_META = {
+    tomato: { name: "Tomato", a: "a tomato", emoji: "🍅" }, egg: { name: "Egg", a: "an egg", emoji: "🥚" },
+    rose: { name: "Rose", a: "a rose", emoji: "🌹" }, potato: { name: "Potato", a: "a potato", emoji: "🥔" },
+    water: { name: "Water", a: "a water balloon", emoji: "💧" }, confetti: { name: "Confetti", a: "confetti", emoji: "🎉" },
+  };
+  const CHAT_MAX = 200;
+  const CHAT_GAP_MS = 1500;
+  const THROW_GAP_MS = 3000;
+  const CHAT_KEEP = 60;
+  const SS_MUTES = "cartofia_ludo_mutes";
   // Server / engine error codes → player-friendly wording (fallback: server message).
   const FRIENDLY_ERRORS = {
     not_your_turn: "Hold on — it’s not your turn yet.",
@@ -59,7 +70,15 @@
     rate_limited: "Slow down a little!",
     server_error: "Something went wrong on the server. Try again.",
     hello_required: "Still connecting — try again in a second.",
+    paused: "The match is paused while players decide whether to keep going.",
+    no_prompt: "That question has already closed.",
+    already_answered: "You’ve already answered.",
+    not_finished: "Play again opens once the match has ended.",
+    bad_target: "Pick another player to throw at.",
+    bad_request: "That didn’t work — try again.",
   };
+  // Errors from chat / throws / the continue prompt: toast only, never disturb screens or pending starts.
+  const SOCIAL_ERRORS = new Set(["rate_limited", "bad_target", "no_prompt", "already_answered", "paused", "bad_request"]);
 
   // ---------------------------------------------------------------------------
   // Small helpers
@@ -200,6 +219,15 @@
     resultsModal: $("resultsModal"), resultsCard: $("resultsCard"),
     confirmModal: $("confirmModal"), confirmTitle: $("confirmTitle"), confirmText: $("confirmText"), confirmYes: $("confirmYes"), confirmNo: $("confirmNo"),
     toastHost: $("toastHost"), srLive: $("srLive"),
+    // chat
+    chatPanel: $("chatPanel"), chatToggle: $("chatToggle"), chatBadge: $("chatBadge"), chatBody: $("chatBody"),
+    chatList: $("chatList"), chatEmpty: $("chatEmpty"), chatForm: $("chatForm"), chatInput: $("chatInput"),
+    lobbyChatSlot: $("lobbyChatSlot"), gameChatSlot: $("gameChatSlot"), btnChat: $("btnChat"), chatToolBadge: $("chatToolBadge"),
+    // log / power help
+    logCard: $("logCard"), btnLogMore: $("btnLogMore"), powerHelp: $("powerHelp"), powerListGame: $("powerListGame"),
+    // continue prompt
+    continueModal: $("continueModal"), continueTitle: $("continueTitle"), continueText: $("continueText"),
+    continueSecs: $("continueSecs"), continueRing: $("continueRing"), continueYes: $("continueYes"), continueNo: $("continueNo"),
   };
 
   // ---------------------------------------------------------------------------
@@ -238,6 +266,13 @@
     seatStatus: {},
     achExpanded: false,
     syncing: false,
+    chat: [],            // [{seat, name, text, ts}] — rendered with textContent only
+    chatUnread: 0,
+    chatOpenGame: !(window.matchMedia && window.matchMedia("(max-width: 920px)").matches),
+    chatReadyAt: 0,
+    throwReadyAt: 0,
+    again: null,         // pending play_again {at, kind, code}
+    prompt: null,        // open continue prompt {deadline, winner}
   };
 
   let renderer = null;
@@ -351,6 +386,8 @@
       });
     }
     if (name !== "game" && prev === "game") teardownRenderer();
+    closePodMenu();
+    placeChat(name);
     updateHeaderStatus();
     updateNetUI();
     if (name !== prev) window.scrollTo({ top: 0 });
@@ -445,14 +482,17 @@
   }
 
   function renderPowerList() {
-    dom.powerList.innerHTML = "";
-    POWER_ORDER.forEach((id) => {
-      const m = powerMeta(id);
-      dom.powerList.appendChild(h("li", { class: "power-item", style: { "--pw": m.color } },
-        powerIcon(id),
-        h("div", { class: "power-item-body" },
-          h("span", { class: "power-item-name", text: m.name }),
-          h("span", { class: "power-item-desc", text: m.description || "" }))));
+    [dom.powerList, dom.powerListGame].forEach((list) => {
+      if (!list) return;
+      list.innerHTML = "";
+      POWER_ORDER.forEach((id) => {
+        const m = powerMeta(id);
+        list.appendChild(h("li", { class: "power-item", style: { "--pw": m.color } },
+          powerIcon(id),
+          h("div", { class: "power-item-body" },
+            h("span", { class: "power-item-name", text: m.name }),
+            h("span", { class: "power-item-desc", text: m.description || "" }))));
+      });
     });
   }
 
@@ -644,6 +684,7 @@
     dom.lobbyMode.dataset.mode = r.mode || "power";
     dom.inviteLink.value = inviteUrl(r.code || "");
     const seats = Array.isArray(r.seats) ? r.seats : [];
+    const reserved = Array.isArray(r.reserved) ? r.reserved : [];
     const occupied = seats.filter(Boolean).length;
     dom.seatGrid.innerHTML = "";
     for (let i = 0; i < 4; i++) {
@@ -659,13 +700,24 @@
       const bodyEl = h("div", { class: "seat-body" });
       if (s) {
         const isBot = s.kind === "bot";
-        bodyEl.appendChild(h("span", { class: "seat-avatar " + (isBot ? "bot" : "") }, isBot ? "🤖" : (s.avatar_url ? h("img", { src: s.avatar_url, alt: "" }) : initials(s.name))));
+        const av = isBot ? "🤖" : (s.avatar_url ? h("img", { src: s.avatar_url, alt: "" }) : initials(s.name));
+        if (isBot) bodyEl.appendChild(h("span", { class: "seat-avatar bot" }, av));
+        else {
+          const btn = h("button", { type: "button", class: "seat-avatar seat-avatar-btn", "aria-label": (s.name || "Player") + " — player menu", "aria-haspopup": "dialog" }, av);
+          btn.addEventListener("click", () => openPodMenu(i, btn.getBoundingClientRect(), "lobby", btn));
+          bodyEl.appendChild(btn);
+        }
         bodyEl.appendChild(h("div", { class: "seat-who" },
           h("span", { class: "seat-name", text: s.name || "Player" }),
           h("span", { class: "seat-kind", text: isBot ? "Bot" : s.kind === "guest" ? "Guest" : ("@" + (s.username || "player")) })));
         const hostSeat = i === r.host_seat;
         const ready = isBot || hostSeat || !!s.ready;
         bodyEl.appendChild(h("span", { class: "ready-pill " + (ready ? "on" : "off"), text: ready ? "Ready" : "Not ready" }));
+      } else if (reserved.includes(i)) {
+        bodyEl.appendChild(h("span", { class: "seat-avatar empty", "aria-hidden": "true", text: "⏳" }));
+        bodyEl.appendChild(h("div", { class: "seat-who" },
+          h("span", { class: "seat-name muted", text: "Held seat" }),
+          h("span", { class: "seat-kind", text: "Kept for last game’s player (2 min)" })));
       } else {
         bodyEl.appendChild(h("span", { class: "seat-avatar empty", "aria-hidden": "true", text: "+" }));
         bodyEl.appendChild(h("div", { class: "seat-who" },
@@ -674,7 +726,9 @@
       }
       card.appendChild(bodyEl);
       const acts = h("div", { class: "seat-actions" });
-      if (!s) {
+      if (!s && reserved.includes(i)) {
+        /* held for a previous player: nothing to do here */
+      } else if (!s) {
         if (!mine) acts.appendChild(h("button", { type: "button", class: "btn btn-ghost btn-sm", onclick: () => send({ type: "pick_seat", seat: i }) }, "Sit here"));
         if (isHost) acts.appendChild(h("button", { type: "button", class: "btn btn-ghost btn-sm", onclick: () => send({ type: "add_bot", seat: i }) }, "＋ Add bot"));
       } else if (s.kind === "bot" && isHost) {
@@ -714,6 +768,7 @@
     send({ type: "leave" });
     app.room = null;
     app.intent = null;
+    clearChat();
     setRoomParam(null);
     showScreen("home");
   });
@@ -886,6 +941,10 @@
       case "player_status": return onPlayerStatus(m);
       case "match_end": return onMatchEnd(m);
       case "room_closed": return onRoomClosed(m);
+      case "chat": return onChat(m);
+      case "throw": return onThrow(m);
+      case "continue_prompt": return onContinuePrompt(m);
+      case "continue_status": return onContinueStatus(m);
       case "pong": return undefined;
       default: return undefined;
     }
@@ -930,6 +989,13 @@
   function onServerError(m) {
     const msg = FRIENDLY_ERRORS[m.code] || m.message || m.code || "Something went wrong.";
     if (net.resuming) { resumeFailed(m.code === "resume_failed" ? null : msg); return; }
+    if (app.again && ["not_in_match", "not_finished", "room_in_progress", "room_full", "busy"].includes(m.code)) { againFallback(m.code, msg); return; }
+    if (SOCIAL_ERRORS.has(m.code)) {
+      toast(msg, "info", 2200);
+      if (m.code === "no_prompt" || m.code === "already_answered") closeContinue();
+      if (m.code === "paused") { setPending(false); if (app.screen === "game") updateGameUI(); }
+      return;
+    }
     if (app.syncing) { app.syncing = false; if (m.code === "not_in_match") return; }
     setPending(false);
     const wasAwaiting = app.awaiting;
@@ -944,6 +1010,13 @@
   }
 
   function onQueueStatus(m) {
+    // Quick-match "play again" re-queues: leave the results for the queue screen.
+    if (app.again && (app.again.kind === "quick" || !app.again.kind) && m.in_queue !== false) {
+      clearAgain();
+      resetMatchState();
+      app.queue = { humans: 1, startsAt: null, mode: m.mode || app.mode };
+      showScreen("queue");
+    }
     // We switch to the queue screen as soon as Quick Match is pressed, so any
     // status that arrives elsewhere (e.g. the ack of cancel_queue) is stale.
     if (app.screen !== "queue") return;
@@ -966,7 +1039,15 @@
 
   function onRoomUpdate(m) {
     app.room = m;
-    if (app.screen === "game" || app.resultsShown) {
+    if (Array.isArray(m.chat_history)) setChatHistory(m.chat_history);
+    let fromAgain = false;
+    if (app.again && app.again.kind !== "quick") {
+      // play_again in a private room: back to the SAME lobby (code, seats, bots, chat).
+      clearAgain();
+      resetMatchState();
+      fromAgain = true;
+    }
+    if (!fromAgain && (app.screen === "game" || app.resultsShown)) {
       // The room survived the match: offer to go back to it.
       if (app.ended || app.resultsShown) { app.roomAfterMatch = true; renderResultsActions(); }
       return;
@@ -997,6 +1078,7 @@
     }
     const reason = code === "stale" ? "inactive for too long" : code.replace(/_/g, " ");
     app.room = null;
+    if (app.screen === "lobby" || app.screen === "queue") clearChat();
     app.roomAfterMatch = false;
     renderResultsActions();
     if (app.screen === "lobby" || app.screen === "queue") {
@@ -1019,7 +1101,14 @@
     app.pendingRoom = null;
     const youSeat = num(m.you_seat != null ? m.you_seat : (m.you && m.you.seat), 0);
     const token = m.seat_token || (readResume() || {}).seat_token || (app.match && app.match.seat_token);
+    const prevScope = muteScope();
+    app.startState = m.state;
+    clearAgain();
     app.match = { match_id: m.match_id, you_seat: youSeat, seat_token: token, mode: m.state.mode || "power", started: Date.now() };
+    carryMutes(prevScope, muteScope());
+    if (!sameMatch) closeContinue();
+    if (Array.isArray(m.chat_history)) setChatHistory(m.chat_history);
+    else if (!sameMatch && !(app.room && app.screen === "lobby")) clearChat();
     if (m.match_id && token) ssSet(SS_RESUME, { match_id: m.match_id, seat_token: token, you_seat: youSeat });
     setRoomParam(null);
     app.gen += 1;
@@ -1101,6 +1190,12 @@
     renderer.on("token", onBoardToken);
     renderer.on("square", (d) => { if (d && app.targeting) pickTarget("square", num(d.abs, -1)); });
     renderer.on("seat", (d) => { if (d && app.targeting) pickTarget("seat", num(d.seat, -1)); });
+    renderer.on("pod", (d) => {
+      if (!d || app.targeting) return; // seat targeting (Freeze) uses pod clicks
+      const seat = num(d.seat, -1);
+      const rect = typeof renderer.getPodRect === "function" ? renderer.getPodRect(seat) : null;
+      openPodMenu(seat, rect, "game", dom.boardHost.querySelector('.lr-pod[data-seat="' + seat + '"]'));
+    });
     renderer.on("dice", (d) => {
       if (app.targeting || !canInteract()) { updateGameUI(); return; }
       const L = legal();
@@ -1194,6 +1289,7 @@
     app.deadline = computeDeadline(m.state.turn);
     if (!resumed) {
       dom.eventLog.innerHTML = "";
+      setLogExpanded(false);
       const n = (m.state.active_seats || []).length || 4;
       logLine(seat, "Match started — you are " + SEAT_LABEL[seat] + ". Good luck!", "system");
       dom.matchMeta.textContent = (m.state.mode === "classic" ? "Classic" : "Power") + " · " + n + " players";
@@ -1344,7 +1440,14 @@
     dom.turnCard.dataset.seat = seatOn != null ? SEAT_COLOR[seatOn] : "";
     dom.turnDot.className = "turn-dot" + (seatOn != null ? " seat-" + SEAT_COLOR[seatOn] : "");
     let title, sub = "";
-    if (!playing) {
+    const paused = playing && turn.phase === "await_continue";
+    const myPl = (st.players || [])[me] || {};
+    const meDone = playing && (myPl.placement != null || !!myPl.retired);
+    if (paused) {
+      const w = (st.players || []).findIndex((p) => p && p.placement === 1);
+      title = w >= 0 ? (w === me ? "You finished 1st! 🏆" : seatName(w, st) + " finished 1st") : "Paused";
+      sub = app.prompt ? "Keep playing for the next places? Answer below." : "Waiting for players to decide whether to keep going…";
+    } else if (!playing) {
       const w = st.winner;
       title = w == null ? "Match over" : (w === me ? "You won! 🏆" : seatName(w, st) + " won");
       sub = "Wrapping up…";
@@ -1352,7 +1455,7 @@
       title = "Your turn";
       if (targeting) sub = "Choose a target for " + powerMeta(app.targeting.power).name + ".";
       else if (choosing) sub = "Double Dice: pick which die to keep.";
-      else if (turn.phase === "roll") sub = turn.double_pending ? "Double Dice ready — roll two dice!" : "Roll the dice — tap the dice or press Space.";
+      else if (turn.phase === "roll") sub = turn.double_pending ? "Double Dice ready — roll two dice and move the total!" : "Roll the dice — tap the dice or press Space.";
       else if (L.moves.length > 1) sub = "Rolled " + turnValue(turn) + ". Pick a glowing token (keys 1–4).";
       else if (L.moves.length === 1) sub = "Rolled " + turnValue(turn) + ". Tap the glowing token to move.";
       else if (L.pass) sub = "Rolled " + turnValue(turn) + ". No moves — use a power-up or pass.";
@@ -1370,19 +1473,25 @@
     dom.turnTitle.textContent = title;
     dom.turnSub.textContent = sub;
     const meInfo = seatInfo(me, st);
-    const meResigned = !!(((st.players || [])[me] || {}).resigned);
-    const showNote = playing && (meResigned || (meInfo && meInfo.autopilot));
+    const meResigned = !!myPl.resigned;
+    const meRetired = !!myPl.retired;
+    const meFinished = myPl.placement != null && !meRetired && !meResigned;
+    const showNote = playing && (meResigned || meRetired || meFinished || (meInfo && meInfo.autopilot));
     dom.autopilotNote.classList.toggle("hidden", !showNote);
-    if (showNote) dom.autopilotNote.textContent = meResigned
-      ? "🏳️ You resigned. Watch the rest of the match or leave whenever you like."
+    if (showNote) dom.autopilotNote.textContent = meFinished
+      ? "🏆 You finished " + ordinal(myPl.placement) + "! The others are playing on — watch, chat, or leave whenever you like."
+      : meRetired ? "You stopped after the first finish — your tokens left the board. Watch the rest or leave whenever you like."
+      : meResigned ? "🏳️ You resigned. Watch the rest of the match or leave whenever you like."
       : "🤖 Autopilot is playing for you. Tap Autopilot (or take any action) to get control back.";
+    dom.powerHelp.classList.toggle("hidden", st.mode !== "power");
+    syncMutedPods();
 
     renderPowerBar(st, L, interactive);
     updateClock();
     updateHeaderStatus();
-    dom.btnResign.disabled = !playing || meResigned;
+    dom.btnResign.disabled = !playing || meResigned || meDone;
     const auto = !!(meInfo && meInfo.autopilot);
-    dom.btnAuto.disabled = !playing || meResigned;
+    dom.btnAuto.disabled = !playing || meResigned || meDone;
     dom.btnAuto.setAttribute("aria-pressed", auto ? "true" : "false");
     dom.autoLabel.textContent = auto ? "Bot on" : "Autopilot";
 
@@ -1401,7 +1510,9 @@
   }
   function turnValue(turn) {
     const v = num(turn.value, 0);
-    return turn.boost ? v + " (+" + turn.boost + ")" : String(v);
+    const d = Array.isArray(turn.dice) ? turn.dice : [];
+    const base = d.length === 2 && v === num(d[0], 0) + num(d[1], 0) ? d[0] + " + " + d[1] + " = " + v : String(v);
+    return turn.boost ? base + " (+" + turn.boost + ")" : base;
   }
 
   function updateClock() {
@@ -1640,7 +1751,9 @@
   });
   dom.btnLeaveGame.addEventListener("click", async () => {
     const st = app.shownState;
-    if (st && st.status === "playing") {
+    const mePl = st && app.match ? ((st.players || [])[app.match.you_seat] || {}) : {};
+    const done = mePl.placement != null || mePl.retired || mePl.resigned;
+    if (st && st.status === "playing" && !done) {
       const ok = await confirmDialog("Leave the match?", "A bot takes over your seat for the rest of the game, and you still get a result at your final placement. To forfeit instead, use Resign.", "Leave match");
       if (!ok) return;
     }
@@ -1649,7 +1762,7 @@
     leaveMatchUI();
   });
 
-  function leaveMatchUI() {
+  function resetMatchState() {
     app.gen += 1;
     anim.queue.length = 0;
     app.match = null;
@@ -1657,7 +1770,14 @@
     app.ended = null;
     app.resultsShown = false;
     cancelTargeting(true);
+    closeContinue();
+    closePodMenu();
     hideResults();
+  }
+  function leaveMatchUI() {
+    resetMatchState();
+    clearAgain();
+    clearChat();
     showScreen("home");
     renderAccount();
   }
@@ -1671,7 +1791,22 @@
       h("span", { class: "log-text", text }));
     dom.eventLog.insertBefore(li, dom.eventLog.firstChild);
     while (dom.eventLog.children.length > LOG_MAX) dom.eventLog.lastChild.remove();
+    updateLogMore();
   }
+  // Match log: only the latest line is visible; "Show more" reveals the rest.
+  function updateLogMore() {
+    const n = dom.eventLog.children.length;
+    const open = dom.logCard.dataset.expanded === "true";
+    dom.btnLogMore.classList.toggle("hidden", n <= 1);
+    dom.btnLogMore.textContent = open ? "Show less" : "Show more (" + (n - 1) + ")";
+    dom.btnLogMore.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  function setLogExpanded(open) {
+    dom.logCard.dataset.expanded = open ? "true" : "false";
+    if (!open) dom.eventLog.scrollTop = 0;
+    updateLogMore();
+  }
+  dom.btnLogMore.addEventListener("click", () => setLogExpanded(dom.logCard.dataset.expanded !== "true"));
 
   function logEvents(events, st) {
     const me = app.match ? app.match.you_seat : -1;
@@ -1686,7 +1821,9 @@
       switch (ev.type) {
         case "rolled": {
           const d = Array.isArray(ev.dice) ? ev.dice : [];
-          text = d.length === 2 ? N(s) + " rolled " + d[0] + " and " + d[1] : N(s) + " rolled a " + (ev.value != null ? ev.value : d[0]);
+          text = d.length === 2
+            ? N(s) + " rolled " + d[0] + " + " + d[1] + " = " + (ev.value != null ? ev.value : d[0] + d[1]) + (d[0] === 6 && d[1] === 6 ? " — double six!" : "")
+            : N(s) + " rolled a " + (ev.value != null ? ev.value : d[0]);
           kind = "roll";
           break;
         }
@@ -1745,13 +1882,27 @@
           break;
         }
         case "resigned": text = N(s) + " resigned 🏳️"; kind = "muted"; break;
+        case "seat_finished": {
+          const pl = num(ev.placement, 0);
+          text = N(s) + " finished " + (pl ? ordinal(pl) : "") + (pl === 1 ? " 🏆" : " 🏁");
+          kind = "big";
+          if (s === me) say = "You finished " + ordinal(pl) + "!";
+          break;
+        }
+        case "retired": text = N(s) + " stopped — tokens off the board"; kind = "muted"; break;
+        case "play_continues": {
+          const who = (Array.isArray(ev.seats) ? ev.seats : []).map((x) => seatName(x, st));
+          text = "Play continues" + (who.length ? " for " + who.join(", ") : "") + " ▶";
+          kind = "system";
+          break;
+        }
         case "game_over":
           text = ev.winner == null ? "Game over" : (ev.winner === me ? "You won the match! 🏆" : seatName(ev.winner, st) + " won the match 🏆");
           kind = "big"; say = text;
           break;
         default: break;
       }
-      if (text) logLine(ev.type === "game_over" ? ev.winner : (ev.type === "shield_blocked" ? ev.victim_seat : s), text, kind);
+      if (text) logLine(ev.type === "game_over" ? ev.winner : (ev.type === "shield_blocked" ? ev.victim_seat : ev.type === "play_continues" ? null : s), text, kind);
       if (say) announce(say);
     }
   }
@@ -1798,6 +1949,7 @@
     const mine = results.find((r) => r.seat === me);
     const place = mine ? num(mine.placement, 0) : 0;
     const iResigned = !!(((st.players || [])[me] || {}).resigned);
+    const iRetired = !!(((st.players || [])[me] || {}).retired);
     const card = dom.resultsCard;
     card.innerHTML = "";
     card.className = "modal-card results-card" + (place === 1 ? " is-win" : "");
@@ -1806,7 +1958,7 @@
       h("span", { class: "results-medal", "aria-hidden": "true", text: place ? medals[place - 1] || "🎲" : "🎲" }),
       h("p", { class: "eyebrow", text: (st.mode === "classic" ? "Classic" : "Power") + " match · " + results.length + " players" }),
       h("h2", { class: "results-title", id: "resultsTitle", text: place === 1 ? "You won!" : place ? "You finished " + ordinal(place) : "Match over" }),
-      h("p", { class: "results-sub", text: place === 1 ? (iResigned ? "Everyone else left the table." : "All four tokens home. Nicely played.") : iResigned ? "You resigned this one." : place ? (results[0] ? seatName(results[0].seat, st, false) + " took the crown this time." : "") : "" })));
+      h("p", { class: "results-sub", text: place === 1 ? (iResigned ? "Everyone else left the table." : "All four tokens home. Nicely played.") : iResigned ? "You resigned this one." : iRetired ? "You stopped after " + (results[0] ? seatName(results[0].seat, st, false) : "the winner") + " finished." : place ? (results[0] ? seatName(results[0].seat, st, false) + " took the crown this time." : "") : "" })));
 
     const list = h("ol", { class: "placements" });
     results.forEach((r) => {
@@ -1814,11 +1966,12 @@
       const isMe = r.seat === me;
       const kindTag = r.kind === "bot" ? "Bot" : r.kind === "guest" ? "Guest" : null;
       const resigned = !!(((st.players || [])[r.seat] || {}).resigned);
+      const retired = !!(((st.players || [])[r.seat] || {}).retired);
       list.appendChild(h("li", { class: "placement seat-" + SEAT_COLOR[r.seat] + (isMe ? " mine" : "") },
         h("span", { class: "pl-rank", text: medals[num(r.placement, 4) - 1] || String(r.placement) }),
         h("span", { class: "pl-dot", "aria-hidden": "true" }),
         h("span", { class: "pl-who" },
-          h("span", { class: "pl-name" }, r.name || seatName(r.seat, st, false), isMe ? h("span", { class: "tag tag-you", text: "You" }) : null, kindTag ? h("span", { class: "tag", text: kindTag }) : null, resigned ? h("span", { class: "tag tag-resigned", text: "Resigned" }) : null),
+          h("span", { class: "pl-name" }, r.name || seatName(r.seat, st, false), isMe ? h("span", { class: "tag tag-you", text: "You" }) : null, kindTag ? h("span", { class: "tag", text: kindTag }) : null, resigned ? h("span", { class: "tag tag-resigned", text: "Resigned" }) : null, retired ? h("span", { class: "tag tag-resigned", text: "Retired" }) : null),
           h("span", { class: "pl-stats" },
             chip("🏠", num(s.tokens_finished, 0) + "/4", "Tokens home"),
             chip("🗡️", num(s.captures, 0), "Captures"),
@@ -1898,35 +2051,68 @@
     }
   }
 
+  function againKind() {
+    const i = app.intent;
+    if (i && (i.kind === "create" || i.kind === "join")) return "room";
+    if (i && i.kind === "quick") return "quick";
+    if (i && i.kind === "bots") return "bots";
+    return null; // e.g. rejoined after a reload: the server still knows where we came from
+  }
   function renderResultsActions() {
     const box = document.getElementById("resultsActions");
     if (!box) return;
     box.innerHTML = "";
     const i = app.intent;
+    const k = againKind();
     let again = "Play again";
-    if (app.roomAfterMatch && app.room) again = "Back to room";
-    else if (i && i.kind === "bots") again = "Play again vs " + i.bots + (i.bots === 1 ? " bot" : " bots");
-    else if (i && i.kind === "quick") again = "Find another match";
-    else if (i && (i.kind === "create" || i.kind === "join")) again = "New room";
-    box.appendChild(h("button", { type: "button", class: "btn btn-primary", onclick: playAgain }, again));
+    if (k === "room") again = "Play again · same room";
+    else if (k === "bots" && i && i.bots) again = "Play again vs " + i.bots + (i.bots === 1 ? " bot" : " bots");
+    else if (k === "quick") again = "Play again · quick match";
+    const btn = h("button", { type: "button", class: "btn btn-primary" + (app.again ? " loading" : ""), onclick: playAgain, disabled: !!app.again }, again);
+    box.appendChild(btn);
     box.appendChild(h("button", { type: "button", class: "btn btn-ghost", onclick: backToMenu }, "Back to menu"));
     if (app.auth) box.appendChild(h("button", { type: "button", class: "btn btn-ghost", onclick: () => { backToMenu(); setTab("stats"); } }, "My stats"));
   }
 
   function hideResults() { dom.resultsModal.classList.add("hidden"); }
 
+  // Play again: the server keeps the room (private → same lobby; bots → same settings;
+  // quick match → re-queue). Falls back to starting over if the old match is gone.
   function playAgain() {
-    const i = app.intent;
-    const roomBack = app.roomAfterMatch && app.room;
+    if (app.again) return;
+    app.again = { at: Date.now(), kind: againKind(), code: app.room && app.room.code, intent: app.intent, mode: (app.match && app.match.mode) || app.mode };
+    renderResultsActions();
+    send({ type: "play_again" });
+    clearTimeout(app.againTimer);
+    app.againTimer = setTimeout(() => { if (app.again) againFallback("timeout"); }, 8000);
+  }
+  function clearAgain() {
+    clearTimeout(app.againTimer);
+    if (!app.again) return;
+    app.again = null;
+    renderResultsActions();
+  }
+  function againFallback(code, msg) {
+    const a = app.again;
+    clearAgain();
+    if (!a) return;
+    if (a.kind === "room" && (code === "room_in_progress" || code === "room_full")) {
+      toast(msg || "That room has moved on.", "info", 4000);
+      backToMenu();
+      return;
+    }
+    const i = a.intent || {};
+    if (!a.kind) { toast(msg || "That match has closed — start a new one from the menu.", "info", 4000); backToMenu(); return; }
     leaveMatchUI();
-    if (roomBack) { showScreen("lobby"); renderLobby(); setRoomParam(app.room.code); return; }
-    if (!i) return;
-    if (i.kind === "bots") startIntent({ kind: "bots", mode: i.mode, bots: i.bots });
-    else if (i.kind === "quick") startIntent({ kind: "quick", mode: i.mode });
-    else startIntent({ kind: "create", mode: (app.match && app.match.mode) || app.mode });
+    if (a.kind === "room") {
+      if (a.code) startIntent({ kind: "join", code: a.code });
+      else startIntent({ kind: "create", mode: a.mode });
+    } else if (a.kind === "quick") startIntent({ kind: "quick", mode: i.mode || a.mode });
+    else startIntent({ kind: "bots", mode: i.mode || a.mode, bots: i.bots || app.bots });
   }
   function backToMenu() {
-    if (app.roomAfterMatch && app.room) send({ type: "leave" });
+    if (app.match && app.ended) send({ type: "leave" });
+    else if (app.roomAfterMatch && app.room) send({ type: "leave" });
     app.room = null;
     app.roomAfterMatch = false;
     leaveMatchUI();
@@ -2133,6 +2319,343 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Chat (lobby + match). Every string from the server is rendered with
+  // textContent (via h(..., {text})) — never innerHTML. The server does not escape.
+  // ---------------------------------------------------------------------------
+  function mySeatNow() {
+    if (app.screen === "game" && app.match) return app.match.you_seat;
+    if (app.room && app.room.you_seat != null) return app.room.you_seat;
+    return app.match ? app.match.you_seat : null;
+  }
+  function placeChat(screen) {
+    const slot = screen === "lobby" ? dom.lobbyChatSlot : screen === "game" ? dom.gameChatSlot : null;
+    if (!slot) return;
+    if (dom.chatPanel.parentNode !== slot) slot.appendChild(dom.chatPanel);
+    setChatOpen(screen === "lobby" ? true : app.chatOpenGame);
+  }
+  function chatIsOpen() { return dom.chatPanel.dataset.open === "true"; }
+  function setChatOpen(open, focus) {
+    dom.chatPanel.dataset.open = open ? "true" : "false";
+    dom.chatToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    dom.btnChat.setAttribute("aria-expanded", open ? "true" : "false");
+    if (app.screen === "game") app.chatOpenGame = !!open;
+    if (open) {
+      app.chatUnread = 0;
+      dom.chatList.scrollTop = dom.chatList.scrollHeight;
+      if (focus) { try { dom.chatInput.focus({ preventScroll: true }); } catch (_) { dom.chatInput.focus(); } }
+    }
+    updateChatBadge();
+  }
+  function updateChatBadge() {
+    const n = app.chatUnread;
+    const txt = n > 9 ? "9+" : String(n);
+    [dom.chatBadge, dom.chatToolBadge].forEach((b) => { b.textContent = txt; b.classList.toggle("hidden", n <= 0); });
+    dom.btnChat.setAttribute("aria-label", n > 0 ? "Chat, " + n + " unread" : "Chat");
+  }
+  function validLine(l) { return l && typeof l === "object" && l.text != null && String(l.text).trim() !== ""; }
+  function chatLineEl(l) {
+    const seat = num(l.seat, -1);
+    const mine = seat >= 0 && seat === mySeatNow();
+    const when = l.ts ? new Date(num(l.ts, 0) < 1e12 ? num(l.ts, 0) * 1000 : num(l.ts, 0)) : null;
+    return h("li", { class: "chat-line" + (SEAT_COLOR[seat] ? " seat-" + SEAT_COLOR[seat] : "") + (mine ? " mine" : ""), title: when && !isNaN(when) ? when.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : null },
+      h("span", { class: "chat-dot", "aria-hidden": "true" }),
+      h("span", { class: "chat-name", text: mine ? "You" : String(l.name || SEAT_LABEL[seat] || "Player").slice(0, 24) }),
+      h("span", { class: "chat-text", text: String(l.text).slice(0, CHAT_MAX) }));
+  }
+  function renderChat() {
+    const near = dom.chatList.scrollHeight - dom.chatList.scrollTop - dom.chatList.clientHeight < 40;
+    dom.chatList.textContent = "";
+    const lines = app.chat.filter((l) => !isMutedSeat(num(l.seat, -1)));
+    lines.forEach((l) => dom.chatList.appendChild(chatLineEl(l)));
+    dom.chatEmpty.classList.toggle("hidden", lines.length > 0);
+    if (near || !lines.length) dom.chatList.scrollTop = dom.chatList.scrollHeight;
+  }
+  function setChatHistory(list) {
+    const lines = list.filter(validLine).slice(-CHAT_KEEP);
+    const lastTs = app.chat.length ? num(app.chat[app.chat.length - 1].ts, 0) : 0;
+    const me = mySeatNow();
+    const fresh = app.chat.length ? lines.filter((l) => num(l.ts, 0) > lastTs && num(l.seat, -1) !== me && !isMutedSeat(num(l.seat, -1))).length : 0;
+    app.chat = lines;
+    if (fresh && !chatIsOpen()) { app.chatUnread += fresh; updateChatBadge(); }
+    renderChat();
+  }
+  function clearChat() {
+    app.chat = [];
+    app.chatUnread = 0;
+    updateChatBadge();
+    renderChat();
+  }
+  function onChat(m) {
+    if (!validLine(m)) return;
+    const seat = num(m.seat, -1);
+    if (isMutedSeat(seat)) return;
+    const line = { seat, name: m.name, text: String(m.text), ts: m.ts };
+    app.chat.push(line);
+    if (app.chat.length > CHAT_KEEP) app.chat.splice(0, app.chat.length - CHAT_KEEP);
+    const near = dom.chatList.scrollHeight - dom.chatList.scrollTop - dom.chatList.clientHeight < 40;
+    dom.chatList.appendChild(chatLineEl(line));
+    while (dom.chatList.children.length > CHAT_KEEP) dom.chatList.firstChild.remove();
+    dom.chatEmpty.classList.add("hidden");
+    if (near) dom.chatList.scrollTop = dom.chatList.scrollHeight;
+    const mine = seat === mySeatNow();
+    if (!mine && (!chatIsOpen() || document.hidden)) { app.chatUnread += 1; updateChatBadge(); }
+    if (!mine) Sfx.play("chat");
+    if (renderer && app.screen === "game" && typeof renderer.showChat === "function") { try { renderer.showChat(seat, line.text); } catch (_) { /* ignore */ } }
+  }
+  dom.chatToggle.addEventListener("click", () => setChatOpen(!chatIsOpen(), !chatIsOpen()));
+  dom.btnChat.addEventListener("click", () => {
+    setChatOpen(true, true);
+    try { dom.chatPanel.scrollIntoView({ block: "nearest", behavior: reducedMotion ? "auto" : "smooth" }); } catch (_) { /* ignore */ }
+  });
+  dom.chatForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = dom.chatInput.value.replace(/\s+/g, " ").trim().slice(0, CHAT_MAX);
+    if (!text) return;
+    if (!(app.screen === "lobby" || app.screen === "game")) return;
+    const now = Date.now();
+    if (now < app.chatReadyAt) { toast("One message every 1.5 seconds.", "info", 1600); return; }
+    app.chatReadyAt = now + CHAT_GAP_MS;
+    send({ type: "chat", text });
+    dom.chatInput.value = "";
+  });
+
+  // ---------------------------------------------------------------------------
+  // Local mutes (chat + throws), per match / per room, kept for the session.
+  // ---------------------------------------------------------------------------
+  function muteScope() {
+    if (app.match && app.match.match_id) return "m:" + app.match.match_id;
+    if (app.room && app.room.code) return "r:" + app.room.code;
+    return null;
+  }
+  function anySeatInfo(seat) {
+    if (app.screen === "lobby" && app.room) return (app.room.seats || [])[seat] || null;
+    return seatInfo(seat, app.shownState || app.startState) || (app.room ? (app.room.seats || [])[seat] || null : null);
+  }
+  function idOfSeat(seat) {
+    const info = anySeatInfo(seat);
+    if (!info) return null;
+    return info.username ? "u:" + info.username : "n:" + (info.name || "") + "#" + seat;
+  }
+  function muteStore() { const v = ssGet(SS_MUTES); return v && typeof v === "object" ? v : {}; }
+  function mutedIds() { const sc = muteScope(); return new Set(sc ? (muteStore()[sc] || []) : []); }
+  function isMutedSeat(seat) {
+    if (seat == null || seat < 0 || seat === mySeatNow()) return false;
+    const id = idOfSeat(seat);
+    return !!id && mutedIds().has(id);
+  }
+  function setSeatMuted(seat, on) {
+    const sc = muteScope(), id = idOfSeat(seat);
+    if (!sc || !id) return;
+    const store = muteStore();
+    const set = new Set(store[sc] || []);
+    if (on) set.add(id); else set.delete(id);
+    store[sc] = Array.from(set);
+    const keys = Object.keys(store);
+    if (keys.length > 8) keys.slice(0, keys.length - 8).forEach((k) => { if (k !== sc) delete store[k]; });
+    ssSet(SS_MUTES, store);
+    renderChat();
+    syncMutedPods();
+    const name = (anySeatInfo(seat) || {}).name || SEAT_LABEL[seat];
+    announce(on ? name + " muted. You won’t see their chat or throws." : name + " unmuted.");
+  }
+  function carryMutes(from, to) {
+    if (!from || !to || from === to) return;
+    const store = muteStore();
+    if (!store[from] || !store[from].length || (store[to] && store[to].length)) return;
+    store[to] = store[from].slice();
+    ssSet(SS_MUTES, store);
+  }
+  function syncMutedPods() {
+    if (!renderer || typeof renderer.setMutedSeats !== "function") return;
+    try { renderer.setMutedSeats([0, 1, 2, 3].filter((x) => isMutedSeat(x))); } catch (_) { /* ignore */ }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Throwables
+  // ---------------------------------------------------------------------------
+  function onThrow(m) {
+    const from = num(m.from_seat, -1), to = num(m.target_seat, -1);
+    if (from < 0 || to < 0 || !THROW_META[m.item]) return;
+    if (isMutedSeat(from)) return;
+    if (!renderer || app.screen !== "game" || typeof renderer.throwItem !== "function") return;
+    try { renderer.throwItem(from, to, m.item); } catch (err) { console.warn("[ludo] throw failed", err); }
+    const me = mySeatNow();
+    if (to === me && from !== me) announce(seatName(from, null, false) + " threw " + THROW_META[m.item].a + " at you!");
+  }
+  function sendThrow(target, item) {
+    const now = Date.now();
+    if (now < app.throwReadyAt) { toast("One throw every 3 seconds.", "info", 1600); return; }
+    app.throwReadyAt = now + THROW_GAP_MS;
+    send({ type: "throw", target_seat: target, item });
+    closePodMenu(true);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Player menu (click an avatar / pod): profile, throws, local mute
+  // ---------------------------------------------------------------------------
+  let podMenu = null;
+  function closePodMenu(refocus) {
+    if (!podMenu) return;
+    const pm = podMenu;
+    podMenu = null;
+    pm.el.remove();
+    if (pm.backdrop) pm.backdrop.remove();
+    clearInterval(pm.timer);
+    document.removeEventListener("pointerdown", pm.outside, true);
+    window.removeEventListener("resize", pm.onResize);
+    app.podMenuClosed = { seat: pm.seat, at: Date.now() };
+    if (refocus && pm.opener && pm.opener.isConnected) { try { pm.opener.focus({ preventScroll: true }); } catch (_) { /* ignore */ } }
+  }
+  function throwArt(id) {
+    const R = window.LudoRenderer;
+    const span = h("span", { class: "pm-art", "aria-hidden": "true" });
+    // Static SVG constants shipped in render.js (no user data), so innerHTML is safe here.
+    if (R && R.THROWABLES && R.THROWABLES[id]) span.innerHTML = R.THROWABLES[id].svg;
+    else span.textContent = THROW_META[id].emoji;
+    return span;
+  }
+  function openPodMenu(seat, rect, ctx, opener) {
+    if (seat < 0) return;
+    const recent = app.podMenuClosed;
+    if (podMenu && podMenu.seat === seat) { closePodMenu(true); return; }
+    if (recent && recent.seat === seat && Date.now() - recent.at < 250) return; // same click that closed it
+    closePodMenu();
+    const info = ctx === "lobby" ? ((app.room && app.room.seats) || [])[seat] : seatInfo(seat);
+    if (!info) return;
+    const me = ctx === "lobby" ? (app.room ? app.room.you_seat : null) : (app.match ? app.match.you_seat : null);
+    const isMe = seat === me;
+    const isBot = info.kind === "bot";
+    const name = info.name || SEAT_LABEL[seat];
+    const el = h("div", { class: "pod-menu seat-" + SEAT_COLOR[seat], role: "dialog", "aria-label": name + " — player menu" });
+    const sub = isBot ? "Bot" : info.kind === "guest" ? "Guest" : info.username ? "@" + info.username : "Player";
+    el.appendChild(h("div", { class: "pm-head" },
+      avatarEl(name, info.avatar_url, "avatar-sm"),
+      h("div", { class: "pm-id" }, h("span", { class: "pm-name", text: name }), h("span", { class: "pm-sub", text: isMe ? sub + " · you" : sub })),
+      h("button", { type: "button", class: "pm-close", "aria-label": "Close menu", onclick: () => closePodMenu(true) }, "✕")));
+    const items = h("div", { class: "pm-items" });
+    if (info.username && !isBot && info.kind !== "guest") {
+      items.appendChild(h("a", { class: "pm-item", href: "/u/" + encodeURIComponent(info.username), target: "_blank", rel: "noopener noreferrer" },
+        h("span", { "aria-hidden": "true", text: "👤" }), h("span", { text: isMe ? "View my profile" : "View profile" }), h("span", { class: "pm-ext", "aria-hidden": "true", text: "↗" })));
+    }
+    const st = app.shownState;
+    const canThrow = ctx === "game" && !isMe && app.match && st && (st.seats || [])[me];
+    if (canThrow) {
+      items.appendChild(h("p", { class: "pm-label", text: "Throw at " + name }));
+      const grid = h("div", { class: "pm-throws", role: "group", "aria-label": "Throw something at " + name });
+      THROW_ITEMS.forEach((id) => {
+        grid.appendChild(h("button", { type: "button", class: "pm-throw", "data-item": id, title: THROW_META[id].name, "aria-label": "Throw " + THROW_META[id].a + " at " + name, onclick: () => sendThrow(seat, id) },
+          throwArt(id), h("span", { class: "pm-throw-name", text: THROW_META[id].name })));
+      });
+      items.appendChild(grid);
+      const cd = h("p", { class: "pm-cool hidden", "aria-live": "polite" });
+      items.appendChild(cd);
+      const tick = () => {
+        const left = app.throwReadyAt - Date.now();
+        grid.querySelectorAll("button").forEach((b) => { b.disabled = left > 0; });
+        cd.classList.toggle("hidden", left <= 0);
+        if (left > 0) cd.textContent = "Next throw in " + Math.ceil(left / 1000) + "s";
+      };
+      tick();
+      var timer = setInterval(tick, 250);
+    }
+    if (!isMe && !isBot) {
+      const muted = isMutedSeat(seat);
+      items.appendChild(h("button", { type: "button", class: "pm-item pm-mute", "aria-pressed": muted ? "true" : "false", onclick: () => { setSeatMuted(seat, !muted); closePodMenu(true); } },
+        h("span", { "aria-hidden": "true", text: muted ? "🔊" : "🔇" }), h("span", { text: muted ? "Unmute " + name : "Mute chat & throws" })));
+    }
+    if (isMe && !items.children.length) items.appendChild(h("p", { class: "pm-note", text: "That’s you! Tap another player to throw something or mute them." }));
+    if (isBot && !canThrow) items.appendChild(h("p", { class: "pm-note", text: "A bot. It doesn’t chat." }));
+    el.appendChild(items);
+
+    const sheet = window.innerWidth <= 640;
+    let backdrop = null;
+    if (sheet) {
+      el.classList.add("pm-sheet");
+      backdrop = h("div", { class: "pm-backdrop", onclick: () => closePodMenu(true) });
+      document.body.appendChild(backdrop);
+    }
+    document.body.appendChild(el);
+    if (!sheet) {
+      const r = rect || (opener && opener.getBoundingClientRect()) || { left: window.innerWidth / 2, right: window.innerWidth / 2, top: 100, bottom: 100, width: 0 };
+      const w = el.offsetWidth, hgt = el.offsetHeight;
+      const left = clamp(r.left + r.width / 2 - w / 2, 8, window.innerWidth - w - 8);
+      let top = r.bottom + 8;
+      if (top + hgt > window.innerHeight - 8) top = Math.max(8, r.top - hgt - 8);
+      el.style.left = Math.round(left) + "px";
+      el.style.top = Math.round(top) + "px";
+    }
+    const outside = (e) => { if (podMenu && !el.contains(e.target) && !(opener && opener.contains && opener.contains(e.target))) closePodMenu(); };
+    const onResize = () => closePodMenu();
+    document.addEventListener("pointerdown", outside, true);
+    window.addEventListener("resize", onResize);
+    podMenu = { el, backdrop, seat, ctx, opener, outside, onResize, timer: typeof timer !== "undefined" ? timer : null };
+    Sfx.play("click");
+    const first = el.querySelector(".pm-items a, .pm-items button:not(:disabled)") || el.querySelector(".pm-close");
+    if (first) setTimeout(() => { try { first.focus({ preventScroll: true }); } catch (_) { /* ignore */ } }, 0);
+  }
+  window.addEventListener("scroll", () => { if (podMenu && !podMenu.backdrop) closePodMenu(); }, { passive: true });
+
+  // ---------------------------------------------------------------------------
+  // Continue after the first win (modal with countdown)
+  // ---------------------------------------------------------------------------
+  let continueTimer = null;
+  function onContinuePrompt(m) {
+    if (!app.match) return;
+    const total = 20000;
+    let remain = num(m.deadline_ms, 0) - Date.now();
+    if (!(remain > 0 && remain < total + 5000)) remain = total; // clock skew: assume a fresh 20 s
+    const winner = m.winner_seat;
+    app.prompt = { deadline: Date.now() + remain, total: Math.max(remain, 1000), winner };
+    closePodMenu();
+    dom.continueTitle.textContent = winner == null ? "We have a winner!" : seatName(winner, null, false) + " finished 1st!";
+    dom.continueText.textContent = "Keep playing for 2nd place and below?";
+    dom.continueModal.classList.remove("hidden");
+    Sfx.play("prompt");
+    announce(dom.continueTitle.textContent + " Keep playing? You have " + Math.ceil(remain / 1000) + " seconds.");
+    setTimeout(() => { try { dom.continueYes.focus(); } catch (_) { /* ignore */ } }, 30);
+    clearInterval(continueTimer);
+    const tick = () => {
+      const p = app.prompt;
+      if (!p) { clearInterval(continueTimer); return; }
+      const left = Math.max(0, p.deadline - Date.now());
+      dom.continueSecs.textContent = String(Math.ceil(left / 1000));
+      dom.continueRing.style.strokeDashoffset = (100 * (1 - left / p.total)).toFixed(2);
+      dom.continueModal.classList.toggle("urgent", left < 5000);
+      if (left <= 0) { closeContinue(); }
+    };
+    tick();
+    continueTimer = setInterval(tick, 200);
+    if (app.screen === "game") updateGameUI({ board: false });
+  }
+  function closeContinue() {
+    clearInterval(continueTimer);
+    continueTimer = null;
+    const was = !!app.prompt;
+    app.prompt = null;
+    if (!dom.continueModal.classList.contains("hidden")) dom.continueModal.classList.add("hidden");
+    if (was && app.screen === "game" && app.shownState) updateGameUI({ board: false });
+  }
+  function answerContinue(yes) {
+    if (!app.prompt) return;
+    send({ type: "continue", yes: !!yes });
+    Sfx.play("click");
+    closeContinue();
+  }
+  dom.continueYes.addEventListener("click", () => answerContinue(true));
+  dom.continueNo.addEventListener("click", () => answerContinue(false));
+  function onContinueStatus(m) {
+    const seat = num(m.seat, -1);
+    if (seat < 0) return;
+    const me = app.match ? app.match.you_seat : null;
+    const yes = m.choice === true || m.choice === "yes";
+    if (seat === me) {
+      closeContinue();
+      toast(yes ? "You’re playing on — good luck!" : "You stopped here. If nobody keeps playing, the match ends now.", yes ? "ok" : "info", 3600);
+    }
+    logLine(seat, (seat === me ? "You" : seatName(seat, null, false)) + (yes ? " will keep playing ▶" : " chose to stop"), "muted");
+  }
+
+  // ---------------------------------------------------------------------------
   // Keyboard
   // ---------------------------------------------------------------------------
   document.addEventListener("keydown", (e) => {
@@ -2141,6 +2664,8 @@
       trapFocus(dom.confirmModal, e);
       return;
     }
+    if (!dom.continueModal.classList.contains("hidden")) { trapFocus(dom.continueModal, e); return; }
+    if (podMenu && e.key === "Escape") { e.preventDefault(); closePodMenu(true); return; }
     if (!dom.resultsModal.classList.contains("hidden")) { trapFocus(dom.resultsModal, e); return; }
     if (e.key === "Escape") {
       if (!dom.emotePop.classList.contains("hidden")) { closeEmotes(true); return; }

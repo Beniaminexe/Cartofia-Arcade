@@ -10,7 +10,8 @@
 
   var KEY = 'ludo_muted';
   var NAMES = ['roll', 'step', 'capture', 'finish', 'crate', 'power', 'freeze', 'bomb', 'shield',
-    'swap', 'boost', 'win', 'lose', 'turn', 'tick', 'click', 'emote'];
+    'swap', 'boost', 'win', 'lose', 'turn', 'tick', 'click', 'emote',
+    'whoosh', 'splat', 'crack', 'splash', 'pop', 'chime', 'bonk', 'chat', 'prompt'];
 
   var ctx = null, master = null, noiseBuf = null;
   var gestured = false;
@@ -235,6 +236,46 @@
     emote: function (t) {
       tone({ t: t, f0: 420, f1: 900, dur: 0.12, g: 0.16, glide: 0.1 });
       tone({ t: t + 0.09, f0: 880, f1: 1320, dur: 0.11, g: 0.1, glide: 0.08 });
+    },
+    /* throwables + social */
+    whoosh: function (t) {
+      noise({ t: t, dur: 0.42, f0: 500, f1: 2600, sweep: 0.38, q: 1.4, g: 0.22, a: 0.08, curve: 'lin' });
+    },
+    splat: function (t) {
+      noise({ t: t, dur: 0.22, ft: 'lowpass', f0: 1800, f1: 240, q: 1.2, g: 0.7 });
+      tone({ t: t, f0: 180, f1: 60, dur: 0.18, g: 0.4 });
+      for (var i = 0; i < 4; i++) noise({ t: t + 0.08 + i * 0.05 + Math.random() * 0.03, dur: 0.04, f0: 900 + Math.random() * 600, q: 4, g: 0.12 });
+    },
+    crack: function (t) {
+      noise({ t: t, dur: 0.05, f0: 4200, q: 3, g: 0.45 });
+      noise({ t: t + 0.03, dur: 0.04, f0: 3000, q: 3, g: 0.3 });
+      noise({ t: t + 0.07, dur: 0.18, ft: 'lowpass', f0: 1400, f1: 300, q: 1, g: 0.4 });
+    },
+    splash: function (t) {
+      noise({ t: t, dur: 0.5, f0: 2600, f1: 700, sweep: 0.45, q: 0.9, g: 0.55 });
+      tone({ t: t, f0: 520, f1: 160, dur: 0.22, g: 0.15 });
+      for (var i = 0; i < 6; i++) tone({ t: t + 0.12 + Math.random() * 0.35, f0: 900 + Math.random() * 900, f1: 1800, dur: 0.05, g: 0.05, glide: 0.04 });
+    },
+    pop: function (t) {
+      noise({ t: t, dur: 0.06, f0: 1800, q: 1.2, g: 0.6 });
+      tone({ t: t, f0: 300, f1: 900, dur: 0.08, g: 0.2, glide: 0.06 });
+      [1568, 2093, 2637].forEach(function (f, i) { bell(t + 0.06 + i * 0.05, f, 0.06, 0.3); });
+    },
+    chime: function (t) {
+      [880, 1108.7, 1318.5, 1760].forEach(function (f, i) { bell(t + i * 0.09, f, 0.11, 0.9); });
+    },
+    bonk: function (t) {
+      tone({ t: t, f0: 260, f1: 120, dur: 0.16, type: 'triangle', g: 0.55 });
+      tone({ t: t, f0: 780, f1: 300, dur: 0.06, type: 'square', g: 0.08, lp: 2000 });
+      noise({ t: t, dur: 0.05, f0: 1500, q: 2, g: 0.25 });
+      tone({ t: t + 0.12, f0: 1400, f1: 900, dur: 0.3, g: 0.05, vib: [14, 40] });
+    },
+    chat: function (t) {
+      tone({ t: t, f0: 990, dur: 0.07, g: 0.09, type: 'triangle' });
+      tone({ t: t + 0.07, f0: 1320, dur: 0.09, g: 0.07, type: 'triangle' });
+    },
+    prompt: function (t) {
+      bell(t, 784, 0.16, 0.6); bell(t + 0.14, 1046.5, 0.16, 0.6); bell(t + 0.28, 1318.5, 0.14, 0.8);
     }
   };
   var MIN_GAP = { step: 0.035, tick: 0.2, click: 0.03 };

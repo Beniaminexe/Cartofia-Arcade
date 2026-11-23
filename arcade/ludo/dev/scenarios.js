@@ -68,7 +68,8 @@
   }
   const path = (from, to) => { const p = []; for (let i = Math.max(0, from + 1); i <= to; i++) p.push(i); return p; };
   const mv = (seat, token, from, to, boost) => ({ type: 'moved', seat: seat, token: token, from: from, to: to, path: from < 0 ? [0] : path(from, to), boost: boost || 0 });
-  const roll = (seat, v) => ({ type: 'rolled', seat: seat, dice: Array.isArray(v) ? v : [v], value: Array.isArray(v) && v.length > 1 ? null : (Array.isArray(v) ? v[0] : v) });
+  // Batch 2 protocol: two dice move by their sum (value = a + b), no choose_die.
+  const roll = (seat, v) => ({ type: 'rolled', seat: seat, dice: Array.isArray(v) ? v : [v], value: Array.isArray(v) ? v.reduce((x, y) => x + y, 0) : v });
   const ts = (seat, n) => ({ type: 'turn_start', seat: seat, number: n || 10 });
 
   /* Each scenario: { title, group, state, steps: [ {events, pause?, before?(r, st), after?(r, st)} ] } */
@@ -151,10 +152,60 @@
     state: mkState({ tokens: base.tokens, crates: [17, 35, 44], inv: [['double_dice', 'bomb'], [], [], []], turn: 3 }),
     steps: [
       { events: [ts(0), { type: 'power_used', seat: 0, power: 'double_dice', target: {} }] },
-      { events: [roll(0, [3, 5])], pause: 1400, after: (r) => r.setDice({ seat: 0, values: [3, 5], phase: 'choose_die', enabled: true }) },
-      { events: [{ type: 'die_chosen', seat: 0, value: 5 }], pause: 500 },
-      { events: [mv(0, 1, 22, 27), ts(1)] }
+      { events: [], pause: 900, before: (r) => r.setDice({ seat: 0, values: [], phase: 'roll', enabled: true, double: true }) },
+      { events: [], pause: 700, before: (r) => r.setDice({ seat: 0, values: [], phase: 'roll', enabled: false, rolling: true, double: true }) },
+      { events: [roll(0, [3, 5])], pause: 1400 },
+      { events: [mv(0, 1, 22, 30), ts(1)] }
     ]
+  };
+  S.double_six = {
+    title: 'Double Dice: 6 + 6 (exit + extra roll)', group: 'Batch 2',
+    state: mkState({ tokens: [[-1, 22, -1, -1], [3, 30, -1, 51], [12, -1, -1, -1], [40, 2, -1, -1]], crates: [17, 35, 44], inv: [['double_dice'], [], [], []], turn: 0 }),
+    steps: [
+      { events: [ts(0), { type: 'power_used', seat: 0, power: 'double_dice', target: {} }], pause: 500 },
+      { events: [], pause: 600, before: (r) => r.setDice({ seat: 0, values: [], phase: 'roll', enabled: false, rolling: true, double: true }) },
+      { events: [roll(0, [6, 6])], pause: 1200 },
+      { events: [mv(0, 0, -1, 0), { type: 'extra_turn', seat: 0, reasons: ['six'] }], pause: 800 }
+    ]
+  };
+  S.double_bot = {
+    title: 'Double Dice: opponent 2 + 4', group: 'Batch 2',
+    state: mkState({ tokens: base.tokens, crates: [17, 35, 44], inv: [[], ['double_dice'], [], []], turn: 1 }),
+    steps: [
+      { events: [ts(1), { type: 'power_used', seat: 1, power: 'double_dice', target: {} }], pause: 400 },
+      { events: [roll(1, [2, 4])], pause: 1300 },
+      { events: [mv(1, 1, 30, 36), ts(2)] }
+    ]
+  };
+  const THROW_ALL = ['tomato', 'egg', 'rose', 'potato', 'water', 'confetti'];
+  S.throws = {
+    title: 'Throwables: all six', group: 'Batch 2',
+    state: mkState({ tokens: base.tokens, crates: [17, 35, 44], inv: base.inv, turn: 2, humans: [1, 3], names: ['Stefan', 'Ada', 'Linus', 'Grace'] }),
+    steps: THROW_ALL.map((it, i) => ({ events: [], pause: 1500, after: (r) => { const pairs = [[1, 0], [0, 2], [3, 1], [2, 3], [0, 3], [1, 2]]; const p = pairs[i]; r.throwItem(p[0], p[1], it); } }))
+  };
+  THROW_ALL.forEach((it) => {
+    S['throw_' + it] = {
+      title: 'Throw ' + it, group: 'Batch 2',
+      state: mkState({ tokens: base.tokens, crates: [17, 35, 44], inv: base.inv, turn: 2, humans: [1, 3] }),
+      steps: [{ events: [], pause: 2600, after: (r) => { r.throwItem(1, 0, it); } }]
+    };
+  });
+  S.throw_storm = {
+    title: 'Throw storm (overlapping + during moves)', group: 'Batch 2',
+    state: mkState({ tokens: base.tokens, crates: [17, 35, 44], inv: base.inv, turn: 3, humans: [1, 3] }),
+    steps: [
+      { events: [ts(3), roll(3, 5)], before: (r) => { r.throwItem(1, 3, 'tomato'); setTimeout(() => r.throwItem(2, 3, 'egg'), 150); setTimeout(() => r.throwItem(0, 1, 'water'), 300); } },
+      { events: [mv(3, 0, 40, 45)], before: (r) => { r.throwItem(3, 2, 'potato'); r.throwItem(0, 2, 'rose'); } , pause: 2500 }
+    ]
+  };
+  S.chat_bubbles = {
+    title: 'Chat bubbles + muted badge', group: 'Batch 2',
+    state: mkState({ tokens: base.tokens, crates: [17, 35, 44], inv: base.inv, turn: 0, humans: [1, 3] }),
+    steps: [{ events: [], pause: 1800, after: (r) => {
+      r.showChat(0, 'gl hf everyone!'); r.showChat(1, 'You are going down 🍅 <b>not bold</b>');
+      r.showChat(2, 'beep boop'); r.showChat(3, 'a very long message that should wrap nicely inside the speech bubble without overflowing the pod or the board');
+      r.setMutedSeats([3]);
+    } }]
   };
 
   S.reroll = {
