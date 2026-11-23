@@ -112,3 +112,16 @@ ARCADE
 Not agent work (orchestrator/infra): Minecraft "create your own server" panel — frontend fixed in
 af4569a (was hidden for cookie users); the controller error in the screenshot ("No route to host") is
 the Minecraft controller host being unreachable → check on the server.
+
+## Batch 3 — page layouts (owner, 23 Nov 08:43): "i want the layouts changed for each page too"
+Direction: redesign every page's layout in the Night Market language of the new arcade page
+(arcade/index.html + arcade/arcade-v2.css are the reference), keeping every feature working.
+Shared building blocks live in assets/site.css / arcade/game-common.css (THEME agent owns those);
+page-specific layout CSS goes in a new per-page stylesheet or the page's own <style>.
+| Agent | Owns (page files only) |
+|---|---|
+| LAYOUT-HOME | index.html, home.js, 404.html, privacy/, terms/ |
+| LAYOUT-ACCOUNT | account/, account/profile/, u/, achievements/ |
+| LAYOUT-COMMUNITY | forum/, forum/thread/, minecraft/, archive/ |
+| LAYOUT-GAMES | arcade/<game>/index.html wrappers for the 10 non-Ludo games (page chrome only, never game logic) |
+Ludo (arcade/ludo/**) stays with LUDO-FE. Keep all element ids/classes that JS uses; verify each page's flows still work.
