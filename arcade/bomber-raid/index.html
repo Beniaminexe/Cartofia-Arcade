@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/assets/site.css?v=4" />
   <link rel="stylesheet" href="/assets/notifications.css?v=3">
   <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
+  <link rel="stylesheet" href="/assets/game-stats.css?v=1" />
   <style>
     .game-layout {
       display: grid;
@@ -407,7 +408,8 @@
   <script src="/assets/theme.js?v=2"></script>
   <script src="/assets/site.js?v=9"></script>
   <script src="/assets/notifications.js?v=2" defer></script>
-  <script src="/assets/game-utils.js?v=3"></script>
+  <script src="/assets/game-utils.js?v=4"></script>
+  <script src="/assets/game-stats.js?v=1" defer></script>
   <script>
   /* Floating overlays: fullscreen + big bomb. Bomb mirrors clicks onto the
      real #bomb button so the game's existing bomb handler fires. */
@@ -1122,10 +1124,16 @@
     if (Number.isFinite(state.sc)) {
       sc = state.sc;
     }
+    const wasOver = over;
     run = !!state.run;
     pau = !!state.pau;
     over = !!state.over;
     win = !!state.win;
+    if (run && !guestRoundStart) guestRoundStart = Date.now();
+    if (over && !wasOver && guestRoundStart && isOnlineGuest()) {
+      reportBomberResult(win ? "win" : "loss", Math.round((Date.now() - guestRoundStart) / 1000));
+      guestRoundStart = 0;
+    }
     if (typeof state.overlay === "string") {
       msg(state.overlay);
       if (state.overlayHidden) {
@@ -1735,6 +1743,16 @@
     maybeBroadcastState(true);
   }
 
+  // Result reporting (game-utils.js). Host/solo report from roundWin/roundLoss;
+  // an online guest reports when the host's snapshot flips to over.
+  let guestRoundStart = 0;
+  function reportBomberResult(result, dur) {
+    if (!window.CartofiaGame) return;
+    const onlineGame = isOnlineMode() && online.connected;
+    CartofiaGame.reportResult({ slug: "bomber-raid", result: result, score: sc, duration_seconds: dur,
+                                extra: { mode: onlineGame ? "online" : "single" } });
+  }
+
   function roundLoss(text) {
     if (over || win) { return; }
     run = false;
@@ -1747,9 +1765,7 @@
     }
     const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
     gameStartTime = null;
-    if (typeof logGameActivity === "function") {
-      logGameActivity({ game: "bomber-raid", result: "loss", score: sc, duration_seconds: _dur });
-    }
+    reportBomberResult("loss", _dur);
     msg(text);
     hud();
     maybeBroadcastState(true);
@@ -1768,9 +1784,7 @@
     }
     const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
     gameStartTime = null;
-    if (typeof logGameActivity === "function") {
-      logGameActivity({ game: "bomber-raid", result: "win", score: sc, duration_seconds: _dur });
-    }
+    reportBomberResult("win", _dur);
     msg("Area cleared. Team victory. Press Restart for another run.");
     hud();
     maybeBroadcastState(true);

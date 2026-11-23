@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/assets/site.css?v=4" />
   <link rel="stylesheet" href="/assets/notifications.css?v=3">
   <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
+  <link rel="stylesheet" href="/assets/game-stats.css?v=1" />
   <style>
     /* ── game layout ── */
     .game-layout {
@@ -317,7 +318,8 @@
   <script src="/assets/theme.js?v=2"></script>
   <script src="/assets/site.js?v=9"></script>
   <script src="/assets/notifications.js?v=2" defer></script>
-  <script src="/assets/game-utils.js?v=3"></script>
+  <script src="/assets/game-utils.js?v=4"></script>
+  <script src="/assets/game-stats.js?v=1" defer></script>
   <script>
     (function () {
       const canvas = document.getElementById("game");
@@ -470,8 +472,9 @@
 
       function handleDeath() {
         const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
-        if (typeof logGameActivity === "function") {
-          logGameActivity({ game: "snake", result: "loss", score: score, duration_seconds: _dur });
+        if (window.CartofiaGame) {
+          CartofiaGame.reportResult({ slug: "snake", result: "loss", score: score, duration_seconds: _dur,
+                                      extra: { length: snake.length } });
         }
         running = false; paused = false; gameOver = true;
         if (score > best) { best = score; saveBest(); }

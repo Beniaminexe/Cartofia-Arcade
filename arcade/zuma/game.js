@@ -70,6 +70,7 @@
   let best = loadBest();
   let gameState = "ready"; // ready, running, paused, lost, cleared, complete
   let gameStartTime = null;
+  let runStartTime = null; // whole run (retries keep the score), for plausibility checks
 
   let path = compilePath(getPathPoints(LEVELS[levelIndex].path));
   let chain = [];
@@ -217,20 +218,23 @@
     if (nextState === "running") {
       if (prevState !== "running" && prevState !== "paused") {
         gameStartTime = Date.now();
+        if (!runStartTime || levelIndex === 0 && score === 0) runStartTime = gameStartTime;
       }
       setOverlay("", false);
     } else if (nextState === "lost" || nextState === "complete") {
       const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
       gameStartTime = null;
-      if (typeof window !== "undefined" && typeof window.logGameActivity === "function") {
-        window.logGameActivity({
-          game: "zuma-temple",
+      if (prevState === "running" && typeof window !== "undefined" && window.CartofiaGame) {
+        window.CartofiaGame.reportResult({
+          slug: "zuma",
           result: nextState === "complete" ? "win" : "loss",
           score: score,
-          level: levelIndex + 1,
           duration_seconds: _dur,
+          extra: { level: levelIndex + 1,
+                   run_seconds: runStartTime ? Math.round((Date.now() - runStartTime) / 1000) : _dur },
         });
       }
+      if (nextState === "complete") runStartTime = null;
       if (typeof overlayText === "string") {
         setOverlay(overlayText, true);
       }

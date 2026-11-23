@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/assets/site.css?v=4" />
   <link rel="stylesheet" href="/assets/notifications.css?v=3">
   <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
+  <link rel="stylesheet" href="/assets/game-stats.css?v=1" />
   <style>
     .game-layout {
       display: grid;
@@ -299,7 +300,8 @@
   <script src="/assets/theme.js?v=2"></script>
   <script src="/assets/site.js?v=9"></script>
   <script src="/assets/notifications.js?v=2" defer></script>
-  <script src="/assets/game-utils.js?v=3"></script>
+  <script src="/assets/game-utils.js?v=4"></script>
+  <script src="/assets/game-stats.js?v=1" defer></script>
   <script>
     (function () {
       const canvas = document.getElementById("game");
@@ -449,7 +451,7 @@
           running = false; paused = false; gameOver = true;
           const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
           gameStartTime = null;
-          if (typeof logGameActivity === "function") logGameActivity({ game: "brick-blitz", result: "loss", score, level, duration_seconds: _dur });
+          if (window.CartofiaGame) CartofiaGame.reportResult({ slug: "brick-blitz", result: "loss", score: score, duration_seconds: _dur, extra: { level: level } });
           if (score > best) { best = score; saveBest(); }
           setOverlay("Game Over. Press Restart to try again.");
           updateHud();
