@@ -4,417 +4,19 @@
   <meta charset="utf-8" />
   <title>Cartofia Minecraft — Shared Survival World</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Cartofia's vanilla Minecraft Java server: live status, connect address, and controls to wake the server." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=5" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=4">
-  <link rel="stylesheet" href="/home.css?v=2" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=6" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=5">
+  <link rel="stylesheet" href="/assets/community-v2.css?v=1" />
   <style>
     /* nav-avatar button reset (matches homepage) */
-    button.nav-avatar {
-      appearance: none;
-      -webkit-appearance: none;
-      font: inherit;
-      cursor: pointer;
-    }
-
-    /* ===================================================
-       HERO — compact (~50vh max), 2-col on desktop
-    =================================================== */
-    .mc-hero {
-      max-width: var(--container);
-      margin: 0 auto;
-      padding: calc(var(--nav-h) + 56px) var(--gutter) 56px;
-      display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
-      gap: clamp(28px, 4vw, 56px);
-      align-items: center;
-      min-height: 50vh;
-    }
-
-    .mc-hero-copy {
-      animation: heroSlideIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
-    }
-    .mc-kicker {
-      font-family: var(--font-mono);
-      font-size: 11.5px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      color: var(--text-accent);
-      margin-bottom: 14px;
-    }
-    .mc-headline {
-      font-size: clamp(32px, 4.6vw, 56px);
-      font-weight: 700;
-      letter-spacing: -0.04em;
-      line-height: 1.05;
-      margin-bottom: 16px;
-      color: var(--text-primary);
-      background: linear-gradient(135deg,
-        var(--text-primary) 0%,
-        #b8d0ff 28%,
-        var(--accent-2) 54%,
-        var(--accent) 76%,
-        var(--text-primary) 100%);
-      background-size: 250% 250%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: gradientShift 7s ease infinite;
-    }
-    @keyframes gradientShift {
-      0%   { background-position: 0% 50%; }
-      50%  { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    @keyframes heroSlideIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .mc-lead {
-      color: var(--text-secondary);
-      font-size: clamp(15px, 1.5vw, 17px);
-      max-width: 50ch;
-      line-height: 1.65;
-      margin-bottom: 22px;
-    }
-    .mc-hero-actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 18px;
-    }
-    .mc-info-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .mc-info-tag {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border);
-      border-radius: 99px;
-      padding: 4px 10px;
-    }
-
-    /* ===================================================
-       STATUS CARD
-    =================================================== */
-    .mc-status-card {
-      position: relative;
-      border-radius: 20px;
-      padding: clamp(20px, 3vw, 28px);
-      background:
-        radial-gradient(420px 220px at 100% 0%, rgba(79, 125, 249, 0.10), transparent 65%),
-        linear-gradient(180deg, rgba(15, 26, 42, 0.78), rgba(10, 17, 29, 0.6));
-      border: 1px solid var(--border);
-      box-shadow: 0 24px 52px rgba(1, 9, 19, 0.42);
-      animation: heroSlideIn 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both;
-      overflow: hidden;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    }
-    /* Green glow when online */
-    .mc-status-card.is-online {
-      border-color: rgba(74, 222, 128, 0.32);
-      box-shadow:
-        0 24px 52px rgba(1, 9, 19, 0.42),
-        0 0 38px rgba(74, 222, 128, 0.10),
-        inset 0 1px 0 rgba(74, 222, 128, 0.22);
-    }
-
-    .status-kicker {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.18em;
-      color: var(--text-muted);
-      margin-bottom: 14px;
-    }
-
-    .status-headline {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-    .server-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: #64748b;
-      box-shadow: 0 0 6px rgba(100, 116, 139, 0.3);
-      flex-shrink: 0;
-      transition: background 0.3s, box-shadow 0.3s;
-    }
-    .server-dot.online {
-      background: #4ade80;
-      box-shadow: 0 0 12px rgba(74, 222, 128, 0.65);
-      animation: dotPulse 2.4s ease-in-out infinite;
-    }
-    @keyframes dotPulse {
-      0%, 100% { box-shadow: 0 0 12px rgba(74, 222, 128, 0.65), 0 0 0 0 rgba(74, 222, 128, 0.6); }
-      50%      { box-shadow: 0 0 14px rgba(74, 222, 128, 0.75), 0 0 0 8px rgba(74, 222, 128, 0); }
-    }
-    .status-text {
-      font-family: var(--font-mono);
-      font-size: clamp(22px, 2.6vw, 30px);
-      font-weight: 500;
-      letter-spacing: -0.02em;
-      color: var(--text-secondary);
-    }
-    .mc-status-card.is-online .status-text { color: #86efac; }
-
-    .status-grid {
-      display: grid;
-      gap: 12px;
-    }
-    .status-row {
-      display: grid;
-      grid-template-columns: 100px 1fr;
-      align-items: baseline;
-      gap: 14px;
-      padding: 10px 0;
-      border-top: 1px solid var(--border);
-    }
-    .status-row:first-child { border-top: none; padding-top: 0; }
-    .status-label {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--text-muted);
-    }
-    .status-value {
-      font-family: var(--font-mono);
-      font-size: 16px;
-      color: var(--text-primary);
-      word-break: break-all;
-    }
-    .status-value.players { font-size: 20px; font-weight: 500; }
-
-    /* ===================================================
-       CONTROL PANEL (admin start/stop, request access)
-    =================================================== */
-    .mc-control-panel {
-      margin-top: 18px;
-      padding-top: 14px;
-      border-top: 1px solid var(--border);
-      display: none;
-    }
-    .mc-control-panel.ready { display: block; }
-    .mc-control-label {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-    }
-    .mc-control-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .mc-control-actions .btn {
-      flex: 1 1 auto;
-      min-width: 0;
-      justify-content: center;
-    }
-    .mc-control-feedback {
-      margin-top: 10px;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      line-height: 1.5;
-      color: var(--text-secondary);
-      min-height: 1.3em;
-      word-break: break-word;
-    }
-    .mc-control-feedback.err { color: #fca5a5; }
-    .mc-control-feedback.ok  { color: #86efac; }
-
-    /* ===================================================
-       SECTIONS
-    =================================================== */
-    .mc-section {
-      max-width: var(--container);
-      margin: 0 auto;
-      padding: clamp(48px, 7vw, 80px) var(--gutter);
-    }
-    .mc-section-head { margin-bottom: clamp(24px, 3.5vw, 38px); }
-    .mc-section-label {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      color: var(--text-accent);
-      margin-bottom: 10px;
-    }
-    .mc-section-title {
-      font-size: clamp(26px, 3.6vw, 38px);
-      font-weight: 700;
-      letter-spacing: -0.032em;
-      line-height: 1.1;
-    }
-
-    /* Step strong tag for monospace inline highlight */
-    .step-desc code, .step-desc strong.mono {
-      font-family: var(--font-mono);
-      font-size: 12.5px;
-      color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--border);
-      padding: 2px 7px;
-      border-radius: 5px;
-      letter-spacing: -0.01em;
-      white-space: nowrap;
-    }
-
-    /* "What you're joining" info strip — same look as homepage stats-strip
-       but with a description per item instead of a number */
-    .mc-info-strip {
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      padding: 30px var(--gutter);
-    }
-    .mc-info-inner {
-      max-width: var(--container);
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-    }
-    .mc-info-item {
-      display: grid;
-      gap: 4px;
-      padding: 8px 4px;
-    }
-    .mc-info-icon { font-size: 22px; line-height: 1; margin-bottom: 6px; }
-    .mc-info-title {
-      font-size: 14.5px;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-    }
-    .mc-info-desc {
-      color: var(--text-secondary);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    /* ===================================================
-       RESPONSIVE
-    =================================================== */
-    @media (max-width: 900px) {
-      .mc-hero {
-        grid-template-columns: 1fr;
-        padding-top: calc(var(--nav-h) + 40px);
-        padding-bottom: 40px;
-      }
-      .mc-info-inner { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 768px) {
-      .steps-strip { flex-direction: column; gap: 12px; align-items: stretch; }
-      .step-connector { display: none; }
-    }
-    @media (max-width: 520px) {
-      .mc-hero-actions { flex-direction: column; align-items: stretch; }
-      .mc-hero-actions .btn { justify-content: center; width: 100%; }
-      .mc-info-inner { grid-template-columns: 1fr; }
-      .status-row { grid-template-columns: 80px 1fr; }
-    }
-
-    /* ===== MY SERVER section ===== */
-    .my-server-card {
-      border-radius: 20px;
-      padding: clamp(20px, 3vw, 28px);
-      background:
-        radial-gradient(420px 220px at 100% 0%, rgba(79,125,249,0.10), transparent 65%),
-        linear-gradient(180deg, rgba(15,26,42,0.78), rgba(10,17,29,0.6));
-      border: 1px solid var(--border);
-      box-shadow: 0 24px 52px rgba(1,9,19,0.42);
-    }
-    .my-server-card.hidden,
-    .my-server-empty.hidden { display: none; }
-    .my-server-card h3 {
-      margin: 0 0 10px;
-      font-size: clamp(20px, 2.6vw, 26px);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-    }
-    .my-server-card p {
-      color: var(--text-secondary);
-      font-size: 14.5px;
-      line-height: 1.6;
-      margin: 0 0 16px;
-    }
-    .my-server-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 14px;
-    }
-    .my-server-label {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--text-muted);
-      margin: 0 0 4px !important;
-    }
-    .my-server-address {
-      font-family: var(--font-mono);
-      font-size: clamp(14px, 2vw, 18px);
-      color: var(--text-primary);
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      padding: 3px 10px;
-      border-radius: 6px;
-      word-break: break-all;
-    }
-    .my-server-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-    .my-server-grid span {
-      font-family: var(--font-mono);
-      font-size: 13px;
-      color: var(--text-primary);
-    }
-    .my-server-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .my-server-actions .btn { flex: 1 1 auto; justify-content: center; min-width: 0; }
-    .my-server-note {
-      margin-top: 10px !important;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--text-muted);
-      min-height: 1.3em;
-    }
-    .my-server-note.err { color: #fca5a5 !important; }
-    .my-server-note.ok  { color: #86efac !important; }
-    .mc-danger { color: #fca5a5 !important; border-color: rgba(252,165,165,0.4) !important; }
-    .mc-danger:hover { background: rgba(252,165,165,0.08) !important; }
-
+    button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }
   </style>
 </head>
-<body>
+<body class="cm cm-mc">
 
   <!-- NAV (matches homepage; no Account in nav-links) -->
   <header class="nav" id="nav">
@@ -430,8 +32,8 @@
     <nav class="nav-links" aria-label="Primary">
       <a href="/">Home</a>
       <a href="/arcade/">Arcade</a>
-      <a href="/minecraft/" class="active">Minecraft</a>
-    <a href="/forum/">Forum</a>
+      <a href="/minecraft/" class="active" aria-current="page">Minecraft</a>
+      <a href="/forum/">Forum</a>
       <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
     <div class="nav-right">
@@ -444,189 +46,235 @@
     </div>
   </header>
 
-  <!-- ================================================
-       HERO + LIVE STATUS
-  ================================================= -->
-  <section class="mc-hero">
-    <div class="mc-hero-copy">
-      <p class="mc-kicker">Cartofia Minecraft</p>
-      <h1 class="mc-headline">A shared survival world.</h1>
-      <p class="mc-lead">
-        Vanilla Minecraft server — no mods, no whitelist, no rules beyond common sense.
-        The server auto-shuts down when empty; approved players can wake it right from this page.
-      </p>
-      <div class="mc-hero-actions">
-        <a class="btn btn-primary" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Join Discord</a>
-        <button class="btn btn-ghost" id="copyAddressBtn" type="button">Copy Server Address</button>
-      </div>
-      <div class="mc-info-tags">
-        <span class="mc-info-tag">Java Edition</span>
-        <span class="mc-info-tag">Vanilla Survival</span>
-        <span class="mc-info-tag" id="mcVersionTag">Latest release</span>
-      </div>
-    </div>
+  <main id="main">
+    <!-- ================================================
+         HERO + LIVE STATUS CONSOLE
+    ================================================= -->
+    <section class="cm-wrap mc-hero" aria-labelledby="mcTitle">
+      <div class="mc-hero-copy">
+        <p class="cm-kicker"><span class="cm-bulbs" aria-hidden="true"><i></i><i></i><i></i></span>Cartofia Minecraft</p>
+        <h1 class="cm-title is-mint" id="mcTitle">A shared<br><span>survival world.</span></h1>
+        <p class="cm-lead">
+          Vanilla Minecraft — no mods, no whitelist, no rules beyond common sense.
+          The server naps when it's empty; approved players can wake it right from this page.
+        </p>
 
-    <aside class="mc-status-card" id="statusCard" aria-label="Live server status">
-      <p class="status-kicker">Live Status</p>
-      <div class="status-headline">
-        <span class="server-dot" id="statusDot" aria-hidden="true"></span>
-        <span class="status-text" id="statusText">Checking…</span>
-      </div>
-      <div class="status-grid">
-        <div class="status-row">
-          <span class="status-label">Players</span>
-          <span class="status-value players" id="playerCount">--</span>
+        <div class="mc-connect">
+          <div class="mc-connect-text">
+            <span class="mc-connect-label">Server address</span>
+            <code class="mc-connect-addr"><span id="serverIp">mc.cartofia.com</span> <small>: 25565</small></code>
+          </div>
+          <button class="btn btn-lemon mc-copy" id="copyAddressBtn" type="button" aria-live="polite">
+            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>
+            <span data-copy-label>Copy address</span>
+          </button>
         </div>
-        <div class="status-row">
-          <span class="status-label">Address</span>
-          <span class="status-value" id="serverIp">mc.cartofia.com</span>
+
+        <div class="mc-hero-actions">
+          <a class="btn btn-coral btn-lg" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Join Discord</a>
+          <a class="btn btn-ghost btn-lg" href="#join">How to join</a>
         </div>
-        <div class="status-row">
-          <span class="status-label">Port</span>
-          <span class="status-value">25565</span>
+        <div class="mc-info-tags">
+          <span class="chip">Java Edition</span>
+          <span class="chip">Vanilla survival</span>
+          <span class="chip">Auto-sleep when empty</span>
         </div>
       </div>
-      <div class="mc-control-panel" id="mcControlPanel" aria-live="polite"></div>
-    </aside>
-  </section>
+
+      <aside class="mc-console mc-status-card is-unknown" id="statusCard" aria-label="Live server status">
+        <div class="mc-console-top">
+          <span class="mc-console-label">Live status</span>
+          <span class="mc-console-time" id="statusChecked" aria-live="off"></span>
+        </div>
+        <div class="status-headline">
+          <span class="server-dot" id="statusDot" aria-hidden="true"></span>
+          <span class="status-text" id="statusText" aria-live="polite">Checking…</span>
+        </div>
+        <p class="mc-status-note" id="statusNote">Asking the server how it's doing…</p>
+
+        <div class="mc-tiles">
+          <div class="mc-tile">
+            <span class="mc-tile-label">Players</span>
+            <span class="mc-tile-value players" id="playerCount">--</span>
+          </div>
+          <div class="mc-tile">
+            <span class="mc-tile-label">Version</span>
+            <span class="mc-tile-value" id="mcVersionTag">Latest</span>
+          </div>
+          <div class="mc-tile">
+            <span class="mc-tile-label">Port</span>
+            <span class="mc-tile-value">25565</span>
+          </div>
+        </div>
+
+        <div class="mc-control-panel" id="mcControlPanel" aria-live="polite"></div>
+      </aside>
+    </section>
 
 
-  <!-- ================================================
-       YOUR OWN SERVER (visible to users in minecraft_creator)
-  ================================================= -->
-  <section class="mc-section reveal" id="myServerSection" hidden>
-    <div class="mc-section-head">
-      <p class="mc-section-label">Your Server</p>
-      <h2 class="mc-section-title">Your private world</h2>
-    </div>
-
-    <!-- Empty state -->
-    <div class="my-server-empty hidden" id="myServerEmpty">
-      <div class="my-server-card">
-        <h3>Spin up a server just for you</h3>
-        <p>One private vanilla Minecraft server attached to your account. We handle
-        the hosting, the subdomain, and the latest-release upgrades. Auto-shuts
-        down when nobody is on. Deleted after 3 months of inactivity.</p>
-        <button id="myServerCreateBtn" class="btn btn-primary" type="button">+ Create my server</button>
-        <p class="my-server-note" id="myServerCreateHint"></p>
-      </div>
-    </div>
-
-    <!-- Status card -->
-    <div class="my-server-card hidden" id="myServerCard">
-      <div class="my-server-head">
+    <!-- ================================================
+         YOUR OWN SERVER (visible to users in minecraft_creator)
+    ================================================= -->
+    <section class="cm-wrap mc-section" id="myServerSection" aria-labelledby="myServerTitle" hidden>
+      <div class="mc-section-head">
         <div>
-          <p class="my-server-label">Address</p>
-          <code class="my-server-address" id="myServerAddress"></code>
+          <p class="cm-eyebrow">Your server</p>
+          <h2 class="cm-h2" id="myServerTitle">Your private world</h2>
         </div>
-        <span class="server-dot" id="myServerDot" aria-hidden="true"></span>
-      </div>
-      <div class="my-server-grid">
-        <div><p class="my-server-label">Status</p><span id="myServerStatus">—</span></div>
-        <div><p class="my-server-label">Created</p><span id="myServerCreated">—</span></div>
-        <div><p class="my-server-label">Last active</p><span id="myServerLastActive">—</span></div>
-      </div>
-      <div class="my-server-actions">
-        <button id="myServerStart"  class="btn btn-primary" type="button">Start</button>
-        <button id="myServerStop"   class="btn btn-ghost"   type="button">Stop</button>
-        <button id="myServerDelete" class="btn btn-ghost mc-danger" type="button">Delete</button>
-      </div>
-      <p class="my-server-note" id="myServerFeedback"></p>
-    </div>
-  </section>
-
-
-  <!-- ================================================
-       SECTION 2: How to join
-  ================================================= -->
-  <section class="mc-section reveal" id="join">
-    <div class="mc-section-head">
-      <p class="mc-section-label">Getting Started</p>
-      <h2 class="mc-section-title">How to join</h2>
-    </div>
-
-    <div class="steps-strip">
-      <div class="step">
-        <div class="step-num">01</div>
-        <h3 class="step-title">Open Minecraft</h3>
-        <p class="step-desc">Launch Minecraft Java Edition and go to Multiplayer.</p>
       </div>
 
-      <div class="step-connector" aria-hidden="true"></div>
-
-      <div class="step">
-        <div class="step-num">02</div>
-        <h3 class="step-title">Add the server</h3>
-        <p class="step-desc">Click "Add Server" and paste the address: <strong class="mono">mc.cartofia.com</strong></p>
+      <!-- Empty state -->
+      <div class="my-server-empty hidden" id="myServerEmpty">
+        <div class="my-server-card">
+          <div class="mc-big-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="30" height="30"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <h3>Spin up a server just for you</h3>
+            <p>One private vanilla Minecraft server attached to your account. We handle
+            the hosting, the subdomain and the latest-release upgrades. It sleeps when
+            nobody is on and is removed after 3 months of inactivity.</p>
+            <button id="myServerCreateBtn" class="btn btn-coral" type="button">
+              <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+              Create my server
+            </button>
+            <div class="my-server-note" id="myServerCreateHint" role="status"></div>
+          </div>
+        </div>
       </div>
 
-      <div class="step-connector" aria-hidden="true"></div>
-
-      <div class="step">
-        <div class="step-num">03</div>
-        <h3 class="step-title">Server sleeping?</h3>
-        <p class="step-desc">If you have access, hit <strong class="mono">Start Server</strong> on this page. Otherwise, click <strong class="mono">Request Access</strong> and I'll get you in.</p>
+      <!-- Status card -->
+      <div class="my-server-card hidden" id="myServerCard">
+        <div class="my-server-head">
+          <div class="my-server-head-main">
+            <span class="server-dot" id="myServerDot" aria-hidden="true"></span>
+            <div>
+              <p class="my-server-label">Address</p>
+              <code class="my-server-address" id="myServerAddress"></code>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm mc-copy" id="myServerCopy" type="button">
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>
+            <span data-copy-label>Copy</span>
+          </button>
+        </div>
+        <div class="my-server-grid">
+          <div><p class="my-server-label">Status</p><span id="myServerStatus">—</span></div>
+          <div><p class="my-server-label">Created</p><span id="myServerCreated">—</span></div>
+          <div><p class="my-server-label">Last active</p><span id="myServerLastActive">—</span></div>
+        </div>
+        <div class="my-server-actions">
+          <button id="myServerStart"  class="btn btn-coral" type="button">Start</button>
+          <button id="myServerStop"   class="btn btn-ghost" type="button">Stop</button>
+          <button id="myServerDelete" class="btn btn-danger-soft mc-danger" type="button">Delete</button>
+        </div>
+        <div class="my-server-note" id="myServerFeedback" role="status"></div>
       </div>
-    </div>
-  </section>
+    </section>
 
 
-  <!-- ================================================
-       SECTION 3: What you're joining (info strip)
-  ================================================= -->
-  <section class="mc-section reveal" id="details">
-    <div class="mc-section-head">
-      <p class="mc-section-label">The Server</p>
-      <h2 class="mc-section-title">What you're joining</h2>
-    </div>
-  </section>
-
-  <div class="mc-info-strip">
-    <div class="mc-info-inner">
-      <div class="mc-info-item">
-        <span class="mc-info-icon" aria-hidden="true">⛏️</span>
-        <div class="mc-info-title">Vanilla survival</div>
-        <div class="mc-info-desc">No mods, no plugins, pure Minecraft.</div>
+    <!-- ================================================
+         How to join
+    ================================================= -->
+    <section class="cm-wrap mc-section" id="join" aria-labelledby="joinTitle">
+      <div class="mc-section-head">
+        <div>
+          <p class="cm-eyebrow">Getting started</p>
+          <h2 class="cm-h2" id="joinTitle">How to join</h2>
+        </div>
       </div>
-      <div class="mc-info-item">
-        <span class="mc-info-icon" aria-hidden="true">💤</span>
-        <div class="mc-info-title">Auto-sleep</div>
-        <div class="mc-info-desc">Server sleeps when empty, saves resources.</div>
+
+      <ol class="mc-steps">
+        <li class="mc-step" style="--g:#3ee6a6">
+          <div class="mc-step-screen">
+            <span class="mc-step-num">01</span>
+            <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+          <div class="mc-step-body">
+            <h3 class="mc-step-title">Open Minecraft</h3>
+            <p class="mc-step-desc">Launch Minecraft Java Edition and go to Multiplayer.</p>
+          </div>
+        </li>
+        <li class="mc-step" style="--g:#ffd84a">
+          <div class="mc-step-screen">
+            <span class="mc-step-num">02</span>
+            <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+          </div>
+          <div class="mc-step-body">
+            <h3 class="mc-step-title">Add the server</h3>
+            <p class="mc-step-desc">Click “Add Server” and paste the address: <strong class="mono">mc.cartofia.com</strong></p>
+          </div>
+        </li>
+        <li class="mc-step" style="--g:#ff6b4a">
+          <div class="mc-step-screen">
+            <span class="mc-step-num">03</span>
+            <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M12 3v9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M6.3 7.5a8 8 0 1 0 11.4 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+          </div>
+          <div class="mc-step-body">
+            <h3 class="mc-step-title">Server sleeping?</h3>
+            <p class="mc-step-desc">If you have access, hit <strong class="mono">Start Server</strong> above. Otherwise click <strong class="mono">Request Access</strong> and I'll get you in.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+
+    <!-- ================================================
+         What you're joining
+    ================================================= -->
+    <section class="cm-wrap mc-section" id="details" aria-labelledby="detailsTitle">
+      <div class="mc-section-head">
+        <div>
+          <p class="cm-eyebrow">The server</p>
+          <h2 class="cm-h2" id="detailsTitle">What you're joining</h2>
+        </div>
       </div>
-      <div class="mc-info-item">
-        <span class="mc-info-icon" aria-hidden="true">🎛️</span>
-        <div class="mc-info-title">Web control</div>
-        <div class="mc-info-desc">Approved players start and stop the server from this page.</div>
+      <div class="mc-features">
+        <div class="mc-feature" style="--g:#3ee6a6">
+          <span class="mc-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M14 4l6 6-3 1-7 7-3-3 7-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M7 15l-3 5 5-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+          <h3 class="mc-feature-title">Vanilla survival</h3>
+          <p class="mc-feature-desc">No mods, no plugins, pure Minecraft.</p>
+        </div>
+        <div class="mc-feature" style="--g:#8b6cff">
+          <span class="mc-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+          <h3 class="mc-feature-title">Auto-sleep</h3>
+          <p class="mc-feature-desc">The server sleeps when empty to save resources.</p>
+        </div>
+        <div class="mc-feature" style="--g:#ff6b4a">
+          <span class="mc-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
+          <h3 class="mc-feature-title">Web control</h3>
+          <p class="mc-feature-desc">Approved players start and stop the server from this page.</p>
+        </div>
+        <div class="mc-feature" style="--g:#ffd84a">
+          <span class="mc-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <h3 class="mc-feature-title">Always current</h3>
+          <p class="mc-feature-desc">Runs the latest Minecraft release.</p>
+        </div>
       </div>
-      <div class="mc-info-item">
-        <span class="mc-info-icon" aria-hidden="true">🔄</span>
-        <div class="mc-info-title">Always current</div>
-        <div class="mc-info-desc">Runs the latest Minecraft release.</div>
+    </section>
+
+
+    <!-- ================================================
+         Final CTA
+    ================================================= -->
+    <section class="cm-cta" id="cta" aria-labelledby="ctaTitle">
+      <div>
+        <h2 class="cm-h2" id="ctaTitle">Server sleeping?</h2>
+        <p>Use the controls in the status panel — approved players can wake it in seconds.</p>
       </div>
-    </div>
-  </div>
+      <div class="cm-actions">
+        <a class="btn btn-coral btn-lg" href="#statusCard">Go to controls</a>
+        <a class="btn btn-ghost btn-lg" href="/forum/?category=minecraft">Minecraft forum</a>
+      </div>
+    </section>
+  </main>
 
-
-  <!-- ================================================
-       SECTION 4: Final CTA
-  ================================================= -->
-  <div class="final-cta reveal" id="cta">
-    <div class="final-cta-inner">
-      <h2 class="final-cta-heading">Server sleeping?</h2>
-      <p class="final-cta-sub">Scroll up and use the control panel — approved players can start it in seconds.</p>
-      <a class="btn btn-primary" href="#statusCard">Go to Controls →</a>
-    </div>
-  </div>
-
-
-  <!-- ================================================
-       FOOTER (copied from homepage)
-  ================================================= -->
   <footer class="site-footer">
     <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
     <nav class="footer-links" aria-label="Footer">
       <a href="/arcade/">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
       <a href="/account/">Account</a>
       <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
       <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
@@ -639,10 +287,116 @@
   <script src="/assets/notifications.js?v=3" defer></script>
   <script>
     /* ----------------------------------------------------------
-       Minecraft server status — preserved from the old page,
-       targets the same IDs (#statusDot, #statusText, #playerCount,
-       #serverIp). Adds .is-online toggle on the card for the glow.
-       "Offline" is shown as "Sleeping" to match the friendlier copy.
+       Shared helpers: friendly controller errors + callouts
+    ---------------------------------------------------------- */
+    var DISCORD_URL = "https://discord.gg/2uPuU3zyWW";
+    var ICONS = {
+      offline: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M12 16v5M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+      warn:    '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 4l9 16H3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4M12 17v.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+      ok:      '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      lock:    '<svg viewBox="0 0 24 24" width="18" height="18"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
+    };
+
+    /* Turn raw API/controller errors ("HTTPConnectionPool… No route to host")
+       into a clear, intentional message; the raw text goes in "details". */
+    function describeError(raw, status) {
+      var s = String(raw || "");
+      if (status === 401 || /authentication required|sign in/i.test(s)) {
+        return { type: "auth", tone: "warn", icon: "lock", title: "Please sign in again", body: "Your session ended, so the controls can't verify who you are." };
+      }
+      if (status === 403 || /not authori[sz]ed|permission/i.test(s)) {
+        return { type: "perm", tone: "warn", icon: "lock", title: "That needs extra access", body: "Your account isn't allowed to do this yet. Ask an admin on Discord if that seems wrong." };
+      }
+      if (status === 429 || /please wait/i.test(s)) {
+        return { type: "rate", tone: "warn", icon: "warn", title: "Slow down a little", body: s || "Try again in a minute." };
+      }
+      if (/not configured/i.test(s)) {
+        return { type: "offline", tone: "error", icon: "offline", title: "Server controls are switched off", body: "The controller isn't set up on this host, so Start and Stop aren't available right now.", detail: s };
+      }
+      if (status === 502 || status === 503 || status === 504 || /unreachable|no route|timed? ?out|refused|connection|max retries|controller/i.test(s) || !s) {
+        return { type: "offline", tone: "error", icon: "offline", title: "Server controls are offline", body: "The server controller can't be reached right now, so Start and Stop are paused. Your world is safe — try again in a few minutes, or ", link: true, detail: s };
+      }
+      return { type: "other", tone: "error", icon: "warn", title: "Something went wrong", body: s };
+    }
+
+    function buildCallout(info) {
+      var box = document.createElement("div");
+      box.className = "mc-callout is-" + (info.tone || "warn");
+      box.setAttribute("role", info.tone === "error" ? "alert" : "status");
+      var icon = document.createElement("span");
+      icon.className = "mc-callout-icon";
+      icon.setAttribute("aria-hidden", "true");
+      icon.innerHTML = ICONS[info.icon] || ICONS.warn;
+      var text = document.createElement("div");
+      var t = document.createElement("p");
+      t.className = "mc-callout-title";
+      t.textContent = info.title;
+      var b = document.createElement("p");
+      b.className = "mc-callout-body";
+      b.textContent = info.body || "";
+      if (info.link) {
+        var a = document.createElement("a");
+        a.href = DISCORD_URL; a.target = "_blank"; a.rel = "noopener noreferrer";
+        a.textContent = "ping us on Discord";
+        b.appendChild(a);
+        b.appendChild(document.createTextNode("."));
+      }
+      text.appendChild(t);
+      if (info.body || info.link) text.appendChild(b);
+      if (info.detail) {
+        var d = document.createElement("details");
+        var sm = document.createElement("summary");
+        sm.textContent = "Technical details";
+        var code = document.createElement("code");
+        code.textContent = info.detail;
+        d.appendChild(sm); d.appendChild(code);
+        text.appendChild(d);
+      }
+      box.appendChild(icon);
+      box.appendChild(text);
+      return box;
+    }
+
+    function copyText(text) {
+      return new Promise(function (resolve) {
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(function () { resolve(true); }, function () { resolve(false); });
+            return;
+          }
+          var el = document.createElement("textarea");
+          el.value = text;
+          el.setAttribute("readonly", "");
+          el.style.position = "absolute";
+          el.style.left = "-9999px";
+          document.body.appendChild(el);
+          el.select();
+          var ok = document.execCommand("copy");
+          document.body.removeChild(el);
+          resolve(ok);
+        } catch (_) { resolve(false); }
+      });
+    }
+
+    function wireCopy(btn, getText) {
+      if (!btn) return;
+      var label = btn.querySelector("[data-copy-label]") || btn;
+      var original = label.textContent;
+      btn.addEventListener("click", function () {
+        copyText(getText()).then(function (ok) {
+          label.textContent = ok ? "Copied!" : "Press Ctrl+C";
+          btn.classList.toggle("is-copied", ok);
+          setTimeout(function () { label.textContent = original; btn.classList.remove("is-copied"); }, 2000);
+        });
+      });
+    }
+
+
+    /* ----------------------------------------------------------
+       Minecraft server status — targets #statusDot, #statusText,
+       #playerCount, #serverIp. State classes on the console card:
+       .is-online / .is-sleeping / .is-unknown. "Offline" is shown as
+       "Sleeping" to match the friendlier copy.
     ---------------------------------------------------------- */
     const CONFIG = {
       serverHost: "mc.cartofia.com",
@@ -656,10 +410,16 @@
       const statusText  = document.getElementById("statusText");
       const playerCount = document.getElementById("playerCount");
       const serverIp    = document.getElementById("serverIp");
+      const note        = document.getElementById("statusNote");
+      const checked     = document.getElementById("statusChecked");
 
       serverIp.textContent = CONFIG.serverHost;
-      dot.classList.remove("online", "offline");
-      card.classList.remove("is-online");
+
+      function setState(cls) {
+        card.classList.remove("is-online", "is-sleeping", "is-unknown");
+        card.classList.add(cls);
+        dot.classList.remove("online", "offline");
+      }
 
       try {
         const response = await fetch(CONFIG.statusApi);
@@ -667,22 +427,31 @@
         const data = await response.json();
 
         if (data.online) {
+          setState("is-online");
           dot.classList.add("online");
-          card.classList.add("is-online");
           statusText.textContent = "Online";
           const online = data.players && typeof data.players.online === "number" ? data.players.online : 0;
           const max    = data.players && typeof data.players.max    === "number" ? data.players.max    : "--";
           playerCount.textContent = online + " / " + max;
+          note.textContent = online > 0
+            ? "The world is awake and " + online + (online === 1 ? " player is" : " players are") + " on. Hop in!"
+            : "The world is awake — nobody's on yet. It will nap again if it stays empty.";
         } else {
+          setState("is-sleeping");
           dot.classList.add("offline");
           statusText.textContent = "Sleeping";
           playerCount.textContent = "0 / --";
+          note.textContent = "The server naps when nobody's online. Approved players can wake it with the controls below.";
         }
       } catch (error) {
-        console.error("Minecraft status fetch failed:", error);
-        statusText.textContent = "Unknown";
+        // External status service unreachable: say so plainly instead of guessing.
+        console.warn("Minecraft status check unavailable:", error && error.message ? error.message : error);
+        setState("is-unknown");
+        statusText.textContent = "Status unknown";
         playerCount.textContent = "--";
+        note.textContent = "The live status service didn't answer, so we can't see the server from here. It may still be up — try connecting.";
       }
+      checked.textContent = "checked " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
 
     refreshMinecraftStatus();
@@ -692,37 +461,7 @@
     /* ----------------------------------------------------------
        Copy server address to clipboard
     ---------------------------------------------------------- */
-    (function () {
-      const btn = document.getElementById("copyAddressBtn");
-      if (!btn) return;
-      const ADDRESS = "mc.cartofia.com";
-      const ORIGINAL = btn.textContent;
-
-      async function copy() {
-        let ok = false;
-        try {
-          if (navigator.clipboard && window.isSecureContext) {
-            await navigator.clipboard.writeText(ADDRESS);
-            ok = true;
-          } else {
-            const el = document.createElement("textarea");
-            el.value = ADDRESS;
-            el.setAttribute("readonly", "");
-            el.style.position = "absolute";
-            el.style.left = "-9999px";
-            document.body.appendChild(el);
-            el.select();
-            ok = document.execCommand("copy");
-            document.body.removeChild(el);
-          }
-        } catch (_) { ok = false; }
-
-        btn.textContent = ok ? "Copied!" : "Press Ctrl+C";
-        setTimeout(() => { btn.textContent = ORIGINAL; }, 2000);
-      }
-
-      btn.addEventListener("click", copy);
-    })();
+    wireCopy(document.getElementById("copyAddressBtn"), function () { return "mc.cartofia.com"; });
 
 
     /* ----------------------------------------------------------
@@ -745,6 +484,7 @@
       const panel = document.getElementById("mcControlPanel");
       if (!panel) return;
       let state = null;
+      let lastResult = null;     // { info } from the last action, survives re-render
 
       function makeBtn(cls, text, onClick, disabled) {
         const b = document.createElement("button");
@@ -756,14 +496,32 @@
         return b;
       }
 
+      function showResult(feedback, info) {
+        feedback.textContent = "";
+        feedback.className = "mc-control-feedback " + (info.tone === "ok" ? "ok" : "err");
+        feedback.appendChild(buildCallout(info));
+      }
+
+      function setBusy(feedback, text) {
+        feedback.textContent = text;
+        feedback.className = "mc-control-feedback is-busy";
+      }
+
       function render() {
         if (!state) return;
         panel.innerHTML = "";
 
+        const head = document.createElement("div");
+        head.className = "mc-control-head";
         const label = document.createElement("p");
         label.className = "mc-control-label";
-        label.textContent = "Server Controls";
-        panel.appendChild(label);
+        label.textContent = "Server controls";
+        const role = document.createElement("span");
+        role.className = "badge " + (state.authorized ? "badge-mint" : "badge-muted");
+        role.textContent = state.authorized ? "Approved player" : (state.authenticated ? "Signed in" : "Guest");
+        head.appendChild(label);
+        head.appendChild(role);
+        panel.appendChild(head);
 
         const actions = document.createElement("div");
         actions.className = "mc-control-actions";
@@ -773,22 +531,36 @@
 
         if (state.authorized) {
           const running = state.running === true;
-          actions.appendChild(makeBtn("btn-primary",
+          if (state.controller_error) {
+            panel.appendChild(buildCallout(describeError(state.controller_error, 502)));
+          }
+          actions.appendChild(makeBtn("btn-coral",
             running ? "Running" : "Start Server",
             () => doAction("start", feedback), running));
           actions.appendChild(makeBtn("btn-ghost",
             "Stop Server",
             () => doAction("stop", feedback), !running));
           if (state.controller_error) {
-            feedback.textContent = "Controller: " + state.controller_error;
-            feedback.className = "mc-control-feedback err";
+            actions.appendChild(makeBtn("btn-ghost", "Check again", () => {
+              setBusy(feedback, "Checking the controller…");
+              lastResult = null;
+              fetchStatus();
+            }, false));
           }
         } else if (state.authenticated) {
-          actions.appendChild(makeBtn("btn-primary", "Request Access",
+          const copy = document.createElement("p");
+          copy.className = "mc-control-copy";
+          copy.textContent = "Waking the server is limited to approved players. Ask for access and the admin gets a ping.";
+          panel.appendChild(copy);
+          actions.appendChild(makeBtn("btn-lemon", "Request Access",
             () => requestAccess(feedback), false));
         } else {
+          const copy = document.createElement("p");
+          copy.className = "mc-control-copy";
+          copy.textContent = "Sign in with your Cartofia account to request access to the server controls.";
+          panel.appendChild(copy);
           const a = document.createElement("a");
-          a.className = "btn btn-primary";
+          a.className = "btn btn-coral";
           a.href = "/account/";
           a.textContent = "Sign in to request access";
           actions.appendChild(a);
@@ -796,6 +568,11 @@
 
         panel.appendChild(actions);
         panel.appendChild(feedback);
+        // Keep the last action's outcome visible across the 30s refresh,
+        // unless it repeats the "controller offline" callout shown above.
+        if (lastResult && !(state.controller_error && lastResult.type === "offline")) {
+          showResult(feedback, lastResult);
+        }
         panel.classList.add("ready");
       }
 
@@ -810,8 +587,7 @@
       }
 
       async function doAction(action, feedback) {
-        feedback.textContent = action === "start" ? "Starting server…" : "Stopping server…";
-        feedback.className = "mc-control-feedback";
+        setBusy(feedback, action === "start" ? "Starting server…" : "Stopping server…");
         panel.querySelectorAll("button").forEach(b => b.disabled = true);
         try {
           const r = await fetch("/api/minecraft/" + action, {
@@ -819,22 +595,21 @@
           });
           const data = await r.json().catch(() => ({}));
           if (!r.ok) {
-            feedback.textContent = data.error || ("HTTP " + r.status);
-            feedback.className = "mc-control-feedback err";
+            lastResult = describeError(data.error || ("HTTP " + r.status), r.status);
           } else {
-            feedback.textContent = (data.running ? "Server is running." : "Server stopped.");
-            feedback.className = "mc-control-feedback ok";
+            lastResult = { type: "ok", tone: "ok", icon: "ok",
+              title: data.running ? "Server is running." : "Server stopped.",
+              body: data.running ? "Give it a minute to finish loading, then connect to mc.cartofia.com." : "It will stay asleep until someone wakes it." };
           }
         } catch (_) {
-          feedback.textContent = "Request failed.";
-          feedback.className = "mc-control-feedback err";
+          lastResult = describeError("Request failed — the site API didn't answer.", 0);
         }
+        showResult(feedback, lastResult);
         setTimeout(fetchStatus, 1200);
       }
 
       async function requestAccess(feedback) {
-        feedback.textContent = "Sending request…";
-        feedback.className = "mc-control-feedback";
+        setBusy(feedback, "Sending request…");
         panel.querySelectorAll("button").forEach(b => b.disabled = true);
         try {
           const r = await fetch("/api/minecraft/request-access", {
@@ -845,44 +620,22 @@
           });
           const data = await r.json().catch(() => ({}));
           if (!r.ok) {
-            feedback.textContent = data.error || ("HTTP " + r.status);
-            feedback.className = "mc-control-feedback err";
+            lastResult = describeError(data.error || ("HTTP " + r.status), r.status);
+            showResult(feedback, lastResult);
             panel.querySelectorAll("button").forEach(b => b.disabled = false);
             return;
           }
-          feedback.textContent = data.message || "Request sent — the admin will get back to you.";
-          feedback.className = "mc-control-feedback ok";
+          lastResult = { type: "ok", tone: "ok", icon: "ok", title: "Request sent", body: (data.message && !/^request sent\.?$/i.test(String(data.message).trim())) ? data.message : "The admin will get back to you." };
+          showResult(feedback, lastResult);
         } catch (_) {
-          feedback.textContent = "Request failed.";
-          feedback.className = "mc-control-feedback err";
+          lastResult = describeError("Request failed — the site API didn't answer.", 0);
+          showResult(feedback, lastResult);
           panel.querySelectorAll("button").forEach(b => b.disabled = false);
         }
       }
 
       fetchStatus();
       setInterval(fetchStatus, 30000);
-    })();
-
-
-    /* ----------------------------------------------------------
-       Scroll-reveal animation (matches homepage pattern)
-    ---------------------------------------------------------- */
-    (function () {
-      const els = document.querySelectorAll(".reveal");
-      if (!els.length) return;
-      if (!("IntersectionObserver" in window)) {
-        els.forEach((el) => el.classList.add("visible"));
-        return;
-      }
-      const obs = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-            obs.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.1, rootMargin: "0px 0px -52px 0px" });
-      els.forEach((el) => obs.observe(el));
     })();
 
 
@@ -913,6 +666,9 @@
       var stopBtn       = document.getElementById("myServerStop");
       var delBtn        = document.getElementById("myServerDelete");
       var feedback      = document.getElementById("myServerFeedback");
+      var lastError     = null;
+
+      wireCopy(document.getElementById("myServerCopy"), function () { return address.textContent; });
 
       function token() {
         try { return sessionStorage.getItem("oidc_access_token") || localStorage.getItem("oidc_access_token"); }
@@ -935,6 +691,11 @@
         feedback.textContent = msg || "";
         feedback.className = "my-server-note" + (cls ? " " + cls : "");
       }
+      function setFeedbackCallout(el, info) {
+        el.textContent = "";
+        el.className = "my-server-note";
+        el.appendChild(buildCallout(info));
+      }
 
       async function fetchState() {
         if (!token()) {
@@ -946,6 +707,7 @@
         }
         try {
           var r = await fetch("/api/minecraft/servers/me", {
+            credentials: "include",
             headers: (token() ? { "Authorization": "Bearer " + token() } : {})
           });
           if (!r.ok) { section.hidden = true; return; }
@@ -961,9 +723,7 @@
           emptyWrap.classList.remove("hidden");
           card.classList.add("hidden");
           createBtn.disabled = !data.can_create;
-          createHint.textContent = data.can_create
-            ? ""
-            : "You need the minecraft_creator group in Authentik to create a server.";
+          if (!data.can_create) createHint.textContent = "You need the minecraft_creator group in Authentik to create a server.";
           return;
         }
         emptyWrap.classList.add("hidden");
@@ -971,28 +731,37 @@
         var s = data.server;
         address.textContent    = s.address;
         statusEl.textContent   = s.running === true ? "Online" : (s.running === false ? "Offline" : "Unknown");
-        dot.className          = "server-dot" + (s.running ? " online" : "");
+        dot.className          = "server-dot" + (s.running ? " online" : (s.running === false ? " offline" : ""));
         createdEl.textContent  = relative(s.created_at);
         lastEl.textContent     = relative(s.last_active_at);
         startBtn.disabled      = s.running === true;
         stopBtn.disabled       = s.running !== true;
         delBtn.disabled        = false;
+        if (lastError) {
+          setFeedbackCallout(feedback, lastError);
+        } else if (s.running !== true && s.running !== false && !feedback.textContent) {
+          setFeedbackCallout(feedback, { tone: "warn", icon: "warn", title: "Live status unavailable",
+            body: "The server controller didn't answer, so we can't tell whether your world is up. Start may fail until it's back." });
+        }
       }
 
       async function call(url, method) {
-        setFeedback("Working…");
-        document.querySelectorAll("#myServerCard button").forEach(function (b) { b.disabled = true; });
+        lastError = null;
+        setFeedback("Working…", "is-busy");
+        document.querySelectorAll("#myServerCard .my-server-actions button").forEach(function (b) { b.disabled = true; });
         try {
           var r = await fetch(url, {
             method: method,
+            credentials: "include",
             headers: (token() ? { "Authorization": "Bearer " + token() } : {})
           });
           var data = await r.json().catch(function () { return {}; });
-          if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+          if (!r.ok) { var err = new Error(data.error || ("HTTP " + r.status)); err.status = r.status; throw err; }
           setFeedback("Done.", "ok");
           await fetchState();
         } catch (e) {
-          setFeedback(e.message, "err");
+          lastError = describeError(e.message, e.status);
+          setFeedbackCallout(feedback, lastError);
           await fetchState();
         }
       }
@@ -1000,17 +769,20 @@
       createBtn.addEventListener("click", async function () {
         createBtn.disabled = true;
         createHint.textContent = "Spinning up your server…";
+        createHint.className = "my-server-note is-busy";
         try {
           var r = await fetch("/api/minecraft/servers/me", {
             method: "POST",
+            credentials: "include",
             headers: (token() ? { "Authorization": "Bearer " + token() } : {})
           });
           var data = await r.json().catch(function () { return {}; });
-          if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+          if (!r.ok) { var err = new Error(data.error || ("HTTP " + r.status)); err.status = r.status; throw err; }
           createHint.textContent = "";
+          createHint.className = "my-server-note";
           await fetchState();
         } catch (e) {
-          createHint.textContent = e.message;
+          setFeedbackCallout(createHint, describeError(e.message, e.status));
           createBtn.disabled = false;
         }
       });

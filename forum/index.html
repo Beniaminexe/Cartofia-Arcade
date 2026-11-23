@@ -4,15 +4,16 @@
   <meta charset="utf-8" />
   <title>Forum — Cartofia</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="The Cartofia community board: arcade strategies, Minecraft builds, site feedback and everything else." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=5" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=4">
-  <link rel="stylesheet" href="/forum/forum.css?v=4" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=6" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=5">
+  <link rel="stylesheet" href="/assets/community-v2.css?v=1" />
   <style>button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }</style>
 </head>
-<body>
+<body class="cm cm-forum">
   <header class="nav" id="nav">
     <a class="nav-brand" href="/">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
@@ -27,7 +28,7 @@
       <a href="/">Home</a>
       <a href="/arcade/">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
-      <a href="/forum/" class="active">Forum</a>
+      <a href="/forum/" class="active" aria-current="page">Forum</a>
       <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
     <div class="nav-right">
@@ -40,53 +41,122 @@
     </div>
   </header>
 
-  <main class="forum-page">
-    <header class="forum-header">
-      <div class="forum-header-copy">
-        <p class="forum-kicker">Forum</p>
-        <h1 class="forum-title">Threads</h1>
-        <p class="forum-sub">Markdown supported — bold, italic, code, links, @mentions, lists, quotes.</p>
+  <main class="forum-page" id="main">
+    <!-- HERO -->
+    <section class="cm-wrap fm-hero" aria-labelledby="forumTitle">
+      <div class="fm-hero-copy">
+        <p class="cm-kicker"><span class="cm-bulbs" aria-hidden="true"><i></i><i></i><i></i></span>Community board</p>
+        <h1 class="cm-title" id="forumTitle">Talk shop.<br><span>Start a thread.</span></h1>
+        <p class="cm-lead">High scores, strategy, Minecraft builds, bug reports and site feedback. Markdown works — <code>**bold**</code>, <code>`code`</code>, links and <code>@mentions</code>.</p>
+        <div class="cm-actions">
+          <button class="btn btn-coral btn-lg" id="newThreadBtn" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+            New thread
+          </button>
+          <a class="btn btn-ghost btn-lg" href="#threadList">Browse threads</a>
+        </div>
       </div>
-      <div class="forum-header-actions">
-        <button class="btn btn-primary" id="newThreadBtn" type="button">+ New Thread</button>
-      </div>
-    </header>
-
-    <!-- Search + category filter row -->
-    <div class="forum-toolbar">
-      <div class="forum-search">
-        <input id="searchInput" class="compose-input" type="search" placeholder="Search threads and posts…" aria-label="Search forum" />
-      </div>
-      <div class="forum-cats" id="categoryTabs" aria-label="Categories"></div>
-    </div>
-
-    <!-- Compose panel -->
-    <section class="forum-compose hidden" id="composePanel">
-      <div class="compose-head">
-        <h2>Start a new thread</h2>
-        <button class="btn btn-ghost btn-sm" type="button" id="composeCancel">Cancel</button>
-      </div>
-      <input id="composeTitle" class="compose-input" type="text" maxlength="200" placeholder="Title (required)" />
-      <select id="composeCategory" class="compose-input" aria-label="Category"></select>
-      <textarea id="composeBody" class="compose-textarea" maxlength="10000" placeholder="Markdown welcome…"></textarea>
-      <div class="compose-foot">
-        <div id="composeHint" class="compose-hint"></div>
-        <button class="btn btn-primary" id="composeSubmit" type="button">Post thread</button>
+      <div class="fm-hero-art" aria-hidden="true">
+        <div class="fm-bubble fm-bubble-1"><i></i><span><b></b><b></b><b></b></span></div>
+        <div class="fm-bubble fm-bubble-2"><i></i><span><b></b><b></b></span></div>
+        <div class="fm-bubble fm-bubble-3"><i></i><span><b></b><b></b><b></b></span></div>
       </div>
     </section>
 
-    <!-- Search results section -->
-    <section id="searchResults" class="search-results hidden" aria-live="polite"></section>
+    <div class="cm-wrap fm-layout">
+      <!-- SIDEBAR: categories + help -->
+      <aside class="fm-side" aria-label="Forum navigation">
+        <div>
+          <p class="fm-side-label">Categories</p>
+          <div class="forum-cats" id="categoryTabs" role="group" aria-label="Categories"></div>
+        </div>
+        <div class="cm-panel fm-help">
+          <p class="fm-side-label">Formatting</p>
+          <ul class="fm-help-list">
+            <li><code>**bold**</code><span>bold</span></li>
+            <li><code>*italic*</code><span>italic</span></li>
+            <li><code>`code`</code><span>inline code</span></li>
+            <li><code>&gt; quote</code><span>quote</span></li>
+            <li><code>- item</code><span>list</span></li>
+            <li><code>@name</code><span>mention</span></li>
+          </ul>
+        </div>
+        <div class="fm-guest hidden" id="forumGuestNote">
+          <p><strong>Browsing as a guest.</strong> Sign in to start threads, reply and get notified when someone mentions you.</p>
+          <a class="btn btn-lemon btn-sm" href="/account/">Sign in</a>
+        </div>
+      </aside>
 
-    <!-- Thread list -->
-    <section class="thread-list" id="threadList" aria-live="polite">
-      <div class="thread-skeleton"><div class="skel-row"></div><div class="skel-row"></div><div class="skel-row"></div></div>
-    </section>
+      <div class="fm-main">
+        <!-- Search -->
+        <div class="fm-toolbar">
+          <label class="fm-search">
+            <span class="cm-sr">Search forum</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <input id="searchInput" class="compose-input" type="search" placeholder="Search threads and posts…" aria-label="Search forum" autocomplete="off" />
+          </label>
+        </div>
 
-    <div class="forum-pager">
-      <button class="btn btn-ghost btn-sm" id="loadMoreBtn" type="button" hidden>Load more</button>
+        <!-- Compose panel -->
+        <section class="forum-compose hidden" id="composePanel" aria-labelledby="composeHeading">
+          <div class="compose-head">
+            <div>
+              <p class="cm-eyebrow">New thread</p>
+              <h2 id="composeHeading">Start a conversation</h2>
+            </div>
+            <button class="btn btn-ghost btn-sm" type="button" id="composeCancel">Cancel</button>
+          </div>
+          <div class="fm-compose-grid">
+            <label class="cm-field"><span>Title</span>
+              <input id="composeTitle" class="compose-input" type="text" maxlength="200" placeholder="What's it about? (required)" />
+            </label>
+            <label class="cm-field"><span>Category</span>
+              <select id="composeCategory" class="compose-input" aria-label="Category"></select>
+            </label>
+          </div>
+          <label class="cm-field"><span>Message</span>
+            <textarea id="composeBody" class="compose-textarea" maxlength="10000" placeholder="Markdown welcome — **bold**, `code`, > quotes, - lists, @mentions…"></textarea>
+          </label>
+          <div class="compose-foot">
+            <div class="fm-compose-status">
+              <div id="composeHint" class="compose-hint" role="alert"></div>
+              <span class="compose-tip">Ctrl + Enter to post</span>
+            </div>
+            <button class="btn btn-coral" id="composeSubmit" type="button">Post thread</button>
+          </div>
+        </section>
+
+        <!-- Search results section -->
+        <section id="searchResults" class="search-results hidden" aria-live="polite"></section>
+
+        <div class="fm-list-head">
+          <h2 id="listHeading">All threads</h2>
+          <p>Latest activity first</p>
+        </div>
+
+        <!-- Thread list -->
+        <section class="thread-list" id="threadList" aria-live="polite" aria-labelledby="listHeading">
+          <div class="thread-skeleton"><div class="skel-row"></div><div class="skel-row"></div><div class="skel-row"></div></div>
+        </section>
+
+        <div class="forum-pager">
+          <button class="btn btn-ghost" id="loadMoreBtn" type="button" hidden>Load more threads</button>
+        </div>
+      </div>
     </div>
   </main>
+
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/account/">Account</a>
+      <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </footer>
 
   <script src="/assets/theme.js?v=3"></script>
   <script src="/assets/site.js?v=9"></script>
@@ -106,12 +176,20 @@
     const catSel   = document.getElementById('composeCategory');
     const searchEl = document.getElementById('searchInput');
     const resultsEl = document.getElementById('searchResults');
+    const listHead = document.getElementById('listHeading');
+    const guestNote = document.getElementById('forumGuestNote');
 
     let cursor = null;
     let categories = [];
     let activeCategory = new URLSearchParams(location.search).get('category') || '';
 
     const esc = CartofiaMarkdown.escapeHtml;
+
+    const ICON_PIN  = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3l6 6-3 1-4 4 1 5-2 2-4-5-5 5-1-1 5-5-5-4 2-2 5 1 4-4z" fill="currentColor"/></svg>';
+    const ICON_LOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
+    const ICON_CHAT = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
+    const PALETTE = ['#8b6cff', '#ff6b4a', '#3ee6a6', '#ffd84a', '#7cc8ff', '#ff52a2'];
+    const CAT_COLORS = { general: '#8b6cff', arcade: '#ff6b4a', minecraft: '#3ee6a6', meta: '#ffd84a' };
 
     function token() {
       try { return sessionStorage.getItem('oidc_access_token') || localStorage.getItem('oidc_access_token'); }
@@ -133,40 +211,80 @@
     function avatarMarkup(a) {
       if (a.avatar_url) return '<img src="' + esc(a.avatar_url) + '" alt="" class="thread-avatar"/>';
       const initial = (a.display_name || a.username || '?').slice(0, 2).toUpperCase();
-      return '<div class="thread-avatar thread-avatar-fallback">' + esc(initial) + '</div>';
+      return '<div class="thread-avatar thread-avatar-fallback" aria-hidden="true">' + esc(initial) + '</div>';
     }
-    function categoryName(id) {
-      if (id == null) return '';
-      const c = categories.find(c => c.id === id);
-      return c ? c.name : '';
+    function categoryById(id) {
+      if (id == null) return null;
+      return categories.find(c => c.id === id) || null;
+    }
+    function categoryColor(c) {
+      if (!c) return PALETTE[0];
+      if (CAT_COLORS[c.slug]) return CAT_COLORS[c.slug];
+      const i = Math.max(0, categories.indexOf(c));
+      return PALETTE[i % PALETTE.length];
+    }
+    // Plain-text preview of a markdown body for the card excerpt.
+    function excerpt(md) {
+      if (!md) return '';
+      return String(md)
+        .replace(/```[\s\S]*?```/g, ' ')
+        .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+        .replace(/^\s{0,3}(#{1,3}|>|[-*])\s+/gm, '')
+        .replace(/[*_~`]+/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 220);
     }
     function threadCard(t) {
       const name = t.author.display_name || t.author.username || 'Unknown';
       const slug = t.author.username || '';
       const authorLink = slug
         ? '<a class="thread-author" href="/u/' + encodeURIComponent(slug) + '">' + esc(name) + '</a>'
-        : esc(name);
-      const pin = t.pinned ? '<span class="thread-flag thread-flag-pinned">📌 Pinned</span>' : '';
-      const lock = t.locked ? '<span class="thread-flag thread-flag-locked">🔒 Locked</span>' : '';
-      const catName = categoryName(t.category_id);
-      const catChip = catName ? '<span class="thread-cat-chip">' + esc(catName) + '</span>' : '';
+        : '<span class="thread-author">' + esc(name) + '</span>';
+      const pin = t.pinned ? '<span class="thread-flag thread-flag-pinned">' + ICON_PIN + 'Pinned</span>' : '';
+      const lock = t.locked ? '<span class="thread-flag thread-flag-locked">' + ICON_LOCK + 'Locked</span>' : '';
+      const cat = categoryById(t.category_id);
+      const color = categoryColor(cat);
+      const catChip = cat ? '<a class="thread-cat-chip" href="/forum/?category=' + encodeURIComponent(cat.slug) + '" data-cat-link="' + esc(cat.slug) + '">' + esc(cat.name) + '</a>' : '';
+      const ex = excerpt(t.body);
+      const n = t.reply_count || 0;
+      const repliesCls = n === 0 ? ' is-zero' : (n >= 10 ? ' is-hot' : '');
       return `
-        <article class="thread-card${t.pinned ? ' pinned' : ''}">
+        <article class="thread-card${t.pinned ? ' pinned' : ''}${t.locked ? ' is-locked' : ''}" style="--g:${color}">
           ${avatarMarkup(t.author)}
           <div class="thread-main">
             <div class="thread-title-row">
-              <a class="thread-title" href="/forum/thread/?id=${t.id}">${esc(t.title)}</a>
-              ${pin}${lock}${catChip}
+              <h3 class="fm-card-title"><a class="thread-title" href="/forum/thread/?id=${t.id}">${esc(t.title)}</a></h3>
+              ${(pin || lock) ? '<span class="fm-flags">' + pin + lock + '</span>' : ''}
             </div>
+            ${ex ? '<p class="fm-excerpt">' + esc(ex) + '</p>' : ''}
             <div class="thread-meta">
               ${authorLink}
-              <span>·</span>
-              <span>${t.reply_count} ${t.reply_count === 1 ? 'reply' : 'replies'}</span>
-              <span>·</span>
-              <span>${esc(relative(t.last_post_at))}</span>
+              ${catChip}
+              <span>started ${esc(relative(t.created_at))}</span>
             </div>
           </div>
+          <div class="fm-stats">
+            <span class="fm-replies${repliesCls}" title="${n} ${n === 1 ? 'reply' : 'replies'}">${ICON_CHAT}${n}<small>${n === 1 ? 'reply' : 'replies'}</small></span>
+            <span class="fm-last">active <b>${esc(relative(t.last_post_at))}</b></span>
+          </div>
         </article>`;
+    }
+    function emptyMarkup() {
+      const cat = categories.find(c => c.slug === activeCategory);
+      return `<div class="forum-empty">
+          <div class="cm-empty-icon">${ICON_CHAT.replace('width="15" height="15"', 'width="26" height="26"')}</div>
+          <p class="cm-empty-title">No threads ${cat ? 'in ' + esc(cat.name) + ' ' : ''}yet</p>
+          <p>Kick things off — the first thread sets the tone.</p>
+          <button class="btn btn-coral btn-sm" type="button" data-start-thread>Start a thread</button>
+        </div>`;
+    }
+    function errorMarkup(msg) {
+      return `<div class="forum-error">
+          <div class="cm-empty-icon"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 4l9 16H3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4M12 17v.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+          <p class="cm-empty-title">${esc(msg)}</p>
+          <p>The forum didn't answer. Refresh in a moment.</p>
+        </div>`;
     }
 
     async function loadCategories() {
@@ -181,10 +299,17 @@
     }
 
     function renderCategoryTabs() {
-      const items = [{ slug: '', name: 'All' }].concat(categories);
-      catTabs.innerHTML = items.map(c => `
-        <button class="forum-cat-tab${activeCategory === c.slug ? ' active' : ''}" data-slug="${esc(c.slug)}" type="button">${esc(c.name)}</button>
-      `).join('');
+      const items = [{ slug: '', name: 'All threads', description: 'Everything, newest activity first.' }].concat(categories);
+      catTabs.innerHTML = items.map(c => {
+        const color = c.slug ? categoryColor(c) : '#f5f0ff';
+        const on = activeCategory === c.slug;
+        return `<button class="forum-cat-tab${on ? ' active' : ''}" data-slug="${esc(c.slug)}" type="button" aria-pressed="${on}" style="--c:${color}">
+            <span class="fm-cat-dot" aria-hidden="true"></span><span class="fm-cat-name">${esc(c.name)}</span>
+            ${c.description ? '<span class="fm-cat-desc">' + esc(c.description) + '</span>' : ''}
+          </button>`;
+      }).join('');
+      const cat = categories.find(c => c.slug === activeCategory);
+      listHead.textContent = cat ? cat.name : 'All threads';
     }
     function renderCategorySelect() {
       // No placeholder — the first real category (sort_order 0 → General) is
@@ -194,19 +319,29 @@
         .join('');
     }
 
-    catTabs.addEventListener('click', (e) => {
-      const b = e.target.closest('.forum-cat-tab');
-      if (!b) return;
-      activeCategory = b.dataset.slug;
+    function selectCategory(slug) {
+      activeCategory = slug || '';
       renderCategoryTabs();
       const url = new URL(location.href);
       if (activeCategory) url.searchParams.set('category', activeCategory); else url.searchParams.delete('category');
       history.replaceState(null, '', url);
       loadThreads(true);
+    }
+
+    catTabs.addEventListener('click', (e) => {
+      const b = e.target.closest('.forum-cat-tab');
+      if (!b) return;
+      selectCategory(b.dataset.slug);
+    });
+
+    listEl.addEventListener('click', (e) => {
+      const chip = e.target.closest('[data-cat-link]');
+      if (chip) { e.preventDefault(); selectCategory(chip.dataset.catLink); return; }
+      if (e.target.closest('[data-start-thread]')) openBtn.click();
     });
 
     async function loadThreads(reset) {
-      if (reset) { cursor = null; listEl.innerHTML = ''; }
+      if (reset) { cursor = null; listEl.innerHTML = '<div class="thread-skeleton"><div class="skel-row"></div><div class="skel-row"></div></div>'; }
       const q = new URLSearchParams();
       if (cursor) q.set('before_id', cursor);
       if (activeCategory) q.set('category', activeCategory);
@@ -215,7 +350,7 @@
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const data = await r.json();
         if (!cursor && (!data.threads || !data.threads.length)) {
-          listEl.innerHTML = '<div class="forum-empty">No threads here yet.</div>';
+          listEl.innerHTML = emptyMarkup();
           moreBtn.hidden = true;
           return;
         }
@@ -224,7 +359,7 @@
         if (data.threads.length) cursor = data.threads[data.threads.length - 1].id;
         moreBtn.hidden = !data.has_more;
       } catch (e) {
-        listEl.innerHTML = '<div class="forum-error">Could not load threads: ' + esc(e.message) + '</div>';
+        listEl.innerHTML = errorMarkup('Could not load threads: ' + e.message);
       }
     }
 
@@ -248,7 +383,7 @@
         renderSearchResults(data, q);
       } catch (e) {
         resultsEl.classList.remove('hidden');
-        resultsEl.innerHTML = '<div class="forum-error">Search failed: ' + esc(e.message) + '</div>';
+        resultsEl.innerHTML = errorMarkup('Search failed: ' + e.message);
       }
     }
     function hilite(text, q) {
@@ -261,9 +396,9 @@
       resultsEl.classList.remove('hidden');
       const threads = data.threads || [];
       const posts   = data.posts   || [];
-      let html = `<h2 class="search-head">Results for "${esc(q)}"</h2>`;
+      let html = `<h2 class="search-head">Results for “${esc(q)}”</h2>`;
       if (!threads.length && !posts.length) {
-        html += '<div class="forum-empty">Nothing matched.</div>';
+        html += '<p class="search-row-meta">Nothing matched. Try a shorter word.</p>';
       } else {
         if (threads.length) {
           html += '<div class="search-group-title">Threads</div>';
@@ -286,32 +421,41 @@
     }
 
     /* ---------------- COMPOSE ---------------- */
+    function signedInPromise() {
+      // Cookie session (current auth) — shared cached promise; legacy JWT short-circuits.
+      window.__cartofiaSignedIn = window.__cartofiaSignedIn || fetch('/api/auth/me', { credentials: 'include' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { return !!(d && d.authenticated); })
+        .catch(function () { return false; });
+      return window.__cartofiaSignedIn;
+    }
     openBtn.addEventListener('click', async () => {
       if (!token()) {
-        window.__cartofiaSignedIn = window.__cartofiaSignedIn || fetch('/api/auth/me', { credentials: 'include' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) { return !!(d && d.authenticated); })
-      .catch(function () { return false; });
-        if (!(await window.__cartofiaSignedIn)) { window.location.href = '/account/'; return; }
+        if (!(await signedInPromise())) { window.location.href = '/account/'; return; }
       }
       compose.classList.remove('hidden');
       // pre-select active category if one is active
       if (activeCategory) catSel.value = activeCategory;
-      titleEl.focus();
+      const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      compose.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      titleEl.focus({ preventScroll: true });
     });
     cancelBt.addEventListener('click', () => {
       compose.classList.add('hidden');
       titleEl.value = ''; bodyEl.value = ''; hintEl.textContent = '';
+      openBtn.focus();
     });
     submitBt.addEventListener('click', async () => {
       const title = titleEl.value.trim();
       const body  = bodyEl.value.trim();
       const category = catSel.value || null;
-      if (!title) { hintEl.textContent = 'Give it a title.'; return; }
+      if (!title) { hintEl.textContent = 'Give it a title.'; titleEl.focus(); return; }
       submitBt.disabled = true; hintEl.textContent = '';
+      submitBt.textContent = 'Posting…';
       try {
         const r = await fetch('/api/forum/threads', {
           method: 'POST',
+          credentials: 'include',
           headers: Object.assign({ 'Content-Type': 'application/json' }, token() ? { 'Authorization': 'Bearer ' + token() } : {}),
           body: JSON.stringify({ title, body, category })
         });
@@ -321,10 +465,17 @@
       } catch (e) {
         hintEl.textContent = e.message;
         submitBt.disabled = false;
+        submitBt.textContent = 'Post thread';
       }
     });
+    [titleEl, bodyEl].forEach(el => el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submitBt.click(); }
+    }));
 
     moreBtn.addEventListener('click', () => loadThreads(false));
+
+    // Sidebar guest hint (cookie session or legacy token counts as signed in).
+    if (!token()) signedInPromise().then(ok => { if (!ok) guestNote.classList.remove('hidden'); });
 
     (async () => { await loadCategories(); await loadThreads(true); })();
   </script>
