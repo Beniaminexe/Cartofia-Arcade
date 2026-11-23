@@ -1,41 +1,56 @@
 /* ============================================================
    CARTOFIA GAME PAGES — SHARED DESIGN SYSTEM
-   Matches home.css variables exactly.
+   "Night Market" theme (Nov 2026): tokens mirror /assets/site.css
+   (loaded first on every game page); component look mirrors
+   /arcade/arcade-v2.css. UI chrome only — game canvases/boards keep
+   their own colours.
    ============================================================ */
 
 /* --------------------------------------------------
    Fonts
 -------------------------------------------------- */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* --------------------------------------------------
    Custom Properties (exact values from home.css)
 -------------------------------------------------- */
 :root {
   /* Backgrounds */
-  --bg:        #0a0e1a;
-  --bg-2:      #0d1220;
-  --bg-card:   rgba(255, 255, 255, 0.03);
-  --bg-card-h: rgba(255, 255, 255, 0.06);
+  --bg:        #0d0a1c;
+  --bg-2:      #141030;
+  --bg-card:   rgba(139, 108, 255, 0.07);   /* translucent violet so nested panels still layer */
+  --bg-card-h: rgba(139, 108, 255, 0.12);
 
   /* Borders */
   --border:    rgba(255, 255, 255, 0.08);
   --border-h:  rgba(255, 255, 255, 0.16);
 
   /* Accent palette */
-  --accent:      #4f7df9;
-  --accent-2:    #7c5bf5;
-  --accent-glow: rgba(79, 125, 249, 0.28);
+  --accent:      #7c5cff;
+  --accent-2:    #ff6b4a;
+  --accent-3:    #3ee6a6;
+  --accent-glow: rgba(124, 92, 255, 0.45);
+  --accent-soft: rgba(124, 92, 255, 0.16);
+
+  /* Fixed Night Market palette */
+  --violet:     #7c5cff;
+  --coral:      #ff6b4a;
+  --coral-deep: #b8391f;
+  --mint:       #3ee6a6;
+  --lemon:      #ffd84a;
+  --lemon-deep: #a8861a;
+  --ink:        #120b24;
 
   /* Text */
-  --text-primary:   #eef2ff;
-  --text-secondary: rgba(238, 242, 255, 0.56);
-  --text-muted:     rgba(238, 242, 255, 0.3);
-  --text-accent:    #7ca6ff;
+  --text-primary:   #f5f0ff;
+  --text-secondary: #b3aacf;
+  --text-muted:     #8a82a8;   /* 5:1 on the card surface (old 0.3-alpha value failed AA) */
+  --text-accent:    #ffcf5c;
 
   /* Typography */
   --font-sans: 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Unbounded', 'Outfit', 'Segoe UI', sans-serif;
 
   /* Layout */
   --radius:       16px;
@@ -75,8 +90,9 @@ body::before {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 900px 650px at 15% 10%,  rgba(124, 91, 245, 0.11) 0%, transparent 70%),
-    radial-gradient(ellipse 600px 400px at 85% 65%,  rgba(79, 125, 249, 0.08) 0%, transparent 65%);
+    radial-gradient(ellipse 900px 600px at 10% 0%,   rgba(124, 92, 255, 0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 700px 420px at 92% 6%,   rgba(255, 107, 74, 0.10) 0%, transparent 65%),
+    radial-gradient(ellipse 700px 400px at 50% 105%, rgba(62, 230, 166, 0.05) 0%, transparent 60%);
 }
 
 /* --------------------------------------------------
@@ -91,7 +107,7 @@ body::before {
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--gutter);
-  background: rgba(10, 14, 26, 0.76);
+  background: rgba(13, 10, 28, 0.82);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
@@ -125,7 +141,7 @@ body::before {
   position: absolute;
   bottom: -3px; left: 0; right: 0;
   height: 2px;
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--coral), var(--lemon));
   border-radius: 99px;
   transform: scaleX(0);
   transform-origin: left;
@@ -172,40 +188,56 @@ body::before {
   align-items: center;
   gap: 8px;
   padding: 11px 22px;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   font-family: var(--font-sans);
   font-size: 15px;
   font-weight: 600;
   border: 1.5px solid transparent;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease,
-              background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  transition: transform 0.12s ease, box-shadow 0.15s ease,
+              background 0.18s ease, border-color 0.18s ease, color 0.18s ease, filter 0.15s ease;
   white-space: nowrap;
 }
-.btn:hover  { transform: translateY(-2px); }
-.btn:active { transform: translateY(0); }
+.btn:hover  { transform: translateY(-1px); }
+.btn:active { transform: translateY(2px); }
 
 .btn-primary {
   background: var(--accent);
   color: #fff;
-  border-color: var(--accent);
-  box-shadow: 0 4px 18px rgba(79, 125, 249, 0.32);
+  border-color: color-mix(in srgb, var(--accent) 70%, #000);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 55%, #000), 0 10px 24px -10px var(--accent-glow);
 }
 .btn-primary:hover {
-  background: #6691ff;
-  border-color: #6691ff;
-  box-shadow: 0 8px 28px rgba(79, 125, 249, 0.48);
+  filter: brightness(1.08);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 55%, #000), 0 14px 30px -10px var(--accent-glow);
 }
+.btn-primary:active { box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 55%, #000); }
 
 .btn-ghost {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.04);
   color: var(--text-primary);
   border-color: var(--border-h);
 }
 .btn-ghost:hover {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 216, 74, 0.55);
+  background: rgba(255, 216, 74, 0.06);
 }
+
+/* Coral CTA / lemon — same as site.css (.btn-coral, .btn-lemon) */
+.btn-coral, .btn-cta {
+  background: var(--coral);
+  color: var(--ink);
+  border-color: var(--ink);
+  box-shadow: 0 3px 0 var(--coral-deep), 0 10px 26px -10px rgba(255, 107, 74, 0.8);
+}
+.btn-coral:active, .btn-cta:active { box-shadow: 0 1px 0 var(--coral-deep); }
+.btn-lemon {
+  background: var(--lemon);
+  color: var(--ink);
+  border-color: var(--ink);
+  box-shadow: 0 3px 0 var(--lemon-deep);
+}
+.btn-lemon:active { box-shadow: 0 1px 0 var(--lemon-deep); }
 
 .btn-sm {
   padding: 8px 16px;
@@ -236,7 +268,7 @@ body::before {
   gap: 16px;
   padding: 14px var(--gutter);
   border-bottom: 1px solid var(--border);
-  background: rgba(10, 14, 26, 0.6);
+  background: rgba(13, 10, 28, 0.6);
   backdrop-filter: blur(8px);
   flex-shrink: 0;
 }
@@ -254,7 +286,8 @@ body::before {
 .game-header-back:hover { color: var(--text-primary); }
 
 .game-header-title {
-  font-size: 16px;
+  font-family: var(--font-display);
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.02em;
   flex: 1;
@@ -321,7 +354,7 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 14, 26, 0.92);
+  background: rgba(13, 10, 28, 0.9);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   animation: fadeIn 0.3s ease;
@@ -332,7 +365,9 @@ body::before {
 }
 
 .pre-game-card {
-  background: var(--bg-card);
+  background:
+    radial-gradient(420px 180px at 100% 0%, rgba(255, 107, 74, 0.14), transparent 70%),
+    linear-gradient(180deg, #211a42, #1a1535 46%);
   border: 1px solid var(--border-h);
   border-radius: 24px;
   padding: clamp(28px, 5vw, 48px);
@@ -344,26 +379,27 @@ body::before {
   align-items: center;
   gap: 16px;
   box-shadow:
-    0 0 0 1px rgba(124, 91, 245, 0.1) inset,
+    0 0 0 1px rgba(139, 108, 255, 0.12) inset,
     0 40px 80px rgba(0, 0, 0, 0.6);
   animation: slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .pre-game-label {
   font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 10.5px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: var(--text-accent);
+  color: var(--coral);
 }
 
 .pre-game-title {
-  font-size: clamp(28px, 6vw, 42px);
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 5.4vw, 38px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   line-height: 1.1;
-  background: linear-gradient(135deg, var(--text-primary) 0%, #b8d0ff 50%, var(--accent) 100%);
+  background: linear-gradient(92deg, var(--lemon) 0%, var(--coral) 85%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -397,7 +433,7 @@ body::before {
 }
 
 .settings-select {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-2);
   border: 1px solid var(--border-h);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
@@ -428,11 +464,14 @@ body::before {
   transition: all 0.18s ease;
 }
 
-.settings-pill:hover,
-.settings-pill.active {
-  border-color: var(--accent);
-  background: rgba(79, 125, 249, 0.12);
+.settings-pill:hover {
+  border-color: rgba(255, 216, 74, 0.55);
   color: var(--text-primary);
+}
+.settings-pill.active {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+  color: var(--ink);
 }
 
 .start-btn {
@@ -440,21 +479,20 @@ body::before {
   padding: 14px 24px;
   font-size: 16px;
   font-weight: 700;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: #fff;
-  border: 1.5px solid var(--accent);
-  box-shadow: 0 4px 24px rgba(79, 125, 249, 0.38);
+  border-radius: 14px;
+  background: var(--coral);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: 0 4px 0 var(--coral-deep), 0 12px 28px -10px rgba(255, 107, 74, 0.8);
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.18s ease;
   font-family: var(--font-sans);
 }
 .start-btn:hover {
-  background: #6691ff;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(79, 125, 249, 0.52);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 var(--coral-deep), 0 16px 32px -10px rgba(255, 107, 74, 0.9);
 }
-.start-btn:active { transform: translateY(0); }
+.start-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--coral-deep); }
 
 .pre-game-hint {
   font-family: var(--font-mono);
@@ -467,8 +505,8 @@ body::before {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(79, 125, 249, 0.08);
-  border: 1px solid rgba(79, 125, 249, 0.2);
+  background: rgba(255, 216, 74, 0.06);
+  border: 1px dashed rgba(255, 216, 74, 0.35);
   border-radius: var(--radius-sm);
   padding: 10px 16px;
   font-size: 14px;
@@ -493,7 +531,7 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 14, 26, 0.86);
+  background: rgba(13, 10, 28, 0.86);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   animation: fadeIn 0.25s ease;
@@ -504,7 +542,9 @@ body::before {
 }
 
 .game-over-card {
-  background: var(--bg-card);
+  background:
+    radial-gradient(420px 180px at 100% 0%, rgba(255, 107, 74, 0.14), transparent 70%),
+    linear-gradient(180deg, #211a42, #1a1535 46%);
   border: 1px solid var(--border-h);
   border-radius: 24px;
   padding: clamp(28px, 5vw, 44px);
@@ -516,7 +556,7 @@ body::before {
   align-items: center;
   gap: 16px;
   box-shadow:
-    0 0 0 1px rgba(124, 91, 245, 0.12) inset,
+    0 0 0 1px rgba(139, 108, 255, 0.14) inset,
     0 40px 80px rgba(0, 0, 0, 0.65);
   animation: slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -531,7 +571,8 @@ body::before {
 }
 
 .game-over-heading {
-  font-size: clamp(26px, 6vw, 38px);
+  font-family: var(--font-display);
+  font-size: clamp(24px, 5.4vw, 34px);
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1.1;
@@ -541,7 +582,7 @@ body::before {
   font-family: var(--font-mono);
   font-size: clamp(44px, 10vw, 72px);
   font-weight: 500;
-  color: var(--accent);
+  color: var(--text-accent);
   line-height: 1;
   letter-spacing: -0.04em;
 }

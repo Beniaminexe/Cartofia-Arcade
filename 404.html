@@ -4,54 +4,243 @@
   <meta charset="utf-8" />
   <title>Not Found | Cartofia</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=5" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=4">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=6" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=5">
+  <style>
+    /* 404 — "Night Market" layout (Batch 3). Page-only styles. */
+    body.nf {
+      --nf-card: #1a1535;
+      --nf-line: rgba(255, 255, 255, 0.08);
+      display: flex; flex-direction: column;
+      background:
+        radial-gradient(900px 520px at 85% -10%, rgba(255, 107, 74, 0.18), transparent 62%),
+        radial-gradient(900px 600px at 0% 0%, rgba(124, 92, 255, 0.26), transparent 64%),
+        var(--bg-base);
+    }
+    body.nf::before {
+      height: 100%;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.4px);
+      background-size: 22px 22px;
+      -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 80%);
+              mask-image: linear-gradient(to bottom, #000 0%, transparent 80%);
+    }
+    .nf button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }
+    body.nf main {
+      position: relative; z-index: 1; flex: 1;
+      display: grid; align-content: center; gap: clamp(28px, 5vw, 48px);
+      width: 100%; max-width: 980px; margin: 0 auto;
+      padding: clamp(32px, 7vw, 80px) clamp(16px, 4vw, 40px) clamp(40px, 7vw, 72px);
+    }
+
+    .nf-stage { display: grid; justify-items: center; text-align: center; gap: 14px; }
+
+    .nf-digits {
+      display: flex; align-items: center; justify-content: center;
+      gap: clamp(6px, 1.6vw, 16px);
+      font: 800 clamp(96px, 24vw, 210px)/0.9 var(--font-display);
+      letter-spacing: -0.06em;
+      user-select: none;
+    }
+    .nf-four {
+      background: linear-gradient(180deg, var(--lemon), var(--coral) 85%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 10px 30px rgba(255, 107, 74, 0.35));
+    }
+    .nf-four:last-child { background: linear-gradient(180deg, var(--coral), #b08cff 90%); -webkit-background-clip: text; background-clip: text; }
+    /* the "0" is a lost game cartridge */
+    .nf-zero {
+      position: relative;
+      width: 0.62em; height: 0.86em;
+      border-radius: 0.31em;
+      overflow: hidden;
+      border: 0.045em solid var(--ink);
+      box-shadow: 0 0 0 0.02em var(--lemon), 0 24px 50px -16px rgba(0, 0, 0, 0.9), 0 0 60px -10px rgba(255, 216, 74, 0.35);
+      background: linear-gradient(135deg, #8c84ff, var(--ink));
+      transform: rotate(-6deg);
+      animation: nf-wobble 4s ease-in-out infinite;
+    }
+    .nf-zero img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.35); }
+    @keyframes nf-wobble { 0%, 100% { transform: rotate(-6deg) translateY(0); } 50% { transform: rotate(5deg) translateY(-6px); } }
+
+    .nf-title {
+      font: 700 clamp(24px, 3.6vw, 40px)/1.12 var(--font-display);
+      letter-spacing: -0.03em;
+      max-width: 22ch;
+    }
+    .nf-lead { color: var(--text-secondary); font-size: clamp(15px, 1.7vw, 18px); max-width: 52ch; }
+    .nf-lead code {
+      font: 500 0.88em/1 var(--font-mono);
+      padding: 3px 7px; border-radius: 7px;
+      background: rgba(255, 216, 74, 0.08); border: 1px solid rgba(255, 216, 74, 0.28);
+      color: var(--lemon);
+      overflow-wrap: anywhere;
+    }
+    .nf-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 10px; }
+
+    .nf-picks {
+      padding: clamp(18px, 3vw, 26px);
+      border-radius: 24px;
+      background: var(--nf-card);
+      border: 1px dashed rgba(255, 255, 255, 0.16);
+    }
+    .nf-picks-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 14px; }
+    .nf-picks-title { font: 700 18px/1.2 var(--font-display); letter-spacing: -0.02em; }
+    .nf-picks-head .kicker { color: var(--text-muted); }
+    .nf-grid { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) repeat(2, minmax(0, 0.8fr)); gap: 12px; }
+    .nf-grid a {
+      --g: var(--violet);
+      height: 100%;
+      display: grid; gap: 8px; align-content: start;
+      padding: 7px 7px 10px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--nf-line);
+      color: var(--text-secondary); font-weight: 600; font-size: 14px; text-align: center;
+      transition: transform 0.2s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.2s, color 0.2s;
+    }
+    .nf-grid a:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--g) 60%, transparent); color: var(--text-primary); }
+    .nf-grid img, .nf-tile {
+      width: 100%; aspect-ratio: 16 / 10; display: block;
+      border-radius: 11px; border: 2px solid var(--ink);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--g) 55%, #000), var(--ink));
+    }
+    .nf-tile { display: grid; place-items: center; color: var(--g); }
+    .nf-tile svg { width: 42%; height: auto; }
+
+    .nf .site-footer {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 1200px; margin: 0 auto;
+      padding: 20px clamp(16px, 4vw, 40px);
+      border-top: 1px solid var(--nf-line);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap;
+    }
+    .nf .footer-copy { color: var(--text-muted); font-size: 12.5px; }
+    .nf .footer-links a { font-size: 12.5px; }
+
+    @media (max-width: 760px) {
+      .nf .nav-links { display: none; }
+      .nf-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .nf-grid li:nth-child(n+4) a { grid-template-columns: 56px 1fr; align-items: center; text-align: left; padding: 6px 12px 6px 6px; }
+      .nf-grid li:nth-child(4) { grid-column: 1 / 3; }
+      .nf .site-footer { justify-content: center; text-align: center; }
+    }
+    @media (max-width: 520px) {
+      .nf-actions .btn { flex: 1 1 auto; width: auto; }
+      .nf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .nf-grid li:nth-child(3) { display: none; }
+      .nf-grid li:nth-child(4) { grid-column: auto; }
+      .nf-grid a { font-size: 13px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .nf-zero { animation: none; }
+      .nf-grid a { transition: none; }
+      .nf-grid a:hover { transform: none; }
+    }
+  </style>
 </head>
-<body>
-  <div class="site-shell" style="position:relative;z-index:1;">
-    <header class="nav">
-      <a class="nav-brand" href="/">
-        <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+<body class="nf">
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
       Cartofia
-      </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a class="active" href="/">Home</a>
-        <a href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-      </nav>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
+    </nav>
+    <div class="nav-right">
       <div class="account-menu" data-account-menu>
         <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
         </div>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <main>
-      <section class="hero-card reveal" data-delay="1">
-        <div class="hero-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="9" stroke="#57C2FF" stroke-width="1.6"></circle>
-            <path d="M12 7V13" stroke="#57C2FF" stroke-width="1.8" stroke-linecap="round"></path>
-            <circle cx="12" cy="16.5" r="1" fill="#57C2FF"></circle>
-          </svg>
-        </div>
-        <div class="hero-copy">
-          <p class="hero-kicker">404</p>
-          <h1 class="hero-title">Page Not Found</h1>
-          <p class="hero-lead">The requested page is unavailable.</p>
-          <div class="button-row">
-            <a class="btn btn-primary" href="/">Back Home</a>
-            <a class="btn btn-ghost" href="/account/">Account</a>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
+  <main id="main">
+    <section class="nf-stage" aria-labelledby="nf-title">
+      <div class="nf-digits" aria-hidden="true">
+        <span class="nf-four">4</span>
+        <span class="nf-zero"><img src="/assets/games/maze-chase.svg" alt="" width="160" height="100" /></span>
+        <span class="nf-four">4</span>
+      </div>
+      <p class="kicker">Error 404 · Page not found</p>
+      <h1 class="nf-title" id="nf-title">This stall has packed up for the night.</h1>
+      <p class="nf-lead">Nothing lives at <code data-nf-path>this address</code> — the page may have moved, or the link has a typo.</p>
+      <div class="nf-actions">
+        <a class="btn btn-coral btn-lg" href="/">Back home</a>
+        <a class="btn btn-ghost btn-lg" href="/arcade/">Browse the arcade</a>
+      </div>
+    </section>
 
+    <section class="nf-picks" aria-labelledby="nf-picks-title">
+      <div class="nf-picks-head">
+        <h2 class="nf-picks-title" id="nf-picks-title">Or wander over to…</h2>
+        <p class="kicker">Random picks</p>
+      </div>
+      <ul class="nf-grid" data-nf-picks>
+        <li><a href="/arcade/ludo/" style="--g:#ffb54a"><img src="/assets/games/ludo.svg" alt="" width="160" height="100" /><span>Ludo</span></a></li>
+        <li><a href="/arcade/snake/" style="--g:#8bd94a"><img src="/assets/games/snake.svg" alt="" width="160" height="100" /><span>Snake Classic</span></a></li>
+        <li><a href="/arcade/chess/" style="--g:#b08cff"><img src="/assets/games/chess.svg" alt="" width="160" height="100" /><span>Chess</span></a></li>
+        <li><a href="/minecraft/" style="--g:#3ee6a6"><span class="nf-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5 20.5 7v10L12 21.5 3.5 17V7z"/><path d="M3.5 7 12 11.5 20.5 7M12 11.5v10"/></svg></span><span>Minecraft</span></a></li>
+        <li><a href="/forum/" style="--g:#a58dff"><span class="nf-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-4 3v-3H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M17 8h3a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v3l-4-3h-3"/></svg></span><span>Forum</span></a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/">Home</a>
+      <a href="/arcade/">Arcade</a>
+      <a href="/account/">Account</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
+    </nav>
+  </footer>
+
+  <script>
+    (function () {
+      /* Show the path that wasn't found (text only) */
+      var slot = document.querySelector('[data-nf-path]');
+      if (slot) {
+        var p = window.location.pathname || '/';
+        try { p = decodeURI(p); } catch (_) {}
+        slot.textContent = p.length > 48 ? p.slice(0, 45) + '…' : p;
+      }
+      /* Three random games for the picks row */
+      var games = [
+        ['cartofia', 'Cartofia', '#7cc8ff'], ['ludo', 'Ludo', '#ffb54a'], ['snake', 'Snake Classic', '#8bd94a'],
+        ['chess', 'Chess', '#b08cff'], ['brick-blitz', 'Brick Blitz', '#ff52a2'], ['bomber-raid', 'Bomber Raid', '#ff8c3a'],
+        ['minesweeper', 'Minesweeper', '#9fb4d8'], ['blackjack', 'Blackjack Rooms', '#2fc184'], ['maze-chase', 'Maze Chase', '#8c84ff'],
+        ['word-puzzle', 'Word Puzzle', '#f2c94c'], ['zuma', 'Zuma Temple', '#2cc6b4']
+      ];
+      for (var i = games.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1)), t = games[i]; games[i] = games[j]; games[j] = t;
+      }
+      var links = document.querySelectorAll('[data-nf-picks] li:nth-child(-n+3) a');
+      links.forEach(function (a, k) {
+        var g = games[k];
+        a.href = '/arcade/' + g[0] + '/';
+        a.style.setProperty('--g', g[2]);
+        a.querySelector('img').src = '/assets/games/' + g[0] + '.svg';
+        a.querySelector('span').textContent = g[1];
+      });
+    })();
+  </script>
   <script src="/assets/theme.js?v=3"></script>
   <script src="/assets/site.js?v=9"></script>
   <script src="/assets/notifications.js?v=3" defer></script>

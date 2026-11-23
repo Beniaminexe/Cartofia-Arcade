@@ -1,16 +1,23 @@
 /* ============================================================
-   CARTOFIA HOME — SCRIPT
+   CARTOFIA HOME — SCRIPT (Night Market layout, Batch 3)
    Pure vanilla JS, no dependencies.
+   1. "What's inside": tabs on desktop, accordion ≤768px
+   2. Scroll reveal ([data-reveal])
+   3. Footer year
+   4. "Tonight on Cartofia" feed   — GET /api/homepage/feed (60 s)
+   5. Online counters               — GET /api/online, /api/online/games (30 s)
+   6. Minecraft status              — GET /api/minecraft/info (60 s)
+   7. Latest forum thread           — GET /api/forum/threads?limit=1
+   8. Guest / signed-in greeting    — GET /api/auth/me
    ============================================================ */
 
 (function () {
   'use strict';
 
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* --------------------------------------------------
-     1. FEATURE SHOWCASE TABS
-     Clicking a tab button shows its panel via opacity
-     transition. Keyboard: Arrow keys cycle tabs.
+     1. FEATURE SHOWCASE TABS / MOBILE ACCORDION
   -------------------------------------------------- */
 
   var tabBtns   = document.querySelectorAll('.tab-btn');
@@ -99,28 +106,11 @@
     });
   });
 
-  /* Deep links like #tab-messages open the matching section. */
-  function openFromHash() {
-    var m = /^#tab-([\w-]+)$/.exec(window.location.hash || '');
-    if (m && document.getElementById('tab-' + m[1])) activateTab(m[1]);
-  }
-  window.addEventListener('hashchange', openFromHash);
-
-
-  /* --------------------------------------------------
-     2. MOBILE ACCORDION REARRANGE
-     On screens ≤768px, move each tab panel directly
-     after its corresponding tab button so it sits inline
-     under the tab that opened it. On wider screens, move
-     all panels back into .showcase-content for the
-     side-by-side desktop layout. Reacts to resize so the
-     layout stays correct after rotation or window resize.
-  -------------------------------------------------- */
-
+  /* Mobile: nest each panel directly after its button; desktop: panels
+     live in .showcase-content. Re-runs on breakpoint changes. */
   function arrangePanels() {
     if (!showcaseTabs || !showcaseContent) return;
     if (isAccordion()) {
-      // Mobile: nest each panel directly after its tab button
       tabBtns.forEach(function (btn) {
         var panel = document.getElementById('tab-' + btn.dataset.tab);
         if (!panel) return;
@@ -129,7 +119,6 @@
         }
       });
     } else {
-      // Desktop: panels go back into .showcase-content
       tabPanels.forEach(function (panel) {
         if (panel.parentNode !== showcaseContent) {
           showcaseContent.appendChild(panel);
@@ -144,9 +133,25 @@
     syncAria();
   }
 
+  /* Deep links like /#tab-messages (used by every page's nav) open the
+     matching section and bring it into view. */
+  function openFromHash() {
+    var m = /^#tab-([\w-]+)$/.exec(window.location.hash || '');
+    if (!m || !document.getElementById('tab-' + m[1])) return;
+    activateTab(m[1]);
+    var target = isAccordion()
+      ? document.querySelector('.tab-btn[data-tab="' + m[1] + '"]')
+      : document.getElementById('showcase');
+    if (target) {
+      requestAnimationFrame(function () {
+        target.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' });
+      });
+    }
+  }
+
   arrangePanels();
   openFromHash();
-  // matchMedia.addEventListener is the modern API; addListener fallback for old Safari
+  window.addEventListener('hashchange', openFromHash);
   if (accordionMQ.addEventListener) {
     accordionMQ.addEventListener('change', arrangePanels);
   } else if (accordionMQ.addListener) {
@@ -155,73 +160,31 @@
 
 
   /* --------------------------------------------------
-     3. SCROLL REVEAL (IntersectionObserver)
-     Elements with class "reveal" start hidden (via CSS)
-     and gain class "visible" when they enter the viewport.
+     2. SCROLL REVEAL — content stays visible without JS
+     or with reduced motion; otherwise fades up once.
   -------------------------------------------------- */
 
-  var revealEls = document.querySelectorAll('.reveal');
-
-  if ('IntersectionObserver' in window && revealEls.length) {
+  var revealEls = document.querySelectorAll('[data-reveal]');
+  if (!reduceMotion && 'IntersectionObserver' in window && revealEls.length) {
     var revealObs = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          revealObs.unobserve(entry.target); // fire once only
+          entry.target.classList.remove('is-pending');
+          revealObs.unobserve(entry.target);
         }
       });
-    }, {
-      threshold:  0.1,
-      rootMargin: '0px 0px -52px 0px'
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight) return; // already on screen: leave it be
+      el.classList.add('is-pending');
+      revealObs.observe(el);
     });
-
-    revealEls.forEach(function (el) { revealObs.observe(el); });
-  } else {
-    // Graceful fallback: show everything immediately
-    revealEls.forEach(function (el) { el.classList.add('visible'); });
   }
 
 
   /* --------------------------------------------------
-     4. NAV ACTIVE LINK (scroll-based highlight)
-     Updates which nav link is "active" as the user
-     scrolls through sections.
-  -------------------------------------------------- */
-
-  var navLinks = document.querySelectorAll('.nav-links a');
-  var sections = document.querySelectorAll('section[id]');
-
-  if (navLinks.length && sections.length) {
-    var lastActive = '';
-
-    function updateActiveNav() {
-      var scrollY = window.scrollY + 120; // offset for fixed nav height
-      var currentId = '';
-
-      sections.forEach(function (section) {
-        if (section.offsetTop <= scrollY) {
-          currentId = section.id;
-        }
-      });
-
-      if (currentId === lastActive) return; // nothing changed
-      lastActive = currentId;
-
-      navLinks.forEach(function (link) {
-        var href = link.getAttribute('href') || '';
-        var isMatch = href === '#' + currentId ||
-                      (currentId === 'hero' && link.textContent.trim() === 'Home');
-        link.classList.toggle('active', isMatch);
-      });
-    }
-
-    window.addEventListener('scroll', updateActiveNav, { passive: true });
-    updateActiveNav(); // run once on load
-  }
-
-
-  /* --------------------------------------------------
-     5. COPYRIGHT YEAR
+     3. COPYRIGHT YEAR
   -------------------------------------------------- */
 
   var yearEl = document.querySelector('.footer-copy');
@@ -231,50 +194,169 @@
 
 
   /* --------------------------------------------------
-     6. TONIGHT ON CARTOFIA FEED
-     Fetches live data from /api/homepage/feed and
-     replaces the hardcoded placeholder items.
+     helpers
   -------------------------------------------------- */
 
-  (async function loadFeed() {
-    var feedList = document.querySelector('.feed-list');
-    if (!feedList) return;
+  function authHeaders() {
+    var h = {};
     try {
-      var res = await fetch('/api/homepage/feed');
-      if (!res.ok) throw new Error('non-200');
-      var data = await res.json();
-      var items = Array.isArray(data.items) && data.items.length ? data.items : null;
-      if (items) {
-        feedList.innerHTML = items.map(function (item) {
-          var icon = item.icon
-            ? '<span class="feed-icon" aria-hidden="true">' + item.icon + '</span>'
-            : '';
-          return '<li>' + icon + (item.text || '') + '</li>';
-        }).join('');
-      }
-    } catch (_) {
-      // Leave the fallback content already in the HTML
-    }
-  })();
-
+      var t = sessionStorage.getItem('oidc_access_token') || localStorage.getItem('oidc_access_token');
+      if (t) h.Authorization = 'Bearer ' + t;
+    } catch (_) {}
+    return h;
+  }
+  function getJSON(url, withAuth) {
+    var opts = withAuth ? { credentials: 'include', headers: authHeaders() } : {};
+    return fetch(url, opts)
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+  }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function fmtNum(n) {
+    n = Number(n);
+    return isFinite(n) ? n.toLocaleString('en-GB') : '–';
+  }
+  function hhmm(d) {
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
 
 
   /* --------------------------------------------------
-     7. PLAYERS ONLINE COUNTER
-     Polls /api/online every 30 seconds and updates
-     the stat-value element with id="online-count".
+     4. TONIGHT ON CARTOFIA FEED (built with textContent — API
+     strings are never parsed as HTML)
   -------------------------------------------------- */
 
-  function updateOnlineCount() {
-    fetch('/api/online')
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        var el = document.getElementById('online-count');
-        if (el) el.textContent = data.count;
-      })
-      .catch(function() {});
+  var feedList = document.querySelector('.feed-list');
+  var feedUpdated = document.querySelector('[data-feed-updated]');
+
+  function loadFeed() {
+    if (!feedList) return;
+    getJSON('/api/homepage/feed').then(function (data) {
+      var items = data && Array.isArray(data.items) && data.items.length ? data.items : null;
+      if (!items) return; // keep whatever is showing
+      var frag = document.createDocumentFragment();
+      items.forEach(function (item) {
+        var li = el('li');
+        if (item.icon) {
+          var icon = el('span', 'feed-icon', String(item.icon));
+          icon.setAttribute('aria-hidden', 'true');
+          li.appendChild(icon);
+        }
+        li.appendChild(el('span', 'feed-text', String(item.text || '')));
+        frag.appendChild(li);
+      });
+      feedList.textContent = '';
+      feedList.appendChild(frag);
+      if (feedUpdated) feedUpdated.textContent = ' · refreshed ' + hhmm(new Date());
+    });
   }
-  updateOnlineCount();
-  setInterval(updateOnlineCount, 30000);
+  loadFeed();
+  setInterval(loadFeed, 60000);
+
+
+  /* --------------------------------------------------
+     5. ONLINE COUNTERS
+  -------------------------------------------------- */
+
+  var arcadeStat = document.querySelector('[data-door-arcade]');
+  var arcadeDefault = arcadeStat ? arcadeStat.textContent : '';
+
+  function updateOnline() {
+    getJSON('/api/online').then(function (data) {
+      var node = document.getElementById('online-count');
+      if (node && data && data.count != null) node.textContent = fmtNum(data.count);
+    });
+    getJSON('/api/online/games').then(function (data) {
+      var games = (data && data.games) || {};
+      var total = 0;
+      Object.keys(games).forEach(function (k) { total += Number(games[k]) || 0; });
+      var node = document.getElementById('ingame-count');
+      if (node && data) node.textContent = fmtNum(total);
+      if (arcadeStat) {
+        arcadeStat.textContent = total > 0
+          ? (total === 1 ? '1 player' : fmtNum(total) + ' players') + ' in a game now'
+          : arcadeDefault;
+        arcadeStat.classList.toggle('is-hot', total > 0);
+      }
+    });
+  }
+  updateOnline();
+  setInterval(updateOnline, 30000);
+
+
+  /* --------------------------------------------------
+     6. MINECRAFT STATUS (public, cached server-side)
+  -------------------------------------------------- */
+
+  function updateMinecraft() {
+    getJSON('/api/minecraft/info').then(function (data) {
+      var running = data ? data.running : null;
+      var state = running === true ? 'awake' : running === false ? 'asleep' : 'unknown';
+      var short = { awake: 'Awake', asleep: 'Asleep', unknown: '—' }[state];
+      var long = {
+        awake: 'Server awake' + (data && data.version ? ' · ' + data.version : ''),
+        asleep: 'Asleep · wakes on demand',
+        unknown: 'Status unavailable'
+      }[state];
+
+      var counter = document.getElementById('mc-state');
+      if (counter) {
+        counter.textContent = short;
+        counter.dataset.state = state;
+        counter.title = long;
+      }
+      var door = document.querySelector('[data-door-mc]');
+      if (door && state !== 'unknown') {
+        door.textContent = long;
+        door.classList.toggle('is-hot', state === 'awake');
+      }
+      var dot = document.querySelector('[data-mc-dot]');
+      if (dot) dot.dataset.state = state;
+      var label = document.querySelector('[data-mc-label]');
+      if (label) label.textContent = state === 'unknown' ? 'Unavailable' : short;
+    });
+  }
+  updateMinecraft();
+  setInterval(updateMinecraft, 60000);
+
+
+  /* --------------------------------------------------
+     7. LATEST FORUM THREAD (adds a real link to the Forum door)
+  -------------------------------------------------- */
+
+  getJSON('/api/forum/threads?limit=1').then(function (data) {
+    var t = data && Array.isArray(data.threads) ? data.threads[0] : null;
+    var slot = document.querySelector('[data-door-forum]');
+    if (!t || !slot || !t.title) return;
+    slot.textContent = '';
+    slot.appendChild(document.createTextNode('Latest: '));
+    var a = el('a', 'hm-door-thread', String(t.title));
+    a.href = '/forum/thread/?id=' + encodeURIComponent(t.id);
+    slot.appendChild(a);
+  });
+
+
+  /* --------------------------------------------------
+     8. GUEST / SIGNED-IN GREETING
+  -------------------------------------------------- */
+
+  getJSON('/api/auth/me', true).then(function (me) {
+    var signedIn = !!(me && me.authenticated && me.user);
+    var guest = document.querySelector('[data-hello-guest]');
+    var member = document.querySelector('[data-hello-member]');
+    if (signedIn && member) {
+      var name = member.querySelector('[data-hello-name]');
+      if (name) name.textContent = me.user.username || 'friend';
+      member.hidden = false;
+    } else if (!signedIn && guest && me && !authHeaders().Authorization) {
+      // (legacy token sessions aren't visible to /api/auth/me — say nothing then)
+      guest.hidden = false;
+    }
+  });
 
 })();

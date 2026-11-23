@@ -6,40 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=5" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=4" />
-  <style>
-    button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }
-    .legal-page {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: calc(var(--nav-h, 64px) + 48px) var(--gutter, 24px) 80px;
-      color: var(--text-primary);
-      line-height: 1.65;
-    }
-    .legal-kicker {
-      font-family: var(--font-mono);
-      font-size: 11.5px; font-weight: 500;
-      letter-spacing: 0.14em; text-transform: uppercase;
-      color: var(--text-accent); margin: 0 0 6px;
-    }
-    .legal-title {
-      font-size: clamp(28px, 4vw, 42px);
-      font-weight: 700; letter-spacing: -0.03em; margin: 0 0 10px;
-    }
-    .legal-updated { color: var(--text-muted); font-family: var(--font-mono); font-size: 12px; }
-    .legal-page h2 {
-      margin: 32px 0 10px;
-      font-size: 20px; font-weight: 700; letter-spacing: -0.015em;
-    }
-    .legal-page p, .legal-page li { color: var(--text-secondary); font-size: 15px; }
-    .legal-page ul { padding-left: 22px; }
-    .legal-page li { margin-bottom: 6px; }
-    .legal-page a { color: var(--text-accent); }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=6" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=5" />
+  <link rel="stylesheet" href="/assets/legal-v2.css?v=1" />
 </head>
-<body>
+<body class="lg-body">
+  <a class="lg-skip" href="#lg-doc">Skip to content</a>
+
   <header class="nav" id="nav">
     <a class="nav-brand" href="/">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
@@ -55,6 +29,7 @@
       <a href="/arcade/">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
       <a href="/forum/">Forum</a>
+      <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
     <div class="nav-right">
       <div class="account-menu" data-account-menu>
@@ -66,20 +41,47 @@
     </div>
   </header>
 
-  <main class="legal-page">
-    <p class="legal-kicker">Privacy</p>
-    <h1 class="legal-title">Privacy Policy</h1>
-    <p class="legal-updated">Last updated: October 2026</p>
+  <main class="legal-page" id="main">
+    <header class="lg-hero">
+      <div class="lg-hero-copy">
+        <p class="legal-kicker">Privacy</p>
+        <h1 class="legal-title">Privacy Policy</h1>
+        <p class="legal-updated">Last updated: October 2026</p>
+        <nav class="tabs lg-switch" aria-label="Legal documents">
+          <a class="tab active" href="/privacy/" aria-current="page">Privacy Policy</a>
+          <a class="tab" href="/terms/">Terms of Service</a>
+        </nav>
+      </div>
+      <div class="lg-hero-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.4 7.5 9.5 4.4-1.1 7.5-4.9 7.5-9.5V6z"/><rect x="9" y="10.5" width="6" height="5" rx="1.2"/><path d="M10.2 10.5V9a1.8 1.8 0 0 1 3.6 0v1.5"/></svg></div>
+    </header>
 
-    <h2>What this is</h2>
+    <div class="lg-layout">
+      <nav class="lg-toc" aria-labelledby="lg-toc-title">
+        <p class="lg-toc-title" id="lg-toc-title">On this page</p>
+        <ol>
+          <li><a href="#what-this-is">What this is</a></li>
+          <li><a href="#information-we-collect">Information we collect</a></li>
+          <li><a href="#how-we-use-it">How we use it</a></li>
+          <li><a href="#what-we-do-not-do">What we do not do</a></li>
+          <li><a href="#third-parties">Third parties</a></li>
+          <li><a href="#deletion">Deletion</a></li>
+          <li><a href="#security">Security</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ol>
+      </nav>
+
+      <article class="lg-doc" id="lg-doc" tabindex="-1">
+      <section class="lg-section" id="what-this-is" aria-labelledby="what-this-is-h">
+        <h2 id="what-this-is-h">What this is</h2>
     <p>
       Cartofia is a personal homelab project. The site, the arcade, the Minecraft
       server, the forum, and the account system all run on a single server owned
       and operated by one person. This policy describes what information is
       collected, why, and how it is handled.
     </p>
-
-    <h2>Information we collect</h2>
+      </section>
+      <section class="lg-section" id="information-we-collect" aria-labelledby="information-we-collect-h">
+        <h2 id="information-we-collect-h">Information we collect</h2>
     <ul>
       <li>
         <strong>Account data from your identity provider.</strong> When you sign in
@@ -113,8 +115,9 @@
         and spam prevention.
       </li>
     </ul>
-
-    <h2>How we use it</h2>
+      </section>
+      <section class="lg-section" id="how-we-use-it" aria-labelledby="how-we-use-it-h">
+        <h2 id="how-we-use-it-h">How we use it</h2>
     <ul>
       <li>To let you sign in and keep you signed in across sessions.</li>
       <li>To render your public profile and let other users find you.</li>
@@ -122,16 +125,18 @@
       <li>To send a Discord DM when your personal server comes online, if you linked Discord.</li>
       <li>To keep the service running and detect abuse.</li>
     </ul>
-
-    <h2>What we do not do</h2>
+      </section>
+      <section class="lg-section" id="what-we-do-not-do" aria-labelledby="what-we-do-not-do-h">
+        <h2 id="what-we-do-not-do-h">What we do not do</h2>
     <ul>
       <li>We do not sell your data to anyone.</li>
       <li>We do not run third-party advertising or trackers.</li>
       <li>We do not share your email with other users.</li>
       <li>We do not use your data to train machine learning models.</li>
     </ul>
-
-    <h2>Third parties</h2>
+      </section>
+      <section class="lg-section" id="third-parties" aria-labelledby="third-parties-h">
+        <h2 id="third-parties-h">Third parties</h2>
     <ul>
       <li>
         <strong>Authentik</strong> — self-hosted identity provider on the same
@@ -154,8 +159,9 @@
         internet into the homelab. Can see connection metadata (IP, bytes).
       </li>
     </ul>
-
-    <h2>Deletion</h2>
+      </section>
+      <section class="lg-section" id="deletion" aria-labelledby="deletion-h">
+        <h2 id="deletion-h">Deletion</h2>
     <p>
       You can delete your personal Minecraft server at any time from
       <a href="/minecraft/">the Minecraft page</a>. User accounts and all
@@ -169,21 +175,60 @@
       automatically removed by the nightly cleanup job; the world is archived
       for an additional 90 days then deleted.
     </p>
-
-    <h2>Security</h2>
+      </section>
+      <section class="lg-section" id="security" aria-labelledby="security-h">
+        <h2 id="security-h">Security</h2>
     <p>
       Cartofia runs on a single homelab server. Reasonable care is taken — HTTPS
       everywhere, OIDC-authenticated APIs, secrets kept out of source control —
       but this is a personal project, not an enterprise. If a serious incident
       happens, affected users will be contacted by email.
     </p>
-
-    <h2>Contact</h2>
+      </section>
+      <section class="lg-section" id="contact" aria-labelledby="contact-h">
+        <h2 id="contact-h">Contact</h2>
     <p>
       Questions, data requests, bug reports: email
       <a href="mailto:manolachestefan13@gmail.com">manolachestefan13@gmail.com</a>.
     </p>
+      </section>
+        <p class="lg-doc-foot"><a href="#main">Back to top ↑</a><a href="/terms/">Terms of Service →</a></p>
+      </article>
+    </div>
   </main>
+
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/">Home</a>
+      <a href="/arcade/">Arcade</a>
+      <a href="/forum/">Forum</a>
+      <a href="/privacy/" aria-current="page">Privacy</a>
+      <a href="/terms/">Terms</a>
+    </nav>
+  </footer>
+
+  <script>
+    /* Highlight the table-of-contents entry for the section being read */
+    (function () {
+      var links = {};
+      document.querySelectorAll('.lg-toc a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+      if (!('IntersectionObserver' in window)) return;
+      var current = null;
+      var obs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          var a = links[e.target.id];
+          if (!a || a === current) return;
+          if (current) current.removeAttribute('aria-current');
+          a.setAttribute('aria-current', 'true');
+          current = a;
+        });
+      }, { rootMargin: '-90px 0px -65% 0px' });
+      document.querySelectorAll('.lg-section').forEach(function (s) { obs.observe(s); });
+    })();
+  </script>
+
 
   <script src="/assets/theme.js?v=3"></script>
   <script src="/assets/site.js?v=9"></script>
