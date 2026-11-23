@@ -16,6 +16,10 @@
      r.setDice({seat, values, phase, enabled, rolling, boost?, double?})
      r.setTimer(seat, deadlineMs, totalMs)   (seat null clears; ticks sound for the view seat < 5 s)
      r.showEmote(seat, emote); r.flash(text, kind, {icon?, hold?, y?}); r.celebrate(seat)
+     r.throwItem(fromSeat, toSeat, item) -> Promise   (tomato|egg|rose|potato|water|confetti; independent of playEvents)
+     r.showChat(seat, text)            short speech bubble on that seat's pod (text only, never HTML)
+     r.getPodRect(seat) -> DOMRect     for anchoring UI menus to a pod
+     r.setMutedSeats([seat])           small "muted" badge on those pods
      r.on(evt, fn) -> unsubscribe fn; r.off(evt, fn)
         "token" {seat, token}  only for selectable tokens / valid targeting tokens
         "square" {abs}         only in square targeting
@@ -24,6 +28,8 @@
         "pod" {seat}           any pod click
      r.resize(); r.destroy(); r.getState(); r.isBusy(); r.setReducedMotion(b); r.setSound(b)
      LudoRenderer.POWERUP_META {id: {name, icon_url, color, description, phases, target}}
+     LudoRenderer.THROWABLES {id: {name, svg}}  (original inline art, also used by the UI menu)
+   Two dice (Double Dice): dice [a,b] with value a+b -> both dice tumble and a "= total" chip shows.
      LudoRenderer.COLORS / GEOMETRY / SAFE_ABS / EVENT_TYPES / VERSION
    Clicking an enabled roll die starts the tumble immediately (optimistic) and emits "dice";
    if the server rejects, call setDice again and the die settles.
@@ -57,7 +63,7 @@
 
   const icon = (id) => BASE + 'assets/powerups/' + id + '.svg' + VQ;
   const POWERUP_META = {
-    double_dice: { name: 'Double Dice', icon_url: icon('double_dice'), color: '#ff8a1f', description: 'Throw two dice on your next roll and keep the one you like.', phases: ['roll'], target: null },
+    double_dice: { name: 'Double Dice', icon_url: icon('double_dice'), color: '#ff8a1f', description: 'Throw two dice on your next roll and move the total. A 6 on either die brings a token out.', phases: ['roll'], target: null },
     reroll: { name: 'Re-roll', icon_url: icon('reroll'), color: '#14c4e0', description: 'Discard this roll and throw again.', phases: ['move'], target: null },
     boost: { name: 'Rocket', icon_url: icon('boost'), color: '#ff4d3d', description: '+3 squares on this move (tokens already on the board).', phases: ['move'], target: null },
     shield: { name: 'Shield', icon_url: icon('shield'), color: '#4f7df9', description: 'Protect one of your tokens from captures and bombs for 2 rounds.', phases: ['roll', 'move'], target: 'own_token' },
@@ -116,10 +122,60 @@
   const CROWN_SVG = '<svg viewBox="0 0 48 34"><path d="M4 12 L14 20 L24 4 L34 20 L44 12 L40 30 H8 Z" fill="#ffd34d" stroke="#b77900" stroke-width="2.5" stroke-linejoin="round"/><rect x="8" y="27" width="32" height="5" rx="2" fill="#f0a800" stroke="#b77900" stroke-width="2"/><circle cx="24" cy="4.5" r="3" fill="#fff4b0"/><circle cx="4" cy="12" r="2.6" fill="#fff4b0"/><circle cx="44" cy="12" r="2.6" fill="#fff4b0"/></svg>';
   const ICON_SNOW = '<svg viewBox="-24 -24 48 48"><g stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none">' + SNOW_ARMS + '</g></svg>';
   const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M2 8.5a15 15 0 0 1 20 0M5.5 12.2a10 10 0 0 1 13 0M9 15.8a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1.3" fill="#fff"/><path d="M3 3l18 18" stroke="#ff5a6e" stroke-width="3"/></svg>';
+  const ICON_MUTED = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10H9l-4 4v-4H4z"/><path d="M3 3l18 18" stroke="#ff5a6e" stroke-width="3"/></svg>';
   const ICON_BOT = '<svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="4" fill="#fff"/><circle cx="9.3" cy="13" r="1.9" fill="#1b2340"/><circle cx="14.7" cy="13" r="1.9" fill="#1b2340"/><path d="M12 7V3.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="3.2" r="1.7" fill="#fff"/></svg>';
   const FROST_HTML =
     '<svg class="lr-icicles" viewBox="0 0 200 20" preserveAspectRatio="none"><path d="M0 0H200V3L196 3L193 12L190 3L182 3L178 17L174 3L163 3L160 10L157 3L146 3L142 15L138 3L126 3L123 9L120 3L108 3L104 18L100 3L90 3L87 11L84 3L72 3L68 14L64 3L53 3L50 9L47 3L36 3L32 16L28 3L17 3L14 10L11 3L0 3Z" fill="rgba(235,251,255,.92)"/></svg>' +
     '<i class="lr-flake lr-fk1"></i><i class="lr-flake lr-fk2"></i><i class="lr-flake lr-fk3"></i>';
+
+  /* ---------- throwables (original art; viewBox 0 0 64 64, no ids so many can coexist) ---------- */
+  const TSVG = (body) => '<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">' + body + '</svg>';
+  const THROWABLES = {
+    tomato: { name: 'Tomato', svg: TSVG(
+      '<ellipse cx="32" cy="39" rx="24" ry="20" fill="#e8392c"/>' +
+      '<path d="M10 41 Q32 66 54 41 Q50 57 32 59 Q15 57 10 41Z" fill="#a91d16" opacity=".55"/>' +
+      '<ellipse cx="22" cy="31" rx="7.5" ry="4.2" transform="rotate(-28 22 31)" fill="#fff" opacity=".6"/>' +
+      '<path d="M32 21 L36 13 L38.5 21.5 L47 19.5 L41 25.5 L45.5 31 L36 27.5 L32 33 L28 27.5 L18.5 31 L23 25.5 L17 19.5 L25.5 21.5 L28 13 Z" fill="#41b14b" stroke="#22762b" stroke-width="1.6" stroke-linejoin="round"/>' +
+      '<path d="M32 21 Q33 13 38 9" stroke="#22762b" stroke-width="3.2" fill="none" stroke-linecap="round"/>') },
+    egg: { name: 'Egg', svg: TSVG(
+      '<path d="M32 5 C46 5 54 27 54 40 C54 53 44 60 32 60 C20 60 10 53 10 40 C10 27 18 5 32 5Z" fill="#fbf3e2" stroke="#cdb48e" stroke-width="2.2"/>' +
+      '<path d="M14 44 Q32 62 50 44 Q46 57 32 58 Q18 57 14 44Z" fill="#e6d3b0" opacity=".7"/>' +
+      '<ellipse cx="23.5" cy="23" rx="5" ry="9" transform="rotate(22 23.5 23)" fill="#fff"/>' +
+      '<circle cx="39" cy="33" r="1.4" fill="#d8c19b"/><circle cx="35" cy="45" r="1.1" fill="#d8c19b"/>') },
+    rose: { name: 'Rose', svg: TSVG(
+      '<path d="M32 33 Q30 47 33 62" stroke="#2c8a38" stroke-width="4" fill="none" stroke-linecap="round"/>' +
+      '<path d="M31 49 Q19 42 13 50 Q23 57 31 51Z" fill="#45b34f"/><path d="M33 43 Q45 35 52 42 Q43 50 33 45Z" fill="#45b34f"/>' +
+      '<circle cx="32" cy="22" r="16.5" fill="#e11d48"/>' +
+      '<path d="M17 25 Q15 9 32 8 Q49 9 47 25 Q41 15 32 19 Q23 15 17 25Z" fill="#be123c"/>' +
+      '<path d="M21 28 Q32 39 43 28 Q38 21 32 25 Q26 21 21 28Z" fill="#fb7185"/>' +
+      '<path d="M26 18 Q32 10 38 18 Q35 23 32 21 Q29 23 26 18Z" fill="#9f1239"/>' +
+      '<ellipse cx="24" cy="15" rx="3.5" ry="2" transform="rotate(-30 24 15)" fill="#fff" opacity=".45"/>') },
+    potato: { name: 'Potato', svg: TSVG(
+      '<path d="M11 35 C8 20 21 9 34 11 C49 11 57 22 55 35 C54 48 44 57 30 55 C17 54 12 45 11 35Z" fill="#c99350" stroke="#85552a" stroke-width="2.2"/>' +
+      '<path d="M15 43 Q30 58 50 44 Q44 54 30 54 Q19 53 15 43Z" fill="#a8743a" opacity=".6"/>' +
+      '<ellipse cx="24" cy="23" rx="8" ry="4.2" transform="rotate(-30 24 23)" fill="#ecc286" opacity=".85"/>' +
+      '<circle cx="39" cy="21" r="2" fill="#77461f"/><circle cx="45" cy="35" r="1.7" fill="#77461f"/><circle cx="26" cy="41" r="2.1" fill="#77461f"/><circle cx="35" cy="46" r="1.4" fill="#77461f"/><circle cx="20" cy="32" r="1.3" fill="#77461f"/>') },
+    water: { name: 'Water balloon', svg: TSVG(
+      '<path d="M32 5 C46 5 54 17 54 29 C54 43 42 53 32 53 C22 53 10 43 10 29 C10 17 18 5 32 5Z" fill="#38bdf8" stroke="#0369a1" stroke-width="2.2"/>' +
+      '<path d="M13 35 Q32 56 51 35 Q45 51 32 52 Q19 51 13 35Z" fill="#0284c7" opacity=".45"/>' +
+      '<path d="M28.5 53 L32 60 L35.5 53Z" fill="#0369a1"/>' +
+      '<ellipse cx="22.5" cy="19" rx="5" ry="9.5" transform="rotate(26 22.5 19)" fill="#fff" opacity=".62"/>' +
+      '<path d="M30 60 Q24 62 26 64" stroke="#0369a1" stroke-width="1.6" fill="none"/>') },
+    confetti: { name: 'Confetti', svg: TSVG(
+      '<path d="M8 59 L24 20 L45 41 Z" fill="#7c5bf5" stroke="#4524b8" stroke-width="2.2" stroke-linejoin="round"/>' +
+      '<path d="M15.5 41 L33 29.5 M11.5 50.5 L40 36" stroke="#ffd34d" stroke-width="3.2"/>' +
+      '<ellipse cx="34.5" cy="30.5" rx="4" ry="15" transform="rotate(-45 34.5 30.5)" fill="#a98bff" stroke="#4524b8" stroke-width="2"/>' +
+      '<circle cx="45" cy="11" r="3.2" fill="#ff3b55"/><rect x="50" y="19" width="7" height="3.4" rx="1" transform="rotate(30 53.5 20.7)" fill="#1fc66a"/>' +
+      '<circle cx="55" cy="33" r="2.6" fill="#2f8cff"/><rect x="34" y="4" width="3.4" height="7.5" rx="1" transform="rotate(-20 35.7 7.7)" fill="#ffc21a"/>' +
+      '<path d="M56 8 l1.6 3.4 3.6 .6 -2.6 2.6 .6 3.6 -3.2 -1.7 -3.2 1.7 .6 -3.6 -2.6 -2.6 3.6 -.6z" fill="#fff6b0"/>') }
+  };
+  const THROW_IDS = Object.keys(THROWABLES);
+  // Splat art drawn on the target's avatar (viewBox 0 0 100 100).
+  const SPLAT_SVG = {
+    tomato: '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 14 C60 6 64 22 72 18 C84 12 82 30 90 34 C99 40 86 48 92 58 C98 70 82 70 80 80 C78 92 64 84 56 92 C48 99 44 86 34 88 C22 90 24 76 14 72 C3 67 14 58 9 50 C4 40 18 38 16 28 C14 16 30 22 34 14 C38 6 44 18 50 14Z" fill="#e3312a"/><path d="M50 26 C62 24 74 36 72 50 C70 64 58 74 46 72 C32 70 26 58 28 46 C30 34 40 28 50 26Z" fill="#ff5a47" opacity=".9"/><circle cx="42" cy="44" r="3" fill="#ffd166" opacity=".85"/><circle cx="56" cy="52" r="2.6" fill="#ffd166" opacity=".85"/><circle cx="48" cy="60" r="2.4" fill="#ffd166" opacity=".85"/><path d="M41 85 Q42 97 45 99 Q48 97 47 86Z M66 83 Q67 93 70 94 Q73 92 71 82Z" fill="#c8241d"/><ellipse cx="38" cy="34" rx="7" ry="3.5" transform="rotate(-25 38 34)" fill="#fff" opacity=".45"/></svg>',
+    egg: '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12 C64 10 70 24 80 26 C94 30 88 46 92 56 C96 70 80 72 76 82 C70 94 56 88 46 90 C32 92 28 80 18 76 C6 70 14 56 10 46 C6 32 20 30 26 22 C34 12 42 13 50 12Z" fill="#fffaf0" opacity=".96"/><path d="M28 50 C26 40 36 30 48 30 C62 30 72 40 70 52 C68 64 58 70 48 70 C36 70 30 62 28 50Z" fill="#fff" /><circle cx="50" cy="50" r="15" fill="#ffb703"/><circle cx="50" cy="50" r="15" fill="none" stroke="#f08c00" stroke-width="2"/><ellipse cx="45" cy="44" rx="5" ry="3" transform="rotate(-30 45 44)" fill="#fff3c4" opacity=".9"/><path d="M30 86 Q31 96 34 97 Q37 95 35 86Z" fill="#fffaf0"/></svg>',
+    water: '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 C58 18 66 10 70 22 C76 34 92 26 88 42 C86 52 98 58 88 66 C80 74 86 88 72 86 C62 85 58 98 48 92 C38 86 28 96 22 84 C17 74 2 72 10 60 C16 50 4 40 16 34 C26 30 22 14 34 16 C42 18 44 2 50 8Z" fill="#5cc8ff" opacity=".55"/><path d="M50 22 C62 22 76 34 74 50 C72 66 60 76 48 74 C34 72 24 60 26 46 C28 32 38 22 50 22Z" fill="#bdf0ff" opacity=".55"/><path d="M36 30 Q44 26 50 30" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".85"/><path d="M30 80 Q31 94 35 95 Q39 93 37 80Z M62 82 Q63 92 66 93 Q69 91 67 82Z" fill="#38bdf8" opacity=".8"/></svg>'
+  };
 
   const PAWN_BASE = 'M15 103 C15 93 31 89 50 89 C69 89 85 93 85 103 C85 113 69 118 50 118 C31 118 15 113 15 103 Z';
   const PAWN_BODY = 'M29 101 C31 86 39 76 41 60 L59 60 C61 76 69 86 71 101 Z';
@@ -469,6 +525,139 @@
     isBusy() { return this._busy; }
     setReducedMotion(v) { this._rmOpt = !!v; this._applyRm(); }
     setSound(v) { this.opts.sound = !!v; }
+    getPodRect(seat) {
+      const pod = this.pods && this.pods[seat | 0];
+      if (this._destroyed || !pod || pod.classList.contains('lr-off')) return null;
+      return pod._p.card.getBoundingClientRect();
+    }
+    setMutedSeats(list) {
+      const next = new Set((Array.isArray(list) ? list : []).filter((v) => isNum(+v)).map((v) => v | 0));
+      const key = Array.from(next).sort().join(',');
+      if (key === this._mutedKey) return;
+      this._mutedKey = key; this._muted = next;
+      if (this.ws) for (let s = 0; s < 4; s++) this._renderPod(s);
+    }
+    showChat(seat, text) {
+      const pod = this.pods && this.pods[seat | 0];
+      if (this._destroyed || !pod || pod.classList.contains('lr-off')) return;
+      const t = String(text == null ? '' : text).replace(/\s+/g, ' ').trim();
+      if (!t) return;
+      const anchor = pod._p.emote;
+      const b = h('div', 'lr-speech');
+      b.textContent = t.length > 48 ? t.slice(0, 47) + '…' : t;   // textContent only — never HTML
+      anchor.querySelectorAll('.lr-speech').forEach((x) => x.remove());
+      anchor.appendChild(b);
+      const life = 3600;
+      if (this.rm || !b.animate) { setTimeout(() => b.remove(), life); return; }
+      b.animate([{ transform: 'scale(.4)', opacity: 0 }, { transform: 'scale(1.06)', opacity: 1, offset: 0.06 }, { transform: 'scale(1)', opacity: 1, offset: 0.1 }, { opacity: 1, offset: 0.88 }, { transform: 'translateY(-12%)', opacity: 0 }], { duration: life, easing: 'ease-out', fill: 'forwards' }).finished.then(() => b.remove(), () => b.remove());
+    }
+    /* Throwables: arc from the thrower's avatar to the target's avatar, then an item-specific
+       effect on the target. Runs alongside (never inside) the event queue. */
+    throwItem(fromSeat, toSeat, item) {
+      if (this._destroyed || !this.L || !THROWABLES[item]) return Promise.resolve();
+      const tp = this.pods[toSeat | 0];
+      if (!tp || tp.classList.contains('lr-off')) return Promise.resolve();
+      const fp = this.pods[fromSeat | 0];
+      const B = this._center(tp._p.avw);
+      const A = fp && !fp.classList.contains('lr-off') && (fromSeat | 0) !== (toSeat | 0) ? this._center(fp._p.avw) : [this.L.stageW / 2, this.L.stageH];
+      const av = Math.max(26, tp._p.avw.getBoundingClientRect().width || this.L.cell * 1.4);
+      const size = Math.max(24, av * 0.66);
+      const rm = this.rm;
+      if (this.opts.sound && !rm) sfx('whoosh');
+      const fly = this._fx('lr-throw', A[0], A[1], size, size, THROWABLES[item].svg);
+      let flight;
+      if (rm || !fly.animate) {
+        fly.style.left = (B[0] - size / 2).toFixed(1) + 'px'; fly.style.top = (B[1] - size / 2).toFixed(1) + 'px';
+        flight = fly.animate ? done(fly.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, fill: 'both' })) : Promise.resolve();
+      } else {
+        const dx = B[0] - A[0], dy = B[1] - A[1], dist = Math.hypot(dx, dy) || 1;
+        const mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2;
+        let nx = -dy / dist, ny = dx / dist;   // bow the arc toward the middle of the stage
+        if ((this.L.stageW / 2 - mx) * nx + (this.L.stageH / 2 - my) * ny < 0) { nx = -nx; ny = -ny; }
+        const bow = Math.min(dist * 0.34, this.L.S * 0.32);
+        const C = [mx + nx * bow, my + ny * bow];
+        const spin = item === 'rose' ? 200 : item === 'potato' ? 900 : item === 'confetti' ? 300 : 620;
+        const kf = [];
+        for (let i = 0; i <= 16; i++) {
+          const t = i / 16, u = 1 - t;
+          const x = u * u * A[0] + 2 * u * t * C[0] + t * t * B[0], y = u * u * A[1] + 2 * u * t * C[1] + t * t * B[1];
+          const sc = 0.7 + 0.55 * Math.sin(Math.PI * t) + 0.3 * t;
+          kf.push({ transform: 'translate(' + (x - A[0]).toFixed(1) + 'px,' + (y - A[1]).toFixed(1) + 'px) rotate(' + (spin * t).toFixed(0) + 'deg) scale(' + sc.toFixed(3) + ')', offset: t });
+        }
+        fly._end = kf[kf.length - 1].transform;
+        const dur = this._tf(clamp(460 + dist * 0.55, 560, 980));
+        flight = done(fly.animate(kf, { duration: dur, easing: 'cubic-bezier(.45,.05,.55,.95)', fill: 'forwards' }));
+      }
+      return flight.then(() => this._throwHit(item, tp, B, av, fly));
+    }
+    _throwHit(item, tp, B, av, fly) {
+      if (this._destroyed) { fly.remove(); return undefined; }
+      const rm = this.rm, snd = (n) => { if (this.opts.sound) sfx(n); };
+      // Reduced motion: no particles / rings — just the (fading) splat on the avatar.
+      const P = (o) => { if (!rm) this._burst(B[0], B[1], Object.assign({ fixed: true }, o)); };
+      const R = (o) => { if (!rm) this._ring(B[0], B[1], Object.assign({ fixed: true }, o)); };
+      const avCells = av / this.L.cell;
+      const shake = (amp) => { if (!rm && tp._p.avw.animate) tp._p.avw.animate([{ transform: 'none' }, { transform: 'translate(' + (-amp) + '%, ' + (amp * 0.4) + '%) rotate(-7deg) scale(.92,1.06)' }, { transform: 'translate(' + amp + '%, 0) rotate(5deg)' }, { transform: 'translate(' + (-amp * 0.5) + '%, 0) rotate(-2deg)' }, { transform: 'none' }], { duration: this._tf(420), easing: 'ease-out' }); };
+      const splat = (hold, drip) => {
+        const sz = av * 1.32;
+        const e = this._fx('lr-splat lr-splat-' + item, B[0], B[1], sz, sz, SPLAT_SVG[item]);
+        if (!e.animate) { setTimeout(() => e.remove(), hold + 600); return; }
+        const a = e.animate(rm ? [{ opacity: 0 }, { opacity: 1 }] : [{ transform: 'scale(.25)', opacity: 0.4 }, { transform: 'scale(1.14,.9)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }], { duration: this._tf(240), easing: 'ease-out', fill: 'both' });
+        done(a).then(() => sleep(this._tf(hold))).then(() => {
+          if (!e.isConnected) return;
+          const out = e.animate(rm || !drip ? [{ opacity: 1 }, { opacity: 0 }] : [{ transform: 'translateY(0) scaleY(1)', opacity: 1 }, { transform: 'translateY(9%) scaleY(1.08)', opacity: 0.85, offset: 0.5 }, { transform: 'translateY(22%) scaleY(1.16)', opacity: 0 }], { duration: this._tf(drip ? 900 : 520), easing: 'ease-in', fill: 'forwards' });
+          done(out).then(() => e.remove());
+        });
+      };
+      const fadeFly = (ms) => { if (!fly.isConnected) return; if (!fly.animate) { fly.remove(); return; } done(fly.animate([{ opacity: 1 }, { opacity: 0 }], { duration: this._tf(ms || 120), fill: 'forwards' })).then(() => fly.remove()); };
+      const base = fly._end || 'none';
+      switch (item) {
+        case 'tomato':
+          snd('splat'); fadeFly(60); shake(5); splat(1500, true);
+          P({ n: 12, cls: 'lr-p-dot', colors: ['#e8392c', '#ff6b5a', '#b8231c'], d0: 0.6, d1: 1.5, s0: 0.12, s1: 0.24, grav: 0.9 });
+          P({ n: 6, cls: 'lr-p-seed', d0: 0.4, d1: 1.1, s0: 0.07, s1: 0.11, grav: 0.6 });
+          break;
+        case 'egg':
+          snd('crack'); fadeFly(60); shake(4); splat(1600, true);
+          P({ n: 9, cls: 'lr-p-shell', d0: 0.7, d1: 1.6, s0: 0.16, s1: 0.3, grav: 1.1, t0: 520, t1: 820 });
+          break;
+        case 'water':
+          snd('splash'); fadeFly(40); shake(3); splat(1700, true);
+          R({ c: '#7fdcff', size: avCells, scale: 2.2, dur: 520 });
+          R({ c: '#ffffff', size: avCells * 0.7, scale: 2.6, dur: 560, delay: 60 });
+          P({ n: 16, cls: 'lr-p-drop', d0: 0.7, d1: 1.8, s0: 0.12, s1: 0.22, grav: 1.3, lift: 0.4 });
+          break;
+        case 'confetti':
+          snd('pop'); fadeFly(80);
+          R({ c: '#ffd34d', size: avCells, scale: 2.4, dur: 480 });
+          P({ n: 30, cls: 'lr-p-conf', colors: ['#ff3b55', '#1fc66a', '#ffc21a', '#2f8cff', '#7c5bf5', '#ffffff'], d0: 0.9, d1: 2.4, s0: 0.1, s1: 0.2, grav: 1.4, lift: 0.8, t0: 700, t1: 1200 });
+          P({ n: 6, cls: 'lr-p-star', colors: ['#fff6b0', '#ffe066'], d0: 0.5, d1: 1.2, s0: 0.16, s1: 0.26 });
+          break;
+        case 'rose':
+          snd('chime');
+          if (!rm && tp._p.avw.animate) tp._p.avw.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1)' }, { transform: 'scale(1)' }], { duration: this._tf(520), easing: 'ease-out' });
+          R({ c: '#ff8fab', size: avCells, scale: 1.9, dur: 620 });
+          P({ n: 10, cls: 'lr-p-petal', d0: 0.5, d1: 1.4, s0: 0.16, s1: 0.26, grav: 1.2, t0: 1100, t1: 1600, sc1: 0.8 });
+          P({ n: 5, cls: 'lr-p-heart', a0: -Math.PI * 0.85, a1: -Math.PI * 0.15, d0: 0.8, d1: 1.6, s0: 0.2, s1: 0.32, t0: 900, t1: 1300, sc1: 0.6 });
+          if (fly.animate && !rm) done(fly.animate([{ transform: base }, { transform: base + ' translateY(6%) rotate(-10deg)' }], { duration: this._tf(700), fill: 'forwards' })).then(() => fadeFly(360));
+          else setTimeout(() => fadeFly(300), this._tf(900));
+          break;
+        default: { // potato: bonk and bounce off
+          snd('bonk'); shake(9);
+          const imp = this._fx('lr-impact', B[0], B[1], av * 1.1, av * 1.1);
+          if (rm) imp.style.opacity = '0';
+          this._anim(imp, [{ transform: 'scale(.2) rotate(0deg)', opacity: 1 }, { transform: 'scale(1.1) rotate(25deg)', opacity: 0.95, offset: 0.4 }, { transform: 'scale(1.3) rotate(35deg)', opacity: 0 }], 420, { fixed: true });
+          P({ n: 5, cls: 'lr-p-star', colors: ['#ffe066', '#fff'], a0: -Math.PI, a1: 0, d0: 0.6, d1: 1.1, s0: 0.16, s1: 0.26, t0: 600, t1: 900 });
+          P({ n: 4, cls: 'lr-p-smoke', d0: 0.2, d1: 0.6, s0: 0.4, s1: 0.6, sc1: 1.5, t0: 500, t1: 700 });
+          if (fly.animate && !rm) {
+            const side = B[0] < this.L.stageW / 2 ? 1 : -1;
+            done(fly.animate([{ transform: base, opacity: 1 }, { transform: base + ' translate(' + (side * 60) + '%, -90%) rotate(' + (side * 140) + 'deg)', opacity: 1, offset: 0.35 }, { transform: base + ' translate(' + (side * 120) + '%, 160%) rotate(' + (side * 300) + 'deg)', opacity: 0 }], { duration: this._tf(820), easing: 'cubic-bezier(.3,.6,.5,1)', fill: 'forwards' })).then(() => fly.remove());
+          } else setTimeout(() => fadeFly(240), this._tf(600));
+          break;
+        }
+      }
+      return sleep(this._tf(600));
+    }
     get rm() { return this._rmOpt || !!(this._mq && this._mq.matches); }
 
     /* ---------------- construction ---------------- */
@@ -527,13 +716,21 @@
         const g = (sel) => pod.querySelector(sel);
         pod._p = { card: g('.lr-pod-card'), avw: g('.lr-av-wrap'), av: g('.lr-av'), lvl: g('.lr-lvl'), badges: g('.lr-badges'), name: g('.lr-name'), tags: g('.lr-tags'), dots: g('.lr-dots'), inv: g('.lr-inv'), slot: g('.lr-dice-slot'), frost: g('.lr-frost'), ring: g('.lr-timer-fg'), toast: g('.lr-toast-a'), emote: g('.lr-emote-a'), sig: {} };
         pod.addEventListener('click', () => this._onPodClick(s));
+        pod.tabIndex = 0;
+        pod.setAttribute('role', 'button');
+        pod.addEventListener('keydown', (ev) => {
+          if (ev.target !== pod || (ev.key !== 'Enter' && ev.key !== ' ')) return;
+          ev.preventDefault();
+          this._onPodClick(s);
+        });
         this.podsL.appendChild(pod);
         this.pods.push(pod);
       }
 
       // dice
-      this.diceEl = h('div', 'lr-dice', '<div class="lr-dice-row"></div><div class="lr-boost-chip"><img alt="" src="' + POWERUP_META.boost.icon_url + '"><b>+3</b></div>');
+      this.diceEl = h('div', 'lr-dice', '<div class="lr-dice-row"></div><div class="lr-boost-chip"><img alt="" src="' + POWERUP_META.boost.icon_url + '"><b>+3</b></div><div class="lr-dice-total" aria-hidden="true"></div>');
       this.diceRow = this.diceEl.firstChild;
+      this.totalEl = this.diceEl.querySelector('.lr-dice-total');
       this.dies = [];
       this.diceEl.addEventListener('click', (ev) => { ev.stopPropagation(); this._onDiceClick(null); });
 
@@ -675,7 +872,7 @@
     }
     _effTok(st, s, i) {
       const p = st.tokens[s] && st.tokens[s][i];
-      if (st.players[s] && st.players[s].resigned) return -1;
+      if (st.players[s] && (st.players[s].resigned || st.players[s].retired)) return -1;
       return isNum(p) ? p : -1;
     }
     _basePos(s, i, p) {
@@ -744,7 +941,7 @@
         for (let i = 0; i < 4; i++) {
           const el = this.tok[s][i];
           el.classList.toggle('lr-off', !on);
-          el.classList.toggle('lr-resigned', !!pl.resigned);
+          el.classList.toggle('lr-resigned', !!(pl.resigned || pl.retired));
           el.classList.toggle('lr-iced', !!pl.frozen);
           if (!on || this._moving.has(el)) continue;
           const L = lay.get(s + '-' + i);
@@ -825,8 +1022,8 @@
           img.src = info.avatar_url;
         }
       }
-      if (sig.name !== name) { sig.name = name; P.name.textContent = name; pod.title = name; }
-      const tags = pl.resigned ? '<span class="lr-tag lr-tag-res">RESIGNED</span>' :
+      if (sig.name !== name) { sig.name = name; P.name.textContent = name; pod.title = name; pod.setAttribute('aria-label', name + ' — player menu'); }
+      const tags = pl.retired ? '<span class="lr-tag lr-tag-res">RETIRED</span>' : pl.resigned ? '<span class="lr-tag lr-tag-res">RESIGNED</span>' :
         (info.kind === 'bot' ? '<span class="lr-tag lr-tag-bot">' + ICON_BOT + 'BOT</span>' : '') +
         (info.kind === 'guest' ? '<span class="lr-tag">GUEST</span>' : '');
       if (sig.tags !== tags) { sig.tags = tags; P.tags.innerHTML = tags; }
@@ -834,7 +1031,8 @@
       if (sig.lvl !== lvl) { sig.lvl = lvl; P.lvl.textContent = lvl ? lvl : ''; P.lvl.style.display = lvl ? '' : 'none'; P.lvl.title = lvl ? 'Level ' + lvl : ''; }
       const badges = (pl.frozen ? '<span class="lr-badge lr-b-frozen" title="Frozen">' + ICON_SNOW + '</span>' : '') +
         (info.autopilot ? '<span class="lr-badge lr-b-afk" title="Autopilot">AFK</span>' : '') +
-        (info.connected === false ? '<span class="lr-badge lr-b-off" title="Disconnected">' + ICON_OFF + '</span>' : '');
+        (info.connected === false ? '<span class="lr-badge lr-b-off" title="Disconnected">' + ICON_OFF + '</span>' : '') +
+        (this._muted && this._muted.has(s) ? '<span class="lr-badge lr-b-muted" title="Muted">' + ICON_MUTED + '</span>' : '');
       if (sig.badges !== badges) { sig.badges = badges; P.badges.innerHTML = badges; }
       const toks = st.tokens[s] || [];
       const fin = isNum(pl.finished_tokens) ? pl.finished_tokens : toks.filter((t) => t === 56).length;
@@ -852,7 +1050,7 @@
       const playing = !st.status || st.status === 'playing';
       pod.classList.toggle('lr-active', playing && !!st.turn && st.turn.seat === s);
       pod.classList.toggle('lr-frozen', !!pl.frozen);
-      pod.classList.toggle('lr-resigned', !!pl.resigned);
+      pod.classList.toggle('lr-resigned', !!(pl.resigned || pl.retired));
       pod.classList.toggle('lr-winner', st.status === 'finished' && st.winner === s);
       pod.classList.toggle('lr-has-inv', inv.length > 0);
     }
@@ -881,6 +1079,7 @@
       d.boost = +t.boost || 0;
       d.double = !!t.double_pending;
       d.chosen = phase === 'move' && d.values.length === 2 && isNum(t.value) ? d.values.indexOf(t.value) : null;
+      if (d.chosen != null && d.chosen < 0) d.chosen = null; // sum protocol: value = a + b
       this._renderDice({});
     }
     _makeDie() {
@@ -927,6 +1126,10 @@
       ec.toggle('lr-pick', d.enabled && d.phase === 'choose_die' && this.dies.length === 2);
       ec.toggle('lr-idle', !d.values.length && !d.rolling && !(d.enabled && d.phase === 'roll'));
       ec.toggle('lr-boosted', d.boost > 0);
+      const sum = this.dies.length === 2 && d.values.length === 2 && !d.rolling && d.phase !== 'choose_die' && (d.chosen == null || d.chosen < 0) && !o.noFaces;
+      const tot = sum ? String(d.values[0] + d.values[1]) : '';
+      if (this.totalEl.textContent !== tot) this.totalEl.textContent = tot;
+      ec.toggle('lr-sum', sum);
       this.dies.forEach((x, i) => {
         x.classList.toggle('lr-chosen', d.chosen === i);
         x.classList.toggle('lr-unchosen', d.chosen != null && d.chosen >= 0 && d.chosen !== i);
@@ -965,15 +1168,18 @@
       die._shadow.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(.45)', opacity: 0.35, offset: 0.3 }, { transform: 'scale(1)', opacity: 1, offset: 0.6 }, { transform: 'scale(.85)', offset: 0.78 }, { transform: 'scale(1)' }], { duration: dur });
       return done(a).then(() => { die._landing = false; });
     }
-    async _rollAnim(seat, vals) {
+    async _rollAnim(seat, vals, phase) {
       const d = this._dice;
       d.seat = seat; d.values = vals.slice(); d.rolling = false; d.enabled = false; d.chosen = null;
-      d.phase = vals.length > 1 ? 'choose_die' : 'move';
+      d.phase = phase || (vals.length > 1 ? 'choose_die' : 'move');
       this._renderDice({ noFaces: true });
       if (this.opts.sound) sfx('roll');
       const base = this.dies.some((x) => x._spin) ? 430 : 640;
-      await Promise.all(this.dies.map((x, i) => this._dieLand(x, vals[i] || vals[0], base + i * 70)));
+      await Promise.all(this.dies.map((x, i) => this._dieLand(x, vals[i] || vals[0], base + i * 110)));
       this._renderDice({});
+      if (vals.length === 2 && d.phase !== 'choose_die' && !this.rm && !this._noFx() && this.totalEl.animate) {
+        this.totalEl.animate([{ scale: '.2', opacity: 0 }, { scale: '1.35', opacity: 1, offset: 0.6 }, { scale: '1', opacity: 1 }], { duration: this._t(340), easing: 'ease-out' });
+      }
       if (vals.indexOf(6) >= 0 && !this._noFx()) {
         const c = this._center(this.diceEl);
         this._burst(c[0], c[1], { n: 10, cls: 'lr-p-star', colors: ['#ffe066', '#fff', '#ffb703'], d0: 0.7, d1: 1.5, s0: 0.18, s1: 0.32 });
@@ -1082,6 +1288,8 @@
 
     /* ---------------- animation queue ---------------- */
     _t(ms) { if (this._scale === 0) return 0; return this.rm ? Math.min(ms, 160) * 0.6 : ms * (this.opts.timeScale || 1) * this._scale; }
+    // Timing for effects that run outside the event queue (throwables, chat): never sped up by a backlog.
+    _tf(ms) { return this.rm ? Math.min(ms, 220) : ms * (this.opts.timeScale || 1); }
     _noFx() { return this._scale === 0 || this._destroyed; }
     _wait(ms) { const t = this._t(ms); return t > 4 ? sleep(t) : Promise.resolve(); }
     async _runJob(events, finalState) {
@@ -1135,12 +1343,13 @@
     }
     _anim(e, kf, dur, o) {
       o = o || {};
-      const a = e.animate(kf, { duration: Math.max(1, this._t(dur)), delay: o.delay ? this._t(o.delay) : 0, easing: o.easing || 'ease-out', fill: 'both' });
+      const tf = o.fixed ? (ms) => this._tf(ms) : (ms) => this._t(ms);
+      const a = e.animate(kf, { duration: Math.max(1, tf(dur)), delay: o.delay ? tf(o.delay) : 0, easing: o.easing || 'ease-out', fill: 'both' });
       if (o.keep !== true) a.finished.then(() => e.remove(), () => e.remove());
       return a;
     }
     _burst(x, y, o) {
-      if (this._noFx()) return;
+      if (o.fixed ? this._destroyed : this._noFx()) return;
       const c = this.L.cell;
       const n = this.rm ? Math.ceil((o.n || 12) / 4) : (o.n || 12);
       for (let i = 0; i < n; i++) {
@@ -1156,7 +1365,7 @@
           { transform: 'translate(0,0) rotate(0deg) scale(' + (o.sc0 == null ? 0.6 : o.sc0) + ')', opacity: 1 },
           { transform: 'translate(' + (dx * 0.72).toFixed(1) + 'px,' + (dy * 0.72 - (o.lift || 0) * c).toFixed(1) + 'px) rotate(' + (rot * 0.6).toFixed(0) + 'deg) scale(1)', opacity: 1, offset: 0.55 },
           { transform: 'translate(' + dx.toFixed(1) + 'px,' + (dy + g).toFixed(1) + 'px) rotate(' + rot.toFixed(0) + 'deg) scale(' + (o.sc1 == null ? 0.2 : o.sc1) + ')', opacity: 0 }
-        ], rand(o.t0 || 420, o.t1 || 760), { easing: 'cubic-bezier(.15,.7,.3,1)', delay: (o.stagger || 0) * i });
+        ], rand(o.t0 || 420, o.t1 || 760), { easing: 'cubic-bezier(.15,.7,.3,1)', delay: (o.stagger || 0) * i, fixed: o.fixed });
       }
     }
     _streak(a, b) {
@@ -1166,12 +1375,12 @@
       this._anim(e, [{ transform: 'rotate(' + ang + 'deg) scaleY(1)', opacity: 1 }, { transform: 'rotate(' + ang + 'deg) scaleY(.35)', opacity: 0 }], 520, { easing: 'ease-in' });
     }
     _ring(x, y, o) {
-      if (this._noFx()) return;
       o = o || {};
+      if (o.fixed ? this._destroyed : this._noFx()) return;
       const c = this.L.cell, sz = (o.size || 1) * c;
       const e = this._fx('lr-ring', x, y, sz, sz);
       if (o.c) e.style.setProperty('--c', o.c);
-      this._anim(e, [{ transform: 'scale(.15)', opacity: 1 }, { transform: 'scale(' + (o.scale || 2.6) + ')', opacity: 0 }], o.dur || 520, { delay: o.delay, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      this._anim(e, [{ transform: 'scale(.15)', opacity: 1 }, { transform: 'scale(' + (o.scale || 2.6) + ')', opacity: 0 }], o.dur || 520, { delay: o.delay, easing: 'cubic-bezier(.2,.8,.3,1)', fixed: o.fixed });
     }
     _shake(power) {
       if (this.rm || this._noFx() || !this.boardEl.animate) return;
@@ -1343,9 +1552,12 @@
       const st = this.ws, s = e.seat | 0;
       const vals = (Array.isArray(e.dice) ? e.dice : [e.value]).map((v) => v | 0).filter((v) => v >= 1 && v <= 6).slice(0, 2);
       if (!vals.length) return;
-      st.turn = Object.assign({}, st.turn, { seat: s, dice: vals.slice(), value: e.value == null ? null : e.value, phase: e.value == null && vals.length > 1 ? 'choose_die' : 'move', double_pending: false });
+      // Two dice now move by their sum (value = a + b); value null + 2 dice = legacy choose_die.
+      const value = e.value == null ? (vals.length > 1 ? null : vals[0]) : e.value;
+      const phase = value == null && vals.length > 1 ? 'choose_die' : 'move';
+      st.turn = Object.assign({}, st.turn, { seat: s, dice: vals.slice(), value: value, phase: phase, double_pending: false });
       if (st.turn.seat !== this._dice.seat) for (let i = 0; i < 4; i++) this._renderPod(i);
-      await this._rollAnim(s, vals);
+      await this._rollAnim(s, vals, phase);
       this._dice.phase = st.turn.phase;
       await this._wait(80);
     },
@@ -1787,6 +1999,31 @@
       await this._wait(500);
     },
 
+    async seat_finished(e) {
+      const st = this.ws, s = e.seat | 0, p = e.placement | 0;
+      if (st.players[s] && p > 0) st.players[s].placement = p;
+      this._renderPod(s);
+      if (!this._noFx() && p === 1) this._confetti(s);
+      this.flash(this._name(s) + ' finishes ' + (PLACE_TXT[p] || p) + '!', s === this.viewSeat ? 'good' : 'info', { hold: 1100 });
+      await this._wait(900);
+    },
+
+    async retired(e) {
+      const st = this.ws, s = e.seat | 0;
+      if (st.players[s]) st.players[s].retired = true;
+      st.shields = (st.shields || []).filter((x) => (x.seat | 0) !== s);
+      this._syncShields();
+      this._renderPod(s);
+      this._podToast(s, 'Retired', 'bad');
+      this._relayout(true);
+      await this._wait(420);
+    },
+
+    async play_continues() {
+      this.flash('Play continues!', 'info', { hold: 800 });
+      await this._wait(700);
+    },
+
     async game_over(e) {
       const st = this.ws;
       st.status = 'finished';
@@ -1825,6 +2062,8 @@
     this._shake(1.4 * P);
   };
 
+  LudoRenderer.THROWABLES = THROWABLES;
+  LudoRenderer.THROW_IDS = THROW_IDS;
   LudoRenderer.POWERUP_META = POWERUP_META;
   LudoRenderer.COLORS = COLORS.map((c) => ({ id: c.id, name: c.name, base: c.base, light: c.light, dark: c.dark }));
   LudoRenderer.GEOMETRY = GEO;

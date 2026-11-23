@@ -12,8 +12,8 @@
   <link rel="stylesheet" href="/assets/site.css?v=4" />
   <link rel="stylesheet" href="/assets/notifications.css?v=4">
   <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
-  <link rel="stylesheet" href="/arcade/ludo/render.css?v=1" />
-  <link rel="stylesheet" href="/arcade/ludo/ui.css?v=1" />
+  <link rel="stylesheet" href="/arcade/ludo/render.css?v=2" />
+  <link rel="stylesheet" href="/arcade/ludo/ui.css?v=2" />
 </head>
 <body class="ludo-body" data-screen="home">
 
@@ -108,13 +108,6 @@
                 </div>
               </div>
 
-              <div class="power-explainer" id="powerExplainer">
-                <div class="power-explainer-head">
-                  <p class="field-label">Power-ups</p>
-                  <p class="power-explainer-note" id="powerExplainerNote">Land exactly on a crate to grab one. Hold up to 2, use 1 per turn.</p>
-                </div>
-                <ul class="power-list" id="powerList"></ul>
-              </div>
             </div>
 
             <div class="home-side">
@@ -172,6 +165,15 @@
               </div>
             </div>
 
+            <!-- Power-up explainer sits UNDER the play options (play buttons first, esp. on phones) -->
+            <div class="power-explainer glass" id="powerExplainer">
+              <div class="power-explainer-head">
+                <p class="field-label">Power-ups</p>
+                <p class="power-explainer-note" id="powerExplainerNote">Land exactly on a crate to grab one. Hold up to 2, use 1 per turn.</p>
+              </div>
+              <ul class="power-list" id="powerList"></ul>
+            </div>
+
           </div>
         </section>
 
@@ -213,6 +215,26 @@
           </div>
 
           <div class="seat-grid" id="seatGrid" aria-label="Seats"></div>
+
+          <div class="chat-slot lobby-chat-slot" id="lobbyChatSlot">
+            <!-- Chat panel (moved between the lobby and the match by game.js) -->
+            <section class="chat-card glass" id="chatPanel" data-open="true" aria-label="Chat">
+              <button type="button" class="chat-head" id="chatToggle" aria-expanded="true" aria-controls="chatBody">
+                <span class="chat-head-title"><span aria-hidden="true">💬</span> Chat</span>
+                <span class="chat-badge hidden" id="chatBadge" aria-label="unread messages">0</span>
+                <span class="chat-chev" aria-hidden="true"></span>
+              </button>
+              <div class="chat-body" id="chatBody">
+                <ol class="chat-list" id="chatList" aria-live="polite" aria-relevant="additions" aria-label="Chat messages"></ol>
+                <p class="chat-empty" id="chatEmpty">No messages yet. Say hi!</p>
+                <form class="chat-form" id="chatForm" autocomplete="off">
+                  <label class="sr-only" for="chatInput">Chat message</label>
+                  <input id="chatInput" class="ludo-input chat-input" type="text" maxlength="200" placeholder="Say something nice…" enterkeyhint="send" spellcheck="true" />
+                  <button type="submit" class="btn btn-primary btn-sm chat-send" id="chatSend">Send</button>
+                </form>
+              </div>
+            </section>
+          </div>
 
           <div class="lobby-foot glass">
             <p class="lobby-hint" id="lobbyHint" aria-live="polite">Waiting for players…</p>
@@ -276,6 +298,9 @@
                   </button>
                   <div class="emote-pop hidden" id="emotePop" role="group" aria-label="Emotes"></div>
                 </div>
+                <button type="button" class="tool-btn" id="btnChat" aria-controls="chatPanel" title="Open chat">
+                  <span aria-hidden="true">💬</span><span class="tool-label">Chat</span><span class="tool-badge hidden" id="chatToolBadge">0</span>
+                </button>
                 <button type="button" class="tool-btn" id="btnMute" aria-pressed="false" title="Mute sounds">
                   <span aria-hidden="true" id="muteIcon">🔊</span><span class="tool-label" id="muteLabel">Sound on</span>
                 </button>
@@ -290,15 +315,24 @@
                 </button>
               </div>
 
-              <div class="log-card glass">
+              <div class="chat-slot game-chat-slot" id="gameChatSlot"></div>
+
+              <div class="log-card glass" id="logCard" data-expanded="false">
                 <div class="card-head">
                   <p class="field-label" id="logLabel">Match log</p>
                   <span class="hint" id="matchMeta"></span>
                 </div>
                 <ol class="event-log" id="eventLog" aria-labelledby="logLabel"></ol>
+                <button type="button" class="link-btn log-more hidden" id="btnLogMore" aria-expanded="false" aria-controls="eventLog">Show more</button>
               </div>
             </aside>
           </div>
+
+          <details class="power-help glass" id="powerHelp">
+            <summary class="power-help-sum"><span aria-hidden="true">⚡</span> Power-ups explained</summary>
+            <p class="power-explainer-note">Land exactly on a crate to grab one. Hold up to 2, use 1 per turn.</p>
+            <ul class="power-list" id="powerListGame"></ul>
+          </details>
         </section>
 
         <!-- ============ STATS ============ -->
@@ -333,6 +367,20 @@
     <div class="modal-card results-card" id="resultsCard"></div>
   </div>
 
+  <!-- Continue-after-a-win prompt -->
+  <div class="ludo-modal hidden" id="continueModal" role="alertdialog" aria-modal="true" aria-labelledby="continueTitle" aria-describedby="continueText">
+    <div class="modal-card continue-card">
+      <div class="continue-timer" aria-hidden="true"><svg viewBox="0 0 100 100"><circle class="ct-bg" cx="50" cy="50" r="44" pathLength="100"/><circle class="ct-fg" id="continueRing" cx="50" cy="50" r="44" pathLength="100"/></svg><span id="continueSecs">20</span></div>
+      <h2 class="confirm-title" id="continueTitle">Someone won!</h2>
+      <p class="confirm-text" id="continueText">Keep playing for the remaining places?</p>
+      <p class="hint" id="continueHint">If you stop, you retire: your tokens leave the board and you’re placed below everyone who plays on. No answer counts as stop.</p>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-ghost" id="continueNo">Stop here</button>
+        <button type="button" class="btn btn-primary" id="continueYes">Keep playing</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Confirm modal -->
   <div class="ludo-modal hidden" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmText">
     <div class="modal-card confirm-card">
@@ -350,9 +398,9 @@
 
   <script src="/assets/theme.js?v=2"></script>
   <script src="/assets/site.js?v=9"></script>
-  <script src="/assets/notifications.js?v=2" defer></script>
-  <script src="/arcade/ludo/sfx.js?v=1"></script>
-  <script src="/arcade/ludo/render.js?v=1"></script>
-  <script src="/arcade/ludo/game.js?v=1"></script>
+  <script src="/assets/notifications.js?v=3" defer></script>
+  <script src="/arcade/ludo/sfx.js?v=2"></script>
+  <script src="/arcade/ludo/render.js?v=2"></script>
+  <script src="/arcade/ludo/game.js?v=2"></script>
 </body>
 </html>
