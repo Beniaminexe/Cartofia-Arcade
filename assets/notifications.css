@@ -47,13 +47,13 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: rgba(26,21,53,0.98);
+  /* Solid, no backdrop-filter: nested inside the header's own blur, Chrome
+     let the page show through a translucent panel. */
+  background: #1a1535;
   border: 1px solid var(--border-bright, rgba(255,255,255,0.16));
   border-radius: 16px;
   box-shadow: 0 24px 60px -12px rgba(0,0,0,0.7);
   z-index: 400;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 .notif-pop.hidden { display: none; }
 
@@ -229,8 +229,20 @@
   font-size: 10.5px;
 }
 
-@media (max-width: 480px) {
-  .notif-pop { width: 320px; }
+/* Phones: the bell sits mid-header (avatar + menu button to its right), so a
+   bell-anchored 320px panel ran off the left edge. Anchor it to the fixed
+   header instead and span the screen with a 12px gutter. */
+@media (max-width: 760px) {
+  .notif-widget { position: static; }
+  .notif-pop {
+    top: calc(100% + 6px);
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - 96px);
+    max-height: calc(100dvh - 96px);
+  }
 }
 
 
