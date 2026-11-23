@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/assets/notifications.css?v=6">
   <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
   <link rel="stylesheet" href="/arcade/ludo/render.css?v=2" />
-  <link rel="stylesheet" href="/arcade/ludo/ui.css?v=2" />
+  <link rel="stylesheet" href="/arcade/ludo/ui.css?v=3" />
 </head>
 <body class="ludo-body" data-screen="home">
 
@@ -256,6 +256,8 @@
             </div>
 
             <aside class="game-side" aria-label="Match controls">
+              <!-- Phones: this pins to the bottom of the screen (ui.css "PLAY DOCK"). -->
+              <div class="play-dock" id="playDock">
               <div class="turn-card glass" id="turnCard" data-mine="false">
                 <div class="turn-row">
                   <span class="turn-dot" id="turnDot" aria-hidden="true"></span>
@@ -291,6 +293,7 @@
                   <span class="power-used-note hidden" id="powerUsedNote">Used this turn</span>
                 </div>
                 <div class="power-bar" id="powerBar" role="group" aria-label="Your power-ups"></div>
+              </div>
               </div>
 
               <div class="tools-card glass">
@@ -403,6 +406,6 @@
   <script src="/assets/notifications.js?v=3" defer></script>
   <script src="/arcade/ludo/sfx.js?v=2"></script>
   <script src="/arcade/ludo/render.js?v=2"></script>
-  <script src="/arcade/ludo/game.js?v=2"></script>
+  <script src="/arcade/ludo/game.js?v=3"></script>
 </body>
 </html>

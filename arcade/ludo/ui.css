@@ -1074,3 +1074,82 @@ kbd {
 /* the in-match chat shares the sticky side column: let the list shrink, keep the input visible */
 .game-chat-slot .chat-list { min-height: 0; }
 .game-chat-slot .chat-form, .game-chat-slot .chat-empty, .game-chat-slot .chat-head { flex-shrink: 0; }
+
+/* ==========================================================================
+   PLAY DOCK — phones keep Roll + power-ups under the thumb
+   Desktop/tablet: the wrapper is layout-transparent. Phones: it pins to the
+   bottom of the screen and the board shrinks to fit above it, so you never
+   scroll between the board and your controls.
+   ========================================================================== */
+.play-dock { display: contents; }
+.play-dock > * { flex-shrink: 0; }
+
+/* Portrait phones and tablets. Landscape phones keep the side-by-side layout:
+   a bottom dock would eat half of a 390px-tall screen. */
+@media (max-width: 920px) and (orientation: portrait) {
+  .play-dock {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "turn   turn"
+      "act    power"
+      "target target"
+      "auto   auto";
+    gap: 6px 8px;
+    padding: 8px max(8px, calc((100vw - 680px) / 2)) calc(8px + env(safe-area-inset-bottom, 0px));
+    background: #0d0a1c;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -14px 32px rgba(0, 0, 0, 0.45);
+    transition: border-color 0.3s, background 0.3s;
+  }
+  /* Your turn: the dock takes your seat colour, like the turn card does. */
+  .play-dock:has(> .turn-card[data-mine="true"][data-seat="red"])    { --dock-seat: var(--seat-red); }
+  .play-dock:has(> .turn-card[data-mine="true"][data-seat="green"])  { --dock-seat: var(--seat-green); }
+  .play-dock:has(> .turn-card[data-mine="true"][data-seat="yellow"]) { --dock-seat: var(--seat-yellow); }
+  .play-dock:has(> .turn-card[data-mine="true"][data-seat="blue"])   { --dock-seat: var(--seat-blue); }
+  .play-dock:has(> .turn-card[data-mine="true"]) {
+    border-top: 2px solid var(--dock-seat, #7ca6ff);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--dock-seat, #7ca6ff) 16%, #0d0a1c), #0d0a1c 70%);
+  }
+  /* The two cards dissolve into the dock's grid. */
+  .play-dock > .turn-card,
+  .play-dock > .power-card { display: contents; }
+  .play-dock > .power-card.hidden { display: none; }
+  .play-dock .turn-row { grid-area: turn; gap: 10px; }
+  .play-dock .action-row { grid-area: act; min-width: 0; }
+  .play-dock .target-bar { grid-area: target; padding: 8px; gap: 6px; }
+  .play-dock .autopilot-note { grid-area: auto; font-size: 12px; padding: 6px 9px; }
+  .play-dock .power-card .card-head { display: none; }
+  .play-dock .power-bar { grid-area: power; display: flex; gap: 6px; align-self: stretch; }
+  .play-dock .turn-dot { width: 11px; height: 11px; }
+  .play-dock .turn-title { font-size: 15px; }
+  .play-dock .turn-sub { font-size: 12px; min-height: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .play-dock .turn-clock { font-size: 13px; min-width: 38px; padding: 3px 6px; }
+  .play-dock .act-roll { min-height: 50px !important; }
+  .play-dock .die-btn { min-height: 50px !important; }
+  .play-dock .choose-label { display: none; }
+  /* Power-ups: square buttons right next to Roll. */
+  .play-dock .power-slot {
+    width: 66px; min-height: 50px; padding: 4px 3px;
+    flex-direction: column; justify-content: center; align-items: center; gap: 2px;
+    border-radius: 12px; text-align: center;
+  }
+  .play-dock .power-slot .pw-icon { width: 28px; height: 28px; font-size: 17px; }
+  .play-dock .power-slot .pw-icon img { width: 22px; height: 22px; }
+  .play-dock .power-slot-text { justify-items: center; max-width: 100%; }
+  .play-dock .power-slot-name { font-size: 10px; font-weight: 700; max-width: 60px; }
+  .play-dock .power-slot-desc { display: none; }
+  .play-dock .power-slot.empty .power-slot-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .play-dock .power-slot.empty { position: relative; }
+  .play-dock .power-slot.empty .pw-icon { opacity: 0.45; }
+
+  .ludo-body[data-screen="game"] main.ludo-inner { padding-bottom: calc(var(--dock-h, 116px) + 16px); }
+  /* Board sized from the height left between the headers and a typical dock
+     (a fixed figure, so the board doesn't jump when the dock grows for a
+     target choice). The board plus player pods is ~1.36x taller than wide. */
+  .ludo-body .board-host {
+    width: clamp(280px, calc((100dvh - 132px - 116px) / 1.36), min(100%, 680px));
+    margin: 0 auto;
+  }
+}
