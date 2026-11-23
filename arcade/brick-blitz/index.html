@@ -6,164 +6,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=5" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=4">
-  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
-  <link rel="stylesheet" href="/assets/game-stats.css?v=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=6" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=5">
+  <link rel="stylesheet" href="/arcade/game-common.css?v=2" />
+  <link rel="stylesheet" href="/assets/game-stats.css?v=2" />
+  <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=1" />
   <style>
-    .game-layout {
-      display: grid;
-      grid-template-columns: minmax(320px, 760px) minmax(250px, 1fr);
-      gap: 16px;
-      align-items: start;
-    }
-
-    .board-panel {
-      position: relative;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: radial-gradient(circle at 50% 0%, rgba(79, 125, 249, 0.1), rgba(10, 14, 26, 0.95) 62%);
-      padding: 12px;
-    }
-
-    .board-frame {
-      position: relative;
-      border-radius: 10px;
-      border: 1px solid rgba(79, 125, 249, 0.2);
-      background: #04101a;
-      overflow: hidden;
-    }
-
-    #game {
-      display: block;
-      width: 100%;
-      height: auto;
-      aspect-ratio: 3 / 2;
-      touch-action: none;
-    }
-
-    .board-overlay {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      background: rgba(2, 8, 13, 0.72);
-      color: var(--text-primary);
-      font-family: var(--font-sans);
-      font-size: 16px;
-      padding: 22px;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-    .board-overlay.hidden { opacity: 0; }
-
-    .inframe-actions {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      display: flex;
-      gap: 6px;
-      z-index: 4;
-      transition: opacity .18s ease;
-    }
-    .inframe-actions .btn { min-height: 32px; padding: 6px 10px; font-size: 12px; }
-    .inframe-actions.hidden { opacity: 0; pointer-events: none; }
-
-    .game-panel { display: grid; gap: 14px; }
-
-    .panel-section-label {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--text-accent);
-      margin-bottom: 10px;
-    }
-
-    .stat-grid { display: grid; gap: 8px; }
-
-    .stat-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-    .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
-    .stat-row b {
-      color: var(--text-accent);
-      font-family: var(--font-mono);
-      font-size: 18px;
-      font-weight: 500;
-    }
-
-    .controls-list {
-      list-style: none;
-      display: grid;
-      gap: 8px;
-      color: var(--text-secondary);
-      font-size: 14px;
-      margin-top: 4px;
-    }
-    .controls-list b { color: var(--text-accent); font-weight: 600; }
-
-    .touch-controls {
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      padding: 10px;
-      display: grid;
-      gap: 8px;
-    }
-    .touch-controls p { color: var(--text-muted); font-size: 13px; }
+    /* Brick Blitz — page-specific pieces only; the stage shell lives in /arcade/game-shell-v2.css */
+    #game { aspect-ratio: 3 / 2; background: #04101a; }
 
     .pad-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pad-btn { font-size: 14px; }
 
-    .pad-btn {
-      min-height: 42px;
-      border-radius: 10px;
-      border: 1px solid rgba(79, 125, 249, 0.3);
-      background: rgba(10, 20, 36, 0.9);
-      color: var(--text-primary);
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-    .pad-btn:active { transform: translateY(1px); }
-
-    .game-note {
-      border-radius: 10px;
-      border: 1px dashed var(--border);
-      background: var(--bg-card);
-      color: var(--text-muted);
-      font-size: 13px;
-      padding: 9px 10px;
-    }
-
-    @media (max-width: 980px) {
-      .game-layout { grid-template-columns: 1fr; }
-      .inframe-actions { left: 8px; right: 8px; top: 8px; justify-content: space-between; }
-      .inframe-actions .btn { flex: 1; }
+    @media (max-width: 720px) {
+      .pad-btn { min-height: 56px; font-size: 15px; }
     }
   </style>
 </head>
-<body>
+<body class="gx" style="--g:#ff52a2">
 
-  <!-- PRE-GAME SCREEN -->
+  <!-- PRE-GAME SCREEN (cartridge) -->
   <div class="pre-game" id="preGame">
     <div class="pre-game-card">
-      <p class="pre-game-label">Arcade / Brick Blitz</p>
-      <h1 class="pre-game-title">Brick Blitz</h1>
+      <div class="gx-cart-cover">
+        <img src="/assets/games/brick-blitz.svg" alt="" width="320" height="200" />
+        <span class="gx-cart-tag">Single player</span>
+      </div>
+      <p class="pre-game-label">Arcade · Brick Blitz</p>
+      <h2 class="pre-game-title">Brick Blitz</h2>
       <p class="pre-game-desc">Smash bricks, keep the ball alive, clear every level.</p>
+      <ul class="gx-howto" aria-label="How to play">
+        <li><b>Move</b><span>Mouse, drag on the board, or ← → / A D</span></li>
+        <li><b>Launch</b><span>Start button or Enter</span></li>
+        <li><b>Pause</b><span>Space or P — miss the ball and you lose a life</span></li>
+      </ul>
       <button class="start-btn" id="preGameStart" type="button">Start Game</button>
-      <p class="pre-game-hint">Mouse/touch to move paddle &nbsp;·&nbsp; Space to launch</p>
+      <p class="pre-game-hint">Mouse/touch to move paddle &nbsp;·&nbsp; Enter to launch</p>
     </div>
   </div>
 
@@ -205,8 +84,10 @@
     </a>
     <nav class="nav-links" aria-label="Primary">
       <a href="/">Home</a>
-      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/arcade/" class="active" aria-current="page">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
     <div class="nav-right">
       <div class="account-menu" data-account-menu>
@@ -218,38 +99,43 @@
     </div>
   </header>
 
-  <!-- GAME HEADER -->
-  <div class="game-header">
-    <a class="game-header-back" href="/arcade/">
-      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
-        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Back to Arcade
-    </a>
-    <span class="game-header-title">Brick Blitz</span>
-    <div class="game-header-stats">
-      <div class="header-stat">
-        <span class="header-stat-label">Score</span>
-        <span class="header-stat-value" id="headerScore">0</span>
-      </div>
-      <div class="header-stat">
-        <span class="header-stat-label">Lives</span>
-        <span class="header-stat-value" id="headerLives">3</span>
-      </div>
-      <div class="header-stat">
-        <span class="header-stat-label">Level</span>
-        <span class="header-stat-value" id="headerLevel">1</span>
-      </div>
-    </div>
-  </div>
+  <main class="game-page" id="main">
 
-  <!-- GAME PAGE -->
-  <div class="game-page">
+    <!-- TOP BAR: back · cover + title · stats -->
+    <header class="game-header gx-bar">
+      <a class="game-header-back gx-back" href="/arcade/" aria-label="Back to the arcade">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="gx-back-txt">Arcade</span>
+      </a>
+      <div class="gx-id">
+        <img class="gx-badge" src="/assets/games/brick-blitz.svg" alt="" width="72" height="45" />
+        <div class="gx-id-txt">
+          <p class="gx-kicker">Single player · Touch + keyboard</p>
+          <h1 class="game-header-title gx-title">Brick Blitz</h1>
+        </div>
+      </div>
+      <div class="game-header-stats" aria-label="Live stats">
+        <div class="header-stat">
+          <span class="header-stat-label">Score</span>
+          <span class="header-stat-value" id="headerScore">0</span>
+        </div>
+        <div class="header-stat">
+          <span class="header-stat-label">Lives</span>
+          <span class="header-stat-value" id="headerLives">3</span>
+        </div>
+        <div class="header-stat">
+          <span class="header-stat-label">Level</span>
+          <span class="header-stat-value" id="headerLevel">1</span>
+        </div>
+      </div>
+    </header>
+
     <div class="game-container">
       <div class="game-container-inner">
-        <div class="game-layout">
-          <div class="board-panel">
-            <div class="board-frame">
+        <div class="game-layout gx-layout">
+
+          <section class="board-panel gx-stage" style="--gx-ar:1.5" aria-label="Game board">
+            <div class="board-frame gx-screen">
               <canvas id="game" width="900" height="600" aria-label="Brick Blitz game board"></canvas>
               <div id="overlay" class="board-overlay">Press Start to launch the ball.</div>
               <div id="action-bar" class="inframe-actions" aria-label="Game actions">
@@ -258,44 +144,56 @@
                 <button id="restart-btn" class="btn btn-ghost" type="button">Restart</button>
               </div>
             </div>
-          </div>
+          </section>
 
-          <aside class="game-panel">
-            <div>
-              <p class="panel-section-label">Run Stats</p>
+          <aside class="game-panel gx-rail" aria-label="Game info">
+            <section class="gx-card">
+              <h2 class="panel-section-label">Run stats</h2>
               <div class="stat-grid">
                 <div class="stat-row"><span>Score</span><b id="score">0</b></div>
                 <div class="stat-row"><span>Best</span><b id="best">0</b></div>
                 <div class="stat-row"><span>Lives</span><b id="lives">3</b></div>
                 <div class="stat-row"><span>Level</span><b id="level">1</b></div>
               </div>
-            </div>
+            </section>
 
-            <div>
-              <p class="panel-section-label">Controls</p>
-              <ul class="controls-list">
-                <li><b>Move:</b> Left / Right arrow keys or A D</li>
-                <li><b>Goal:</b> Clear every brick to advance levels</li>
-                <li><b>Survive:</b> You lose a life if the ball falls below the paddle</li>
-              </ul>
-            </div>
-
-            <div class="touch-controls">
-              <p>Touch controls</p>
+            <section class="gx-card touch-controls gx-touch">
+              <h2 class="panel-section-label">Touch pad</h2>
               <div class="pad-row">
-                <button class="pad-btn" type="button" data-move="left">Move Left</button>
-                <button class="pad-btn" type="button" data-move="right">Move Right</button>
+                <button class="pad-btn" type="button" data-move="left">&larr; Move Left</button>
+                <button class="pad-btn" type="button" data-move="right">Move Right &rarr;</button>
               </div>
-            </div>
+            </section>
 
-            <div class="game-note">
-              Tip: drag on the game board to position the paddle quickly.
-            </div>
+            <section class="gx-card">
+              <h2 class="panel-section-label">Controls</h2>
+              <ul class="controls-list">
+                <li><b>Move</b><span>Left / Right arrow keys or A D</span></li>
+                <li><b>Pause</b><span>Space or P (Enter relaunches after a lost life)</span></li>
+                <li><b>Goal</b><span>Clear every brick to advance levels</span></li>
+                <li><b>Survive</b><span>You lose a life if the ball falls below the paddle</span></li>
+              </ul>
+            </section>
+
+            <p class="game-note">Tip: drag on the game board to position the paddle quickly.</p>
           </aside>
+
         </div>
       </div>
     </div>
-  </div>
+  </main>
+
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/account/">Account</a>
+      <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </footer>
 
   <script src="/assets/theme.js?v=3"></script>
   <script src="/assets/site.js?v=9"></script>

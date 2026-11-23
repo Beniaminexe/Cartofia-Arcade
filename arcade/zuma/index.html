@@ -6,49 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=5" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=4">
-  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
-  <link rel="stylesheet" href="/assets/game-stats.css?v=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=6" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=5">
+  <link rel="stylesheet" href="/arcade/game-common.css?v=2" />
+  <link rel="stylesheet" href="/assets/game-stats.css?v=2" />
+  <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=1" />
   <style>
-    /* ── game layout ── */
-    .zuma-layout {
-      display: grid;
-      grid-template-columns: minmax(320px, 780px) minmax(260px, 1fr);
-      gap: 16px;
-      align-items: start;
-    }
-
-    .board-panel {
-      position: relative;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background:
-        radial-gradient(420px 180px at 20% 6%, rgba(79, 125, 249, 0.12), transparent 68%),
-        radial-gradient(520px 220px at 82% 0%, rgba(124, 91, 245, 0.1), transparent 70%),
-        linear-gradient(180deg, rgba(10, 14, 26, 0.92), rgba(4, 10, 18, 0.96));
-      padding: 12px;
-      overflow: hidden;
-    }
-
-    .board-frame {
-      position: relative;
-      border-radius: 10px;
-      border: 1px solid rgba(79, 125, 249, 0.2);
-      background: #030912;
-      overflow: hidden;
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), inset 0 0 40px rgba(41, 122, 184, 0.08);
-    }
-
-    #game {
-      display: block;
-      width: 100%;
-      height: auto;
-      aspect-ratio: 16 / 10;
-      touch-action: none;
-      background: #020913;
-    }
+    /* Zuma Temple — page-specific pieces only; the stage shell lives in /arcade/game-shell-v2.css */
+    #game { aspect-ratio: 16 / 10; background: #020913; }
 
     #board-frame:fullscreen,
     #board-frame:-webkit-full-screen {
@@ -70,188 +36,98 @@
       aspect-ratio: 16 / 10;
     }
 
-    .board-overlay {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      background: rgba(2, 8, 13, 0.72);
-      color: var(--text-primary);
-      font-family: var(--font-sans);
-      font-size: 16px;
-      padding: 22px;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-    .board-overlay.hidden { opacity: 0; }
-
-    .inframe-actions {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      display: flex;
-      gap: 6px;
-      z-index: 4;
-      transition: opacity .18s ease;
-    }
-    .inframe-actions .btn { min-height: 32px; padding: 6px 10px; font-size: 12px; backdrop-filter: blur(2px); }
     .inframe-actions .btn.btn-compact { min-width: 106px; }
-    .inframe-actions.hidden { opacity: 0; pointer-events: none; }
 
     .landscape-tip {
-      margin-top: 10px;
+      margin-top: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text-secondary);
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(255, 216, 74, 0.3);
+      background: rgba(255, 216, 74, 0.05);
+      color: var(--gx-muted);
       font-size: 13px;
-      padding: 8px 10px;
     }
     .landscape-tip.hidden { display: none; }
     .landscape-tip .tip-action {
-      min-height: 30px;
-      min-width: 110px;
-      border-radius: 999px;
-      border: 1px solid var(--border-h);
-      background: var(--bg-card);
-      color: var(--text-primary);
-      font: inherit;
-      font-weight: 700;
+      flex: none;
+      min-height: 36px;
+      padding: 0 14px;
+      border-radius: 10px;
+      border: 2px solid var(--gx-ink);
+      background: var(--gx-lemon);
+      color: var(--gx-ink);
+      font: 700 13px/1 var(--gx-body);
+      box-shadow: 0 3px 0 var(--lemon-deep, #a8861a);
       cursor: pointer;
       touch-action: manipulation;
     }
 
-    /* ── side panel ── */
-    .game-panel { display: grid; gap: 14px; }
-
-    .panel-section-label {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--text-accent);
-      margin-bottom: 10px;
-    }
-
-    .stat-grid { display: grid; gap: 8px; }
-
-    .stat-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-    .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
-    .stat-row b {
-      color: var(--text-accent);
-      font-family: var(--font-mono);
-      font-size: 18px;
-      font-weight: 500;
-      letter-spacing: -0.01em;
-    }
-
-    .controls-list {
-      list-style: none;
-      display: grid;
-      gap: 8px;
-      color: var(--text-secondary);
-      font-size: 14px;
-      margin-top: 4px;
-    }
-    .controls-list b { color: var(--text-accent); font-weight: 600; }
-
-    .game-note {
-      border-radius: 10px;
-      border: 1px dashed var(--border);
-      background: var(--bg-card);
-      color: var(--text-muted);
-      font-size: 13px;
-      padding: 9px 10px;
-    }
-
-    /* ── level-complete card (lighter, non-full-screen) ── */
+    /* ── level-complete card (lighter, non-blocking) ── */
     .level-complete-overlay {
       position: fixed;
-      inset: 0;
+      inset: var(--gx-nav) 0 0 0;
       z-index: 155;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(10, 14, 26, 0.62);
-      backdrop-filter: blur(8px);
+      padding: 16px;
+      background: rgba(13, 10, 28, 0.55);
       -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
       animation: fadeIn 0.2s ease;
     }
     .level-complete-overlay.hidden { display: none; }
-
     .level-complete-card {
-      background: var(--bg-card);
-      border: 1px solid rgba(79, 125, 249, 0.3);
-      border-radius: 20px;
-      padding: clamp(22px, 4vw, 36px);
-      max-width: 340px;
-      width: 90%;
-      text-align: center;
+      width: min(340px, 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 12px;
-      box-shadow: 0 0 0 1px rgba(79, 125, 249, 0.08) inset, 0 28px 56px rgba(0,0,0,0.5);
-      animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      padding: 0 22px 20px;
+      overflow: hidden;
+      text-align: center;
+      border-radius: 22px;
+      border: 1px solid color-mix(in srgb, var(--g) 45%, rgba(255, 255, 255, 0.1));
+      background: linear-gradient(180deg, var(--gx-card-2), var(--gx-card) 50%);
+      box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.95), 0 24px 60px -36px color-mix(in srgb, var(--g) 70%, transparent);
+      animation: gx-pop 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
     }
-
+    .level-complete-card::before {
+      content: '';
+      align-self: stretch;
+      height: 10px;
+      margin: 0 -22px 6px;
+      border-bottom: 3px solid var(--gx-ink);
+      background: repeating-linear-gradient(90deg, var(--g) 0 18px, color-mix(in srgb, var(--g) 55%, var(--gx-ink)) 18px 24px);
+    }
     .level-complete-label {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 500;
+      color: var(--gx-coral);
+      font: 600 11px/1.2 var(--gx-mono);
+      letter-spacing: 0.16em;
       text-transform: uppercase;
-      letter-spacing: 0.18em;
-      color: var(--text-accent);
     }
-
     .level-complete-heading {
-      font-size: clamp(20px, 4vw, 28px);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-      color: var(--text-primary);
+      color: var(--gx-text);
+      font: 800 clamp(20px, 4.6vw, 26px)/1.1 var(--gx-display);
+      letter-spacing: -0.035em;
     }
-
-    .level-complete-stats {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
+    .level-complete-stats { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .lc-stat {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 4px;
+      padding: 9px 8px;
+      border-radius: 12px;
+      border: 1px solid var(--gx-line);
+      background: var(--gx-well);
     }
-    .lc-stat-value {
-      font-family: var(--font-mono);
-      font-size: 20px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-    .lc-stat-label {
-      font-size: 10px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
+    .lc-stat-value { color: var(--gx-text); font: 600 19px/1.1 var(--gx-mono); }
+    .lc-stat-label { color: var(--gx-dim); font: 600 9.5px/1.2 var(--gx-mono); letter-spacing: 0.12em; text-transform: uppercase; }
 
     /* ── confetti for "all clear" ── */
     .confetti-container {
@@ -262,7 +138,6 @@
       overflow: hidden;
     }
     .confetti-container.hidden { display: none; }
-
     .confetti-dot {
       position: absolute;
       border-radius: 50%;
@@ -270,35 +145,43 @@
       height: 10px;
       animation: confettiFall linear forwards;
     }
-
     @keyframes confettiFall {
       0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
       100% { transform: translateY(110vh) rotate(720deg); opacity: 0.2; }
     }
+    @media (prefers-reduced-motion: reduce) {
+      .confetti-container { display: none; }
+    }
 
     @media (max-width: 980px) {
-      .zuma-layout { grid-template-columns: 1fr; }
-      .inframe-actions { left: 8px; right: 8px; top: 8px; justify-content: space-between; }
-      .inframe-actions .btn { flex: 1; min-height: 34px; font-size: 12px; padding: 6px 8px; }
       .inframe-actions .btn.btn-compact { min-width: 0; }
     }
   </style>
 </head>
-<body>
+<body class="gx" style="--g:#2cc6b4">
 
-  <!-- PRE-GAME SCREEN -->
+  <!-- PRE-GAME SCREEN (cartridge) -->
   <div class="pre-game" id="preGame">
     <div class="pre-game-card">
-      <p class="pre-game-label">Arcade / Zuma Temple</p>
-      <h1 class="pre-game-title">Zuma Temple</h1>
+      <div class="gx-cart-cover">
+        <img src="/assets/games/zuma.svg" alt="" width="320" height="200" />
+        <span class="gx-cart-tag">Single player</span>
+      </div>
+      <p class="pre-game-label">Arcade · Zuma Temple</p>
+      <h2 class="pre-game-title">Zuma Temple</h2>
       <p class="pre-game-desc">Shoot marbles, match colors, chain combos. Clear all 12 temples before the marbles reach the end.</p>
+      <ul class="gx-howto" aria-label="How to play">
+        <li><b>Aim</b><span>Move the mouse or drag over the board</span></li>
+        <li><b>Shoot</b><span>Click, tap or press Space</span></li>
+        <li><b>Swap</b><span>Right-click, X or Shift</span></li>
+      </ul>
       <div id="levelProgressWrap" style="display:none; width:100%;">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
           <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;">Level Progress</span>
-          <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-accent);" id="levelProgressLabel">0/12</span>
+          <span style="font-family:var(--font-mono);font-size:12px;color:var(--g);" id="levelProgressLabel">0/12</span>
         </div>
-        <div style="height:6px;border-radius:99px;background:var(--border);overflow:hidden;">
-          <div id="levelProgressBar" style="height:100%;border-radius:99px;background:var(--accent);width:0%;transition:width 0.3s ease;"></div>
+        <div style="height:8px;border-radius:99px;background:var(--gx-well);border:1px solid var(--border);overflow:hidden;">
+          <div id="levelProgressBar" style="height:100%;border-radius:99px;background:var(--g);width:0%;transition:width 0.3s ease;"></div>
         </div>
       </div>
       <button class="start-btn" id="preGameStart" type="button">Start Game</button>
@@ -366,8 +249,10 @@
     </a>
     <nav class="nav-links" aria-label="Primary">
       <a href="/">Home</a>
-      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/arcade/" class="active" aria-current="page">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
     <div class="nav-right">
       <div class="account-menu" data-account-menu>
@@ -379,34 +264,39 @@
     </div>
   </header>
 
-  <!-- GAME HEADER -->
-  <div class="game-header" id="gameHeader" style="display:none;">
-    <a class="game-header-back" href="/arcade/">
-      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
-        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Back to Arcade
-    </a>
-    <span class="game-header-title" id="gameHeaderTitle">Zuma Temple</span>
-    <div class="game-header-stats">
-      <div class="header-stat">
-        <span class="header-stat-label">Score</span>
-        <span class="header-stat-value" id="headerScore">0</span>
-      </div>
-      <div class="header-stat">
-        <span class="header-stat-label">Level</span>
-        <span class="header-stat-value" id="headerLevel">1/12</span>
-      </div>
-    </div>
-  </div>
+  <main class="game-page" id="gamePage" style="display:none;">
 
-  <!-- GAME PAGE -->
-  <div class="game-page" id="gamePage" style="display:none;">
+    <!-- TOP BAR: back · cover + title · stats -->
+    <header class="game-header gx-bar" id="gameHeader" style="display:none;">
+      <a class="game-header-back gx-back" href="/arcade/" aria-label="Back to the arcade">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="gx-back-txt">Arcade</span>
+      </a>
+      <div class="gx-id">
+        <img class="gx-badge" src="/assets/games/zuma.svg" alt="" width="72" height="45" />
+        <div class="gx-id-txt">
+          <p class="gx-kicker">Single player · Mouse + touch</p>
+          <h1 class="game-header-title gx-title" id="gameHeaderTitle">Zuma Temple</h1>
+        </div>
+      </div>
+      <div class="game-header-stats" aria-label="Live stats">
+        <div class="header-stat">
+          <span class="header-stat-label">Score</span>
+          <span class="header-stat-value" id="headerScore">0</span>
+        </div>
+        <div class="header-stat">
+          <span class="header-stat-label">Level</span>
+          <span class="header-stat-value" id="headerLevel">1/12</span>
+        </div>
+      </div>
+    </header>
+
     <div class="game-container">
       <div class="game-container-inner">
-        <div class="zuma-layout">
-          <div class="board-panel">
-            <div id="board-frame" class="board-frame">
+        <div class="zuma-layout gx-layout">
+
+          <section class="board-panel gx-stage" style="--gx-ar:1.6" aria-label="Game board">
+            <div id="board-frame" class="board-frame gx-screen">
               <canvas id="game" width="900" height="560" aria-label="Zuma Temple board"></canvas>
               <div id="overlay" class="board-overlay">Press Start to begin.</div>
               <div id="action-bar" class="inframe-actions" aria-label="Game actions">
@@ -420,39 +310,50 @@
               <span>Phone mode: rotate to landscape for better visibility.</span>
               <button id="landscape-btn" class="tip-action" type="button">Go Landscape</button>
             </div>
-          </div>
+          </section>
 
-          <aside class="game-panel">
-            <div>
-              <p class="panel-section-label">Run Stats</p>
+          <aside class="game-panel gx-rail" aria-label="Game info">
+            <section class="gx-card">
+              <h2 class="panel-section-label">Run stats</h2>
               <div class="stat-grid">
                 <div class="stat-row"><span>Level</span><b id="level">1 / 12</b></div>
                 <div class="stat-row"><span>Score</span><b id="score">0</b></div>
                 <div class="stat-row"><span>Best</span><b id="best">0</b></div>
                 <div class="stat-row"><span>Remaining</span><b id="remaining">0</b></div>
-                <div class="stat-row"><span>State</span><b id="state">Ready</b></div>
+                <div class="stat-row gx-wide"><span>State</span><b id="state">Ready</b></div>
               </div>
-            </div>
+            </section>
 
-            <div>
-              <p class="panel-section-label">Controls</p>
+            <section class="gx-card">
+              <h2 class="panel-section-label">Controls</h2>
               <ul class="controls-list">
-                <li><b>Aim:</b> Move mouse or drag touch over the board</li>
-                <li><b>Shoot:</b> Click / tap / press Space</li>
-                <li><b>Swap Ball:</b> X, Shift, or right-click</li>
-                <li><b>Fullscreen:</b> Button below canvas (locks landscape on phones)</li>
-                <li><b>Goal:</b> Match 3+ marbles, clear all chains</li>
+                <li><b>Aim</b><span>Move mouse or drag touch over the board</span></li>
+                <li><b>Shoot</b><span>Click / tap / press Space</span></li>
+                <li><b>Swap</b><span>X, Shift, or right-click</span></li>
+                <li><b>Full</b><span>Fullscreen button on the board (locks landscape on phones)</span></li>
+                <li><b>Goal</b><span>Match 3+ marbles, clear all chains</span></li>
               </ul>
-            </div>
+            </section>
 
-            <div class="game-note">
-              Tip: break long mixed sections first so later shots have cleaner match angles.
-            </div>
+            <p class="game-note">Tip: break long mixed sections first so later shots have cleaner match angles.</p>
           </aside>
+
         </div>
       </div>
     </div>
-  </div>
+  </main>
+
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/account/">Account</a>
+      <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </footer>
 
   <script src="/assets/theme.js?v=3"></script>
   <script src="/assets/site.js?v=9"></script>

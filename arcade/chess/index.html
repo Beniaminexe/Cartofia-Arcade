@@ -6,63 +6,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=5" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=4">
-  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
-  <link rel="stylesheet" href="/assets/game-stats.css?v=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=6" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=5">
+  <link rel="stylesheet" href="/arcade/game-common.css?v=2" />
+  <link rel="stylesheet" href="/assets/game-stats.css?v=2" />
+  <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=1" />
   <style>
-    .chess-layout {
-      display: grid;
-      grid-template-columns: minmax(300px, 580px) minmax(240px, 1fr);
-      gap: 16px;
-      align-items: start;
-    }
+    /* Chess — page-specific pieces only; the stage shell lives in /arcade/game-shell-v2.css */
+    .chess-stage { display: grid; gap: 12px; }
+    .chess-stage .gx-screen { container-type: inline-size; background: #2b2452; }
 
-    /* Board wrapper */
-    .board-panel {
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: radial-gradient(circle at 50% 0%, rgba(79,125,249,0.08), rgba(10,14,26,0.96) 60%);
-      padding: 14px;
-    }
-
-    /* Chess board grid — DOM-based squares */
+    /* Chess board grid — DOM-based squares (8 equal rows, so squares stay square) */
     .board-grid {
       width: 100%;
       aspect-ratio: 1 / 1;
-      border-radius: 10px;
-      overflow: hidden;
       display: grid;
       grid-template-columns: repeat(8, minmax(0, 1fr));
-      border: 1px solid rgba(79,125,249,0.25);
+      grid-template-rows: repeat(8, minmax(0, 1fr));
     }
-
-    /* Individual squares */
     .sq {
-      border: 0;
-      margin: 0;
-      padding: 0;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: var(--font-sans);
-      font-size: clamp(22px, 4.5vw, 46px);
+      min-width: 0; min-height: 0;
+      margin: 0; padding: 0; border: 0;
+      font-family: var(--gx-body);
+      font-size: clamp(20px, 9.4cqw, 50px);
+      line-height: 1;
       cursor: pointer;
-      position: relative;
       user-select: none;
       touch-action: manipulation;
       transition: filter 0.12s ease;
     }
-    .sq.light { background: rgba(255,255,255,0.08); }
-    .sq.dark  { background: rgba(255,255,255,0.02); }
-    .sq:hover { filter: brightness(1.3); }
-    .sq.disabled { opacity: 0.78; cursor: default; }
-    .sq.selected { box-shadow: inset 0 0 0 3px rgba(79,125,249,0.72); background: rgba(79,125,249,0.15); }
-    .sq.move::after { content: ""; width: 28%; height: 28%; border-radius: 50%; background: rgba(79,125,249,0.55); position: absolute; }
-    .sq.capture::after { content: ""; width: 70%; height: 70%; border-radius: 50%; border: 3px solid rgba(255,117,145,0.8); position: absolute; box-sizing: border-box; }
-    .sq.last-move { background: rgba(246,183,60,0.12); }
-    .sq.in-check  { background: rgba(255,80,80,0.18); }
+    .sq.light { background: #4a4084; }
+    .sq.dark  { background: #2b2452; }
+    .sq:hover { filter: brightness(1.18); }
+    .sq.disabled { cursor: default; }
+    .sq.disabled:hover { filter: none; }
+    .sq.selected { background: color-mix(in srgb, var(--gx-lemon) 30%, #4a4084); box-shadow: inset 0 0 0 3px var(--gx-lemon); }
+    .sq.move::after { content: ""; position: absolute; width: 26%; height: 26%; border-radius: 50%; background: rgba(255, 216, 74, 0.7); }
+    .sq.capture::after { content: ""; position: absolute; width: 76%; height: 76%; border-radius: 50%; border: 3px solid rgba(255, 107, 74, 0.9); box-sizing: border-box; }
+    .sq.last-move { background: color-mix(in srgb, var(--gx-lemon) 22%, #3a3170); }
+    .sq.in-check  { background: color-mix(in srgb, var(--gx-coral) 45%, #3a3170); }
     .piece-white {
       color: #ffffff;
       text-shadow:
@@ -78,7 +65,7 @@
        Scoped to the .same-device marker so the online/bot flows stay
        untouched. */
     .board-grid.same-device .sq.piece-black { transform: rotate(180deg); }
-        .piece-black {
+    .piece-black {
       color: #0a0d14;
       text-shadow:
         -1px -1px 0 rgba(255,255,255,0.95),
@@ -89,161 +76,88 @@
       font-weight: 600;
     }
 
-    /* Side panel */
-    .game-panel { display: grid; gap: 14px; }
-
-    .panel-section-label {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--text-accent);
-      margin-bottom: 10px;
+    /* status ticker under the board */
+    .status-line {
+      width: clamp(min(100%, 300px), (100svh - var(--gx-chrome) - 56px) * 1, 100%);
+      margin: 0 auto;
+      min-height: 22px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--gx-line);
+      background: var(--gx-well);
+      color: var(--gx-text);
+      font: 600 14px/1.4 var(--gx-body);
+      text-align: center;
     }
+    .chess-stage .gx-screen { width: clamp(min(100%, 300px), (100svh - var(--gx-chrome) - 56px) * 1, 100%); }
 
     /* Mode select cards */
-    .mode-cards {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
+    .mode-cards { display: grid; grid-template-columns: 1fr; gap: 8px; }
     .mode-card {
-      border-radius: 12px;
-      border: 1.5px solid var(--border);
-      background: var(--bg-card);
-      padding: 12px 14px;
-      cursor: pointer;
-      transition: border-color .2s, background .2s, transform .18s;
       display: flex;
       align-items: center;
       gap: 12px;
-    }
-    .mode-card:hover  { border-color: var(--border-h); background: var(--bg-card-h); transform: translateY(-1px); }
-    .mode-card.active { border-color: var(--accent); background: rgba(79,125,249,.08); }
-    .mode-card-icon   { font-size: 22px; line-height: 1; flex-shrink: 0; }
-    .mode-card-body   { flex: 1; }
-    .mode-card-title  { font-size: 14px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
-    .mode-card-desc   { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-
-    /* Difficulty row (shown for bot mode) */
-    .difficulty-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .difficulty-row label { font-size: 13px; color: var(--text-secondary); }
-
-    .settings-select {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border-h);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      padding: 7px 12px;
-      font-family: var(--font-sans);
-      font-size: 14px;
-      font-weight: 500;
+      padding: 11px 13px;
       cursor: pointer;
-      min-height: 36px;
     }
+    .mode-card-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+    .mode-card-body { flex: 1; min-width: 0; }
+    .mode-card-desc { font-size: 12px; margin-top: 2px; }
 
-    /* Status line */
-    .status-line {
-      font-size: 14px;
-      color: var(--text-secondary);
-      min-height: 20px;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-    }
+    .difficulty-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .difficulty-row label { color: var(--gx-dim); font: 600 10px/1.2 var(--gx-mono); letter-spacing: 0.12em; text-transform: uppercase; }
+    .difficulty-row .settings-select { flex: 1; cursor: pointer; }
+    .chess-new { margin-top: 12px; }
+    .chess-new .btn { width: 100%; }
 
     /* Online box */
     .online-box {
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
+      margin-top: 12px;
       padding: 12px;
+      border-radius: 14px;
+      border: 1px dashed color-mix(in srgb, var(--g) 45%, transparent);
+      background: color-mix(in srgb, var(--g) 6%, transparent);
       display: grid;
       gap: 10px;
     }
     .online-box.hidden { display: none; }
-
     .online-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-
-    .online-input {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border-h);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      padding: 8px 12px;
-      font-family: var(--font-sans);
-      font-size: 14px;
-      min-height: 36px;
-      min-width: 110px;
-      flex: 1;
-    }
-    .online-input::placeholder { color: var(--text-muted); }
-
-    .online-pill {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      padding: 0 12px;
-      min-height: 30px;
-      font-size: 12px;
-      font-family: var(--font-mono);
-      color: var(--text-secondary);
-      background: var(--bg-card);
-      white-space: nowrap;
-    }
-    .online-pill.ok   { border-color: rgba(41,196,108,.5); color: #a7efc7; }
-    .online-pill.warn { border-color: rgba(246,183,60,.55); color: #ffd89b; }
-
-    .lobby-list { list-style: none; display: grid; gap: 6px; }
-    .lobby-list li { border: 1px solid rgba(79,125,249,.18); border-radius: 8px; padding: 7px 10px; display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-primary); background: rgba(7,18,30,.6); }
-    .lobby-ready { color: #9ddfb7; }
-    .lobby-wait  { color: #ffcc98; }
-
-    .lobby-state-text { font-size: 12px; color: var(--text-muted); }
+    .lobby-list li { display: flex; justify-content: space-between; gap: 8px; }
+    .lobby-ready { color: var(--gx-mint); }
+    .lobby-wait  { color: var(--gx-lemon); }
 
     /* Captured pieces */
-    .captured-section { display: grid; gap: 10px; }
-    .captured-row { display: grid; gap: 4px; }
-    .captured-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); }
+    .captured-section { display: grid; gap: 8px; }
+    .captured-row {
+      display: grid;
+      gap: 2px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--gx-line);
+      background: var(--gx-well);
+    }
+    .captured-label { color: var(--gx-dim); font: 600 10px/1.2 var(--gx-mono); letter-spacing: 0.12em; text-transform: uppercase; }
     .captured-pieces { min-height: 28px; font-size: 22px; letter-spacing: .02em; line-height: 1.3; }
 
     /* Move log */
     .move-log {
       max-height: 220px;
       overflow: auto;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: rgba(5,10,20,.5);
-      padding: 8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--gx-line);
+      background: var(--gx-well);
       display: grid;
       gap: 4px;
     }
-    .move-log div { font-size: 13px; color: var(--text-secondary); font-family: var(--font-mono); }
-
-    .game-note {
-      border-radius: 10px;
-      border: 1px dashed var(--border);
-      background: var(--bg-card);
-      color: var(--text-muted);
-      font-size: 12px;
-      padding: 9px 10px;
-      line-height: 1.55;
-    }
+    .move-log div { font: 500 13px/1.45 var(--gx-mono); color: var(--gx-muted); }
 
     @media (max-width: 980px) {
-      .chess-layout { grid-template-columns: 1fr; }
+      .chess-stage .gx-screen, .status-line { width: 100%; }
     }
   </style>
 </head>
-<body>
+<body class="gx" style="--g:#b08cff">
 
   <!-- NAV -->
   <header class="nav" id="nav">
@@ -258,8 +172,10 @@
     </a>
     <nav class="nav-links" aria-label="Primary">
       <a href="/">Home</a>
-      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/arcade/" class="active" aria-current="page">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
     <div class="nav-right">
       <div class="account-menu" data-account-menu>
@@ -271,57 +187,64 @@
     </div>
   </header>
 
-  <!-- GAME HEADER -->
-  <div class="game-header">
-    <a class="game-header-back" href="/arcade/">
-      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
-        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Back to Arcade
-    </a>
-    <span class="game-header-title">Chess</span>
-    <div class="game-header-stats">
-      <div class="header-stat" id="headerTurnStat">
-        <span class="header-stat-label">Turn</span>
-        <span class="header-stat-value" id="headerTurn">White</span>
-      </div>
-    </div>
-  </div>
+  <main class="game-page" id="main">
 
-  <!-- GAME PAGE -->
-  <div class="game-page">
+    <!-- TOP BAR: back · cover + title · stats -->
+    <header class="game-header gx-bar">
+      <a class="game-header-back gx-back" href="/arcade/" aria-label="Back to the arcade">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="gx-back-txt">Arcade</span>
+      </a>
+      <div class="gx-id">
+        <img class="gx-badge" src="/assets/games/chess.svg" alt="" width="72" height="45" />
+        <div class="gx-id-txt">
+          <p class="gx-kicker">Multiplayer + AI · Mouse + touch</p>
+          <h1 class="game-header-title gx-title">Chess</h1>
+        </div>
+      </div>
+      <div class="game-header-stats" aria-label="Live stats">
+        <div class="header-stat" id="headerTurnStat">
+          <span class="header-stat-label">Turn</span>
+          <span class="header-stat-value" id="headerTurn">White</span>
+        </div>
+      </div>
+    </header>
+
     <div class="game-container">
       <div class="game-container-inner">
-        <div class="chess-layout">
+        <div class="chess-layout gx-layout">
 
-          <!-- LEFT: board -->
-          <div class="board-panel">
-            <div id="board" class="board-grid" aria-label="Chess board"></div>
-          </div>
+          <!-- Board stage -->
+          <section class="board-panel gx-stage chess-stage" aria-label="Chess board">
+            <div class="gx-screen">
+              <div id="board" class="board-grid" aria-label="Chess board"></div>
+            </div>
+            <div id="statusLine" class="status-line" aria-live="polite">White to move.</div>
+          </section>
 
-          <!-- RIGHT: panel -->
-          <aside class="game-panel">
+          <!-- Rail -->
+          <aside class="game-panel gx-rail" aria-label="Game controls">
 
-            <!-- Mode select -->
-            <div>
-              <p class="panel-section-label">Mode</p>
+            <!-- Mode select + online lobby -->
+            <section class="gx-card">
+              <h2 class="panel-section-label">Mode</h2>
               <div class="mode-cards">
-                <div class="mode-card" id="card-multi" role="button" tabindex="0" aria-pressed="true">
-                  <span class="mode-card-icon">&#129309;</span>
+                <div class="mode-card active" id="card-multi" role="button" tabindex="0" aria-pressed="true">
+                  <span class="mode-card-icon" aria-hidden="true">&#129309;</span>
                   <div class="mode-card-body">
                     <div class="mode-card-title">Same Device</div>
                     <div class="mode-card-desc">Two players, one screen.</div>
                   </div>
                 </div>
                 <div class="mode-card" id="card-bot" role="button" tabindex="0" aria-pressed="false">
-                  <span class="mode-card-icon">&#129302;</span>
+                  <span class="mode-card-icon" aria-hidden="true">&#129302;</span>
                   <div class="mode-card-body">
                     <div class="mode-card-title">vs Bot</div>
                     <div class="mode-card-desc">Test your skills against AI.</div>
                   </div>
                 </div>
                 <div class="mode-card" id="card-online" role="button" tabindex="0" aria-pressed="false">
-                  <span class="mode-card-icon">&#127760;</span>
+                  <span class="mode-card-icon" aria-hidden="true">&#127760;</span>
                   <div class="mode-card-body">
                     <div class="mode-card-title">Online</div>
                     <div class="mode-card-desc">Create or join a room.</div>
@@ -338,8 +261,8 @@
                 </select>
               </div>
 
-              <!-- Difficulty (shown below card area for bot mode) -->
-              <div class="difficulty-row" id="difficultyRow" style="margin-top:10px; display:none;">
+              <!-- Difficulty (shown for bot mode) -->
+              <div class="difficulty-row" id="difficultyRow" style="margin-top:12px; display:none;">
                 <label for="difficultySelect">Difficulty</label>
                 <select id="difficultySelect" class="settings-select">
                   <option value="easy">Easy</option>
@@ -348,20 +271,18 @@
                 </select>
               </div>
 
-              <div style="margin-top:12px;">
-                <button id="newGameBtn" class="btn btn-primary" type="button" style="width:100%;">New Game</button>
+              <div class="chess-new">
+                <button id="newGameBtn" class="btn btn-coral" type="button">New Game</button>
               </div>
 
-              <div id="statusLine" class="status-line" style="margin-top:10px;">White to move.</div>
-
               <!-- Online lobby box (shown when online mode active) -->
-              <section id="onlineBox" class="online-box hidden" aria-live="polite" style="margin-top:12px;">
+              <section id="onlineBox" class="online-box hidden" aria-live="polite" aria-label="Online room">
                 <div class="online-row">
                   <span id="netStatus" class="online-pill">Offline</span>
                 </div>
                 <div class="online-row">
-                  <input id="roomCode" class="online-input" type="text" maxlength="6" autocomplete="off" placeholder="Room code" style="font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;" />
-                  <input id="roomPassword" class="online-input" type="password" maxlength="32" autocomplete="off" placeholder="Password (optional)" />
+                  <input id="roomCode" class="online-input" type="text" maxlength="6" autocomplete="off" placeholder="Room code" aria-label="Room code" style="font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;" />
+                  <input id="roomPassword" class="online-input" type="password" maxlength="32" autocomplete="off" placeholder="Password (optional)" aria-label="Room password" />
                 </div>
                 <div class="online-row">
                   <button id="createRoomBtn" class="btn btn-ghost btn-sm" type="button">Create Room</button>
@@ -369,18 +290,18 @@
                   <button id="leaveRoomBtn" class="btn btn-ghost btn-sm" type="button">Leave</button>
                 </div>
                 <div class="online-row">
-                  <input id="playerName" class="online-input" type="text" maxlength="16" autocomplete="off" placeholder="Player name" />
+                  <input id="playerName" class="online-input" type="text" maxlength="16" autocomplete="off" placeholder="Player name" aria-label="Player name" />
                   <button id="saveNameBtn" class="btn btn-ghost btn-sm" type="button">Save</button>
                   <button id="readyBtn" class="btn btn-ghost btn-sm" type="button">Ready: Off</button>
                 </div>
                 <div class="lobby-state-text" id="lobbyState">Connect to a room.</div>
                 <ul id="lobbyList" class="lobby-list"></ul>
               </section>
-            </div>
+            </section>
 
             <!-- Captured pieces -->
-            <div>
-              <p class="panel-section-label">Captured</p>
+            <section class="gx-card">
+              <h2 class="panel-section-label">Captured</h2>
               <div class="captured-section">
                 <div class="captured-row">
                   <span class="captured-label">White captured</span>
@@ -391,21 +312,33 @@
                   <div id="capturedByBlack" class="captured-pieces"></div>
                 </div>
               </div>
-            </div>
+            </section>
 
             <!-- Move log -->
-            <div>
-              <p class="panel-section-label">Move Log</p>
+            <section class="gx-card">
+              <h2 class="panel-section-label">Move log</h2>
               <div id="moveLog" class="move-log" aria-live="polite"></div>
-            </div>
+            </section>
 
-            <div class="game-note">Click to select a piece, click again to move. Promotion auto-queens. Castling, en passant, check, checkmate, and stalemate included. In online mode host plays White, guest plays Black.</div>
+            <p class="game-note">Click to select a piece, click again to move. Promotion auto-queens. Castling, en passant, check, checkmate, and stalemate included. In online mode host plays White, guest plays Black.</p>
 
           </aside>
         </div>
       </div>
     </div>
-  </div>
+  </main>
+
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/account/">Account</a>
+      <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </footer>
 
   <script src="/assets/theme.js?v=3"></script>
   <script src="/assets/site.js?v=9"></script>

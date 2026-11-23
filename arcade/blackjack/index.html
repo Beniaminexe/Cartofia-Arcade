@@ -6,67 +6,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=5" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=4">
-  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
-  <link rel="stylesheet" href="/assets/game-stats.css?v=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=6" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=5">
+  <link rel="stylesheet" href="/arcade/game-common.css?v=2" />
+  <link rel="stylesheet" href="/assets/game-stats.css?v=2" />
+  <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=1" />
   <style>
-    .blackjack-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
-      gap: 16px;
-      align-items: start;
-    }
+    /* Blackjack — page-specific pieces only; the stage shell lives in /arcade/game-shell-v2.css.
+       The table keeps its felt-green identity inside the Night Market stage. */
+    .blackjack-layout { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); }
 
-    /* Table card (left) */
     .table-card {
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(5,20,16,.9), rgba(4,14,12,.85));
-      padding: 16px;
       display: grid;
       gap: 14px;
+      background:
+        radial-gradient(90% 60% at 50% 0%, rgba(47, 193, 132, 0.20), transparent 70%),
+        radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1.5px) 0 0 / 16px 16px,
+        linear-gradient(180deg, #0b2a22, #071a15);
+      border-color: rgba(47, 193, 132, 0.22);
     }
-
-    .table-head {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .table-title {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-    }
-
-    .table-status {
-      font-size: 14px;
-      color: var(--text-secondary);
-      min-height: 20px;
-    }
+    .table-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+    .table-title { color: var(--gx-text); font: 700 16px/1.2 var(--gx-display); letter-spacing: -0.02em; }
+    .table-status { min-height: 20px; color: #bfe9d6; font-size: 14px; }
 
     /* Dealer zone */
     .dealer-zone {
-      border-radius: 12px;
-      border: 1px solid rgba(84,217,178,0.2);
-      background: rgba(3,12,10,.5);
-      padding: 14px;
       display: grid;
       gap: 10px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 2px solid rgba(3, 12, 10, 0.6);
+      background: rgba(3, 12, 10, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(84, 217, 178, 0.18);
     }
-    .dealer-label {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: rgba(84,217,178,0.7);
-      font-weight: 500;
-    }
+    .dealer-label { color: rgba(132, 236, 196, 0.85); font: 600 10.5px/1 var(--gx-mono); letter-spacing: 0.16em; text-transform: uppercase; }
 
     /* Cards area */
     .cards {
@@ -175,162 +149,110 @@
     }
 
     /* Player list */
-    .player-list {
-      list-style: none;
-      display: grid;
-      gap: 10px;
-    }
-
+    .player-list { list-style: none; display: grid; gap: 10px; }
     .player-item {
-      border-radius: 12px;
-      border: 1px solid rgba(84,217,178,0.15);
-      background: rgba(4,14,12,.55);
-      padding: 10px 12px;
       display: grid;
       gap: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(84, 217, 178, 0.16);
+      background: rgba(4, 14, 12, 0.55);
       transition: border-color 0.2s;
     }
-    .player-item.active {
-      border-color: rgba(84,217,178,0.55);
-      box-shadow: 0 0 0 1px rgba(84,217,178,0.12) inset;
-    }
-
-    .player-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .player-name-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    .player-result {
-      font-family: var(--font-mono);
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-accent);
-    }
-    .player-meta {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-    }
-    .player-item-empty { color: var(--text-muted); font-size: 13px; text-align: center; padding: 14px; }
+    .player-item.active { border-color: var(--gx-mint); box-shadow: 0 0 0 1px rgba(62, 230, 166, 0.18) inset, 0 10px 24px -16px rgba(62, 230, 166, 0.7); }
+    .player-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+    .player-name-label { color: var(--gx-text); font-size: 14px; font-weight: 600; }
+    .player-result { color: var(--gx-lemon); font: 600 13px/1.3 var(--gx-mono); }
+    .player-meta { color: #8fb9a8; font: 500 12px/1.4 var(--gx-mono); }
+    .player-item-empty { color: #8fb9a8; font-size: 13px; text-align: center; padding: 14px; }
 
     /* Round result banner */
     .round-result {
-      border-radius: 10px;
       padding: 10px 12px;
-      font-family: var(--font-mono);
-      font-size: 13.5px;
-      font-weight: 600;
-      text-align: center;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text-primary);
+      border-radius: 12px;
+      border: 1px solid var(--gx-line);
+      background: var(--gx-well);
+      color: var(--gx-text);
+      font: 600 13.5px/1.4 var(--gx-mono);
       letter-spacing: 0.02em;
+      text-align: center;
     }
-    .round-result.win  { border-color: rgba(74,222,128,.55); background: rgba(74,222,128,.08);  color: #a7f0c7; }
-    .round-result.lose { border-color: rgba(246,88,88,.55);  background: rgba(246,88,88,.08);   color: #ff9c9c; }
-    .round-result.push { border-color: rgba(246,183,60,.55); background: rgba(246,183,60,.08);  color: #ffd89b; }
-    .round-result.warn { border-color: rgba(246,183,60,.55); color: #ffd89b; }
-    .round-result.ok   { border-color: rgba(74,222,128,.55); color: #a7f0c7; }
+    .round-result.win  { border-color: rgba(62, 230, 166, 0.55); background: rgba(62, 230, 166, 0.08); color: #a7f0d2; }
+    .round-result.lose { border-color: rgba(255, 107, 74, 0.55); background: rgba(255, 107, 74, 0.08); color: #ffb3a1; }
+    .round-result.push { border-color: rgba(255, 216, 74, 0.55); background: rgba(255, 216, 74, 0.08); color: #ffe7a1; }
+    .round-result.warn { border-color: rgba(255, 216, 74, 0.55); color: #ffe7a1; }
+    .round-result.ok   { border-color: rgba(62, 230, 166, 0.55); color: #a7f0d2; }
     .round-result[hidden] { display: none; }
 
     /* Action controls */
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .controls .btn { min-height: 44px; flex: 1; min-width: 90px; justify-content: center; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+    .controls .btn { min-height: 46px; flex: 1; min-width: 90px; justify-content: center; }
 
-    /* Wallet pills */
+    /* Wallet */
     .wallet-row {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 10px;
-      border: 1px solid rgba(79,125,249,0.22);
-      background: linear-gradient(180deg, rgba(79,125,249,0.08), rgba(79,125,249,0.02));
-      border-radius: 12px;
-      padding: 10px 12px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 216, 74, 0.28);
+      background: rgba(255, 216, 74, 0.05);
     }
-    .wallet-chip-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      font-family: var(--font-mono);
-      font-size: 15px;
-      font-weight: 700;
-      color: #ffd368;
-    }
+    .wallet-chip-pill { display: inline-flex; align-items: center; gap: 8px; color: var(--gx-lemon); font: 700 18px/1 var(--gx-mono); }
     .wallet-chip-pill::before {
       content: "";
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
       border-radius: 50%;
       background: radial-gradient(circle at 30% 30%, #ffe29b 0%, #ffb331 55%, #a66f10 100%);
-      box-shadow: 0 0 6px rgba(255,180,50,0.5), inset 0 0 0 1px rgba(255,255,255,0.3);
-      flex-shrink: 0;
+      box-shadow: 0 0 6px rgba(255, 180, 50, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
     }
-    .wallet-stats { font-size: 11.5px; color: var(--text-muted); font-family: var(--font-mono); flex: 1 1 100%; }
+    .wallet-stats { flex: 1 1 100%; color: var(--gx-dim); font: 500 11.5px/1.4 var(--gx-mono); }
     #walletBanner {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px dashed rgba(255, 216, 74, 0.4);
+      background: rgba(255, 216, 74, 0.06);
+      color: #ffe7a1;
       font-size: 12px;
-      color: #ffd89b;
-      border: 1px dashed rgba(246,183,60,0.4);
-      background: rgba(246,183,60,0.06);
-      padding: 7px 10px;
-      border-radius: 8px;
     }
     #walletBanner[hidden] { display: none; }
 
-    /* Bet input row */
-    .bet-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .bet-label {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--text-muted);
-    }
+    /* Bet stepper */
+    .bet-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .bet-label { color: var(--gx-dim); font: 600 10px/1.2 var(--gx-mono); letter-spacing: 0.12em; text-transform: uppercase; }
     .bet-stepper {
       display: inline-flex;
       align-items: center;
-      border: 1px solid var(--border-h);
-      border-radius: 10px;
       overflow: hidden;
-      background: rgba(255,255,255,0.04);
+      border-radius: 12px;
+      border: 1px solid var(--gx-line-2);
+      background: var(--gx-well);
     }
     .bet-stepper button {
-      background: transparent;
-      color: var(--text-primary);
+      width: 40px;
+      height: 40px;
       border: 0;
-      width: 36px;
-      height: 36px;
-      font-size: 18px;
+      background: transparent;
+      color: var(--gx-text);
+      font-size: 19px;
       font-weight: 700;
       cursor: pointer;
     }
+    .bet-stepper button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
     .bet-stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
     .bet-stepper input {
-      width: 72px;
-      background: transparent;
+      width: 76px;
+      height: 40px;
       border: 0;
-      color: #ffd368;
-      font-family: var(--font-mono);
-      font-weight: 700;
-      font-size: 14px;
+      border-inline: 1px solid var(--gx-line);
+      background: transparent;
+      color: var(--gx-lemon);
+      font: 700 15px/1 var(--gx-mono);
       text-align: center;
-      height: 36px;
       outline: none;
     }
     .bet-stepper input::-webkit-outer-spin-button,
@@ -340,122 +262,54 @@
     .phase-pill {
       display: inline-flex;
       align-items: center;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      padding: 0 12px;
       min-height: 28px;
-      font-size: 11px;
-      font-family: var(--font-mono);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      font-weight: 500;
-      color: var(--text-muted);
-      background: var(--bg-card);
-    }
-    .phase-pill.playing { border-color: rgba(84,217,178,0.5); color: #a7f0db; }
-    .phase-pill.results { border-color: rgba(246,183,60,.5); color: #ffd89b; }
-
-    /* Lobby card (right) */
-    .lobby-card {
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      padding: 16px;
-      display: grid;
-      gap: 12px;
-    }
-
-    .panel-section-label {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--text-accent);
-      margin-bottom: 6px;
-    }
-
-    .online-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-
-    .online-input {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border-h);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      padding: 8px 12px;
-      font-family: var(--font-sans);
-      font-size: 14px;
-      min-height: 36px;
-      min-width: 110px;
-      flex: 1;
-    }
-    .online-input::placeholder { color: var(--text-muted); }
-
-    .online-pill {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      border: 1px solid var(--border);
       padding: 0 12px;
-      min-height: 30px;
-      font-size: 12px;
-      font-family: var(--font-mono);
-      color: var(--text-secondary);
-      background: var(--bg-card);
-      white-space: nowrap;
+      border-radius: 999px;
+      border: 1px solid var(--gx-line-2);
+      background: rgba(3, 12, 10, 0.5);
+      color: var(--gx-muted);
+      font: 600 11px/1 var(--gx-mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
     }
-    .online-pill.ok   { border-color: rgba(41,196,108,.5); color: #a7efc7; }
-    .online-pill.warn { border-color: rgba(246,183,60,.55); color: #ffd89b; }
+    .phase-pill.playing { border-color: rgba(62, 230, 166, 0.5); color: var(--gx-mint); }
+    .phase-pill.results { border-color: rgba(255, 216, 74, 0.5); color: var(--gx-lemon); }
 
-    .lobby-state-text { font-size: 12px; color: var(--text-muted); }
+    /* Lobby */
+    .bj-lobby { display: grid; gap: 10px; }
+    .online-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .lobby-list li { display: flex; justify-content: space-between; gap: 8px; }
+    .ready-on  { color: var(--gx-mint); }
+    .ready-off { color: var(--gx-lemon); }
 
-    .lobby-list { list-style: none; display: grid; gap: 6px; }
-    .lobby-list li { border: 1px solid rgba(79,125,249,.18); border-radius: 8px; padding: 7px 10px; display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-primary); background: rgba(7,18,30,.6); }
-    .ready-on  { color: #9ddfb7; }
-    .ready-off { color: #ffcc98; }
-
-    .game-note {
-      border-radius: 10px;
-      border: 1px dashed var(--border);
-      background: var(--bg-card);
-      color: var(--text-muted);
-      font-size: 12px;
-      padding: 9px 10px;
-      line-height: 1.55;
-    }
-
-    @media (max-width: 980px) {
-      .blackjack-layout { grid-template-columns: 1fr; }
-    }
     @media (max-width: 540px) {
       .pcard { --pc-w: 48px; --pc-h: 70px; }
       .pcard .pcard-pip { font-size: 26px; }
       .dealer-zone .pcard { --pc-w: 56px; --pc-h: 82px; }
       .dealer-zone .pcard .pcard-pip { font-size: 30px; }
       .cards { gap: 8px; }
-      .controls .btn { flex: 1 1 100px; min-height: 48px; }
-      .bet-stepper button { width: 40px; height: 40px; }
-      .bet-stepper input { width: 68px; height: 40px; font-size: 15px; }
-      .wallet-chip-pill { font-size: 17px; }
+      .controls { display: grid; grid-template-columns: 1fr 1fr; }
+      .controls .btn { width: auto; min-width: 0; min-height: 48px; }
+      .bet-stepper button { width: 42px; height: 42px; }
+      .bet-stepper input { width: 70px; height: 42px; font-size: 16px; }
       /* Sticky action bar on narrow screens so hit/stand/double are always
          reachable even on a long table. */
       .table-card .controls {
         position: sticky;
         bottom: 0;
-        padding: 10px 12px;
-        margin: 0 -16px -16px;
-        background: linear-gradient(180deg, rgba(5,20,16,0) 0%, rgba(4,14,12,0.95) 40%, rgba(4,14,12,0.98) 100%);
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-        border-top: 1px solid rgba(84,217,178,0.18);
-        border-radius: 0 0 18px 18px;
-        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
         z-index: 5;
+        margin: 0 -8px -8px;
+        padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px));
+        border-top: 1px solid rgba(84, 217, 178, 0.18);
+        border-radius: 0 0 18px 18px;
+        background: linear-gradient(180deg, rgba(7, 26, 21, 0.2) 0%, rgba(7, 26, 21, 0.95) 40%, rgba(7, 26, 21, 0.98) 100%);
+        -webkit-backdrop-filter: blur(6px);
+        backdrop-filter: blur(6px);
       }
     }
   </style>
 </head>
-<body>
+<body class="gx" style="--g:#2fc184">
 
   <!-- NAV -->
   <header class="nav" id="nav">
@@ -470,8 +324,10 @@
     </a>
     <nav class="nav-links" aria-label="Primary">
       <a href="/">Home</a>
-      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/arcade/" class="active" aria-current="page">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
     <div class="nav-right">
       <div class="account-menu" data-account-menu>
@@ -483,33 +339,37 @@
     </div>
   </header>
 
-  <!-- GAME HEADER -->
-  <div class="game-header">
-    <a class="game-header-back" href="/arcade/">
-      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
-        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Leave Table
-    </a>
-    <span class="game-header-title">Blackjack</span>
-    <div class="game-header-stats">
-      <div class="header-stat">
-        <span class="header-stat-label">Phase</span>
-        <span class="header-stat-value" id="headerPhase">Lobby</span>
-      </div>
-    </div>
-  </div>
+  <main class="game-page" id="main">
 
-  <!-- GAME PAGE -->
-  <div class="game-page">
+    <!-- TOP BAR: back · cover + title · stats -->
+    <header class="game-header gx-bar">
+      <a class="game-header-back gx-back" href="/arcade/" aria-label="Leave the table and go back to the arcade">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="gx-back-txt">Leave table</span>
+      </a>
+      <div class="gx-id">
+        <img class="gx-badge" src="/assets/games/blackjack.svg" alt="" width="72" height="45" />
+        <div class="gx-id-txt">
+          <p class="gx-kicker">Online multiplayer · Touch + mouse</p>
+          <h1 class="game-header-title gx-title">Blackjack</h1>
+        </div>
+      </div>
+      <div class="game-header-stats" aria-label="Live stats">
+        <div class="header-stat">
+          <span class="header-stat-label">Phase</span>
+          <span class="header-stat-value" id="headerPhase">Lobby</span>
+        </div>
+      </div>
+    </header>
+
     <div class="game-container">
       <div class="game-container-inner">
-        <div class="blackjack-layout">
+        <div class="blackjack-layout gx-layout">
 
-          <!-- LEFT: Table -->
-          <section class="table-card">
+          <!-- Table stage -->
+          <section class="table-card gx-stage" aria-label="Blackjack table">
             <div class="table-head">
-              <span class="table-title">Table</span>
+              <h2 class="table-title">Table</h2>
               <div id="phasePill" class="phase-pill">Lobby</div>
             </div>
             <div id="tableStatus" class="table-status">Connect to a room and ready up.</div>
@@ -521,71 +381,84 @@
             <ul id="playersList" class="player-list"></ul>
             <div id="roundResult" class="round-result" hidden></div>
             <div class="controls">
-              <button id="startRoundBtn" class="btn btn-primary" type="button">Start Round</button>
+              <button id="startRoundBtn" class="btn btn-coral" type="button">Start Round</button>
               <button id="hitBtn" class="btn btn-ghost" type="button">Hit</button>
               <button id="standBtn" class="btn btn-ghost" type="button">Stand</button>
               <button id="doubleBtn" class="btn btn-ghost" type="button" title="Double your bet, take one card, then stand">Double</button>
             </div>
           </section>
 
-          <!-- RIGHT: Lobby -->
-          <aside class="lobby-card">
-            <div>
-              <p class="panel-section-label">Bankroll</p>
+          <!-- Rail: bankroll, bet, lobby -->
+          <aside class="lobby-card gx-rail" aria-label="Bankroll and lobby">
+            <section class="gx-card">
+              <h2 class="panel-section-label">Bankroll</h2>
               <div class="wallet-row">
                 <span class="wallet-chip-pill"><span id="walletChips">—</span></span>
-                <button id="topupBtn" class="btn btn-ghost btn-sm" type="button" hidden>Claim free chips</button>
+                <button id="topupBtn" class="btn btn-lemon btn-sm" type="button" hidden>Claim free chips</button>
                 <span id="walletStats" class="wallet-stats">Sign in to play for chips.</span>
               </div>
               <div id="walletBanner" hidden></div>
-            </div>
+            </section>
 
-            <div>
-              <p class="panel-section-label">Your Bet</p>
+            <section class="gx-card">
+              <h2 class="panel-section-label">Your bet</h2>
               <div class="bet-row">
                 <span class="bet-label">Chips per hand</span>
                 <div class="bet-stepper">
                   <button id="betDown" type="button" aria-label="Decrease bet">−</button>
-                  <input id="betInput" type="number" min="10" max="10000" step="10" value="100" inputmode="numeric" />
+                  <input id="betInput" type="number" min="10" max="10000" step="10" value="100" inputmode="numeric" aria-label="Bet in chips" />
                   <button id="betUp" type="button" aria-label="Increase bet">+</button>
                 </div>
               </div>
-            </div>
+            </section>
 
-            <div>
-              <p class="panel-section-label">Room Lobby</p>
-              <p class="game-note" style="margin-bottom:10px;">Hit, stand, or double down. Dealer stands on all 17s. Blackjack pays 3:2.</p>
-            </div>
+            <section class="gx-card bj-lobby" aria-label="Room lobby">
+              <h2 class="panel-section-label" style="margin-bottom:2px;">Room lobby</h2>
 
-            <div class="online-row">
-              <span id="netStatus" class="online-pill">Offline</span>
-            </div>
+              <div class="online-row">
+                <span id="netStatus" class="online-pill">Offline</span>
+              </div>
 
-            <div class="online-row">
-              <input id="roomCode" class="online-input" type="text" maxlength="6" autocomplete="off" placeholder="Table code" style="font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;" />
-              <input id="roomPassword" class="online-input" type="password" maxlength="32" autocomplete="off" placeholder="Password (optional)" />
-            </div>
+              <div class="online-row">
+                <input id="roomCode" class="online-input" type="text" maxlength="6" autocomplete="off" placeholder="Table code" aria-label="Table code" style="font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;" />
+                <input id="roomPassword" class="online-input" type="password" maxlength="32" autocomplete="off" placeholder="Password (optional)" aria-label="Table password" />
+              </div>
 
-            <div class="online-row">
-              <button id="createRoomBtn" class="btn btn-ghost btn-sm" type="button">Create Table</button>
-              <button id="joinRoomBtn" class="btn btn-primary btn-sm" type="button">Join Table</button>
-              <button id="leaveRoomBtn" class="btn btn-ghost btn-sm" type="button">Leave</button>
-            </div>
+              <div class="online-row">
+                <button id="createRoomBtn" class="btn btn-ghost btn-sm" type="button">Create Table</button>
+                <button id="joinRoomBtn" class="btn btn-primary btn-sm" type="button">Join Table</button>
+                <button id="leaveRoomBtn" class="btn btn-ghost btn-sm" type="button">Leave</button>
+              </div>
 
-            <div class="online-row">
-              <input id="playerName" class="online-input" type="text" maxlength="16" autocomplete="off" placeholder="Player name" />
-              <button id="saveNameBtn" class="btn btn-ghost btn-sm" type="button">Save</button>
-              <button id="readyBtn" class="btn btn-ghost btn-sm" type="button">Ready: Off</button>
-            </div>
+              <div class="online-row">
+                <input id="playerName" class="online-input" type="text" maxlength="16" autocomplete="off" placeholder="Player name" aria-label="Player name" />
+                <button id="saveNameBtn" class="btn btn-ghost btn-sm" type="button">Save</button>
+                <button id="readyBtn" class="btn btn-ghost btn-sm" type="button">Ready: Off</button>
+              </div>
 
-            <div class="lobby-state-text" id="lobbyState">Waiting for room connection.</div>
-            <ul id="lobbyList" class="lobby-list"></ul>
+              <div class="lobby-state-text" id="lobbyState">Waiting for room connection.</div>
+              <ul id="lobbyList" class="lobby-list"></ul>
+            </section>
+
+            <p class="game-note">Hit, stand, or double down. Dealer stands on all 17s. Blackjack pays 3:2.</p>
           </aside>
 
         </div>
       </div>
     </div>
-  </div>
+  </main>
+
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/account/">Account</a>
+      <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </footer>
 
   <script src="/assets/theme.js?v=3"></script>
   <script src="/assets/site.js?v=9"></script>

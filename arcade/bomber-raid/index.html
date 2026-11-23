@@ -6,43 +6,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=5" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=4">
-  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
-  <link rel="stylesheet" href="/assets/game-stats.css?v=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=6" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=5">
+  <link rel="stylesheet" href="/arcade/game-common.css?v=2" />
+  <link rel="stylesheet" href="/assets/game-stats.css?v=2" />
+  <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=1" />
   <style>
-    .game-layout {
-      display: grid;
-      grid-template-columns: minmax(300px, 620px) minmax(240px, 1fr);
-      gap: 16px;
-      align-items: start;
-    }
-    .board-panel {
-      position: relative;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: radial-gradient(circle at 50% 0%, rgba(79,125,249,0.1), rgba(10,14,26,0.95) 62%);
-      padding: 12px;
-    }
-    .board-frame {
-      position: relative;
-      border-radius: 10px;
-      border: 1px solid rgba(79,125,249,0.2);
-      background: #071322;
-      overflow: hidden;
-    }
+    /* Bomber Raid — page-specific pieces only; the stage shell lives in /arcade/game-shell-v2.css */
     #g {
-      display:block; width:100%; height:auto;
-      aspect-ratio:13/11;
-      image-rendering:pixelated;
-      touch-action:none;
-      transform:translateZ(0);        /* promote to a layer so scaling runs on the GPU */
-      will-change:transform;
-      backface-visibility:hidden;
+      aspect-ratio: 13 / 11;
+      image-rendering: pixelated;
+      background: #071322;
+      transform: translateZ(0);        /* promote to a layer so scaling runs on the GPU */
+      will-change: transform;
+      backface-visibility: hidden;
     }
-    #ov { position:absolute; inset:0; display:grid; place-items:center; text-align:center; padding:16px; background:rgba(2,8,13,.72); color:var(--text-primary); font-family:var(--font-sans); pointer-events:none; transition:opacity .2s ease; }
+    #ov { position:absolute; inset:0; display:grid; place-items:center; text-align:center; padding:16px; background:rgba(13,10,28,.66); color:var(--gx-text); font:600 15px/1.5 var(--gx-body); pointer-events:none; transition:opacity .2s ease; text-wrap:balance; }
     #ov.hide { opacity:0; }
+
     .joy-layer { position:absolute; inset:0; z-index:3; pointer-events:none; }
     .joystick-base { position:absolute; left:-9999px; top:-9999px; width:112px; height:112px; border-radius:50%; border:1px solid rgba(93,183,255,.42); background:radial-gradient(circle at 32% 28%,rgba(130,196,244,.2),rgba(12,28,43,.46) 58%),linear-gradient(180deg,rgba(8,22,34,.4),rgba(6,15,24,.34)); box-shadow:inset 0 0 0 1px rgba(191,228,255,.06); opacity:0; transform:translate(-50%,-50%) scale(.9); transition:opacity .12s ease,transform .12s ease; pointer-events:none; }
     .joystick-base::before,.joystick-base::after { content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); background:rgba(170,219,255,.15); pointer-events:none; }
@@ -51,60 +33,49 @@
     .joystick-thumb { position:absolute; left:50%; top:50%; width:44px; height:44px; border-radius:50%; transform:translate(-50%,-50%); border:1px solid rgba(117,198,255,.68); background:radial-gradient(circle at 35% 32%,rgba(223,243,255,.5),rgba(77,146,201,.62) 64%),linear-gradient(180deg,rgba(24,76,119,.58),rgba(14,47,74,.54)); box-shadow:0 5px 12px rgba(0,0,0,.24); transition:transform .08s ease; pointer-events:none; }
     .joystick-base.active { opacity:.58; transform:translate(-50%,-50%) scale(1); }
     .joystick-base.active .joystick-thumb { transition:none; }
-    .inframe-actions { position:absolute; top:10px; right:10px; display:flex; gap:6px; z-index:4; transition:opacity .18s ease; }
-    .inframe-actions .btn { text-align:center; justify-content:center; display:inline-flex; align-items:center; }
-    .inframe-actions .btn { min-height:32px; padding:6px 10px; font-size:12px; }
-    .inframe-actions.hidden { opacity:0; pointer-events:none; }
-    .game-panel { display:grid; gap:14px; }
-    .panel-section-label { font-family:var(--font-mono); font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:.14em; color:var(--text-accent); margin-bottom:10px; }
-    .stat-grid { display:grid; gap:8px; }
-    .stat-row { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid var(--border); padding-bottom:8px; font-size:14px; color:var(--text-secondary); }
-    .stat-row:last-child { border-bottom:none; padding-bottom:0; }
-    .stat-row b { color:var(--text-accent); font-family:var(--font-mono); font-size:18px; font-weight:500; }
-    .mode-cards { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:8px; }
-    .mode-card { border-radius:14px; border:1.5px solid var(--border); background:var(--bg-card); padding:18px 14px; cursor:pointer; transition:border-color .2s,background .2s,transform .18s; text-align:center; display:flex; flex-direction:column; gap:8px; align-items:center; }
-    .mode-card:hover { border-color:var(--border-h); background:var(--bg-card-h); transform:translateY(-2px); }
-    .mode-card.active { border-color:var(--accent); background:rgba(79,125,249,.08); }
+
+    /* in-frame Start/Pause/Restart sit right of the fullscreen button */
+    .inframe-actions { left:auto; }
+
+    /* mode picker */
+    .mode-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .mode-card { padding:16px 12px; cursor:pointer; text-align:center; display:flex; flex-direction:column; gap:7px; align-items:center; }
     .mode-card-icon  { font-size:26px; line-height:1; }
-    .mode-card-title { font-size:14px; font-weight:700; color:var(--text-primary); }
-    .mode-card-desc  { font-size:12px; color:var(--text-secondary); line-height:1.5; }
-    .lobby-section { border-radius:12px; border:1px solid var(--border); background:var(--bg-card); padding:12px; display:grid; gap:10px; }
+    .mode-card-desc  { font-size:12px; line-height:1.45; }
+    .gx .br-keys { margin-top:12px; }
+
+    /* online room */
+    .lobby-section { display:grid; gap:10px; }
     .lobby-section.hidden { display:none; }
     .lobby-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    .lobby-input { background:rgba(255,255,255,.06); border:1px solid var(--border-h); border-radius:var(--radius-sm); color:var(--text-primary); padding:8px 12px; font-family:var(--font-sans); font-size:14px; min-height:36px; min-width:110px; flex:1; }
-    .lobby-input::placeholder { color:var(--text-muted); }
-    .net-pill { display:inline-flex; align-items:center; border-radius:999px; border:1px solid var(--border); padding:0 12px; min-height:32px; font-size:12px; font-family:var(--font-mono); color:var(--text-secondary); background:var(--bg-card); white-space:nowrap; }
-    .net-pill.ok   { border-color:rgba(41,196,108,.5); color:#a7efc7; }
-    .net-pill.warn { border-color:rgba(246,183,60,.55); color:#ffd89b; }
-    .lobby-list-panel { border-radius:10px; border:1px solid var(--border); background:rgba(10,14,26,.4); padding:10px; display:grid; gap:8px; }
+    .lobby-list-panel { display:grid; gap:8px; padding:10px; border-radius:12px; border:1px solid var(--gx-line); background:rgba(6,4,16,.25); }
     .lobby-list-header { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-    .lobby-list-title { font-size:13px; font-weight:600; color:var(--text-primary); }
-    .lobby-list-state { font-size:12px; color:var(--text-muted); }
-    .lobby-list { list-style:none; display:grid; gap:6px; }
-    .lobby-list li { border:1px solid rgba(79,125,249,.2); border-radius:8px; padding:7px 10px; display:flex; justify-content:space-between; gap:8px; font-size:13px; color:var(--text-primary); background:rgba(7,18,30,.6); }
-    .lobby-ready     { color:#9ad5b0; }
-    .lobby-not-ready { color:#ffcc98; }
-    .sync-opts { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    .sync-opt { display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); font-size:12px; }
-    .sync-opt input[type="number"] { background:rgba(255,255,255,.06); border:1px solid var(--border-h); border-radius:6px; color:var(--text-primary); padding:4px 8px; font-size:12px; min-width:74px; max-width:90px; min-height:28px; }
-    .sync-opt input[type="checkbox"] { width:14px; height:14px; accent-color:var(--accent); }
-    .touch-controls { border-radius:12px; border:1px solid var(--border); background:var(--bg-card); padding:10px; }
-    .touch-bomb { width:100%; min-height:52px; font-size:15px; }
-    .game-note { border-radius:10px; border:1px dashed var(--border); background:var(--bg-card); color:var(--text-muted); font-size:12px; padding:9px 10px; line-height:1.55; }
+    .lobby-list-title { color:var(--gx-text); font:700 12.5px/1.2 var(--gx-display); }
+    .lobby-list li { display:flex; justify-content:space-between; gap:8px; }
+    .lobby-ready     { color:var(--gx-mint); }
+    .lobby-not-ready { color:var(--gx-lemon); }
+    .sync-opts { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; padding-top:2px; }
+    .sync-opt { display:inline-flex; align-items:center; gap:6px; color:var(--gx-dim); font-size:12px; font-weight:500; }
+    .sync-opt input[type="number"] { min-width:70px; max-width:84px; min-height:30px; padding:0 8px; border-radius:8px; border:1px solid var(--gx-line-2); background:var(--gx-well); color:var(--gx-text); font:600 12px/1 var(--gx-mono); }
+    .sync-opt input[type="checkbox"] { width:15px; height:15px; accent-color:var(--g); }
+
+    .touch-bomb { width:100%; min-height:54px; font-size:16px; }
+
     /* Floating overlay buttons on the canvas (touch primary, visible always) */
     .overlay-icon-btn {
       position:absolute; z-index:5;
-      width:40px; height:40px; border-radius:50%;
-      border:1px solid rgba(142,198,255,.46);
-      background:rgba(7,18,29,.65);
-      color:#e7f4ff;
+      width:40px; height:40px; border-radius:12px;
+      border:2px solid var(--gx-ink);
+      background:rgba(13,10,28,.72);
+      color:var(--gx-text);
       display:inline-flex; align-items:center; justify-content:center;
       cursor:pointer;
-      -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
-      transition:background .15s ease,border-color .15s ease;
+      box-shadow:0 0 0 1px rgba(255,255,255,.14);
+      -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+      transition:background .15s ease, box-shadow .15s ease;
     }
     .overlay-icon-btn:hover,
-    .overlay-icon-btn:active { background:rgba(40,108,179,.55); border-color:rgba(177,220,255,.78); }
+    .overlay-icon-btn:active { background:rgba(255,216,74,.14); box-shadow:0 0 0 1px rgba(255,216,74,.6); }
     .fs-overlay { top:10px; left:10px; }
 
     .overlay-bomb-btn {
@@ -113,19 +84,19 @@
       bottom:16px;
       z-index:5;
       width:88px; height:88px; border-radius:50%;
-      border:1.5px solid rgba(255,180,120,.6);
-      background:radial-gradient(circle at 32% 30%, rgba(255,220,180,.35), rgba(120,40,20,.72) 68%);
+      border:3px solid var(--gx-ink);
+      background:radial-gradient(circle at 32% 30%, #ffb08f, var(--gx-coral) 55%, var(--gx-coral-d) 100%);
       color:#fff5e5;
       display:none;
       align-items:center; justify-content:center;
       cursor:pointer;
-      box-shadow:0 10px 24px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,220,180,.22);
+      box-shadow:0 5px 0 #6e1f0e, 0 14px 28px rgba(0,0,0,.5);
       touch-action:none; user-select:none; -webkit-user-select:none;
       transition:transform .08s ease, box-shadow .15s ease;
     }
     .overlay-bomb-btn:active {
-      transform:translateY(2px) scale(.97);
-      box-shadow:0 4px 10px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,220,180,.22);
+      transform:translateY(4px) scale(.98);
+      box-shadow:0 1px 0 #6e1f0e, 0 6px 12px rgba(0,0,0,.45);
     }
     .overlay-bomb-icon { font-size:40px; line-height:1; }
 
@@ -145,13 +116,15 @@
       width:100vw; height:100vh;
       padding:env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
               env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
-      background:#0a0e1a;
+      border:0; border-radius:0;
+      background:#0d0a1c;
     }
     .board-panel:fullscreen .board-frame,
     .board-panel:-webkit-full-screen .board-frame {
       width:100%; height:100%;
       max-width:none; max-height:none;
       display:flex; align-items:center; justify-content:center;
+      border:0; border-radius:0; box-shadow:none;
     }
     .board-panel:fullscreen canvas,
     .board-panel:-webkit-full-screen canvas {
@@ -165,7 +138,8 @@
       .game-layout { grid-template-columns:1fr !important; }
       .game-panel  { display:none !important; }
       .board-frame { max-width:none; }
-      canvas#g     { max-height:calc(100vh - 20px); width:auto; aspect-ratio:13/11; margin:0 auto; display:block; }
+      .gx .gx-screen { width:fit-content; max-width:100%; }
+      .gx canvas#g { max-height:calc(100svh - 28px); width:auto; aspect-ratio:13/11; margin:0 auto; display:block; }
     }
 
     /* Full-screen "please rotate to landscape" wall on narrow portrait
@@ -175,29 +149,26 @@
       position:absolute; inset:0; z-index:10;
       display:none;
       flex-direction:column; align-items:center; justify-content:center;
-      gap:16px; padding:22px; text-align:center;
+      gap:14px; padding:22px; text-align:center;
       border-radius:inherit;
       background:
-        radial-gradient(circle at 50% 35%, rgba(79,125,249,.14), transparent 65%),
-        rgba(10,14,26,.95);
-      color:#e7f4ff;
-      font-family:var(--font-sans);
-      backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+        radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--g) 22%, transparent), transparent 65%),
+        rgba(13,10,28,.95);
+      color:var(--gx-text);
+      font-family:var(--gx-body);
+      -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
     }
     .rotate-prompt-icon {
-      width:88px; height:88px;
+      width:84px; height:84px;
       display:inline-flex; align-items:center; justify-content:center;
-      border-radius:50%; border:1px solid rgba(142,198,255,.5);
-      background:rgba(7,18,29,.65);
-      color:#9fc9ff;
+      border-radius:22px; border:2px solid var(--gx-ink);
+      background:color-mix(in srgb, var(--g) 22%, #1a1535);
+      box-shadow:0 0 0 1px rgba(255,255,255,.1);
+      color:var(--g);
       animation:rotate-swing 2.4s ease-in-out infinite;
     }
-    .rotate-prompt-title {
-      font-size:22px; font-weight:700; letter-spacing:-.02em; margin:0;
-    }
-    .rotate-prompt-sub {
-      font-size:14px; color:rgba(238,242,255,.65); max-width:28ch; line-height:1.5; margin:0;
-    }
+    .rotate-prompt-title { margin:0; font:700 19px/1.2 var(--gx-display); letter-spacing:-.02em; }
+    .rotate-prompt-sub { margin:0; max-width:28ch; color:var(--gx-muted); font-size:14px; line-height:1.5; }
     @keyframes rotate-swing {
       0%, 100% { transform:rotate(-18deg); }
       50%      { transform:rotate(72deg); }
@@ -205,11 +176,14 @@
     @media (orientation: portrait) and (max-width: 900px) {
       .rotate-prompt { display:flex; }
     }
-
+    @media (prefers-reduced-motion: reduce) {
+      .rotate-prompt-icon { animation:none; transform:rotate(72deg); }
+    }
 
     /* iOS pseudo-fullscreen fallback for the Bomber Raid board */
-    body.pseudo-fs { overflow: hidden; }
+    body.pseudo-fs { overflow: hidden; padding-top: 0 !important; }
     body.pseudo-fs .nav,
+    body.pseudo-fs .game-header,
     body.pseudo-fs .game-container-inner > .game-layout > .game-panel,
     body.pseudo-fs .mc-section,
     body.pseudo-fs .final-cta,
@@ -217,20 +191,18 @@
     body.pseudo-fs .game-page,
     body.pseudo-fs .game-container,
     body.pseudo-fs .game-container-inner,
-    body.pseudo-fs .game-layout { padding: 0 !important; margin: 0 !important; max-width: none !important; }
-    body.pseudo-fs .board-panel { width: 100vw !important; height: 100vh !important; display: flex; align-items: center; justify-content: center; }
-    body.pseudo-fs .board-frame { width: 100%; height: 100%; max-width: none; display: flex; align-items: center; justify-content: center; }
+    body.pseudo-fs .game-layout { padding: 0 !important; margin: 0 !important; max-width: none !important; width: 100% !important; }
+    body.pseudo-fs .board-panel { width: 100vw !important; height: 100vh !important; display: flex; align-items: center; justify-content: center; padding: 0 !important; border: 0 !important; border-radius: 0 !important; }
+    body.pseudo-fs .board-frame { width: 100% !important; height: 100%; max-width: none; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 0; box-shadow: none; }
     body.pseudo-fs canvas#g { width: auto !important; height: 100% !important; max-width: 100vw !important; max-height: 100vh !important; aspect-ratio: 13/11; }
 
-    @media (max-width:960px) {
-      .game-layout { grid-template-columns:1fr; }
-      .inframe-actions { left:8px; right:8px; top:8px; justify-content:space-between; }
-      .inframe-actions .btn { flex:1; }
+    @media (max-width:980px) {
+      .gx .board-frame .inframe-actions { left:58px; }
     }
-    @media (max-width:480px) { .mode-cards { grid-template-columns:1fr; } }
+    @media (max-width:480px) { .mode-cards { grid-template-columns:1fr 1fr; } .mode-card { padding:12px 8px; } }
   </style>
 </head>
-<body>
+<body class="gx" style="--g:#ff8c3a">
 
   <!-- NAV -->
   <header class="nav" id="nav">
@@ -245,8 +217,10 @@
     </a>
     <nav class="nav-links" aria-label="Primary">
       <a href="/">Home</a>
-      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/arcade/" class="active" aria-current="page">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
     <div class="nav-right">
       <div class="account-menu" data-account-menu>
@@ -258,36 +232,40 @@
     </div>
   </header>
 
-  <!-- GAME HEADER -->
-  <div class="game-header">
-    <a class="game-header-back" href="/arcade/">
-      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
-        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Back to Arcade
-    </a>
-    <span class="game-header-title">Bomber Raid</span>
-    <div class="game-header-stats">
-      <div class="header-stat">
-        <span class="header-stat-label">Score</span>
-        <span class="header-stat-value" id="sc">0</span>
-      </div>
-      <div class="header-stat">
-        <span class="header-stat-label">Best</span>
-        <span class="header-stat-value" id="bs">0</span>
-      </div>
-    </div>
-  </div>
+  <main class="game-page" id="main">
 
-  <!-- GAME PAGE -->
-  <div class="game-page">
+    <!-- TOP BAR: back · cover + title · stats -->
+    <header class="game-header gx-bar">
+      <a class="game-header-back gx-back" href="/arcade/" aria-label="Back to the arcade">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="gx-back-txt">Arcade</span>
+      </a>
+      <div class="gx-id">
+        <img class="gx-badge" src="/assets/games/bomber-raid.svg" alt="" width="72" height="45" />
+        <div class="gx-id-txt">
+          <p class="gx-kicker">Online multiplayer · Touch + keyboard</p>
+          <h1 class="game-header-title gx-title">Bomber Raid</h1>
+        </div>
+      </div>
+      <div class="game-header-stats" aria-label="Live stats">
+        <div class="header-stat">
+          <span class="header-stat-label">Score</span>
+          <span class="header-stat-value" id="sc">0</span>
+        </div>
+        <div class="header-stat">
+          <span class="header-stat-label">Best</span>
+          <span class="header-stat-value" id="bs">0</span>
+        </div>
+      </div>
+    </header>
+
     <div class="game-container">
       <div class="game-container-inner">
-        <div class="game-layout">
+        <div class="game-layout gx-layout">
 
-          <!-- LEFT: board -->
-          <div class="board-panel">
-            <div class="board-frame">
+          <!-- Board stage -->
+          <section class="board-panel gx-stage" style="--gx-ar:1.18" aria-label="Game board">
+            <div class="board-frame gx-screen">
               <canvas id="g" width="624" height="528" aria-label="Bomber Raid game board"></canvas>
               <div id="ov">Choose a mode, then press Start.</div>
               <div class="rotate-prompt" role="dialog" aria-live="polite">
@@ -318,22 +296,22 @@
                 <span class="overlay-bomb-icon" aria-hidden="true">💣</span>
               </button>
             </div>
-          </div>
+          </section>
 
-          <!-- RIGHT: panel -->
-          <aside class="game-panel">
+          <!-- Rail -->
+          <aside class="game-panel gx-rail" aria-label="Game controls">
 
             <!-- Mode select cards -->
-            <div>
-              <p class="panel-section-label">Game Mode</p>
+            <section class="gx-card">
+              <h2 class="panel-section-label">Game mode</h2>
               <div class="mode-cards">
                 <div class="mode-card" id="mode-single-card" role="button" tabindex="0" aria-pressed="false">
-                  <span class="mode-card-icon">&#129302;</span>
+                  <span class="mode-card-icon" aria-hidden="true">&#129302;</span>
                   <span class="mode-card-title">Play with Bots</span>
                   <span class="mode-card-desc">Quick solo match against AI opponents.</span>
                 </div>
                 <div class="mode-card active" id="mode-multi-card" role="button" tabindex="0" aria-pressed="true">
-                  <span class="mode-card-icon">&#127760;</span>
+                  <span class="mode-card-icon" aria-hidden="true">&#127760;</span>
                   <span class="mode-card-title">Play Online</span>
                   <span class="mode-card-desc">Create a room or join an existing one.</span>
                 </div>
@@ -343,38 +321,28 @@
                 <button id="mode-single" class="btn btn-ghost" type="button">Singleplayer</button>
                 <button id="mode-multi" class="btn btn-primary" type="button">Online Multiplayer</button>
               </div>
-              <p class="game-note" style="margin-top:8px;">WASD or arrows to move &middot; Space to drop bombs</p>
-            </div>
-
-            <!-- Live stats -->
-            <div>
-              <p class="panel-section-label">Live Stats</p>
-              <div class="stat-grid">
-                <div class="stat-row"><span>Enemies</span><b id="en">3</b></div>
-                <div class="stat-row"><span>Mode</span><b id="mode">Online</b></div>
-                <div class="stat-row"><span>P1 Kit</span><b id="p1k">—</b></div>
-                <div class="stat-row"><span>P2 Kit</span><b id="p2k">—</b></div>
-                <div class="stat-row"><span>Powerups</span><b id="pu">0</b></div>
-                <div class="stat-row"><span>Status</span><b id="st">Ready</b></div>
-              </div>
-            </div>
+              <ul class="controls-list br-keys">
+                <li><b>Move</b><span>WASD or arrows (drag on touch)</span></li>
+                <li><b>Bomb</b><span>Space or Enter</span></li>
+              </ul>
+            </section>
 
             <!-- Online lobby panel -->
-            <div id="lobby-panel" class="lobby-section hidden" aria-live="polite">
-              <p class="panel-section-label" style="margin-bottom:0;">Online Room</p>
+            <section id="lobby-panel" class="gx-card lobby-section hidden" aria-live="polite" aria-label="Online room">
+              <h2 class="panel-section-label" style="margin-bottom:2px;">Online room</h2>
               <div class="lobby-row">
                 <span id="net-status" class="net-pill warn">Disconnected</span>
               </div>
               <div class="lobby-row">
-                <input id="room-code" class="lobby-input" type="text" maxlength="6" autocomplete="off" placeholder="ROOM CODE" style="font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;" />
-                <input id="room-password" class="lobby-input" type="password" maxlength="32" autocomplete="off" placeholder="Password (optional)" />
+                <input id="room-code" class="lobby-input" type="text" maxlength="6" autocomplete="off" placeholder="ROOM CODE" aria-label="Room code" style="font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;" />
+                <input id="room-password" class="lobby-input" type="password" maxlength="32" autocomplete="off" placeholder="Password (optional)" aria-label="Room password" />
               </div>
               <div class="lobby-row">
                 <button id="create-room" class="btn btn-ghost btn-sm" type="button">Create Room</button>
                 <button id="join-room" class="btn btn-primary btn-sm" type="button">Join Room</button>
               </div>
               <div class="lobby-row">
-                <input id="player-name" class="lobby-input" type="text" maxlength="16" autocomplete="off" placeholder="Player name" />
+                <input id="player-name" class="lobby-input" type="text" maxlength="16" autocomplete="off" placeholder="Player name" aria-label="Player name" />
                 <button id="save-name" class="btn btn-ghost btn-sm" type="button">Save</button>
                 <button id="ready-toggle" class="btn btn-ghost btn-sm" type="button">Ready: Off</button>
               </div>
@@ -390,12 +358,25 @@
                 <label class="sync-opt">Interp ms <input id="interp-ms" type="number" min="40" max="240" step="10" value="110" /></label>
                 <label class="sync-opt">Guest delay <input id="input-delay-ms" type="number" min="0" max="240" step="10" value="70" /></label>
               </div>
-            </div>
+            </section>
+
+            <!-- Live stats -->
+            <section class="gx-card">
+              <h2 class="panel-section-label">Live stats</h2>
+              <div class="stat-grid">
+                <div class="stat-row"><span>Enemies</span><b id="en">3</b></div>
+                <div class="stat-row"><span>Mode</span><b id="mode">Online</b></div>
+                <div class="stat-row"><span>P1 Kit</span><b id="p1k">—</b></div>
+                <div class="stat-row"><span>P2 Kit</span><b id="p2k">—</b></div>
+                <div class="stat-row"><span>Powerups</span><b id="pu">0</b></div>
+                <div class="stat-row"><span>Status</span><b id="st">Ready</b></div>
+              </div>
+            </section>
 
             <!-- Touch bomb -->
-            <div class="touch-controls" aria-label="Touch controls">
-              <button id="bomb" class="btn btn-ghost touch-bomb" type="button">Place Bomb</button>
-            </div>
+            <section class="gx-card touch-controls" aria-label="Touch controls">
+              <button id="bomb" class="btn btn-coral touch-bomb" type="button">Place Bomb</button>
+            </section>
 
             <p id="control-note" class="game-note">Singleplayer: WASD/Arrows + Space/Enter. Online: create/join room, mark Ready, host is P1, guest is P2. Powerups: +Bomb, +Range, +Speed, +Shield.</p>
 
@@ -403,7 +384,19 @@
         </div>
       </div>
     </div>
-  </div>
+  </main>
+
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/account/">Account</a>
+      <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </footer>
 
   <script src="/assets/theme.js?v=3"></script>
   <script src="/assets/site.js?v=9"></script>
