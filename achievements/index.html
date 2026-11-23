@@ -7,89 +7,15 @@
 <meta name="description" content="Every Cartofia arcade achievement, grouped by game.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="/assets/site.css?v=5">
-<link rel="stylesheet" href="/assets/notifications.css?v=4">
-<style>
-:root {
-  --bg-deep: #080b12;
-  --bg-elevated: #1a2332;
-  --bg-card: #161f2d;
-  --border: rgba(56, 130, 235, 0.12);
-  --border-bright: rgba(56, 130, 235, 0.25);
-  --accent: #3b82f6;
-  --accent-soft: rgba(59, 130, 246, 0.15);
-  --text-primary: #e8edf5;
-  --text-secondary: #8b9bb4;
-  --text-muted: #63738c;
-  --text-accent: #7cb3ff;
-  --gold: #eab308;
-  --font-mono: 'JetBrains Mono', monospace;
-  --radius: 12px;
-  --radius-sm: 8px;
-}
-.nav-right { display: flex; align-items: center; }
-.achievement-item[hidden] { display: none !important; }
-@media (max-width: 620px) {
-  .nav-brand { flex: 0 0 auto; }
-  .nav-links { flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; margin: 0 10px; }
-  .nav-links::-webkit-scrollbar { display: none; }
-  .nav-right { flex: 0 0 auto; }
-}
-.ach-page { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
-.ach-head { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
-.ach-head h1 { font-size: clamp(26px, 4vw, 36px); margin: 0 0 6px; color: var(--text-primary); letter-spacing: -0.01em; }
-.ach-sub { color: var(--text-secondary); font-size: 14px; margin: 0; }
-.ach-sub a { color: var(--text-accent); }
-.ach-progress { min-width: 220px; }
-.ach-progress-bar { height: 8px; border-radius: 999px; background: var(--bg-elevated); overflow: hidden; margin-top: 6px; }
-.ach-progress-bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), #8b5cf6); transition: width 0.4s; }
-.ach-progress-text { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
-.ach-filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 22px; }
-.ach-filter { appearance: none; font: inherit; font-size: 13px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border-bright); background: transparent; color: var(--text-secondary); cursor: pointer; }
-.ach-filter[aria-pressed="true"] { background: var(--accent); border-color: transparent; color: #fff; }
-.ach-group { margin-bottom: 28px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-.ach-group-head { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
-.ach-cover { width: 72px; aspect-ratio: 16/10; border-radius: var(--radius-sm); overflow: hidden; flex: 0 0 72px; position: relative; background: linear-gradient(135deg, #1d4ed8, #8b5cf6); }
-.ach-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.ach-group-head h2 { font-size: 17px; margin: 0; color: var(--text-primary); }
-.ach-group-head h2 a { color: inherit; text-decoration: none; }
-.ach-group-head h2 a:hover { color: var(--text-accent); }
-.ach-group-count { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
-.ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; padding: 14px; }
-.ach-card { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: var(--radius-sm); background: var(--bg-elevated); border: 1px solid var(--border); scroll-margin-top: 90px; transition: border-color 0.2s, box-shadow 0.2s; }
-.ach-card.locked { opacity: 0.6; }
-.ach-card.locked .ach-icon { filter: grayscale(1); }
-.ach-card.earned { border-color: rgba(234, 179, 8, 0.35); }
-.ach-card.target { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), 0 0 24px rgba(59,130,246,0.35); opacity: 1; animation: ach-pulse 1.2s ease-out 2; }
-@keyframes ach-pulse { 0% { transform: scale(1); } 40% { transform: scale(1.03); } 100% { transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .ach-card.target { animation: none; } .ach-progress-bar span { transition: none; } }
-.ach-icon { font-size: 26px; line-height: 1; flex: 0 0 auto; }
-.ach-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-.ach-desc { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.45; }
-.ach-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: 10.5px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; }
-.ach-rarity { color: var(--text-muted); }
-.ach-rarity.rare { color: #60a5fa; }
-.ach-rarity.epic { color: #c084fc; }
-.ach-rarity.legendary { color: var(--gold); }
-.ach-earned { color: #22c55e; }
-.ach-link { color: var(--text-muted); text-decoration: none; margin-left: auto; }
-.ach-link:hover { color: var(--text-accent); }
-.ach-empty, .ach-error { padding: 40px 20px; text-align: center; color: var(--text-secondary); }
-.ach-group[hidden], .ach-card[hidden] { display: none; }
-@media (max-width: 520px) {
-  .ach-page { padding: 20px 14px 60px; }
-  .ach-grid { grid-template-columns: 1fr; padding: 10px; }
-  .ach-group-head { padding: 12px; }
-  .ach-cover { width: 56px; flex-basis: 56px; }
-  .ach-progress { width: 100%; }
-}
-</style>
+<link rel="stylesheet" href="/assets/site.css?v=6">
+<link rel="stylesheet" href="/assets/notifications.css?v=5">
+<link rel="stylesheet" href="/assets/profile-v2.css?v=1">
 </head>
-<body>
+<body class="pf pf-trophies">
 
 <header class="nav">
   <a class="nav-brand" href="/">
-    <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/></svg>
     Cartofia
   </a>
   <nav class="nav-links" aria-label="Primary">
@@ -97,6 +23,7 @@
     <a href="/arcade/">Arcade</a>
     <a href="/minecraft/">Minecraft</a>
     <a href="/forum/">Forum</a>
+    <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
   </nav>
   <div class="nav-right">
     <div class="account-menu" data-account-menu>
@@ -108,24 +35,44 @@
   </div>
 </header>
 
-<main class="ach-page">
-  <div class="ach-head">
+<main class="pf-wrap ach-page">
+  <header class="pf-head ach-head">
     <div>
-      <h1>Achievements</h1>
-      <p class="ach-sub" id="achSub">Every achievement in the Cartofia arcade, grouped by game.</p>
+      <p class="pf-kicker"><span class="pf-bulbs" aria-hidden="true"><i></i><i></i><i></i></span>Trophy case</p>
+      <h1 class="pf-title">Achievements</h1>
+      <p class="pf-lead ach-sub" id="achSub">Every achievement in the Cartofia arcade, grouped by game.</p>
     </div>
     <div class="ach-progress" id="achProgress" hidden>
-      <div class="ach-progress-text" id="achProgressText"></div>
-      <div class="ach-progress-bar"><span id="achProgressBar"></span></div>
+      <span class="ach-progress-cup" aria-hidden="true">🏆</span>
+      <div class="ach-progress-body">
+        <div class="ach-progress-text" id="achProgressText"></div>
+        <div class="ach-progress-bar"><span id="achProgressBar"></span></div>
+      </div>
     </div>
+  </header>
+
+  <div class="ach-toolbar">
+    <div class="tabs ach-filters" id="achFilters" role="group" aria-label="Filter by state" hidden>
+      <button class="tab ach-filter" type="button" data-filter="all" aria-pressed="true">All <span class="tab-count" data-count="all"></span></button>
+      <button class="tab ach-filter" type="button" data-filter="earned" aria-pressed="false">Earned <span class="tab-count" data-count="earned"></span></button>
+      <button class="tab ach-filter" type="button" data-filter="locked" aria-pressed="false">Locked <span class="tab-count" data-count="locked"></span></button>
+    </div>
+    <div class="ach-games" id="achGameFilter" role="group" aria-label="Filter by game"></div>
   </div>
-  <div class="ach-filters" id="achFilters" role="group" aria-label="Filter" hidden>
-    <button class="ach-filter" type="button" data-filter="all" aria-pressed="true">All</button>
-    <button class="ach-filter" type="button" data-filter="earned" aria-pressed="false">Earned</button>
-    <button class="ach-filter" type="button" data-filter="locked" aria-pressed="false">Locked</button>
-  </div>
-  <div id="achGroups"><div class="ach-empty">Loading achievements…</div></div>
+  <p class="pf-sr" aria-live="polite" id="achStatus"></p>
+
+  <div class="ach-groups" id="achGroups"><div class="ach-empty">Loading achievements…</div></div>
 </main>
+
+<footer class="site-footer">
+  <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+  <nav class="footer-links" aria-label="Footer">
+    <a href="/arcade/">Arcade</a>
+    <a href="/forum/">Forum</a>
+    <a href="/account/">Account</a>
+    <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+  </nav>
+</footer>
 
 <script src="/assets/theme.js?v=3"></script>
 <script src="/assets/site.js?v=9"></script>
@@ -133,8 +80,16 @@
 <script>
 (function () {
   const groupsEl = document.getElementById('achGroups');
+  const gameBar = document.getElementById('achGameFilter');
   const GAME_ALIASES = { 'zuma-temple': 'zuma' };
   const NO_PAGE = { general: 1, site: 1 };
+  /* Per-game accent (matches the arcade page cartridges) */
+  const GAME_ACCENT = {
+    cartofia: '#7cc8ff', ludo: '#ffb54a', snake: '#8bd94a', chess: '#b08cff', 'brick-blitz': '#ff52a2',
+    'bomber-raid': '#ff8c3a', minesweeper: '#9fb4d8', blackjack: '#2fc184', 'maze-chase': '#8c84ff',
+    'word-puzzle': '#f2c94c', zuma: '#2cc6b4',
+  };
+  let stateFilter = 'all', gameFilter = 'all';
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -148,26 +103,32 @@
 
   async function viewerSlug() {
     try {
+      const tok = sessionStorage.getItem('oidc_access_token') || localStorage.getItem('oidc_access_token');
       const me = await fetch('/api/auth/me', { credentials: 'include' }).then(r => r.ok ? r.json() : null);
-      if (!me || !me.authenticated) return '';
-      const p = await fetch('/api/profile/me', { credentials: 'include' }).then(r => r.ok ? r.json() : null);
+      if (!tok && (!me || !me.authenticated)) return '';
+      const p = await fetch('/api/profile/me', {
+        credentials: 'include',
+        headers: tok ? { 'Authorization': 'Bearer ' + tok } : {},
+      }).then(r => r.ok ? r.json() : null);
       return (p && p.profile && p.profile.username_slug) || '';
     } catch (_) { return ''; }
   }
 
   function card(a, withState, userQ) {
     const state = withState ? (a.earned ? 'earned' : 'locked') : '';
-    const meta = [`<span class="ach-rarity ${esc(a.rarity)}">${esc(a.rarity || 'common')}</span>`];
+    const rarity = String(a.rarity || 'common').toLowerCase();
+    const meta = [`<span class="ach-rarity">${esc(rarity)}</span>`];
     if (withState && a.earned) meta.push(`<span class="ach-earned">✓ ${esc(fmtDate(a.unlocked_at) || 'earned')}</span>`);
+    else if (withState) meta.push('<span class="ach-locked-tag">Locked</span>');
     meta.push(`<a class="ach-link" href="/achievements/${userQ}#${encodeURIComponent(a.id)}" aria-label="Link to ${esc(a.name)}">#</a>`);
-    return `<div class="ach-card ${state}" id="${esc(a.id)}" data-state="${state}">
+    return `<article class="ach-card ${state}" id="${esc(a.id)}" data-state="${state}" data-rarity="${esc(rarity)}">
         <span class="ach-icon" aria-hidden="true">${esc(a.icon || '🏅')}</span>
-        <div style="min-width:0;flex:1">
-          <div class="ach-name">${esc(a.name)}</div>
-          <div class="ach-desc">${esc(a.description)}</div>
+        <div style="min-width:0">
+          <h3 class="ach-name">${esc(a.name)}${state === 'locked' ? '<span class="pf-sr"> (locked)</span>' : ''}</h3>
+          <p class="ach-desc">${esc(a.description)}</p>
           <div class="ach-meta">${meta.join('')}</div>
         </div>
-      </div>`;
+      </article>`;
   }
 
   function render(data, withState, userQ) {
@@ -175,23 +136,47 @@
     if (!games.length) { groupsEl.innerHTML = '<div class="ach-empty">No achievements yet.</div>'; return; }
     groupsEl.innerHTML = games.map(g => {
       const slug = slugOf(g.game);
-      const count = withState ? `${g.earned || 0} / ${g.total}` : `${g.total}`;
-      const title = NO_PAGE[slug] ? esc(g.name) : `<a href="/arcade/${encodeURIComponent(slug)}/">${esc(g.name)}</a>`;
-      return `<section class="ach-group" data-game="${esc(slug)}" aria-labelledby="g-${esc(slug)}">
+      const accent = GAME_ACCENT[slug] || 'var(--accent)';
+      const pct = withState && g.total ? Math.round(100 * (g.earned || 0) / g.total) : 0;
+      const count = withState ? `${g.earned || 0} / ${g.total} earned` : `${g.total} achievement${g.total === 1 ? '' : 's'}`;
+      const hasPage = !NO_PAGE[slug];
+      const title = hasPage ? `<a href="/arcade/${encodeURIComponent(slug)}/">${esc(g.name)}</a>` : esc(g.name);
+      return `<section class="ach-group" data-game="${esc(slug)}" id="game-${esc(slug)}" style="--g:${accent}" aria-labelledby="g-${esc(slug)}">
           <div class="ach-group-head">
             <div class="ach-cover"><img src="/assets/games/${encodeURIComponent(slug)}.svg" alt="" loading="lazy" onerror="this.remove()"></div>
-            <h2 id="g-${esc(slug)}">${title}</h2>
-            <span class="ach-group-count">${count}</span>
+            <div style="min-width:0">
+              <h2 id="g-${esc(slug)}">${title}</h2>
+              <div class="ach-group-sub">
+                ${withState ? `<span class="ach-group-bar" aria-hidden="true"><span style="width:${pct}%"></span></span>` : ''}
+                <span class="ach-group-count">${count}</span>
+              </div>
+            </div>
+            ${hasPage ? `<a class="ach-play" href="/arcade/${encodeURIComponent(slug)}/">Play →</a>` : ''}
           </div>
           <div class="ach-grid">${g.achievements.map(a => card(a, withState, userQ)).join('')}</div>
         </section>`;
     }).join('');
+
+    gameBar.innerHTML = `<button class="ach-game-chip" type="button" data-game="all" aria-pressed="true"><span class="ach-chip-all" aria-hidden="true">★</span>All games</button>`
+      + games.map(g => {
+        const slug = slugOf(g.game);
+        return `<button class="ach-game-chip" type="button" data-game="${esc(slug)}" aria-pressed="false"><img src="/assets/games/${encodeURIComponent(slug)}.svg" alt="" loading="lazy" onerror="this.style.visibility='hidden'">${esc(g.name)}</button>`;
+      }).join('');
   }
 
-  function applyFilter(f) {
-    document.querySelectorAll('.ach-filter').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === f)));
-    document.querySelectorAll('.ach-card').forEach(c => { c.hidden = f !== 'all' && c.dataset.state !== f; });
-    document.querySelectorAll('.ach-group').forEach(gr => { gr.hidden = !gr.querySelector('.ach-card:not([hidden])'); });
+  function applyFilter(f, game) {
+    if (f) stateFilter = f;
+    if (game) gameFilter = game;
+    document.querySelectorAll('.ach-filter').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === stateFilter)));
+    gameBar.querySelectorAll('.ach-game-chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.game === gameFilter)));
+    document.querySelectorAll('.ach-card').forEach(c => { c.hidden = stateFilter !== 'all' && c.dataset.state !== stateFilter; });
+    let shown = 0;
+    document.querySelectorAll('.ach-group').forEach(gr => {
+      const gameOk = gameFilter === 'all' || gr.dataset.game === gameFilter;
+      gr.hidden = !gameOk || !gr.querySelector('.ach-card:not([hidden])');
+      if (!gr.hidden) shown += gr.querySelectorAll('.ach-card:not([hidden])').length;
+    });
+    document.getElementById('achStatus').textContent = shown + ' achievement' + (shown === 1 ? '' : 's') + ' shown';
   }
 
   function focusHash() {
@@ -200,10 +185,22 @@
     if (!id) return;
     const el = document.getElementById(id);
     if (!el || !el.classList.contains('ach-card')) return;
-    if (el.hidden) applyFilter('all');
+    if (el.hidden || el.closest('.ach-group').hidden) applyFilter('all', 'all');
     el.classList.add('target');
+    el.setAttribute('tabindex', '-1');
     el.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    el.focus({ preventScroll: true });
   }
+
+  gameBar.addEventListener('click', ev => {
+    const b = ev.target.closest('[data-game]');
+    if (!b) return;
+    applyFilter(null, b.dataset.game);
+    if (b.dataset.game !== 'all') {
+      const gr = document.getElementById('game-' + b.dataset.game);
+      if (gr && !gr.hidden) gr.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    }
+  });
 
   (async function init() {
     const params = new URLSearchParams(location.search);
@@ -221,6 +218,8 @@
       data = await r.json();
       if (user && user !== mine) {
         document.getElementById('achSub').textContent = 'That profile is private or does not exist. Showing every achievement.';
+      } else {
+        document.getElementById('achSub').innerHTML = 'Every achievement in the Cartofia arcade, grouped by game. <a href="/account/#login">Sign in</a> to track your progress.';
       }
     }
     const userQ = withState ? '?user=' + encodeURIComponent(data.user.username) : '';
@@ -230,18 +229,23 @@
       document.getElementById('achSub').innerHTML = who + ' across every game. '
         + (own ? '' : `<a href="/u/${encodeURIComponent(data.user.username)}">View profile</a>`);
       document.getElementById('achProgress').hidden = false;
-      document.getElementById('achProgressText').textContent = `${data.earned} of ${data.total} earned`;
+      document.getElementById('achProgressText').textContent = `${data.earned} of ${data.total} earned · ${data.total ? Math.round(100 * data.earned / data.total) : 0}%`;
       requestAnimationFrame(() => {
         document.getElementById('achProgressBar').style.width = (data.total ? (100 * data.earned / data.total) : 0) + '%';
       });
-      document.getElementById('achFilters').hidden = false;
-      document.getElementById('achFilters').addEventListener('click', ev => {
+      const filters = document.getElementById('achFilters');
+      filters.hidden = false;
+      filters.querySelector('[data-count="all"]').textContent = data.total;
+      filters.querySelector('[data-count="earned"]').textContent = data.earned;
+      filters.querySelector('[data-count="locked"]').textContent = data.total - data.earned;
+      filters.addEventListener('click', ev => {
         const b = ev.target.closest('[data-filter]');
-        if (b) applyFilter(b.dataset.filter);
+        if (b) applyFilter(b.dataset.filter, null);
       });
       document.title = (own ? 'Your achievements' : data.user.display_name + '’s achievements') + ' — Cartofia';
     }
     render(data, withState, userQ);
+    applyFilter('all', 'all');
     focusHash();
     window.addEventListener('hashchange', focusHash);
   })();

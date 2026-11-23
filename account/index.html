@@ -2,432 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Cartofia Account</title>
+  <title>Account — Cartofia</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=5" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=4">
-  <link rel="stylesheet" href="/home.css?v=2" />
-  <style>
-    /* nav-avatar button reset (matches homepage) */
-    button.nav-avatar {
-      appearance: none;
-      -webkit-appearance: none;
-      font: inherit;
-      cursor: pointer;
-    }
-
-    /* ----- Visibility helpers ----- */
-    .acct-hidden { display: none !important; }
-
-    /* ----- Account page container ----- */
-    .acct-shell {
-      max-width: var(--container);
-      margin: 0 auto;
-      padding: calc(var(--nav-h) + 40px) var(--gutter) 60px;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* ====================================================
-       GUEST VIEW
-    ===================================================== */
-    .guest-hero {
-      min-height: 38vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 32px 0 28px;
-    }
-    .guest-hero .hero-kicker {
-      font-family: var(--font-mono);
-      font-size: 11.5px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      color: var(--text-accent);
-      margin-bottom: 14px;
-    }
-    .guest-hero h1 {
-      font-size: clamp(30px, 4.4vw, 52px);
-      font-weight: 700;
-      letter-spacing: -0.038em;
-      line-height: 1.06;
-      max-width: 22ch;
-      margin-bottom: 14px;
-      color: var(--text-primary);
-      background: linear-gradient(135deg,
-        var(--text-primary) 0%,
-        #b8d0ff 28%,
-        var(--accent-2) 54%,
-        var(--accent) 76%,
-        var(--text-primary) 100%);
-      background-size: 250% 250%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .guest-hero .lead {
-      color: var(--text-secondary);
-      font-size: clamp(15px, 1.5vw, 17px);
-      max-width: 56ch;
-      line-height: 1.65;
-      margin-bottom: 22px;
-    }
-    .guest-actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-bottom: 14px;
-    }
-    .guest-fineprint {
-      color: var(--text-muted);
-      font-size: 13px;
-      margin-bottom: 8px;
-    }
-    .remember-row {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 6px;
-      cursor: pointer;
-      user-select: none;
-    }
-    .remember-row input { cursor: pointer; accent-color: var(--accent); }
-
-    .benefits-strip {
-      border-top: 1px solid rgba(255,255,255,0.05);
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      padding: 26px 0;
-      margin-top: 24px;
-    }
-    .benefits-inner {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      text-align: left;
-    }
-    .benefit-item {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      padding: 4px;
-    }
-    .benefit-icon { font-size: 22px; line-height: 1.1; flex-shrink: 0; }
-    .benefit-title {
-      font-size: 14.5px;
-      font-weight: 600;
-      letter-spacing: -0.018em;
-      margin-bottom: 2px;
-    }
-    .benefit-desc {
-      color: var(--text-secondary);
-      font-size: 13px;
-      line-height: 1.55;
-    }
-
-    /* ====================================================
-       DASHBOARD VIEW
-    ===================================================== */
-
-    /* Identity card */
-    .identity-card {
-      position: relative;
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      align-items: center;
-      gap: 20px;
-      padding: 22px clamp(20px, 3vw, 30px);
-      border-radius: var(--radius);
-      background:
-        radial-gradient(420px 200px at 0% 0%, rgba(124, 91, 245, 0.14), transparent 70%),
-        linear-gradient(180deg, rgba(15, 26, 42, 0.78), rgba(10, 17, 29, 0.62));
-      border: 1px solid var(--border);
-      box-shadow: 0 22px 48px rgba(1, 9, 19, 0.4);
-      margin-bottom: 24px;
-    }
-    .identity-card::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg,
-        rgba(124, 91, 245, 0.5) 0%,
-        rgba(79, 125, 249, 0.5) 50%,
-        transparent 100%);
-      border-top-left-radius: var(--radius);
-      border-top-right-radius: var(--radius);
-    }
-
-    .identity-avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 26px;
-      letter-spacing: -0.02em;
-      color: #fff;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-    .identity-avatar img {
-      width: 100%; height: 100%; object-fit: cover;
-    }
-
-    .identity-info { min-width: 0; }
-    .identity-username {
-      font-size: clamp(20px, 2.4vw, 28px);
-      font-weight: 700;
-      letter-spacing: -0.028em;
-      line-height: 1.1;
-      color: var(--text-primary);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .identity-email {
-      color: var(--text-secondary);
-      font-size: 13.5px;
-      margin-top: 2px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .badge-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 10px;
-    }
-    .badge-pill {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      font-weight: 500;
-      letter-spacing: 0.04em;
-      padding: 3px 9px;
-      border-radius: 99px;
-      background: rgba(79, 125, 249, 0.13);
-      border: 1px solid rgba(79, 125, 249, 0.28);
-      color: var(--text-accent);
-    }
-    .identity-actions { flex-shrink: 0; }
-
-    /* Stats row (full-width strip — same look as homepage stats-strip) */
-    .acct-stats-strip {
-      border-top: 1px solid rgba(255,255,255,0.05);
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      padding: 24px 0;
-      margin: 8px 0 24px;
-    }
-    .acct-stats-inner {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      text-align: center;
-    }
-    .acct-stat {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-    }
-    .acct-stat-icon { font-size: 20px; line-height: 1; margin-bottom: 3px; }
-    .acct-stat-value {
-      font-size: clamp(22px, 3vw, 32px);
-      font-weight: 700;
-      letter-spacing: -0.04em;
-      line-height: 1;
-      color: var(--text-primary);
-    }
-    .acct-stat-label {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    /* Settings list */
-    .settings-list {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      margin-bottom: 24px;
-    }
-    .setting-row {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      align-items: center;
-      gap: 16px;
-      padding: 16px 22px;
-      border-bottom: 1px solid var(--border);
-      transition: background 0.15s ease;
-    }
-    .setting-row:last-child { border-bottom: none; }
-    .setting-row:hover { background: rgba(255, 255, 255, 0.03); }
-    .setting-icon {
-      font-size: 22px;
-      line-height: 1;
-      width: 28px;
-      text-align: center;
-    }
-    .setting-title {
-      font-size: 14.5px;
-      font-weight: 600;
-      letter-spacing: -0.018em;
-      color: var(--text-primary);
-    }
-    .setting-desc {
-      color: var(--text-secondary);
-      font-size: 13px;
-      line-height: 1.45;
-      margin-top: 2px;
-    }
-
-    /* Session footer */
-    .session-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 14px 4px 4px;
-      font-size: 13px;
-      color: var(--text-muted);
-      flex-wrap: wrap;
-    }
-    .signed-in-row {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .signed-in-row b { color: var(--text-secondary); font-weight: 600; }
-    .status-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: #4ade80;
-      box-shadow: 0 0 8px rgba(74, 222, 128, 0.55);
-      flex-shrink: 0;
-    }
-    .logout-link {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 13px;
-      padding: 6px 8px;
-      border-radius: 6px;
-      transition: color 0.15s, background 0.15s;
-    }
-    .logout-link:hover {
-      color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.04);
-    }
-
-    /* Loading skeleton */
-    .skeleton {
-      background: linear-gradient(90deg,
-        rgba(255,255,255,0.04) 0%,
-        rgba(255,255,255,0.08) 50%,
-        rgba(255,255,255,0.04) 100%);
-      background-size: 200% 100%;
-      animation: skeletonPulse 1.4s ease-in-out infinite;
-      color: transparent !important;
-      border-radius: 6px;
-      display: inline-block;
-      min-height: 1em;
-    }
-    @keyframes skeletonPulse {
-      0%   { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    /* Error view */
-    .error-view {
-      text-align: center;
-      padding: clamp(40px, 8vh, 80px) 0;
-    }
-    .error-view h1 {
-      font-size: clamp(22px, 3vw, 30px);
-      font-weight: 700;
-      letter-spacing: -0.028em;
-      margin-bottom: 8px;
-    }
-    .error-view p {
-      color: var(--text-secondary);
-      margin-bottom: 22px;
-      max-width: 44ch;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    /* ====================================================
-       RESPONSIVE
-    ===================================================== */
-    @media (max-width: 768px) {
-      .identity-card {
-        grid-template-columns: 1fr;
-        text-align: center;
-        gap: 14px;
-      }
-      .identity-avatar { margin: 0 auto; }
-      .identity-username, .identity-email {
-        white-space: normal;
-      }
-      .badge-row { justify-content: center; }
-      .identity-actions { justify-self: center; }
-
-      .acct-stats-inner {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px 0;
-      }
-
-      .benefits-inner {
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-
-      .setting-row {
-        grid-template-columns: auto 1fr;
-        grid-template-rows: auto auto;
-        column-gap: 14px;
-        row-gap: 8px;
-        padding: 14px 18px;
-      }
-      .setting-row .btn {
-        grid-column: 1 / -1;
-        justify-self: start;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .guest-actions { flex-direction: column; align-items: stretch; }
-      .guest-actions .btn { justify-content: center; width: 100%; }
-    }
-  </style>
-  <style>
-    .acct-stat-link { text-decoration: none; color: inherit; border-radius: 12px; transition: background 0.15s; }
-    .acct-stat-link:hover { background: rgba(255,255,255,0.04); }
-    .discord-icon { color: #5865F2; display: inline-flex; }
-    .discord-state { font-size: 11px; font-weight: 600; margin-left: 6px; }
-    .discord-state.on { color: #22c55e; }
-    .discord-msg { font-size: 12px; margin-top: 4px; }
-    .discord-msg.ok { color: #22c55e; }
-    .discord-msg.err { color: #f87171; }
-    .discord-actions { display: inline-flex; gap: 6px; }
-    .setting-row[hidden] { display: none; }
-    .discord-actions [hidden], .discord-msg[hidden] { display: none !important; }
-  </style>
+  <link rel="stylesheet" href="/assets/site.css?v=6" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=5">
+  <link rel="stylesheet" href="/assets/profile-v2.css?v=1" />
 </head>
-<body>
+<body class="pf pf-account">
 
-  <!-- NAV (matches homepage, no Account link in nav-links) -->
   <header class="nav" id="nav">
     <a class="nav-brand" href="/">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
@@ -442,7 +26,7 @@
       <a href="/">Home</a>
       <a href="/arcade/">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
-    <a href="/forum/">Forum</a>
+      <a href="/forum/">Forum</a>
       <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
     <div class="nav-right">
@@ -455,176 +39,222 @@
     </div>
   </header>
 
-  <div class="acct-shell">
-
-    <!-- ===== GUEST VIEW (hidden until init decides) ===== -->
-    <main id="guestView" class="acct-hidden">
-      <section class="guest-hero">
-        <p class="hero-kicker">Cartofia Accounts</p>
-        <h1>Sign in to unlock everything.</h1>
-        <p class="lead">
-          Track your game stats, upload to the archive, customize your profile, and access
-          members-only features. One account works across all of Cartofia.
-        </p>
-        <div class="guest-actions">
-          <button id="signInButton" type="button" class="btn btn-primary">Sign In</button>
-          <a id="registerLink" href="#" class="btn btn-ghost">Create Account</a>
-        </div>
-        <p class="guest-fineprint">Powered by single sign-on. Your password never touches Cartofia's servers.</p>
-        <label class="remember-row">
-          <input id="rememberMe" type="checkbox" />
-          Remember me on this device
-        </label>
-      </section>
-
-      <div class="benefits-strip">
-        <div class="benefits-inner">
-          <div class="benefit-item">
-            <span class="benefit-icon" aria-hidden="true">🎮</span>
-            <div>
-              <div class="benefit-title">Game tracking</div>
-              <div class="benefit-desc">Every game you play is logged to your profile.</div>
-            </div>
-          </div>
-          <div class="benefit-item">
-            <span class="benefit-icon" aria-hidden="true">📦</span>
-            <div>
-              <div class="benefit-title">Archive access</div>
-              <div class="benefit-desc">Upload and download from the Cartofia archive.</div>
-            </div>
-          </div>
-          <div class="benefit-item">
-            <span class="benefit-icon" aria-hidden="true">🎨</span>
-            <div>
-              <div class="benefit-title">Your profile</div>
-              <div class="benefit-desc">Avatar, banner, bio, badges — make it yours.</div>
-            </div>
-          </div>
-        </div>
+  <!-- ===== GUEST VIEW (hidden until init decides) ===== -->
+  <main id="guestView" class="pf-wrap ac-main acct-hidden">
+    <section class="ac-guest">
+      <p class="pf-kicker"><span class="pf-bulbs" aria-hidden="true"><i></i><i></i><i></i></span>Cartofia accounts</p>
+      <h1 class="pf-title">Sign in to <span>unlock everything.</span></h1>
+      <p class="pf-lead">
+        Track your game stats, earn achievements, add friends, upload to the archive and
+        customise your player card. One account works across all of Cartofia.
+      </p>
+      <div class="ac-guest-actions">
+        <button id="signInButton" type="button" class="btn btn-coral btn-lg">Sign In</button>
+        <a id="registerLink" href="#" class="btn btn-ghost btn-lg">Create Account</a>
       </div>
-    </main>
+      <p class="ac-fineprint">Powered by single sign-on. Your password never touches Cartofia's servers.</p>
+      <label class="remember-row">
+        <input id="rememberMe" type="checkbox" />
+        Remember me on this device
+      </label>
+    </section>
+
+    <section class="ac-benefits" aria-label="What you get">
+      <article class="ac-benefit">
+        <span class="ac-benefit-ico" style="--b:var(--coral)" aria-hidden="true">🎮</span>
+        <h2>Game tracking</h2>
+        <p>Every game you play is logged to your profile, with records and leaderboards.</p>
+      </article>
+      <article class="ac-benefit">
+        <span class="ac-benefit-ico" style="--b:var(--lemon)" aria-hidden="true">🏆</span>
+        <h2>Achievements &amp; friends</h2>
+        <p>Unlock trophies in every game and see what your friends are up to.</p>
+      </article>
+      <article class="ac-benefit">
+        <span class="ac-benefit-ico" style="--b:var(--mint)" aria-hidden="true">🎨</span>
+        <h2>Your player card</h2>
+        <p>Avatar, banner, bio, theme — make your public profile yours.</p>
+      </article>
+    </section>
+  </main>
 
 
-    <!-- ===== DASHBOARD VIEW (hidden until init decides) ===== -->
-    <main id="dashView" class="acct-hidden">
-      <!-- Identity card -->
-      <section class="identity-card">
+  <!-- ===== DASHBOARD VIEW (hidden until init decides) ===== -->
+  <main id="dashView" class="pf-wrap ac-main acct-hidden">
+    <header class="pf-head">
+      <div>
+        <p class="pf-kicker"><span class="pf-bulbs" aria-hidden="true"><i></i><i></i><i></i></span>Your account</p>
+        <h1 class="pf-title">Settings <span>hub</span></h1>
+        <p class="pf-lead">Your profile, connections and security in one place.</p>
+      </div>
+    </header>
+
+    <!-- Profile summary -->
+    <section class="ac-summary pf-rise" aria-label="Profile summary">
+      <div class="ac-summary-top">
         <div class="identity-avatar" id="dashAvatar"><span class="skeleton" style="width:48px;">CA</span></div>
-        <div class="identity-info">
+        <div style="min-width:0">
           <div class="identity-username" id="dashUsername"><span class="skeleton" style="width:140px;">loading</span></div>
-          <div class="identity-email"    id="dashEmail"><span class="skeleton" style="width:200px;">loading</span></div>
+          <div class="identity-email" id="dashEmail"><span class="skeleton" style="width:200px;">loading</span></div>
           <div class="badge-row" id="dashBadges"></div>
         </div>
-        <div class="identity-actions">
-          <a id="viewPublicLink" href="#" class="btn btn-ghost btn-sm">View Public Profile</a>
-        </div>
-      </section>
-
-      <!-- Stats row -->
-      <div class="acct-stats-strip">
-        <div class="acct-stats-inner">
-          <a class="acct-stat acct-stat-link" href="/account/profile/#friends" title="Your friends">
-            <span class="acct-stat-icon" aria-hidden="true">👥</span>
-            <span class="acct-stat-value" id="statFriends">0</span>
-            <span class="acct-stat-label">Friends</span>
-          </a>
-          <div class="acct-stat">
-            <span class="acct-stat-icon" aria-hidden="true">⏱️</span>
-            <span class="acct-stat-value" id="statPlaytime">0m</span>
-            <span class="acct-stat-label">Play Time</span>
-          </div>
-          <div class="acct-stat">
-            <span class="acct-stat-icon" aria-hidden="true">📦</span>
-            <span class="acct-stat-value" id="statUploads">0</span>
-            <span class="acct-stat-label">Uploads</span>
-          </div>
-          <div class="acct-stat">
-            <span class="acct-stat-icon" aria-hidden="true">👁️</span>
-            <span class="acct-stat-value" id="statViews">0</span>
-            <span class="acct-stat-label">Profile Views</span>
-          </div>
+        <div class="ac-summary-actions">
+          <a class="btn btn-coral" href="/account/profile/">Edit profile</a>
+          <a id="viewPublicLink" href="#" class="btn btn-ghost">View public profile</a>
         </div>
       </div>
-
-      <!-- Settings list -->
-      <section class="settings-list">
-        <div class="setting-row">
-          <span class="setting-icon" aria-hidden="true">✏️</span>
-          <div>
-            <div class="setting-title">Edit Profile</div>
-            <div class="setting-desc">Change your avatar, banner, and bio.</div>
-          </div>
-          <a class="btn btn-ghost btn-sm" href="/account/profile/">Edit</a>
+      <div class="acct-stats-inner">
+        <a class="stat-cell" href="/account/profile/#friends" title="Your friends">
+          <span class="stat-value" id="statFriends">0</span>
+          <span class="stat-label">Friends</span>
+        </a>
+        <div class="stat-cell">
+          <span class="stat-value" id="statPlaytime">0m</span>
+          <span class="stat-label">Play time</span>
         </div>
-        <div class="setting-row">
-          <span class="setting-icon" aria-hidden="true">🔐</span>
-          <div>
-            <div class="setting-title">Manage Account</div>
-            <div class="setting-desc">Update your password, email, or security settings.</div>
-          </div>
-          <a class="btn btn-ghost btn-sm" href="https://accounts.cartofia.com/if/user/" target="_blank" rel="noopener noreferrer">Open Settings</a>
+        <div class="stat-cell">
+          <span class="stat-value" id="statUploads">0</span>
+          <span class="stat-label">Uploads</span>
         </div>
-        <div class="setting-row" id="discord">
-          <span class="setting-icon discord-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-          </span>
-          <div>
-            <div class="setting-title">Discord <span class="discord-state" id="discordState"></span></div>
-            <div class="setting-desc" id="discordDesc">Link Discord to get a DM when your Minecraft server comes online.</div>
-            <div class="discord-msg" id="discordMsg" role="status" aria-live="polite" hidden></div>
-          </div>
-          <span class="discord-actions">
-            <button id="discordLinkBtn" class="btn btn-ghost btn-sm" type="button" hidden>Link</button>
-            <button id="discordDisconnectBtn" class="btn btn-ghost btn-sm" type="button" hidden>Disconnect</button>
-          </span>
+        <div class="stat-cell">
+          <span class="stat-value" id="statViews">0</span>
+          <span class="stat-label">Profile views</span>
         </div>
-        <div class="setting-row">
-          <span class="setting-icon" aria-hidden="true">📦</span>
-          <div>
-            <div class="setting-title">File Archive</div>
-            <div class="setting-desc">Browse your uploads and downloads.</div>
-          </div>
-          <a class="btn btn-ghost btn-sm" href="/archive/">Open Archive</a>
-        </div>
-        <div class="setting-row">
-          <span class="setting-icon" aria-hidden="true">👤</span>
-          <div>
-            <div class="setting-title">Public Profile</div>
-            <div class="setting-desc">See how others see you.</div>
-          </div>
-          <a id="viewPublicLink2" class="btn btn-ghost btn-sm" href="#">View</a>
-        </div>
-      </section>
-
-      <!-- Session footer -->
-      <div class="session-bar">
-        <span class="signed-in-row">
-          <span class="status-dot" aria-hidden="true"></span>
-          Signed in as <b id="dashFooterUsername">…</b>
-        </span>
-        <a id="logoutButton" href="#" class="logout-link">Logout</a>
       </div>
-    </main>
+    </section>
 
+    <div class="ac-grid">
+      <div class="ac-col">
+        <!-- Profile -->
+        <section class="pf-panel ac-group pf-rise" style="--d:.05s" aria-labelledby="acProfileH">
+          <div class="ac-group-head"><p class="pf-eyebrow">Profile</p><h2 class="pf-h2" id="acProfileH">Your player card</h2></div>
+          <div class="settings-list">
+            <div class="setting-row">
+              <span class="setting-icon" aria-hidden="true">✏️</span>
+              <div>
+                <div class="setting-title">Edit profile</div>
+                <div class="setting-desc">Name, tagline, bio, avatar, banner and theme — with live preview.</div>
+              </div>
+              <a class="btn btn-ghost btn-sm" href="/account/profile/">Edit</a>
+            </div>
+            <div class="setting-row">
+              <span class="setting-icon" aria-hidden="true">👥</span>
+              <div>
+                <div class="setting-title">Friends</div>
+                <div class="setting-desc">Find players, answer requests, manage your list.</div>
+              </div>
+              <a class="btn btn-ghost btn-sm" href="/account/profile/#friends">Manage</a>
+            </div>
+            <div class="setting-row">
+              <span class="setting-icon" aria-hidden="true">🏆</span>
+              <div>
+                <div class="setting-title">Achievements</div>
+                <div class="setting-desc">Your trophy case across every game.</div>
+              </div>
+              <a class="btn btn-ghost btn-sm" href="/achievements/">Open</a>
+            </div>
+            <div class="setting-row">
+              <span class="setting-icon" aria-hidden="true">👤</span>
+              <div>
+                <div class="setting-title">Public profile</div>
+                <div class="setting-desc">See how other players see you.</div>
+              </div>
+              <a id="viewPublicLink2" class="btn btn-ghost btn-sm" href="#">View</a>
+            </div>
+          </div>
+        </section>
 
-    <!-- ===== ERROR VIEW ===== -->
-    <main id="errorView" class="acct-hidden">
-      <div class="error-view">
-        <h1>Couldn't load your profile.</h1>
-        <p>Your session may have expired or the profile service is unreachable. Try refreshing or signing in again.</p>
-        <button id="errorSignIn" type="button" class="btn btn-primary">Sign In</button>
+        <!-- Your stuff -->
+        <section class="pf-panel ac-group pf-rise" style="--d:.15s" aria-labelledby="acStuffH">
+          <div class="ac-group-head"><p class="pf-eyebrow">Your stuff</p><h2 class="pf-h2" id="acStuffH">Files &amp; servers</h2></div>
+          <div class="settings-list">
+            <div class="setting-row">
+              <span class="setting-icon" aria-hidden="true">📦</span>
+              <div>
+                <div class="setting-title">File archive</div>
+                <div class="setting-desc">Browse your uploads and downloads.</div>
+              </div>
+              <a class="btn btn-ghost btn-sm" href="/archive/">Open</a>
+            </div>
+            <div class="setting-row">
+              <span class="setting-icon" aria-hidden="true">⛏️</span>
+              <div>
+                <div class="setting-title">Minecraft</div>
+                <div class="setting-desc">Your servers and the community server status.</div>
+              </div>
+              <a class="btn btn-ghost btn-sm" href="/minecraft/">Open</a>
+            </div>
+          </div>
+        </section>
       </div>
-    </main>
 
-  </div>
+      <div class="ac-col">
+        <!-- Connections -->
+        <section class="pf-panel ac-group pf-rise" style="--d:.1s" aria-labelledby="acConnH">
+          <div class="ac-group-head"><p class="pf-eyebrow">Connections</p><h2 class="pf-h2" id="acConnH">Linked accounts</h2></div>
+          <div class="settings-list">
+            <div class="setting-row discord-row" id="discord">
+              <span class="setting-icon discord-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+              </span>
+              <div>
+                <div class="setting-title">Discord <span class="discord-state" id="discordState"></span></div>
+                <div class="setting-desc" id="discordDesc">Link Discord to get a DM when your Minecraft server comes online.</div>
+                <div class="discord-msg" id="discordMsg" role="status" aria-live="polite" hidden></div>
+              </div>
+              <span class="discord-actions">
+                <button id="discordLinkBtn" class="btn btn-primary btn-sm" type="button" hidden>Link Discord</button>
+                <button id="discordDisconnectBtn" class="btn btn-danger-soft btn-sm" type="button" hidden>Disconnect</button>
+              </span>
+            </div>
+          </div>
+          <p class="ac-empty">Connections are unavailable right now. Try again later.</p>
+        </section>
 
-  <!-- Footer (copied from homepage) -->
+        <!-- Account & security -->
+        <section class="pf-panel ac-group pf-rise" style="--d:.2s" aria-labelledby="acSecH">
+          <div class="ac-group-head"><p class="pf-eyebrow">Security</p><h2 class="pf-h2" id="acSecH">Account &amp; sign-in</h2></div>
+          <div class="settings-list">
+            <div class="setting-row">
+              <span class="setting-icon" aria-hidden="true">🔐</span>
+              <div>
+                <div class="setting-title">Manage account</div>
+                <div class="setting-desc">Password, email, MFA and active sessions (Cartofia SSO).</div>
+              </div>
+              <a class="btn btn-ghost btn-sm" href="https://accounts.cartofia.com/if/user/" target="_blank" rel="noopener noreferrer">Open settings ↗</a>
+            </div>
+            <div class="setting-row ac-signout-row">
+              <span class="setting-icon" aria-hidden="true">🚪</span>
+              <div>
+                <div class="setting-title">Sign out</div>
+                <div class="setting-desc"><span class="status-dot" aria-hidden="true"></span>Signed in as <b id="dashFooterUsername">…</b></div>
+              </div>
+              <a id="logoutButton" href="#" class="btn btn-danger-soft btn-sm">Logout</a>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+
+  <!-- ===== ERROR VIEW ===== -->
+  <main id="errorView" class="pf-wrap ac-main acct-hidden">
+    <div class="ac-error">
+      <div class="not-found-icon" aria-hidden="true">!</div>
+      <h1>Couldn't load your profile.</h1>
+      <p>Your session may have expired or the profile service is unreachable. Try refreshing or signing in again.</p>
+      <button id="errorSignIn" type="button" class="btn btn-coral">Sign In</button>
+    </div>
+  </main>
+
   <footer class="site-footer">
     <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
     <nav class="footer-links" aria-label="Footer">
       <a href="/arcade/">Arcade</a>
+      <a href="/achievements/">Achievements</a>
       <a href="/minecraft/">Minecraft</a>
-      <a href="/account/">Account</a>
+      <a href="/forum/">Forum</a>
       <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
       <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
     </nav>
