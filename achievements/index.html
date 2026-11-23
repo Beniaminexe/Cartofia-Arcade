@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Achievements — Cartofia</title>
+<meta name="description" content="Every Cartofia arcade achievement, grouped by game.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/assets/site.css?v=7">
+<link rel="stylesheet" href="/assets/notifications.css?v=6">
+<link rel="stylesheet" href="/assets/profile-v2.css?v=1">
+</head>
+<body class="pf pf-trophies">
+
+<header class="nav">
+  <a class="nav-brand" href="/">
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/></svg>
+    Cartofia
+  </a>
+  <nav class="nav-links" aria-label="Primary">
+    <a href="/">Home</a>
+    <a href="/arcade/">Arcade</a>
+    <a href="/minecraft/">Minecraft</a>
+    <a href="/forum/">Forum</a>
+    <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
+  </nav>
+  <div class="nav-right">
+    <div class="account-menu" data-account-menu>
+      <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+      <div class="account-dropdown hidden" data-account-dropdown role="menu">
+        <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="pf-wrap ach-page">
+  <header class="pf-head ach-head">
+    <div>
+      <p class="pf-kicker"><span class="pf-bulbs" aria-hidden="true"><i></i><i></i><i></i></span>Trophy case</p>
+      <h1 class="pf-title">Achievements</h1>
+      <p class="pf-lead ach-sub" id="achSub">Every achievement in the Cartofia arcade, grouped by game.</p>
+    </div>
+    <div class="ach-progress" id="achProgress" hidden>
+      <span class="ach-progress-cup" aria-hidden="true">🏆</span>
+      <div class="ach-progress-body">
+        <div class="ach-progress-text" id="achProgressText"></div>
+        <div class="ach-progress-bar"><span id="achProgressBar"></span></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="ach-toolbar">
+    <div class="tabs ach-filters" id="achFilters" role="group" aria-label="Filter by state" hidden>
+      <button class="tab ach-filter" type="button" data-filter="all" aria-pressed="true">All <span class="tab-count" data-count="all"></span></button>
+      <button class="tab ach-filter" type="button" data-filter="earned" aria-pressed="false">Earned <span class="tab-count" data-count="earned"></span></button>
+      <button class="tab ach-filter" type="button" data-filter="locked" aria-pressed="false">Locked <span class="tab-count" data-count="locked"></span></button>
+    </div>
+    <div class="ach-games" id="achGameFilter" role="group" aria-label="Filter by game"></div>
+  </div>
+  <p class="pf-sr" aria-live="polite" id="achStatus"></p>
+
+  <div class="ach-groups" id="achGroups"><div class="ach-empty">Loading achievements…</div></div>
+</main>
+
+<footer class="site-footer">
+  <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+  <nav class="footer-links" aria-label="Footer">
+    <a href="/arcade/">Arcade</a>
+    <a href="/forum/">Forum</a>
+    <a href="/account/">Account</a>
+    <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+  </nav>
+</footer>
+
+<script src="/assets/theme.js?v=3"></script>
+<script src="/assets/site.js?v=10"></script>
+<script src="/assets/notifications.js?v=3" defer></script>
+<script>
+(function () {
+  const groupsEl = document.getElementById('achGroups');
+  const gameBar = document.getElementById('achGameFilter');
+  const GAME_ALIASES = { 'zuma-temple': 'zuma' };
+  const NO_PAGE = { general: 1, site: 1 };
+  /* Per-game accent (matches the arcade page cartridges) */
+  const GAME_ACCENT = {
+    cartofia: '#7cc8ff', ludo: '#ffb54a', snake: '#8bd94a', chess: '#b08cff', 'brick-blitz': '#ff52a2',
+    'bomber-raid': '#ff8c3a', minesweeper: '#9fb4d8', blackjack: '#2fc184', 'maze-chase': '#8c84ff',
+    'word-puzzle': '#f2c94c', zuma: '#2cc6b4',
+  };
+  let stateFilter = 'all', gameFilter = 'all';
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function slugOf(g) { g = String(g || '').toLowerCase(); return GAME_ALIASES[g] || g; }
+
+  async function viewerSlug() {
+    try {
+      const tok = sessionStorage.getItem('oidc_access_token') || localStorage.getItem('oidc_access_token');
+      const me = await fetch('/api/auth/me', { credentials: 'include' }).then(r => r.ok ? r.json() : null);
+      if (!tok && (!me || !me.authenticated)) return '';
+      const p = await fetch('/api/profile/me', {
+        credentials: 'include',
+        headers: tok ? { 'Authorization': 'Bearer ' + tok } : {},
+      }).then(r => r.ok ? r.json() : null);
+      return (p && p.profile && p.profile.username_slug) || '';
+    } catch (_) { return ''; }
+  }
+
+  function card(a, withState, userQ) {
+    const state = withState ? (a.earned ? 'earned' : 'locked') : '';
+    const rarity = String(a.rarity || 'common').toLowerCase();
+    const meta = [`<span class="ach-rarity">${esc(rarity)}</span>`];
+    if (withState && a.earned) meta.push(`<span class="ach-earned">✓ ${esc(fmtDate(a.unlocked_at) || 'earned')}</span>`);
+    else if (withState) meta.push('<span class="ach-locked-tag">Locked</span>');
+    meta.push(`<a class="ach-link" href="/achievements/${userQ}#${encodeURIComponent(a.id)}" aria-label="Link to ${esc(a.name)}">#</a>`);
+    return `<article class="ach-card ${state}" id="${esc(a.id)}" data-state="${state}" data-rarity="${esc(rarity)}">
+        <span class="ach-icon" aria-hidden="true">${esc(a.icon || '🏅')}</span>
+        <div style="min-width:0">
+          <h3 class="ach-name">${esc(a.name)}${state === 'locked' ? '<span class="pf-sr"> (locked)</span>' : ''}</h3>
+          <p class="ach-desc">${esc(a.description)}</p>
+          <div class="ach-meta">${meta.join('')}</div>
+        </div>
+      </article>`;
+  }
+
+  function render(data, withState, userQ) {
+    const games = data.games || [];
+    if (!games.length) { groupsEl.innerHTML = '<div class="ach-empty">No achievements yet.</div>'; return; }
+    groupsEl.innerHTML = games.map(g => {
+      const slug = slugOf(g.game);
+      const accent = GAME_ACCENT[slug] || 'var(--accent)';
+      const pct = withState && g.total ? Math.round(100 * (g.earned || 0) / g.total) : 0;
+      const count = withState ? `${g.earned || 0} / ${g.total} earned` : `${g.total} achievement${g.total === 1 ? '' : 's'}`;
+      const hasPage = !NO_PAGE[slug];
+      const title = hasPage ? `<a href="/arcade/${encodeURIComponent(slug)}/">${esc(g.name)}</a>` : esc(g.name);
+      return `<section class="ach-group" data-game="${esc(slug)}" id="game-${esc(slug)}" style="--g:${accent}" aria-labelledby="g-${esc(slug)}">
+          <div class="ach-group-head">
+            <div class="ach-cover"><img src="/assets/games/${encodeURIComponent(slug)}.svg" alt="" loading="lazy" onerror="this.remove()"></div>
+            <div style="min-width:0">
+              <h2 id="g-${esc(slug)}">${title}</h2>
+              <div class="ach-group-sub">
+                ${withState ? `<span class="ach-group-bar" aria-hidden="true"><span style="width:${pct}%"></span></span>` : ''}
+                <span class="ach-group-count">${count}</span>
+              </div>
+            </div>
+            ${hasPage ? `<a class="ach-play" href="/arcade/${encodeURIComponent(slug)}/">Play →</a>` : ''}
+          </div>
+          <div class="ach-grid">${g.achievements.map(a => card(a, withState, userQ)).join('')}</div>
+        </section>`;
+    }).join('');
+
+    gameBar.innerHTML = `<button class="ach-game-chip" type="button" data-game="all" aria-pressed="true"><span class="ach-chip-all" aria-hidden="true">★</span>All games</button>`
+      + games.map(g => {
+        const slug = slugOf(g.game);
+        return `<button class="ach-game-chip" type="button" data-game="${esc(slug)}" aria-pressed="false"><img src="/assets/games/${encodeURIComponent(slug)}.svg" alt="" loading="lazy" onerror="this.style.visibility='hidden'">${esc(g.name)}</button>`;
+      }).join('');
+  }
+
+  function applyFilter(f, game) {
+    if (f) stateFilter = f;
+    if (game) gameFilter = game;
+    document.querySelectorAll('.ach-filter').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === stateFilter)));
+    gameBar.querySelectorAll('.ach-game-chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.game === gameFilter)));
+    document.querySelectorAll('.ach-card').forEach(c => { c.hidden = stateFilter !== 'all' && c.dataset.state !== stateFilter; });
+    let shown = 0;
+    document.querySelectorAll('.ach-group').forEach(gr => {
+      const gameOk = gameFilter === 'all' || gr.dataset.game === gameFilter;
+      gr.hidden = !gameOk || !gr.querySelector('.ach-card:not([hidden])');
+      if (!gr.hidden) shown += gr.querySelectorAll('.ach-card:not([hidden])').length;
+    });
+    document.getElementById('achStatus').textContent = shown + ' achievement' + (shown === 1 ? '' : 's') + ' shown';
+  }
+
+  function focusHash() {
+    const id = decodeURIComponent((location.hash || '').slice(1));
+    document.querySelectorAll('.ach-card.target').forEach(c => c.classList.remove('target'));
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (!el || !el.classList.contains('ach-card')) return;
+    if (el.hidden || el.closest('.ach-group').hidden) applyFilter('all', 'all');
+    el.classList.add('target');
+    el.setAttribute('tabindex', '-1');
+    el.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    el.focus({ preventScroll: true });
+  }
+
+  gameBar.addEventListener('click', ev => {
+    const b = ev.target.closest('[data-game]');
+    if (!b) return;
+    applyFilter(null, b.dataset.game);
+    if (b.dataset.game !== 'all') {
+      const gr = document.getElementById('game-' + b.dataset.game);
+      if (gr && !gr.hidden) gr.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    }
+  });
+
+  (async function init() {
+    const params = new URLSearchParams(location.search);
+    let user = (params.get('user') || '').trim().toLowerCase();
+    const mine = await viewerSlug();
+    if (!user && mine) user = mine;
+    let data = null, withState = false;
+    if (user) {
+      const r = await fetch('/api/achievements/catalog?user=' + encodeURIComponent(user)).catch(() => null);
+      if (r && r.ok) { data = await r.json(); withState = true; }
+    }
+    if (!data) {
+      const r = await fetch('/api/achievements/catalog').catch(() => null);
+      if (!r || !r.ok) { groupsEl.innerHTML = '<div class="ach-error">Could not load achievements. Try again later.</div>'; return; }
+      data = await r.json();
+      if (user && user !== mine) {
+        document.getElementById('achSub').textContent = 'That profile is private or does not exist. Showing every achievement.';
+      } else {
+        document.getElementById('achSub').innerHTML = 'Every achievement in the Cartofia arcade, grouped by game. <a href="/account/#login">Sign in</a> to track your progress.';
+      }
+    }
+    const userQ = withState ? '?user=' + encodeURIComponent(data.user.username) : '';
+    if (withState) {
+      const own = data.user.username === mine;
+      const who = own ? 'Your progress' : esc(data.user.display_name) + '’s progress';
+      document.getElementById('achSub').innerHTML = who + ' across every game. '
+        + (own ? '' : `<a href="/u/${encodeURIComponent(data.user.username)}">View profile</a>`);
+      document.getElementById('achProgress').hidden = false;
+      document.getElementById('achProgressText').textContent = `${data.earned} of ${data.total} earned · ${data.total ? Math.round(100 * data.earned / data.total) : 0}%`;
+      requestAnimationFrame(() => {
+        document.getElementById('achProgressBar').style.width = (data.total ? (100 * data.earned / data.total) : 0) + '%';
+      });
+      const filters = document.getElementById('achFilters');
+      filters.hidden = false;
+      filters.querySelector('[data-count="all"]').textContent = data.total;
+      filters.querySelector('[data-count="earned"]').textContent = data.earned;
+      filters.querySelector('[data-count="locked"]').textContent = data.total - data.earned;
+      filters.addEventListener('click', ev => {
+        const b = ev.target.closest('[data-filter]');
+        if (b) applyFilter(b.dataset.filter, null);
+      });
+      document.title = (own ? 'Your achievements' : data.user.display_name + '’s achievements') + ' — Cartofia';
+    }
+    render(data, withState, userQ);
+    applyFilter('all', 'all');
+    focusHash();
+    window.addEventListener('hashchange', focusHash);
+  })();
+})();
+</script>
+</body>
+</html>

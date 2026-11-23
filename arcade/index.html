@@ -4,49 +4,16 @@
   <meta charset="utf-8" />
   <title>Cartofia Arcade — All Games</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Free browser games on Cartofia: Ludo, Chess, Snake, Brick Blitz, Bomber Raid and more. No downloads, desktop and mobile." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=4" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=3">
-  <link rel="stylesheet" href="/arcade/arcade.css?v=1" />
-  <style>
-    /* Make the nav-avatar button reset so arcade.css styles apply cleanly */
-    button.nav-avatar {
-      appearance: none;
-      -webkit-appearance: none;
-      font: inherit;
-      cursor: pointer;
-    }
-    .game-player-count {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.4);
-    }
-    .game-player-count.has-players { color: #4ade80; }
-    .player-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-    }
-    .game-player-count.has-players .player-dot {
-      background: #4ade80;
-      animation: pulse-dot 2s ease-in-out infinite;
-    }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=7" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=6">
+  <link rel="stylesheet" href="/arcade/arcade-v2.css?v=1" />
 </head>
-<body>
+<body class="ax">
 
-  <!-- ================================================
-       NAV — fixed top bar (matches live homepage)
-  ================================================= -->
   <header class="nav" id="nav">
     <a class="nav-brand" href="/">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
@@ -60,9 +27,9 @@
 
     <nav class="nav-links" aria-label="Primary">
       <a href="/">Home</a>
-      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/arcade/" class="active" aria-current="page">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
-    <a href="/forum/">Forum</a>
+      <a href="/forum/">Forum</a>
       <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
 
@@ -76,305 +43,263 @@
     </div>
   </header>
 
+  <main id="main">
 
-  <!-- ================================================
-       HERO — compact (~56vh), copy + featured Cartofia
-  ================================================= -->
-  <section class="hero" id="hero">
-    <div class="hero-inner">
+    <!-- HERO -->
+    <section class="ax-hero" aria-labelledby="ax-title">
+      <div class="ax-hero-copy">
+        <p class="ax-kicker"><span class="ax-bulbs" aria-hidden="true"><i></i><i></i><i></i></span>Cartofia Arcade</p>
+        <h1 class="ax-title" id="ax-title">Insert coin.<br><span>Pick a game.</span></h1>
+        <p class="ax-lead">11 browser games, zero installs. Play solo, challenge friends online, and climb the leaderboards — on desktop or phone.</p>
+        <div class="ax-actions">
+          <a class="ax-btn ax-btn-primary" href="#games">Browse games</a>
+          <a class="ax-btn ax-btn-ghost" href="/arcade/ludo/">Play Ludo online</a>
+        </div>
+        <p class="ax-pulse" data-total-live><span class="ax-live-dot" aria-hidden="true"></span><span data-total-live-text>Checking who's playing…</span></p>
+      </div>
+      <div class="ax-hero-art" aria-hidden="true">
+        <img class="ax-stack ax-stack-1" src="/assets/games/chess.svg" alt="" width="320" height="200" />
+        <img class="ax-stack ax-stack-2" src="/assets/games/ludo.svg" alt="" width="320" height="200" />
+        <img class="ax-stack ax-stack-3" src="/assets/games/cartofia.svg" alt="" width="320" height="200" />
+      </div>
+    </section>
 
-      <!-- Left: main copy -->
-      <div class="hero-copy">
-        <p class="hero-kicker">Cartofia Arcade</p>
-        <h1 class="hero-headline">Pick a game.<br>Start playing.</h1>
-        <p class="hero-lead">
-          No downloads, no installs, no account required. Everything runs in your
-          browser — desktop and mobile.
-        </p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#games" data-scroll-to="games">Jump to Games</a>
-          <a class="btn btn-ghost"   href="cartofia/">Play Cartofia</a>
+    <!-- RECENT (signed-in) / sign-in nudge (guest) — filled by arcade-v2.js -->
+    <section class="ax-recent" id="recent" aria-labelledby="ax-recent-title" hidden>
+      <div class="ax-recent-head">
+        <h2 class="ax-h2" id="ax-recent-title">Jump back in</h2>
+        <a class="ax-link" href="/account/profile/">Your stats →</a>
+      </div>
+      <ul class="ax-recent-list" data-recent-list></ul>
+    </section>
+    <aside class="ax-nudge" id="nudge" hidden>
+      <p><strong>Playing as a guest.</strong> Sign in to save scores, earn achievements and show up on the leaderboards.</p>
+      <a class="ax-btn ax-btn-small" href="/account/#login">Sign in</a>
+    </aside>
+
+    <!-- GAMES -->
+    <section class="ax-games" id="games" aria-labelledby="ax-games-title">
+      <div class="ax-games-head">
+        <div>
+          <p class="ax-eyebrow">The lineup</p>
+          <h2 class="ax-h2" id="ax-games-title">All games</h2>
+        </div>
+        <div class="ax-filters" role="group" aria-label="Filter games">
+          <button class="ax-filter" type="button" aria-pressed="true" data-filter="all">All <span>11</span></button>
+          <button class="ax-filter" type="button" aria-pressed="false" data-filter="single">Single player <span>7</span></button>
+          <button class="ax-filter" type="button" aria-pressed="false" data-filter="multiplayer">Multiplayer <span>4</span></button>
         </div>
       </div>
+      <p class="ax-sr" aria-live="polite" data-filter-status></p>
 
-      <!-- Right: featured Cartofia card (special treatment) -->
-      <aside class="featured-card-wrap" aria-label="Featured game">
-        <div class="featured-card">
-          <div class="featured-card-inner">
-            <p class="featured-label">Flagship</p>
-            <h2 class="featured-title">Cartofia</h2>
-            <p class="featured-desc">
-              A 2D platformer built in Python, ported to the web. The game that started it all.
-            </p>
-            <div class="featured-tags">
-              <span class="featured-tag">Single player</span>
-              <span class="featured-tag">Keyboard</span>
-              <span class="featured-tag">WebAssembly</span>
-            </div>
-            <a class="btn btn-primary btn-sm" href="cartofia/">Launch Now →</a>
-          </div>
+      <div class="ax-grid" id="gamesGrid">
+      <article class="ax-card" data-mode="single" data-slug="cartofia" style="--g:#7cc8ff">
+        <div class="ax-cover">
+          <img src="/assets/games/cartofia.svg" alt="" width="320" height="200" loading="lazy" decoding="async" />
+          
+          <span class="ax-live" data-live hidden><span class="ax-live-dot" aria-hidden="true"></span><span data-live-text></span></span>
         </div>
-      </aside>
-    </div>
-  </section>
-
-
-  <!-- ================================================
-       GAMES — the main event
-  ================================================= -->
-  <section class="section games-section reveal" id="games">
-
-    <div class="section-head-row">
-      <div class="section-head" style="margin-bottom:0;">
-        <p class="section-label">The Lineup</p>
-        <h2 class="section-title">All games</h2>
-        <p class="section-sub">Every game launches from right here.</p>
+        <div class="ax-body">
+          <h3 class="ax-name"><a class="ax-card-link" href="/arcade/cartofia/">Cartofia</a></h3>
+          <p class="ax-desc">The flagship potato platformer — built in Python, playable in your browser.</p>
+          <ul class="ax-tags" aria-label="Details"><li>Single player</li><li>Keyboard</li><li>WebAssembly</li></ul>
+        </div>
+        <div class="ax-foot">
+          <div class="ax-top" data-top></div>
+          <span class="ax-play" aria-hidden="true">Play<svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5l8 7-8 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </article>
+      <article class="ax-card" data-mode="multiplayer" data-slug="ludo" style="--g:#ffb54a">
+        <div class="ax-cover">
+          <img src="/assets/games/ludo.svg" alt="" width="320" height="200" loading="lazy" decoding="async" />
+          <span class="ax-badge"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="currentColor"/><circle cx="17" cy="9" r="2.6" fill="currentColor" opacity=".7"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5z" fill="currentColor"/><path d="M14.5 13.8c.8-.3 1.6-.4 2.5-.4 2.7 0 4.8 1.8 4.8 4.6h-5.5" fill="currentColor" opacity=".7"/></svg><span>Multiplayer</span></span>
+          <span class="ax-live" data-live hidden><span class="ax-live-dot" aria-hidden="true"></span><span data-live-text></span></span>
+        </div>
+        <div class="ax-body">
+          <h3 class="ax-name"><a class="ax-card-link" href="/arcade/ludo/">Ludo</a></h3>
+          <p class="ax-desc">Race four tokens home. Capture rivals, grab power-ups, play bots or friends.</p>
+          <ul class="ax-tags" aria-label="Details"><li>2–4 players + bots</li><li>Touch + Mouse</li></ul>
+        </div>
+        <div class="ax-foot">
+          <div class="ax-top" data-top></div>
+          <span class="ax-play" aria-hidden="true">Play<svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5l8 7-8 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </article>
+      <article class="ax-card" data-mode="single" data-slug="snake" style="--g:#8bd94a">
+        <div class="ax-cover">
+          <img src="/assets/games/snake.svg" alt="" width="320" height="200" loading="lazy" decoding="async" />
+          
+          <span class="ax-live" data-live hidden><span class="ax-live-dot" aria-hidden="true"></span><span data-live-text></span></span>
+        </div>
+        <div class="ax-body">
+          <h3 class="ax-name"><a class="ax-card-link" href="/arcade/snake/">Snake Classic</a></h3>
+          <p class="ax-desc">The classic snake game. Eat, grow, chase your high score.</p>
+          <ul class="ax-tags" aria-label="Details"><li>Single player</li><li>Touch + Keyboard</li></ul>
+        </div>
+        <div class="ax-foot">
+          <div class="ax-top" data-top></div>
+          <span class="ax-play" aria-hidden="true">Play<svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5l8 7-8 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </article>
+      <article class="ax-card" data-mode="multiplayer" data-slug="chess" style="--g:#b08cff">
+        <div class="ax-cover">
+          <img src="/assets/games/chess.svg" alt="" width="320" height="200" loading="lazy" decoding="async" />
+          <span class="ax-badge"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="currentColor"/><circle cx="17" cy="9" r="2.6" fill="currentColor" opacity=".7"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5z" fill="currentColor"/><path d="M14.5 13.8c.8-.3 1.6-.4 2.5-.4 2.7 0 4.8 1.8 4.8 4.6h-5.5" fill="currentColor" opacity=".7"/></svg><span>Multiplayer</span></span>
+          <span class="ax-live" data-live hidden><span class="ax-live-dot" aria-hidden="true"></span><span data-live-text></span></span>
+        </div>
+        <div class="ax-body">
+          <h3 class="ax-name"><a class="ax-card-link" href="/arcade/chess/">Chess</a></h3>
+          <p class="ax-desc">Play a friend on the same screen, online, or challenge the bot.</p>
+          <ul class="ax-tags" aria-label="Details"><li>Multiplayer + AI</li><li>Mouse + Touch</li></ul>
+        </div>
+        <div class="ax-foot">
+          <div class="ax-top" data-top></div>
+          <span class="ax-play" aria-hidden="true">Play<svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5l8 7-8 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </article>
+      <article class="ax-card" data-mode="single" data-slug="brick-blitz" style="--g:#ff52a2">
+        <div class="ax-cover">
+          <img src="/assets/games/brick-blitz.svg" alt="" width="320" height="200" loading="lazy" decoding="async" />
+          
+          <span class="ax-live" data-live hidden><span class="ax-live-dot" aria-hidden="true"></span><span data-live-text></span></span>
+        </div>
+        <div class="ax-body">
+          <h3 class="ax-name"><a class="ax-card-link" href="/arcade/brick-blitz/">Brick Blitz</a></h3>
+          <p class="ax-desc">Smash bricks, rack up lives, climb through levels.</p>
+          <ul class="ax-tags" aria-label="Details"><li>Single player</li><li>Touch + Keyboard</li></ul>
+        </div>
+        <div class="ax-foot">
+          <div class="ax-top" data-top></div>
+          <span class="ax-play" aria-hidden="true">Play<svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5l8 7-8 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </article>
+      <article class="ax-card" data-mode="multiplayer" data-slug="bomber-raid" style="--g:#ff8c3a">
+        <div class="ax-cover">
+          <img src="/assets/games/bomber-raid.svg" alt="" width="320" height="200" loading="lazy" decoding="async" />
+          <span class="ax-badge"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="currentColor"/><circle cx="17" cy="9" r="2.6" fill="currentColor" opacity=".7"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5z" fill="currentColor"/><path d="M14.5 13.8c.8-.3 1.6-.4 2.5-.4 2.7 0 4.8 1.8 4.8 4.6h-5.5" fill="currentColor" opacity=".7"/></svg><span>Multiplayer</span></span>
+          <span class="ax-live" data-live hidden><span class="ax-live-dot" aria-hidden="true"></span><span data-live-text></span></span>
+        </div>
+        <div class="ax-body">
+          <h3 class="ax-name"><a class="ax-card-link" href="/arcade/bomber-raid/">Bomber Raid</a></h3>
+          <p class="ax-desc">Drop bombs, grab power-ups, outlast your opponents online.</p>
+          <ul class="ax-tags" aria-label="Details"><li>Online multiplayer</li><li>Touch + Keyboard</li></ul>
+        </div>
+        <div class="ax-foot">
+          <div class="ax-top" data-top></div>
+          <span class="ax-play" aria-hidden="true">Play<svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5l8 7-8 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </article>
+      <article class="ax-card" data-mode="single" data-slug="minesweeper" style="--g:#9fb4d8">
+        <div class="ax-cover">
+          <img src="/assets/games/minesweeper.svg" alt="" width="320" height="200" loading="lazy" decoding="async" />
+          
+          <span class="ax-live" data-live hidden><span class="ax-live-dot" aria-hidden="true"></span><span data-live-text></span></span>
+        </div>
+        <div class="ax-body">
+          <h3 class="ax-name"><a class="ax-card-link" href="/arcade/minesweeper/">Minesweeper Classic</a></h3>
+          <p class="ax-desc">The original logic puzzle. Beginner to expert.</p>
+          <ul class="ax-tags" aria-label="Details"><li>Single player</li><li>Mouse + Touch</li></ul>
+        </div>
+        <div class="ax-foot">
+          <div class="ax-top" data-top></div>
+          <span class="ax-play" aria-hidden="true">Play<svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5l8 7-8 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </article>
+      <article class="ax-card" data-mode="multiplayer" data-slug="blackjack" style="--g:#2fc184">
+        <div class="ax-cover">
+          <img src="/assets/games/blackjack.svg" alt="" width="320" height="200" loading="lazy" decoding="async" />
+          <span class="ax-badge"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="currentColor"/><circle cx="17" cy="9" r="2.6" fill="currentColor" opacity=".7"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5z" fill="currentColor"/><path d="M14.5 13.8c.8-.3 1.6-.4 2.5-.4 2.7 0 4.8 1.8 4.8 4.6h-5.5" fill="currentColor" opacity=".7"/></svg><span>Multiplayer</span></span>
+          <span class="ax-live" data-live hidden><span class="ax-live-dot" aria-hidden="true"></span><span data-live-text></span></span>
+        </div>
+        <div class="ax-body">
+          <h3 class="ax-name"><a class="ax-card-link" href="/arcade/blackjack/">Blackjack Rooms</a></h3>
+          <p class="ax-desc">Join a table, play hands, try not to bust.</p>
+          <ul class="ax-tags" aria-label="Details"><li>Online multiplayer</li><li>Touch + Mouse</li></ul>
+        </div>
+        <div class="ax-foot">
+          <div class="ax-top" data-top></div>
+          <span class="ax-play" aria-hidden="true">Play<svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5l8 7-8 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </article>
+      <article class="ax-card" data-mode="single" data-slug="maze-chase" style="--g:#8c84ff">
+        <div class="ax-cover">
+          <img src="/assets/games/maze-chase.svg" alt="" width="320" height="200" loading="lazy" decoding="async" />
+          
+          <span class="ax-live" data-live hidden><span class="ax-live-dot" aria-hidden="true"></span><span data-live-text></span></span>
+        </div>
+        <div class="ax-body">
+          <h3 class="ax-name"><a class="ax-card-link" href="/arcade/maze-chase/">Maze Chase</a></h3>
+          <p class="ax-desc">Eat pellets, dodge the slimes, flip the chase with power orbs.</p>
+          <ul class="ax-tags" aria-label="Details"><li>Single player</li><li>Touch + Keyboard</li></ul>
+        </div>
+        <div class="ax-foot">
+          <div class="ax-top" data-top></div>
+          <span class="ax-play" aria-hidden="true">Play<svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5l8 7-8 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </article>
+      <article class="ax-card" data-mode="single" data-slug="word-puzzle" style="--g:#f2c94c">
+        <div class="ax-cover">
+          <img src="/assets/games/word-puzzle.svg" alt="" width="320" height="200" loading="lazy" decoding="async" />
+          
+          <span class="ax-live" data-live hidden><span class="ax-live-dot" aria-hidden="true"></span><span data-live-text></span></span>
+        </div>
+        <div class="ax-body">
+          <h3 class="ax-name"><a class="ax-card-link" href="/arcade/word-puzzle/">Word Puzzle</a></h3>
+          <p class="ax-desc">Six attempts. One word. Keep your streak alive.</p>
+          <ul class="ax-tags" aria-label="Details"><li>Single player</li><li>Keyboard + Touch</li></ul>
+        </div>
+        <div class="ax-foot">
+          <div class="ax-top" data-top></div>
+          <span class="ax-play" aria-hidden="true">Play<svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5l8 7-8 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </article>
+      <article class="ax-card" data-mode="single" data-slug="zuma" style="--g:#2cc6b4">
+        <div class="ax-cover">
+          <img src="/assets/games/zuma.svg" alt="" width="320" height="200" loading="lazy" decoding="async" />
+          
+          <span class="ax-live" data-live hidden><span class="ax-live-dot" aria-hidden="true"></span><span data-live-text></span></span>
+        </div>
+        <div class="ax-body">
+          <h3 class="ax-name"><a class="ax-card-link" href="/arcade/zuma/">Zuma Temple</a></h3>
+          <p class="ax-desc">Match marbles, chain combos, clear all 12 temples.</p>
+          <ul class="ax-tags" aria-label="Details"><li>Single player</li><li>Mouse + Touch</li></ul>
+        </div>
+        <div class="ax-foot">
+          <div class="ax-top" data-top></div>
+          <span class="ax-play" aria-hidden="true">Play<svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5l8 7-8 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </article>
       </div>
+    </section>
 
-      <!-- Filter pills -->
-      <div class="filter-row" role="tablist" aria-label="Filter games by mode">
-        <button class="filter-pill active" type="button" role="tab" aria-selected="true" data-filter="all">
-          All <span class="pill-count">10</span>
-        </button>
-        <button class="filter-pill" type="button" role="tab" aria-selected="false" data-filter="single">
-          Single Player <span class="pill-count">7</span>
-        </button>
-        <button class="filter-pill" type="button" role="tab" aria-selected="false" data-filter="multiplayer">
-          Multiplayer <span class="pill-count">3</span>
-        </button>
+    <!-- CTA -->
+    <section class="ax-cta" aria-labelledby="ax-cta-title">
+      <div>
+        <h2 class="ax-h2" id="ax-cta-title">Got a game idea?</h2>
+        <p>Cartofia is open source. Suggest a game, report a bug, or build one yourself.</p>
       </div>
-    </div>
-
-    <div class="games-grid" id="gamesGrid">
-
-      <!-- 1. Cartofia -->
-      <article class="game-card" data-mode="single">
-        <div class="game-card-head">
-          <h3 class="game-name">Cartofia</h3>
-          <div class="game-tags">
-            <span class="game-tag">Single player</span>
-            <span class="game-tag">Keyboard</span>
-            <span class="game-tag">WebAssembly</span>
-          </div>
-        </div>
-        <p class="game-desc">The flagship platformer — built in Python, playable in your browser.</p>
-        <span class="game-player-count" data-game="cartofia"><span class="player-dot"></span><span class="player-count-text"></span></span>
-        <a class="btn btn-primary btn-sm" href="cartofia/">Play →</a>
-      </article>
-
-      <!-- 2. Snake Classic -->
-      <article class="game-card" data-mode="single">
-        <div class="game-card-head">
-          <h3 class="game-name">Snake Classic</h3>
-          <div class="game-tags">
-            <span class="game-tag">Single player</span>
-            <span class="game-tag">Touch + Keyboard</span>
-          </div>
-        </div>
-        <p class="game-desc">The classic snake game. Chase your high score.</p>
-        <span class="game-player-count" data-game="snake"><span class="player-dot"></span><span class="player-count-text"></span></span>
-        <a class="btn btn-primary btn-sm" href="snake/">Play →</a>
-      </article>
-
-      <!-- 3. Brick Blitz -->
-      <article class="game-card" data-mode="single">
-        <div class="game-card-head">
-          <h3 class="game-name">Brick Blitz</h3>
-          <div class="game-tags">
-            <span class="game-tag">Single player</span>
-            <span class="game-tag">Touch + Keyboard</span>
-          </div>
-        </div>
-        <p class="game-desc">Smash bricks, rack up lives, climb through levels.</p>
-        <span class="game-player-count" data-game="brick-blitz"><span class="player-dot"></span><span class="player-count-text"></span></span>
-        <a class="btn btn-primary btn-sm" href="brick-blitz/">Play →</a>
-      </article>
-
-      <!-- 4. Bomber Raid -->
-      <article class="game-card is-multiplayer" data-mode="multiplayer">
-        <span class="mode-badge" aria-label="Online multiplayer">👥 Online</span>
-        <div class="game-card-head">
-          <h3 class="game-name">Bomber Raid</h3>
-          <div class="game-tags">
-            <span class="game-tag">Online multiplayer</span>
-            <span class="game-tag">Touch + Keyboard</span>
-          </div>
-        </div>
-        <p class="game-desc">Drop bombs, grab powerups, outlast your opponents online.</p>
-        <span class="game-player-count" data-game="bomber-raid"><span class="player-dot"></span><span class="player-count-text"></span></span>
-        <a class="btn btn-primary btn-sm" href="bomber-raid/">Play →</a>
-      </article>
-
-      <!-- 5. Minesweeper Classic -->
-      <article class="game-card" data-mode="single">
-        <div class="game-card-head">
-          <h3 class="game-name">Minesweeper Classic</h3>
-          <div class="game-tags">
-            <span class="game-tag">Single player</span>
-            <span class="game-tag">Mouse + Touch</span>
-          </div>
-        </div>
-        <p class="game-desc">The original logic puzzle. Beginner to expert.</p>
-        <span class="game-player-count" data-game="minesweeper"><span class="player-dot"></span><span class="player-count-text"></span></span>
-        <a class="btn btn-primary btn-sm" href="minesweeper/">Play →</a>
-      </article>
-
-      <!-- 6. Maze Chase -->
-      <article class="game-card" data-mode="single">
-        <div class="game-card-head">
-          <h3 class="game-name">Maze Chase</h3>
-          <div class="game-tags">
-            <span class="game-tag">Single player</span>
-            <span class="game-tag">Touch + Keyboard</span>
-          </div>
-        </div>
-        <p class="game-desc">Eat pellets, dodge ghosts, flip the chase with power orbs.</p>
-        <span class="game-player-count" data-game="maze-chase"><span class="player-dot"></span><span class="player-count-text"></span></span>
-        <a class="btn btn-primary btn-sm" href="maze-chase/">Play →</a>
-      </article>
-
-      <!-- 7. Word Puzzle -->
-      <article class="game-card" data-mode="single">
-        <div class="game-card-head">
-          <h3 class="game-name">Word Puzzle</h3>
-          <div class="game-tags">
-            <span class="game-tag">Single player</span>
-            <span class="game-tag">Keyboard + Touch</span>
-          </div>
-        </div>
-        <p class="game-desc">Six attempts. One word. Track your streak.</p>
-        <span class="game-player-count" data-game="word-puzzle"><span class="player-dot"></span><span class="player-count-text"></span></span>
-        <a class="btn btn-primary btn-sm" href="word-puzzle/">Play →</a>
-      </article>
-
-      <!-- 8. Chess -->
-      <article class="game-card is-multiplayer" data-mode="multiplayer">
-        <span class="mode-badge" aria-label="Online multiplayer">👥 Online</span>
-        <div class="game-card-head">
-          <h3 class="game-name">Chess</h3>
-          <div class="game-tags">
-            <span class="game-tag">Multiplayer + AI</span>
-            <span class="game-tag">Mouse + Touch</span>
-          </div>
-        </div>
-        <p class="game-desc">Play a friend on the same screen, online, or challenge the bot.</p>
-        <span class="game-player-count" data-game="chess"><span class="player-dot"></span><span class="player-count-text"></span></span>
-        <a class="btn btn-primary btn-sm" href="chess/">Play →</a>
-      </article>
-
-      <!-- 9. Blackjack Rooms -->
-      <article class="game-card is-multiplayer" data-mode="multiplayer">
-        <span class="mode-badge" aria-label="Online multiplayer">👥 Online</span>
-        <div class="game-card-head">
-          <h3 class="game-name">Blackjack Rooms</h3>
-          <div class="game-tags">
-            <span class="game-tag">Online multiplayer</span>
-            <span class="game-tag">Touch + Mouse</span>
-          </div>
-        </div>
-        <p class="game-desc">Join a table, play hands, try not to bust.</p>
-        <span class="game-player-count" data-game="blackjack"><span class="player-dot"></span><span class="player-count-text"></span></span>
-        <a class="btn btn-primary btn-sm" href="blackjack/">Play →</a>
-      </article>
-
-      <!-- 10. Zuma Temple -->
-      <article class="game-card" data-mode="single">
-        <div class="game-card-head">
-          <h3 class="game-name">Zuma Temple</h3>
-          <div class="game-tags">
-            <span class="game-tag">Single player</span>
-            <span class="game-tag">Mouse + Touch</span>
-          </div>
-        </div>
-        <p class="game-desc">Match marbles, chain combos, clear all 12 temples.</p>
-        <span class="game-player-count" data-game="zuma"><span class="player-dot"></span><span class="player-count-text"></span></span>
-        <a class="btn btn-primary btn-sm" href="zuma/">Play →</a>
-      </article>
-
-    </div>
-  </section>
-
-
-  <!-- ================================================
-       QUICK INFO STRIP — three inline items
-  ================================================= -->
-  <div class="info-strip" aria-label="Arcade at a glance">
-    <div class="info-inner">
-      <div class="info-item">
-        <span class="info-icon" aria-hidden="true">🎮</span>
-        <span>10 games and growing</span>
+      <div class="ax-actions">
+        <a class="ax-btn ax-btn-primary" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Join Discord</a>
+        <a class="ax-btn ax-btn-ghost" href="https://github.com/Beniaminexe/Cartofia-Arcade" target="_blank" rel="noopener noreferrer">View on GitHub</a>
       </div>
-      <div class="info-item">
-        <span class="info-icon" aria-hidden="true">🌐</span>
-        <span>Works on any device</span>
-      </div>
-      <div class="info-item">
-        <span class="info-icon" aria-hidden="true">⚡</span>
-        <span>No installs needed</span>
-      </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-
-  <!-- ================================================
-       FINAL CTA — "Got a game idea?"
-  ================================================= -->
-  <div class="final-cta reveal" id="cta">
-    <div class="final-cta-inner">
-      <h2 class="final-cta-heading">Got a game idea?</h2>
-      <p class="final-cta-sub">Cartofia is open source. Suggest a game, report a bug, or build one yourself.</p>
-      <div class="final-cta-actions">
-        <a class="btn btn-primary" href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Join Discord →</a>
-        <a class="btn btn-ghost"   href="https://github.com/Beniaminexe/Cartofia-Arcade" target="_blank" rel="noopener noreferrer">View on GitHub →</a>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ================================================
-       FOOTER (copied from homepage)
-  ================================================= -->
   <footer class="site-footer">
     <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
     <nav class="footer-links" aria-label="Footer">
       <a href="/arcade/">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
       <a href="/account/">Account</a>
       <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
       <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
     </nav>
   </footer>
 
-
-  <script src="/assets/theme.js?v=1"></script>
-  <script src="/assets/site.js?v=8"></script>
-  <script src="/assets/notifications.js?v=1" defer></script>
-  <script src="/arcade/arcade.js?v=2"></script>
-  <script>
-  function updateGameCounts() {
-    fetch('/api/online/games')
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        var games = data.games || {};
-        document.querySelectorAll('.game-player-count').forEach(function(el) {
-          var slug = el.dataset.game;
-          var count = games[slug] || 0;
-          var textEl = el.querySelector('.player-count-text');
-          if (count > 0) {
-            el.classList.add('has-players');
-            textEl.textContent = count === 1 ? '1 playing' : count + ' playing';
-          } else {
-            el.classList.remove('has-players');
-            textEl.textContent = '';
-          }
-        });
-      })
-      .catch(function() {});
-  }
-  document.addEventListener('DOMContentLoaded', function() {
-    updateGameCounts();
-    setInterval(updateGameCounts, 30000);
-  });
-  </script>
+  <script src="/assets/theme.js?v=3"></script>
+  <script src="/assets/site.js?v=10"></script>
+  <script src="/assets/notifications.js?v=3" defer></script>
+  <script src="/arcade/arcade-v2.js?v=1" defer></script>
 </body>
 </html>

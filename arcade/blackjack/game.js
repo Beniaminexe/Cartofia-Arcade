@@ -457,10 +457,14 @@
     if (_lastLoggedPhase === key || !online.clientId) return;
     _lastLoggedPhase = key;
     lastLoggedRound = game.round;
-    const myResult = game.results[online.clientId] || "unknown";
+    const myResult = game.results[online.clientId] || "";
+    if (!myResult) return; // sat this round out
     const dur = roundStartTime ? Math.round((Date.now() - roundStartTime) / 1000) : 0;
-    if (typeof window.logGameActivity === "function") {
-      window.logGameActivity({ game: "blackjack", result: myResult, round: game.round, duration_seconds: dur });
+    // Every hand is played at a room-server table ("online"): the room server
+    // logs the session to the profile; this feeds per-game stats only.
+    if (window.CartofiaGame) {
+      window.CartofiaGame.reportResult({ slug: "blackjack", result: "", duration_seconds: dur,
+        extra: { mode: "online", outcome: resultToOutcome(myResult), doubled: !!game.doubled[online.clientId] } });
     }
   }
 
@@ -478,11 +482,7 @@
   // Wallet + settle API
   // ---------------------------------------------------------------------------
   function loadWallet() {
-    if (!getAuthToken()) {
-      wallet = null;
-      renderWallet();
-      return;
-    }
+    // Cookie-session users have no legacy token; the server answers 401 for guests.
     authedFetch(WALLET_URL)
       .then((r) => r.ok ? r.json() : null)
       .then((j) => {
@@ -502,7 +502,6 @@
   }
 
   function requestTopup() {
-    if (!getAuthToken()) return;
     authedFetch(TOPUP_URL, { method: "POST" })
       .then((r) => r.json().then((j) => ({ ok: r.ok, body: j })))
       .then(({ ok, body }) => {
@@ -544,7 +543,6 @@
     const sign = localDelta > 0 ? "+" : "";
     showRoundResult(result + " — " + sign + fmtChips(localDelta) + " chips", kind);
 
-    if (!getAuthToken()) return;
     authedFetch(SETTLE_URL, {
       method: "POST",
       body: JSON.stringify({ bet: myBet, outcome, doubled })

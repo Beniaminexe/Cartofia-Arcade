@@ -6,27 +6,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=4" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=3">
-  <link rel="stylesheet" href="/arcade/game-common.css?v=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=7" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=6">
+  <link rel="stylesheet" href="/arcade/game-common.css?v=2" />
+  <link rel="stylesheet" href="/assets/game-stats.css?v=2" />
+  <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=1" />
   <style>
-    /* ── Puzzle layout ── */
-    .puzzle-layout {
-      display: grid;
-      gap: 18px;
-      max-width: 520px;
-      margin: 0 auto;
-    }
-
+    /* Word Puzzle — page-specific pieces only; the stage shell lives in /arcade/game-shell-v2.css */
     .puzzle-panel {
-      border-radius: 20px;
-      padding: clamp(18px, 3.2vw, 28px);
-      background: var(--bg-card);
-      border: 1px solid var(--border);
       display: grid;
       gap: 16px;
+      justify-items: center;
+      padding-top: clamp(16px, 2.4vw, 26px);
+      padding-bottom: clamp(16px, 2.4vw, 26px);
     }
+    .puzzle-panel > * { width: 100%; max-width: 500px; }
 
     /* ── Board ── */
     .board {
@@ -36,36 +31,32 @@
       margin: 0 auto;
       width: 100%;
     }
-
     .board-row {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 8px;
     }
-
     .cell {
-      border-radius: 10px;
-      height: 56px;
+      height: 58px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: var(--font-mono);
-      font-size: clamp(20px, 3vw, 26px);
-      font-weight: 700;
+      border-radius: 12px;
+      border: 2px solid var(--gx-line-2);
+      background: var(--gx-well);
+      color: var(--gx-text);
+      font: 700 clamp(20px, 3vw, 26px)/1 var(--gx-display);
       letter-spacing: 0.02em;
       text-transform: uppercase;
-      background: rgba(10, 18, 30, 0.74);
-      border: 1px solid var(--border);
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
     }
-
-    .cell.filled  { border-color: var(--border-h); }
-    .cell.correct { background: rgba(59, 154, 97, 0.92);  border-color: rgba(105, 211, 146, 0.94); color: #f5fff8; }
-    .cell.present { background: rgba(180, 133, 35, 0.9);  border-color: rgba(255, 208, 104, 0.88); color: #fff9ed; }
-    .cell.absent  { background: rgba(40, 52, 70, 0.86);   border-color: rgba(100, 120, 160, 0.4);  color: var(--text-secondary); }
+    .cell.filled  { border-color: rgba(255, 255, 255, 0.34); transform: scale(1.02); }
+    .cell.correct { background: #1f9d6b; border-color: var(--gx-mint); color: #f5fff9; transform: none; }
+    .cell.present { background: #e0b13a; border-color: var(--gx-lemon); color: var(--gx-ink); transform: none; }
+    .cell.absent  { background: #2a2350; border-color: rgba(255, 255, 255, 0.06); color: var(--gx-dim); transform: none; }
 
     /* ── Keyboard ── */
-    .keyboard { display: grid; gap: 8px; }
-
+    .keyboard { display: grid; gap: 7px; }
     .kbd-row {
       display: grid;
       grid-template-columns: repeat(10, minmax(0, 1fr));
@@ -76,51 +67,69 @@
       margin-left: 4.5%;
       margin-right: 4.5%;
     }
-    .kbd-row.bottom {
-      grid-template-columns: 1.4fr repeat(7, minmax(0, 1fr)) 1.4fr;
-    }
-
+    .kbd-row.bottom { grid-template-columns: 1.4fr repeat(7, minmax(0, 1fr)) 1.4fr; }
     .kbd-btn {
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: rgba(11, 18, 30, 0.72);
-      color: var(--text-primary);
-      min-height: 40px;
-      font-family: var(--font-sans);
-      font-size: 13px;
-      font-weight: 600;
+      min-height: 46px;
+      border-radius: 10px;
+      border: 2px solid var(--gx-ink);
+      background: linear-gradient(180deg, #2c2456, #211a42);
+      color: var(--gx-text);
+      font: 700 14px/1 var(--gx-body);
+      text-transform: uppercase;
+      box-shadow: 0 3px 0 #0b0717;
       cursor: pointer;
-      transition: background 0.16s ease, transform 0.14s ease;
       touch-action: manipulation;
+      transition: background 0.16s ease, transform 0.1s ease, box-shadow 0.1s ease;
     }
-    .kbd-btn:hover  { transform: translateY(-1px); background: rgba(19, 31, 48, 0.9); }
-    .kbd-btn.correct { background: rgba(59, 154, 97, 0.92);  border-color: rgba(105, 211, 146, 0.92); color: #f5fff8; }
-    .kbd-btn.present { background: rgba(180, 133, 35, 0.9);  border-color: rgba(255, 208, 104, 0.88); color: #fff9ed; }
-    .kbd-btn.absent  { background: rgba(40, 52, 70, 0.86);   border-color: rgba(100, 120, 160, 0.4);  color: var(--text-secondary); }
+    .kbd-btn:hover { background: linear-gradient(180deg, #352c66, #271f4e); }
+    .kbd-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #0b0717; }
+    .kbd-btn.correct { background: #1f9d6b; color: #f5fff9; }
+    .kbd-btn.present { background: #e0b13a; color: var(--gx-ink); }
+    .kbd-btn.absent  { background: #1a1535; color: #6f678c; }
 
     .puzzle-notice {
+      min-height: 22px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--gx-line);
+      background: var(--gx-well);
+      color: var(--gx-muted);
       font-size: 14px;
-      color: var(--text-secondary);
       text-align: center;
-      min-height: 20px;
     }
-    .puzzle-notice.warn { color: #ffc857; }
-    .puzzle-notice.ok   { color: #73ebb1; }
+    .puzzle-notice.warn { color: var(--gx-lemon); border-color: rgba(255, 216, 74, 0.35); }
+    .puzzle-notice.ok   { color: var(--gx-mint); border-color: rgba(62, 230, 166, 0.35); }
+
+    /* colour legend in the rail */
+    .wp-legend { list-style: none; display: grid; gap: 10px; color: var(--gx-muted); font-size: 13.5px; }
+    .wp-legend li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: center; }
+    .wp-legend .cell { height: 34px; border-radius: 9px; font-size: 15px; }
+    .wp-actions .btn { width: 100%; }
 
     @media (max-width: 480px) {
-      .cell { height: 46px; }
-      .kbd-btn { min-height: 34px; font-size: 12px; }
+      .cell { height: 50px; }
+      .kbd-btn { min-height: 44px; font-size: 13px; border-radius: 8px; }
+      .kbd-row { gap: 4px; }
     }
   </style>
 </head>
-<body>
+<body class="gx" style="--g:#f2c94c">
 
-  <!-- PRE-GAME SCREEN -->
+  <!-- PRE-GAME SCREEN (cartridge) -->
   <div class="pre-game" id="preGame">
     <div class="pre-game-card">
-      <p class="pre-game-label">Arcade / Word Puzzle</p>
-      <h1 class="pre-game-title">Word Puzzle</h1>
+      <div class="gx-cart-cover">
+        <img src="/assets/games/word-puzzle.svg" alt="" width="320" height="200" />
+        <span class="gx-cart-tag">Single player</span>
+      </div>
+      <p class="pre-game-label">Arcade · Word Puzzle</p>
+      <h2 class="pre-game-title">Word Puzzle</h2>
       <p class="pre-game-desc">Six guesses. One word. How fast can you crack it?</p>
+      <ul class="gx-howto" aria-label="How to play">
+        <li><b>Guess</b><span>Type any 5-letter word and press Enter</span></li>
+        <li><b>Green</b><span>Right letter, right spot</span></li>
+        <li><b>Gold</b><span>In the word, wrong spot</span></li>
+      </ul>
       <div id="preStreak" class="pre-game-streak" style="display:none;">
         <span>Current streak:</span>
         <strong id="preStreakVal">0</strong>
@@ -166,8 +175,10 @@
     </a>
     <nav class="nav-links" aria-label="Primary">
       <a href="/">Home</a>
-      <a href="/arcade/" class="active">Arcade</a>
+      <a href="/arcade/" class="active" aria-current="page">Arcade</a>
       <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
     </nav>
     <div class="nav-right">
       <div class="account-menu" data-account-menu>
@@ -179,48 +190,79 @@
     </div>
   </header>
 
-  <!-- GAME HEADER -->
-  <div class="game-header">
-    <a class="game-header-back" href="/arcade/">
-      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
-        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Back to Arcade
-    </a>
-    <span class="game-header-title">Word Puzzle</span>
-    <div class="game-header-stats">
-      <div class="header-stat">
-        <span class="header-stat-label">Guess</span>
-        <span class="header-stat-value" id="headerGuess">0/6</span>
-      </div>
-    </div>
-  </div>
+  <main class="game-page" id="main">
 
-  <!-- GAME PAGE -->
-  <div class="game-page">
+    <!-- TOP BAR: back · cover + title · stats -->
+    <header class="game-header gx-bar">
+      <a class="game-header-back gx-back" href="/arcade/" aria-label="Back to the arcade">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="gx-back-txt">Arcade</span>
+      </a>
+      <div class="gx-id">
+        <img class="gx-badge" src="/assets/games/word-puzzle.svg" alt="" width="72" height="45" />
+        <div class="gx-id-txt">
+          <p class="gx-kicker">Single player · Keyboard + touch</p>
+          <h1 class="game-header-title gx-title">Word Puzzle</h1>
+        </div>
+      </div>
+      <div class="game-header-stats" aria-label="Live stats">
+        <div class="header-stat">
+          <span class="header-stat-label">Guess</span>
+          <span class="header-stat-value" id="headerGuess">0/6</span>
+        </div>
+      </div>
+    </header>
+
     <div class="game-container">
       <div class="game-container-inner">
-        <section class="puzzle-layout">
-          <article class="puzzle-panel">
+        <div class="puzzle-layout gx-layout">
 
+          <section class="puzzle-panel gx-stage" aria-label="Puzzle">
             <div class="board" id="board"></div>
             <div class="keyboard" id="keyboard"></div>
-
             <div class="notice puzzle-notice" id="puzzleNotice">Type a 5-letter word and press Enter.</div>
+          </section>
 
-            <div style="display:flex;justify-content:center;">
-              <button class="btn btn-ghost btn-sm" type="button" id="newPuzzleButton">New Puzzle</button>
-            </div>
-          </article>
-        </section>
+          <aside class="gx-rail" aria-label="Game info">
+            <section class="gx-card">
+              <h2 class="panel-section-label">How to play</h2>
+              <ul class="wp-legend">
+                <li><span class="cell correct" aria-hidden="true">A</span><span>Green — right letter in the right spot</span></li>
+                <li><span class="cell present" aria-hidden="true">B</span><span>Gold — in the word, but somewhere else</span></li>
+                <li><span class="cell absent" aria-hidden="true">C</span><span>Grey — not in the word at all</span></li>
+              </ul>
+            </section>
+
+            <section class="gx-card wp-actions">
+              <h2 class="panel-section-label">Puzzle</h2>
+              <button class="btn btn-ghost" type="button" id="newPuzzleButton">New Puzzle</button>
+            </section>
+
+            <p class="game-note">Tip: start with a word that uses common vowels, then lock in the green letters.</p>
+          </aside>
+
+        </div>
       </div>
     </div>
-  </div>
+  </main>
 
-  <script src="/assets/theme.js?v=1"></script>
-  <script src="/assets/site.js?v=8"></script>
-  <script src="/assets/notifications.js?v=1" defer></script>
-  <script src="/assets/game-utils.js?v=2"></script>
+  <footer class="site-footer">
+    <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/account/">Account</a>
+      <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="https://github.com/Beniaminexe" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </footer>
+
+  <script src="/assets/theme.js?v=3"></script>
+  <script src="/assets/site.js?v=10"></script>
+  <script src="/assets/notifications.js?v=3" defer></script>
+  <script src="/assets/game-utils.js?v=4"></script>
+  <script src="/assets/game-stats.js?v=1" defer></script>
   <script>
     (function () {
       const WORDS = [
@@ -398,8 +440,9 @@
         gameOver = true;
         const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
         gameStartTime = null;
-        if (typeof logGameActivity === "function") {
-          logGameActivity({ game: "word-puzzle", result: won ? "win" : "loss", attempts: guesses.length, duration_seconds: _dur });
+        if (window.CartofiaGame) {
+          CartofiaGame.reportResult({ slug: "word-puzzle", result: won ? "win" : "loss", duration_seconds: _dur,
+                                      extra: { attempts: guesses.length } });
         }
         const streak = loadNumber(STORAGE_STREAK);
         const best   = loadNumber(STORAGE_BEST);

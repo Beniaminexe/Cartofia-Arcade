@@ -6,825 +6,171 @@
 <title>Cartofia — Profile</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="/assets/site.css?v=4">
-  <link rel="stylesheet" href="/assets/notifications.css?v=3">
-<style>
-/* ── PROFILE-SPECIFIC TOKENS ── */
-:root {
-  --bg-deep: #080b12;
-  --bg-base: #0d1117;
-  --bg-surface: #141b27;
-  --bg-elevated: #1a2332;
-  --bg-card: #161f2d;
-  --bg-hover: #1e2a3c;
-  --border: rgba(56, 130, 235, 0.12);
-  --border-bright: rgba(56, 130, 235, 0.25);
-  --accent: #3b82f6;
-  --accent-glow: rgba(59, 130, 246, 0.4);
-  --accent-soft: rgba(59, 130, 246, 0.15);
-  --accent-2: #06b6d4;
-  --accent-3: #8b5cf6;
-  --text-primary: #e8edf5;
-  --text-secondary: #7d8fa8;
-  --text-muted: #4a5b73;
-  --text-accent: #7cb3ff;
-  --success: #22c55e;
-  --warning: #eab308;
-  --font-body: 'Outfit', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --radius-lg: 16px;
-}
-
-/* ── BANNER / HERO ── */
-.profile-banner {
-  position: relative;
-  width: 100%;
-  height: 320px;
-  margin-top: 0; /* body padding-top from site.css handles nav offset */
-  overflow: hidden;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-}
-
-.banner-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: brightness(0.6);
-  display: none;
-}
-
-.banner-img.loaded { display: block; }
-
-.banner-gradient {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, transparent 30%, var(--bg-deep) 100%),
-    linear-gradient(90deg, rgba(8,11,18,0.6) 0%, transparent 50%);
-}
-
-/* ── IDENTITY HEADER ── */
-.identity-section {
-  position: relative;
-  max-width: 1100px;
-  margin: -80px auto 0;
-  padding: 0 24px;
-  z-index: 10;
-}
-
-/* "This is you" banner */
-.own-profile-notice {
-  display: none;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px;
-  margin-bottom: 12px;
-  border-radius: var(--radius-sm);
-  background: var(--accent-soft);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  font-size: 13px;
-  color: var(--text-accent);
-}
-
-.own-profile-notice.visible { display: flex; }
-
-.own-profile-notice a {
-  color: var(--text-primary);
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.own-profile-notice a:hover { text-decoration: underline; }
-
-.identity-card {
-  display: flex;
-  align-items: flex-end;
-  gap: 24px;
-  padding: 24px 28px 28px;
-  background: rgba(20, 27, 39, 0.8);
-  backdrop-filter: blur(24px);
-  border: 1px solid var(--border-bright);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 80px var(--accent-glow);
-}
-
-.avatar-frame {
-  position: relative;
-  flex-shrink: 0;
-  margin-bottom: -8px;
-}
-
-.avatar-ring {
-  width: 120px;
-  height: 120px;
-  border-radius: 20px;
-  padding: 4px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
-  box-shadow: 0 0 30px var(--accent-glow);
-  animation: ring-glow 3s ease-in-out infinite alternate;
-}
-
-@keyframes ring-glow {
-  0% { box-shadow: 0 0 20px var(--accent-glow); }
-  100% { box-shadow: 0 0 40px var(--accent-glow), 0 0 60px rgba(139,92,246,0.15); }
-}
-
-.avatar-img {
-  width: 100%;
-  height: 100%;
-  border-radius: 17px;
-  object-fit: cover;
-  background: var(--bg-elevated);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 42px;
-  font-weight: 700;
-  color: var(--accent);
-  overflow: hidden;
-}
-
-.avatar-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 17px;
-}
-
-.level-badge {
-  position: absolute;
-  bottom: -6px;
-  right: -6px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent-3));
-  border: 3px solid var(--bg-surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: white;
-  box-shadow: 0 2px 10px var(--accent-glow);
-}
-
-.identity-info { flex: 1; min-width: 0; }
-
-.identity-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 4px;
-  flex-wrap: wrap;
-}
-
-.display-name {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-}
-
-.username-link {
-  font-size: 14px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  text-decoration: none;
-}
-
-.username-link:hover { color: var(--text-accent); }
-
-.status-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  max-width: 100%;
-}
-
-.status-badge {
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.badge-online {
-  background: rgba(34, 197, 94, 0.15);
-  color: var(--success);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-.badge-role {
-  background: var(--accent-soft);
-  color: var(--text-accent);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-.tagline {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-top: 6px;
-  font-style: italic;
-}
-
-.identity-actions {
-  display: flex;
-  gap: 10px;
-  flex-shrink: 0;
-  align-self: center;
-}
-
-/* Profile-local btn styles (supplement site.css .btn) */
-.btn-friend {
-  padding: 10px 20px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: not-allowed;
-  border: 1px solid var(--border-bright);
-  background: var(--bg-elevated);
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  opacity: 0.6;
-  position: relative;
-}
-
-.btn-share {
-  padding: 10px 20px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid var(--border-bright);
-  background: var(--bg-hover);
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn-share:hover {
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-}
-
-.coming-soon-tip {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-deep);
-  border: 1px solid var(--border-bright);
-  border-radius: var(--radius-sm);
-  padding: 6px 10px;
-  white-space: nowrap;
-  font-size: 11px;
-  color: var(--text-secondary);
-  z-index: 20;
-  pointer-events: none;
-}
-
-.btn-friend:hover .coming-soon-tip { display: block; }
-
-/* ── MAIN CONTENT ── */
-.profile-content {
-  max-width: 1100px;
-  margin: 28px auto 60px;
-  padding: 0 24px;
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 24px;
-}
-
-/* ── CARDS ── */
-.pcard {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
-  transition: border-color 0.3s;
-}
-
-.pcard:hover { border-color: var(--border-bright); }
-
-.card-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-muted);
-  margin-bottom: 12px;
-}
-
-/* ── BIO ── */
-.bio-text {
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--text-secondary);
-  white-space: pre-wrap;
-}
-
-.bio-meta {
-  margin-top: 16px;
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.bio-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.bio-meta-item svg {
-  width: 14px;
-  height: 14px;
-  opacity: 0.6;
-}
-
-/* ── SHOWCASES ── */
-.showcases { display: flex; flex-direction: column; gap: 20px; }
-
-.showcase-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.showcase-header .card-label { margin-bottom: 0; }
-
-/* Game showcase */
-.game-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.game-card {
-  position: relative;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  aspect-ratio: 3/4;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.game-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-
-.game-card-bg {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  filter: brightness(0.7);
-  transition: filter 0.2s;
-}
-
-.game-card:hover .game-card-bg { filter: brightness(0.9); }
-
-.game-card-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.85) 100%);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 12px;
-}
-
-.game-card-name { font-size: 12px; font-weight: 600; color: white; }
-.game-card-hours { font-size: 10px; color: rgba(255,255,255,0.6); font-family: var(--font-mono); }
-
-/* Achievement showcase */
-.achievement-row { display: flex; gap: 12px; flex-wrap: wrap; }
-
-.achievement-item {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  position: relative;
-  transition: all 0.2s;
-}
-
-.achievement-item:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 16px var(--accent-glow);
-  transform: scale(1.08);
-}
-
-.achievement-item.rare {
-  border-color: rgba(234, 179, 8, 0.4);
-  background: rgba(234, 179, 8, 0.08);
-}
-
-.achievement-tooltip {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-deep);
-  border: 1px solid var(--border-bright);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  white-space: nowrap;
-  font-size: 11px;
-  color: var(--text-primary);
-  z-index: 20;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-}
-
-.achievement-item:hover .achievement-tooltip { display: block; }
-
-/* Arcade records */
-.record-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  margin-bottom: 10px;
-}
-
-.record-row:last-child { margin-bottom: 0; }
-.record-game { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.record-label { font-size: 11px; color: var(--text-muted); }
-.record-value { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent); }
-
-.showcase-empty {
-  text-align: center;
-  padding: 24px;
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-/* ── ACTIVITY ── */
-.activity-list { display: flex; flex-direction: column; gap: 0; }
-
-.activity-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.activity-item:last-child { border-bottom: none; }
-
-.activity-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.activity-icon.play   { background: rgba(59, 130, 246, 0.15); }
-.activity-icon.badge  { background: rgba(234, 179, 8, 0.15); }
-.activity-icon.upload { background: rgba(34, 197, 94, 0.15); }
-.activity-icon.level  { background: rgba(139, 92, 246, 0.15); }
-.activity-icon.avatar { background: rgba(59, 130, 246, 0.1); }
-
-.activity-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
-.activity-text strong { color: var(--text-primary); font-weight: 500; }
-.activity-text .highlight { color: var(--text-accent); font-weight: 500; }
-.activity-time { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 2px; }
-
-/* ── SIDEBAR ── */
-.sidebar { display: flex; flex-direction: column; gap: 20px; }
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.stat-cell {
-  padding: 14px;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-sm);
-  text-align: center;
-  border: 1px solid var(--border);
-  transition: border-color 0.3s;
-}
-
-.stat-cell:hover { border-color: var(--border-bright); }
-
-.stat-value {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-top: 6px;
-  font-weight: 600;
-}
-
-/* Level progress */
-.level-section { text-align: center; }
-
-.level-ring {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 12px;
-  position: relative;
-}
-
-.level-ring svg { width: 80px; height: 80px; transform: rotate(-90deg); }
-.level-ring-bg { fill: none; stroke: var(--bg-hover); stroke-width: 4; }
-.level-ring-fill {
-  fill: none;
-  stroke: url(#level-gradient);
-  stroke-width: 4;
-  stroke-linecap: round;
-  stroke-dasharray: 226;
-  stroke-dashoffset: 226;
-  transition: stroke-dashoffset 1s ease;
-}
-
-.level-number {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.level-xp { font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); }
-
-/* Badge case */
-.badge-case { display: flex; gap: 10px; flex-wrap: wrap; }
-
-.badge-item {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  transition: all 0.2s;
-}
-
-.badge-item.featured {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: 0 0 12px var(--accent-glow);
-}
-
-.badge-item:hover { transform: scale(1.1); border-color: var(--accent); }
-
-/* Profile meta */
-.meta-list { display: flex; flex-direction: column; gap: 10px; }
-
-.meta-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-}
-
-.meta-key { color: var(--text-muted); }
-.meta-value { color: var(--text-secondary); font-family: var(--font-mono); font-size: 12px; }
-
-/* ── 404 STATE ── */
-.not-found {
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  text-align: center;
-  gap: 16px;
-  padding: 48px 24px;
-}
-
-.not-found-icon { font-size: 64px; }
-.not-found h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; color: var(--text-primary); }
-.not-found p { font-size: 15px; color: var(--text-secondary); max-width: 40ch; }
-
-/* ── ANIMATIONS ── */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.animate-in { animation: fadeInUp 0.5s ease forwards; opacity: 0; }
-.delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
-.delay-3 { animation-delay: 0.3s; }
-.delay-4 { animation-delay: 0.4s; }
-.delay-5 { animation-delay: 0.5s; }
-.delay-6 { animation-delay: 0.6s; }
-
-/* ── RESPONSIVE ── */
-@media (max-width: 860px) {
-  .profile-content { grid-template-columns: 1fr; }
-  .identity-card { flex-direction: column; align-items: flex-start; }
-  .identity-actions { align-self: flex-start; margin-top: 12px; }
-  .avatar-ring { width: 96px; height: 96px; }
-  .display-name { font-size: 22px; }
-  .game-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (max-width: 520px) {
-  .profile-banner { height: 200px; }
-  .identity-section { margin-top: -50px; }
-  .identity-card { padding: 16px 18px 20px; gap: 16px; }
-  .avatar-ring { width: 72px; height: 72px; }
-  .level-badge { width: 28px; height: 28px; font-size: 11px; }
-  .display-name { font-size: 20px; }
-  .game-grid { grid-template-columns: repeat(2, 1fr); }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-  .profile-content { padding: 0 16px; }
-  .identity-section { padding: 0 16px; }
-}
-
-
-/* ===== Add Friend button states ===== */
-.btn-friend.is-friend {
-  color: #86efac;
-  border-color: rgba(74,222,128,0.45);
-  background: rgba(74,222,128,0.08);
-}
-.btn-friend.is-pending {
-  color: #ffd89b;
-  border-color: rgba(246,183,60,0.45);
-  background: rgba(246,183,60,0.08);
-}
-.btn-friend[disabled] { opacity: 0.6; cursor: wait; }
-
-</style>
+<link rel="stylesheet" href="/assets/site.css?v=7">
+<link rel="stylesheet" href="/assets/notifications.css?v=6">
+<link rel="stylesheet" href="/assets/profile-v2.css?v=1">
 </head>
-<body>
+<body class="pf pf-public">
 
 <!-- NAV — site.js renders viewer's own avatar here -->
 <header class="nav">
   <a class="nav-brand" href="/">
-    <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/></svg>
     Cartofia
   </a>
   <nav class="nav-links" aria-label="Primary">
     <a href="/">Home</a>
     <a href="/arcade/">Arcade</a>
     <a href="/minecraft/">Minecraft</a>
-  <a href="/forum/">Forum</a>
-      <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
+    <a href="/forum/">Forum</a>
+    <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
   </nav>
-  <div class="account-menu" data-account-menu>
-    <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
-    <div class="account-dropdown hidden" data-account-dropdown role="menu">
-      <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+  <div class="nav-right">
+    <div class="account-menu" data-account-menu>
+      <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+      <div class="account-dropdown hidden" data-account-dropdown role="menu">
+        <a class="account-item" href="/account/" role="menuitem">Open Account</a>
+      </div>
     </div>
   </div>
 </header>
 
 <!-- 404 STATE (hidden until needed) -->
 <div class="not-found" id="notFound">
-  <div class="not-found-icon">👤</div>
-  <h1>Profile not found</h1>
-  <p>This profile doesn't exist or has been set to private.</p>
-  <a class="btn btn-ghost" href="/">Back to Home</a>
+  <div class="not-found-card">
+    <div class="not-found-icon" aria-hidden="true">?</div>
+    <h1>Profile not found</h1>
+    <p>This profile doesn't exist or has been set to private.</p>
+    <div class="button-row">
+      <a class="btn btn-ghost" href="/">Back to Home</a>
+      <a class="btn btn-coral" href="/arcade/">Browse the arcade</a>
+    </div>
+  </div>
 </div>
 
 <!-- PROFILE CONTENT (shown after successful load) -->
-<div id="profileContent" style="display:none">
+<main class="pf-wrap pf-public-main" id="profileContent" style="display:none">
 
-  <!-- BANNER -->
-  <div class="profile-banner">
-    <img class="banner-img" id="bannerImg" alt="Profile banner">
-    <div class="banner-gradient"></div>
+  <!-- "This is you" notice — shown if viewer owns this profile -->
+  <div class="own-profile-notice" id="ownProfileNotice">
+    <span><strong>This is your public profile.</strong> It's what other players see.</span>
+    <a class="pf-link" href="/account/profile/">Edit your profile →</a>
   </div>
 
-  <!-- IDENTITY HEADER -->
-  <div class="identity-section animate-in">
-    <!-- "This is you" notice — shown if viewer owns this profile -->
-    <div class="own-profile-notice" id="ownProfileNotice">
-      <span>This is your public profile.</span>
-      <a href="/account/profile/">Edit your profile →</a>
+  <!-- PLAYER CARD -->
+  <section class="pc pf-rise" aria-labelledby="displayName">
+    <div class="profile-banner">
+      <img class="banner-img" id="bannerImg" alt="">
+      <div class="banner-gradient"></div>
     </div>
 
-    <div class="identity-card">
+    <div class="pc-identity identity-card">
       <div class="avatar-frame">
         <div class="avatar-ring">
           <div class="avatar-img" id="avatarDisplay">–</div>
         </div>
-        <div class="level-badge" id="levelBadge">1</div>
+        <div class="level-badge" id="levelBadge" title="Level">1</div>
       </div>
 
       <div class="identity-info">
-        <div class="identity-top">
-          <span class="display-name" id="displayName">Loading…</span>
+        <div class="status-badges" id="statusBadges"></div>
+        <h1 class="display-name" id="displayName">Loading…</h1>
+        <div class="pc-sub">
           <a class="username-link" id="usernameDisplay" href="#" title="Public profile link">@—</a>
-          <div class="status-badges" id="statusBadges"></div>
+          <span class="tagline" id="tagline">—</span>
         </div>
-        <div class="tagline" id="tagline">—</div>
       </div>
 
       <div class="identity-actions">
-        <button class="btn-friend" type="button" id="friendBtn" hidden></button>
-        <button class="btn-share" type="button" id="shareBtn">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="12" cy="3" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 9l4 3M10 4L6 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <button class="btn btn-coral btn-friend" type="button" id="friendBtn" hidden></button>
+        <button class="btn btn-ghost btn-share" type="button" id="shareBtn">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="12" cy="3" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 9l4 3M10 4L6 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           Share
         </button>
       </div>
     </div>
-  </div>
 
-  <!-- MAIN CONTENT -->
+    <div class="stats-grid pc-stats" aria-label="Stats">
+      <a class="stat-cell" href="#friends" id="statFriendsCell" title="See friends">
+        <span class="stat-value" id="statFriends">0</span>
+        <span class="stat-label">Friends</span>
+      </a>
+      <div class="stat-cell">
+        <span class="stat-value" id="statPlaytime">0h</span>
+        <span class="stat-label">Playtime</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-value" id="statAchievements">0</span>
+        <span class="stat-label">Achievements</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-value" id="statUploads">0</span>
+        <span class="stat-label">Uploads</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-value" id="statBadges">0</span>
+        <span class="stat-label">Badges</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-value" id="statViews">0</span>
+        <span class="stat-label">Profile views</span>
+      </div>
+    </div>
+  </section>
+
   <div class="profile-content">
 
     <!-- LEFT COLUMN -->
     <div class="main-column">
 
       <!-- BIO -->
-      <div class="pcard animate-in delay-1">
-        <div class="card-label">About</div>
+      <section class="pcard pf-rise" style="--d:.06s" aria-labelledby="aboutTitle">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Player</p><h2 class="pf-h2" id="aboutTitle">About</h2></div></div>
         <div class="bio-text" id="bioText">—</div>
         <div class="bio-meta">
           <div class="bio-meta-item">
-            <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 4v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 4v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Joined <span id="joinedDate">—</span>
           </div>
           <div class="bio-meta-item">
-            <svg viewBox="0 0 16 16" fill="none"><path d="M2 13V3h12v10H2zM5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
             <span id="profileViewsCount">0</span> profile views
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- SHOWCASES -->
+      <!-- SHOWCASES (favorite games / arcade records / achievements) -->
       <div class="showcases" id="showcasesContainer"></div>
 
       <!-- ACTIVITY FEED -->
-      <div class="pcard animate-in delay-5">
-        <div class="card-label">Recent Activity</div>
+      <section class="pcard pf-rise" style="--d:.12s" aria-labelledby="activityTitle">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Feed</p><h2 class="pf-h2" id="activityTitle">Recent activity</h2></div></div>
         <div class="activity-list" id="activityList">
           <div class="activity-item">
-            <div class="activity-icon play">⏳</div>
+            <div class="activity-icon play" aria-hidden="true">⏳</div>
             <div><div class="activity-text">Loading activity…</div></div>
           </div>
         </div>
-      </div>
+        <div class="more-row" id="activityMore" hidden>
+          <button class="show-more-btn" type="button" id="activityMoreBtn" aria-expanded="false" aria-controls="activityList">Show more</button>
+        </div>
+      </section>
 
     </div>
 
     <!-- RIGHT SIDEBAR -->
-    <div class="sidebar">
+    <aside class="sidebar" aria-label="Player details">
 
       <!-- Level -->
-      <div class="pcard animate-in delay-2">
-        <div class="card-label">Level</div>
+      <section class="pcard pf-rise" style="--d:.08s" aria-labelledby="levelTitle">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Progress</p><h2 class="pf-h2" id="levelTitle">Level</h2></div></div>
         <div class="level-section">
           <div class="level-ring">
-            <svg viewBox="0 0 80 80">
+            <svg viewBox="0 0 80 80" aria-hidden="true">
               <defs>
                 <linearGradient id="level-gradient" x1="0" y1="0" x2="1" y2="1">
                   <stop offset="0%" stop-color="var(--accent)"/>
-                  <stop offset="100%" stop-color="var(--accent-3)"/>
+                  <stop offset="100%" stop-color="var(--accent-2)"/>
                 </linearGradient>
               </defs>
               <circle class="level-ring-bg" cx="40" cy="40" r="36"/>
@@ -832,63 +178,42 @@
             </svg>
             <div class="level-number" id="levelNumber">1</div>
           </div>
-          <div class="level-xp" id="levelXp">0 XP</div>
+          <div class="level-copy">
+            <strong>Arcade level</strong>
+            <div class="level-xp" id="levelXp">0 XP</div>
+            <p class="level-hint">XP comes from games played, achievements, uploads and badges.</p>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Stats -->
-      <div class="pcard animate-in delay-3">
-        <div class="card-label">Stats</div>
-        <div class="stats-grid">
-          <div class="stat-cell">
-            <div class="stat-value" id="statGamesPlayed">0</div>
-            <div class="stat-label">Games Played</div>
-          </div>
-          <div class="stat-cell">
-            <div class="stat-value" id="statPlaytime">0h</div>
-            <div class="stat-label">Playtime</div>
-          </div>
-          <div class="stat-cell">
-            <div class="stat-value" id="statAchievements">0</div>
-            <div class="stat-label">Achievements</div>
-          </div>
-          <div class="stat-cell">
-            <div class="stat-value" id="statUploads">0</div>
-            <div class="stat-label">Uploads</div>
-          </div>
-          <div class="stat-cell">
-            <div class="stat-value" id="statBadges">0</div>
-            <div class="stat-label">Badges</div>
-          </div>
-          <div class="stat-cell">
-            <div class="stat-value" id="statViews">0</div>
-            <div class="stat-label">Profile Views</div>
-          </div>
-        </div>
-      </div>
+      <!-- FRIENDS -->
+      <section class="pcard pf-rise" style="--d:.12s" id="friends" aria-labelledby="friendsTitle">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Squad</p><h2 class="pf-h2" id="friendsTitle">Friends <span class="pf-count" id="friendsCountLabel"></span></h2></div></div>
+        <div class="friend-grid" id="friendsGrid"><div class="showcase-empty">Loading…</div></div>
+      </section>
 
       <!-- Badge Case -->
-      <div class="pcard animate-in delay-4">
-        <div class="card-label">Badge Case</div>
+      <section class="pcard pf-rise" style="--d:.16s" aria-labelledby="badgeTitle">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Flair</p><h2 class="pf-h2" id="badgeTitle">Badge case</h2></div></div>
         <div class="badge-case" id="badgeCase">
-          <div style="font-size:13px;color:var(--text-muted);">No badges yet</div>
+          <div class="pf-muted-note">No badges yet</div>
         </div>
-      </div>
+      </section>
 
       <!-- Profile Meta -->
-      <div class="pcard animate-in delay-5">
-        <div class="card-label">Profile</div>
+      <section class="pcard pf-rise" style="--d:.2s" aria-labelledby="metaTitle">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Details</p><h2 class="pf-h2" id="metaTitle">Profile</h2></div></div>
         <div class="meta-list">
           <div class="meta-row">
-            <span class="meta-key">Account Age</span>
+            <span class="meta-key">Account age</span>
             <span class="meta-value" id="metaAccountAge">—</span>
           </div>
           <div class="meta-row">
             <span class="meta-key">Theme</span>
-            <span class="meta-value" id="metaTheme">Ocean</span>
+            <span class="meta-value" id="metaTheme">Night Market</span>
           </div>
           <div class="meta-row">
-            <span class="meta-key">Featured Badge</span>
+            <span class="meta-key">Featured badge</span>
             <span class="meta-value" id="metaFeaturedBadge">None</span>
           </div>
           <div class="meta-row">
@@ -896,15 +221,26 @@
             <span class="meta-value" id="metaShowcases">0 / 3</span>
           </div>
         </div>
-      </div>
+      </section>
 
-    </div>
+    </aside>
   </div>
-</div><!-- #profileContent -->
+</main><!-- #profileContent -->
 
-<script src="/assets/theme.js?v=1"></script>
-  <script src="/assets/site.js?v=8"></script>
-  <script src="/assets/notifications.js?v=1" defer></script>
+<footer class="site-footer">
+  <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+  <nav class="footer-links" aria-label="Footer">
+    <a href="/arcade/">Arcade</a>
+    <a href="/achievements/">Achievements</a>
+    <a href="/forum/">Forum</a>
+    <a href="/account/">Account</a>
+    <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+  </nav>
+</footer>
+
+<script src="/assets/theme.js?v=3"></script>
+<script src="/assets/site.js?v=10"></script>
+<script src="/assets/notifications.js?v=3" defer></script>
 <script>
 /* ─────────────────────────────────────────────
    URL parsing — extract username from /u/<username>
@@ -916,18 +252,15 @@ function getUsernameFromPath() {
 }
 
 /* ─────────────────────────────────────────────
-   Theme system (read-only — applies owner's theme)
+   Theme system (read-only — applies the owner's theme). Uses the shared
+   palette from theme.js (window.CartofiaTheme) so every theme, incl. the
+   default Night Market, resolves; the fallback is Night Market only.
 ───────────────────────────────────────────── */
-const THEMES = {
-  ocean:     { accent:'#3b82f6', accentGlow:'rgba(59,130,246,0.4)',  accentSoft:'rgba(59,130,246,0.15)',  accent2:'#06b6d4', accent3:'#8b5cf6', textAccent:'#7cb3ff' },
-  neon:      { accent:'#a855f7', accentGlow:'rgba(168,85,247,0.4)',  accentSoft:'rgba(168,85,247,0.15)',  accent2:'#ec4899', accent3:'#f472b6', textAccent:'#d8b4fe' },
-  ember:     { accent:'#f59e0b', accentGlow:'rgba(245,158,11,0.4)',  accentSoft:'rgba(245,158,11,0.15)',  accent2:'#ef4444', accent3:'#f97316', textAccent:'#fcd34d' },
-  matrix:    { accent:'#22c55e', accentGlow:'rgba(34,197,94,0.4)',   accentSoft:'rgba(34,197,94,0.15)',   accent2:'#06b6d4', accent3:'#10b981', textAccent:'#86efac' },
-  synthwave: { accent:'#e11d48', accentGlow:'rgba(225,29,72,0.4)',   accentSoft:'rgba(225,29,72,0.15)',   accent2:'#9333ea', accent3:'#ec4899', textAccent:'#fda4af' },
+const _CT = window.CartofiaTheme || {};
+const THEMES = _CT.THEMES || {
+  nightmarket: { accent:'#7c5cff', accentGlow:'rgba(124,92,255,0.45)', accentSoft:'rgba(124,92,255,0.16)', accent2:'#ff6b4a', accent3:'#3ee6a6', textAccent:'#ffcf5c' },
 };
-
-const THEME_NAMES = { ocean:'Deep Ocean', neon:'Neon Night', ember:'Ember', matrix:'Matrix', synthwave:'Synthwave' };
-
+const THEME_NAMES = _CT.THEME_NAMES || { nightmarket:'Night Market' };
 
 /* Render ONLINE + group pills from the public profile data. */
 const _U_GROUP_DISPLAY = {
@@ -946,7 +279,7 @@ function renderStatusBadges(profile) {
   if (profile && profile.is_online) {
     const p = document.createElement('span');
     p.className = 'status-badge badge-online';
-    p.textContent = '● ONLINE';
+    p.textContent = '● Online';
     host.appendChild(p);
   }
   const groups = (profile && profile.groups) || [];
@@ -955,13 +288,14 @@ function renderStatusBadges(profile) {
     if (!label) return;
     const p = document.createElement('span');
     p.className = 'status-badge badge-role';
-    p.textContent = label.toUpperCase();
+    p.textContent = label;
     host.appendChild(p);
   });
 }
 
 function applyTheme(name) {
-  const t = THEMES[name] || THEMES.ocean;
+  const key = THEMES[name] ? name : 'nightmarket';
+  const t = THEMES[key] || THEMES.nightmarket;
   const r = document.documentElement;
   r.style.setProperty('--accent', t.accent);
   r.style.setProperty('--accent-glow', t.accentGlow);
@@ -969,7 +303,7 @@ function applyTheme(name) {
   r.style.setProperty('--accent-2', t.accent2);
   r.style.setProperty('--accent-3', t.accent3);
   r.style.setProperty('--text-accent', t.textAccent);
-  document.getElementById('metaTheme').textContent = THEME_NAMES[name] || name;
+  document.getElementById('metaTheme').textContent = THEME_NAMES[key] || key;
 }
 
 /* ─────────────────────────────────────────────
@@ -978,7 +312,8 @@ function applyTheme(name) {
 function setAvatar(url, initials) {
   const el = document.getElementById('avatarDisplay');
   if (url) {
-    el.innerHTML = `<img src="${url}" alt="avatar" onerror="this.parentElement.textContent='${escHtml(initials)}'">`;
+    el.innerHTML = `<img src="${escHtml(url)}" alt="">`;
+    el.querySelector('img').onerror = () => { el.textContent = initials; };
   } else {
     el.textContent = initials;
   }
@@ -1043,7 +378,9 @@ function joinedFmt(iso) {
    Activity rendering
 ───────────────────────────────────────────── */
 const ACTIVITY_MAP = {
-  played_game:          { icon: '🎮', cls: 'play',   text: m => `Played <span class="highlight">${escHtml(m.game || 'a game')}</span>` },
+  played_game:          { icon: '🎮', cls: 'play',   text: m => `Played <span class="highlight">${escHtml(gameName(m.game))}</span>${m.result ? ' · ' + escHtml(resultText(m)) : ''}` },
+  created_thread:       { icon: '💬', cls: 'level',  text: m => `Started a forum thread${m.title ? ' <strong>' + escHtml(m.title) + '</strong>' : ''}` },
+  replied_thread:       { icon: '💬', cls: 'level',  text: m => `Replied in the forum${m.title ? ' to <strong>' + escHtml(m.title) + '</strong>' : ''}` },
   earned_badge:         { icon: '🏆', cls: 'badge',  text: m => `Earned badge <strong>${escHtml(m.badge || '')}</strong>` },
   unlocked_achievement: { icon: '🎖️', cls: 'badge',  text: m => `Unlocked achievement <strong>${escHtml(m.achievement || '')}</strong>` },
   uploaded_file:        { icon: '📁', cls: 'upload', text: () => 'Uploaded a file to Archive' },
@@ -1052,106 +389,206 @@ const ACTIVITY_MAP = {
   changed_banner:       { icon: '🖼️', cls: 'avatar', text: () => 'Updated profile banner' },
 };
 
-function renderActivity(items) {
-  const list = document.getElementById('activityList');
-  if (!items || items.length === 0) {
-    list.innerHTML = '<div class="activity-item"><div class="activity-icon play">💤</div><div><div class="activity-text">No activity yet</div></div></div>';
-    return;
-  }
-  list.innerHTML = items.map(item => {
-    const def = ACTIVITY_MAP[item.event_type] || { icon: '●', cls: 'play', text: () => escHtml(item.event_type) };
-    return `<div class="activity-item">
-      <div class="activity-icon ${def.cls}">${def.icon}</div>
+const ACTIVITY_PREVIEW = 3;
+function activityRow(item) {
+  const def = ACTIVITY_MAP[item.event_type] || { icon: '●', cls: 'play', text: () => escHtml(item.event_type) };
+  return `<div class="activity-item">
+      <div class="activity-icon ${def.cls}" aria-hidden="true">${def.icon}</div>
       <div>
         <div class="activity-text">${def.text(item.metadata || {})}</div>
         <div class="activity-time">${relTime(item.created_at)}</div>
       </div>
     </div>`;
-  }).join('');
 }
+
+let _activityAll = [], _activityHasMore = false, _activityExpanded = false;
+function renderActivity(items, hasMore) {
+  const list = document.getElementById('activityList');
+  const more = document.getElementById('activityMore');
+  _activityAll = items || [];
+  _activityHasMore = !!hasMore;
+  if (!_activityAll.length) {
+    list.innerHTML = '<div class="activity-item"><div class="activity-icon play" aria-hidden="true">💤</div><div><div class="activity-text">No activity yet</div></div></div>';
+    more.hidden = true;
+    return;
+  }
+  const shown = _activityExpanded ? _activityAll : _activityAll.slice(0, ACTIVITY_PREVIEW);
+  list.innerHTML = shown.map(activityRow).join('');
+  const canExpand = !_activityExpanded && (_activityAll.length > ACTIVITY_PREVIEW);
+  const canLoadMore = _activityExpanded && _activityHasMore;
+  more.hidden = !(canExpand || canLoadMore || _activityExpanded);
+  const btn = document.getElementById('activityMoreBtn');
+  btn.textContent = canExpand ? 'Show more' : (canLoadMore ? 'Load older' : 'Show less');
+  btn.setAttribute('aria-expanded', String(_activityExpanded));
+}
+
+async function loadActivity(slug, before) {
+  const q = '?limit=20' + (before ? '&before=' + encodeURIComponent(before) : '');
+  const r = await fetch('/api/profile/' + encodeURIComponent(slug) + '/activity' + q);
+  if (!r.ok) return { activity: [], has_more: false };
+  return r.json();
+}
+
+document.getElementById('activityMoreBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('activityMoreBtn');
+  if (!_activityExpanded) { _activityExpanded = true; renderActivity(_activityAll, _activityHasMore); return; }
+  if (_activityHasMore && window._u_slug) {
+    btn.disabled = true;
+    const last = _activityAll[_activityAll.length - 1];
+    const d = await loadActivity(window._u_slug, last && last.id).catch(() => null);
+    btn.disabled = false;
+    if (d) renderActivity(_activityAll.concat(d.activity || []), d.has_more);
+    return;
+  }
+  _activityExpanded = false;
+  renderActivity(_activityAll, _activityHasMore);
+  document.getElementById('activityList').scrollIntoView({ block: 'nearest' });
+});
 
 /* ─────────────────────────────────────────────
    Showcase rendering
 ───────────────────────────────────────────── */
-const GAME_COLORS = {
-  'bomber-raid':  'linear-gradient(135deg,#b91c1c,#ef4444)',
-  'blackjack':    'linear-gradient(135deg,#0f766e,#2dd4bf)',
-  'chess':        'linear-gradient(135deg,#7c3aed,#a78bfa)',
-  'checkers':     'linear-gradient(135deg,#c2410c,#fb923c)',
-  'snake':        'linear-gradient(135deg,#15803d,#4ade80)',
-  'zuma-temple':  'linear-gradient(135deg,#b45309,#fbbf24)',
-  'minesweeper':  'linear-gradient(135deg,#475569,#94a3b8)',
-  'maze-chase':   'linear-gradient(135deg,#1d4ed8,#60a5fa)',
+/* Per-game accent (matches the arcade page cartridges) */
+const GAME_ACCENT = {
+  cartofia: '#7cc8ff', ludo: '#ffb54a', snake: '#8bd94a', chess: '#b08cff', 'brick-blitz': '#ff52a2',
+  'bomber-raid': '#ff8c3a', minesweeper: '#9fb4d8', blackjack: '#2fc184', 'maze-chase': '#8c84ff',
+  'word-puzzle': '#f2c94c', zuma: '#2cc6b4',
 };
-const GAME_COLORS_FALLBACK = [
-  'linear-gradient(135deg,#b91c1c,#ef4444)',
-  'linear-gradient(135deg,#0f766e,#2dd4bf)',
-  'linear-gradient(135deg,#7c3aed,#a78bfa)',
-  'linear-gradient(135deg,#1d4ed8,#60a5fa)',
-  'linear-gradient(135deg,#b45309,#fbbf24)',
-];
+const GAME_ACCENT_FALLBACK = ['#8b6cff', '#ff6b4a', '#3ee6a6', '#ffd84a', '#7cc8ff'];
 let arcadeStats = null;
 
-function gameColor(gameId, idx) {
-  return GAME_COLORS[gameId] || GAME_COLORS_FALLBACK[idx % GAME_COLORS_FALLBACK.length];
+function gameAccent(slug, idx) {
+  return GAME_ACCENT[slug] || GAME_ACCENT_FALLBACK[(idx || 0) % GAME_ACCENT_FALLBACK.length];
+}
+/* Gradient shown behind / instead of the cover art if it fails to load */
+function gameColor(slug, idx) {
+  const c = gameAccent(slug, idx);
+  return `linear-gradient(135deg, color-mix(in srgb, ${c} 75%, #000), #120b24)`;
 }
 
 function fmtHrs(seconds) {
-  const h = seconds / 3600;
-  return h < 0.1 ? '<1m' : h.toFixed(1) + ' hrs';
+  const s = Math.max(0, Number(seconds) || 0);
+  if (s < 60) return s ? '<1m' : '0m';
+  if (s < 3600) return Math.round(s / 60) + 'm';
+  const h = s / 3600;
+  return (h < 10 ? h.toFixed(1) : Math.round(h)) + 'h';
 }
 
-function renderShowcase(s) {
-  const label = {
-    favorite_games: '★ Favorite Games',
-    achievements:   '🏆 Achievement Showcase',
-    arcade_records: '🎯 Arcade Records',
-    badge_case:     '🎖️ Badge Case',
-  }[s.showcase_type] || s.showcase_type;
+/* Game slug -> folder slug (cover art, links) and display name. */
+const GAME_ALIASES = { 'zuma-temple': 'zuma' };
+const GAME_NAMES = {
+  'bomber-raid': 'Bomber Raid', blackjack: 'Blackjack', chess: 'Chess', snake: 'Snake',
+  cartofia: 'Cartofia', zuma: 'Zuma Temple', minesweeper: 'Minesweeper', 'maze-chase': 'Maze Chase',
+  ludo: 'Ludo', 'word-puzzle': 'Word Puzzle', 'brick-blitz': 'Brick Blitz',
+};
+function gameSlug(g) { g = String(g || '').toLowerCase(); return GAME_ALIASES[g] || g; }
+function gameName(g) { const s = gameSlug(g); return GAME_NAMES[s] || (s ? s.replace(/-/g, ' ') : 'a game'); }
+function resultText(m) {
+  const r = String(m.result || '').toLowerCase();
+  if (m.placement) return ({ 1: '1st', 2: '2nd', 3: '3rd' }[m.placement] || m.placement + 'th') + ' place';
+  if (r === 'win' || r === 'won') return 'won';
+  if (r === 'loss' || r === 'lose' || r === 'lost') return 'lost';
+  return String(m.result).slice(0, 40);
+}
+function gameCard(g, i) {
+  const slug = gameSlug(g.slug || g.game);
+  const name = g.display_name || gameName(slug);
+  return `<a class="game-card" href="/arcade/${encodeURIComponent(slug)}/" style="--g:${gameAccent(slug, i)}" aria-label="Play ${escHtml(name)}">
+      <span class="game-card-cover">
+        <span class="game-card-bg" style="background:${gameColor(slug, i)};"></span>
+        <img class="game-card-art" src="/assets/games/${encodeURIComponent(slug)}.svg" alt="" loading="lazy" onerror="this.remove()">
+      </span>
+      <span class="game-card-body game-card-overlay">
+        <span class="game-card-text">
+          <span class="game-card-name">${escHtml(name)}</span>
+          <span class="game-card-hours">${fmtHrs(g.total_playtime_seconds)} played</span>
+        </span>
+        <span class="game-card-play" aria-hidden="true">Play →</span>
+      </span>
+    </a>`;
+}
+function recordsBlock(games) {
+  const sorted = [...games].sort((a, b) => (b.games_played || 0) - (a.games_played || 0)
+    || (b.total_playtime_seconds || 0) - (a.total_playtime_seconds || 0));
+  return '<div class="record-list">' + sorted.map((r, i) => {
+    const n = r.games_played != null ? r.games_played : (r.total_sessions || 0);
+    const slug = gameSlug(r.slug || r.game);
+    const cells = [`<div class="record-stat"><b>${n}</b><span>game${n !== 1 ? 's' : ''}</span></div>`];
+    if (r.wins) cells.push(`<div class="record-stat"><b>${r.wins}</b><span>wins</span></div>`);
+    if (r.best_score != null && r.best_score > 0) cells.push(`<div class="record-stat"><b>${Number(r.best_score).toLocaleString()}</b><span>best</span></div>`);
+    cells.push(`<div class="record-stat"><b>${fmtHrs(r.total_playtime_seconds)}</b><span>played</span></div>`);
+    return `<div class="record-row" style="--g:${gameColor(slug, i)}">
+        <img class="record-thumb" src="/assets/games/${encodeURIComponent(slug)}.svg" alt="" loading="lazy" onerror="this.removeAttribute('src')">
+        <div style="min-width:0">
+          <div class="record-game"><a href="/arcade/${encodeURIComponent(slug)}/">${escHtml(r.display_name || gameName(slug))}</a></div>
+          <div class="record-label">${r.last_played ? 'last played ' + relTime(r.last_played) : ''}</div>
+        </div>
+        <div class="record-stats">${cells.join('')}</div>
+      </div>`;
+  }).join('') + '</div>';
+}
+const ACH_PREVIEW = 6;
+function achievementTile(a, slug, extra) {
+  const href = '/achievements/' + (slug ? '?user=' + encodeURIComponent(slug) : '') + '#' + encodeURIComponent(a.id);
+  const sub = (a.game_name || '') + (a.unlocked_at ? (a.game_name ? ' · ' : '') + relTime(a.unlocked_at) : '');
+  return `<a class="achievement-item${['rare','epic','legendary'].includes(a.rarity) ? ' rare' : ''}${extra ? ' ach-extra' : ''}" href="${href}"${extra ? ' hidden' : ''} title="${escHtml(a.description)}">`
+    + `<span class="achievement-icon" aria-hidden="true">${escHtml(a.icon || '🏅')}</span>`
+    + `<span class="achievement-text"><span class="achievement-name">${escHtml(a.name)}</span>`
+    + `<span class="achievement-status">${escHtml(sub)}</span></span>`
+    + '</a>';
+}
+function achievementsBlock(all, slug) {
+  const items = (all || []).filter(a => a.earned)
+    .sort((a, b) => String(b.unlocked_at || '').localeCompare(String(a.unlocked_at || '')));
+  const allLink = '<a class="more-link" href="/achievements/' + (slug ? '?user=' + encodeURIComponent(slug) : '') + '">All achievements →</a>';
+  if (!items.length) {
+    return '<div class="showcase-empty">No achievements earned yet.</div><div class="more-row"><span></span>' + allLink + '</div>';
+  }
+  const extra = items.length - ACH_PREVIEW;
+  return '<div class="achievement-row">'
+    + items.map((a, i) => achievementTile(a, slug, i >= ACH_PREVIEW)).join('') + '</div>'
+    + '<div class="more-row">'
+    + (extra > 0 ? `<button class="show-more-btn" type="button" data-ach-more aria-expanded="false">Show ${extra} more</button>` : '<span></span>')
+    + allLink + '</div>';
+}
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('[data-ach-more]');
+  if (!btn) return;
+  const card = btn.closest('.pcard, .card') || document;
+  const open = btn.getAttribute('aria-expanded') !== 'true';
+  card.querySelectorAll('.ach-extra').forEach(el => { el.hidden = !open; });
+  btn.setAttribute('aria-expanded', String(open));
+  btn.textContent = open ? 'Show less' : 'Show ' + card.querySelectorAll('.ach-extra').length + ' more';
+});
 
+const SHOWCASE_META = {
+  favorite_games: { eyebrow: 'Showcase', title: 'Favorite games', link: ['/arcade/', 'Arcade →'] },
+  achievements:   { eyebrow: 'Trophies', title: 'Achievements' },
+  arcade_records: { eyebrow: 'Records',  title: 'Arcade records' },
+  badge_case:     { eyebrow: 'Flair',    title: 'Badge showcase' },
+};
+function renderShowcase(s) {
+  const meta = SHOWCASE_META[s.showcase_type] || { eyebrow: 'Showcase', title: s.showcase_type };
   const games = (arcadeStats && arcadeStats.games) ? arcadeStats.games : [];
   let body = '';
+  let count = '';
 
   if (s.showcase_type === 'favorite_games') {
-    if (!games.length) {
-      body = '<div class="showcase-empty">No games played yet.</div>';
-    } else {
-      const top = games.slice(0, 3);
-      body = '<div class="game-grid">' + top.map((g, i) => `
-          <div class="game-card">
-            <div class="game-card-bg" style="background:${gameColor(g.game, i)};"></div>
-            <div class="game-card-overlay">
-              <div class="game-card-name">${escHtml(g.display_name || g.game)}</div>
-              <div class="game-card-hours">${fmtHrs(g.total_playtime_seconds)}</div>
-            </div>
-          </div>`).join('') + '</div>';
-    }
+    body = games.length
+      ? '<div class="game-grid">' + games.slice(0, 3).map(gameCard).join('') + '</div>'
+      : '<div class="showcase-empty">No games played yet.</div>';
 
   } else if (s.showcase_type === 'arcade_records') {
-    if (!games.length) {
-      body = '<div class="showcase-empty">No games played yet.</div>';
-    } else {
-      const sorted = [...games].sort((a, b) => b.total_sessions - a.total_sessions);
-      body = '<div>' + sorted.map(r => `
-          <div class="record-row">
-            <div>
-              <div class="record-game">${escHtml(r.display_name || r.game)}</div>
-              <div class="record-label">${r.total_sessions} session${r.total_sessions !== 1 ? 's' : ''}</div>
-            </div>
-            <div class="record-value">${fmtHrs(r.total_playtime_seconds)}</div>
-          </div>`).join('') + '</div>';
-    }
+    body = games.length ? recordsBlock(games) : '<div class="showcase-empty">No games played yet.</div>';
+    if (games.length) count = String(games.length);
 
   } else if (s.showcase_type === 'achievements') {
-    const items = (window.achievements_data || []).filter(a => a.earned);
-    body = items.length
-      ? '<div class="achievement-row" style="padding:16px 24px;gap:10px;">'
-          + items.map(a => `<div class="achievement-item" title="${escHtml(a.name)} — ${escHtml(a.description)}">`
-              + `<span style="font-size:22px;line-height:1">${escHtml(a.icon || '🏅')}</span>`
-              + `<div class="achievement-tooltip"><strong>${escHtml(a.name)}</strong><br>${escHtml(a.description)}</div>`
-            + '</div>').join('')
-          + '</div>'
-      : '<div class="showcase-empty" style="padding:20px 24px;">No achievements earned yet.</div>';
+    if (window.achievements_data) {
+      body = achievementsBlock(window.achievements_data, window._u_slug);
+      count = window.achievements_data.filter(a => a.earned).length + ' / ' + window.achievements_data.length;
+    } else {
+      body = '<div class="showcase-empty">Loading achievements…</div>';
+    }
 
   } else if (s.showcase_type === 'badge_case') {
     const cfg = s.config || {};
@@ -1163,18 +600,20 @@ function renderShowcase(s) {
       : '<div class="showcase-empty">No badges in showcase.</div>';
   }
 
-  return `<div class="pcard animate-in">
+  const link = meta.link ? `<a class="pf-link" href="${meta.link[0]}">${meta.link[1]}</a>` : '';
+  return `<section class="pcard" data-showcase="${escHtml(s.showcase_type)}">
     <div class="showcase-header">
-      <div class="card-label">${label}</div>
+      <div><p class="pf-eyebrow">${escHtml(meta.eyebrow)}</p><h2 class="pf-h2">${escHtml(meta.title)}<span class="pf-count">${escHtml(count)}</span></h2></div>
+      ${link}
     </div>
     ${body}
-  </div>`;
+  </section>`;
 }
 /* ─────────────────────────────────────────────
    Stats rendering
 ───────────────────────────────────────────── */
 function renderStats(stats) {
-  document.getElementById('statGamesPlayed').textContent  = (stats.games_played || 0).toLocaleString();
+  document.getElementById('statFriends').textContent      = (stats.friends_count || 0).toLocaleString();
   document.getElementById('statPlaytime').textContent     = fmtPlaytime(stats.total_playtime_seconds || 0);
   document.getElementById('statAchievements').textContent = (stats.achievements_unlocked || 0).toLocaleString();
   document.getElementById('statUploads').textContent      = (stats.uploads || 0).toLocaleString();
@@ -1187,7 +626,8 @@ function renderStats(stats) {
    Full profile render
 ───────────────────────────────────────────── */
 function renderProfile(data) {
-  const { profile, showcases, stats, activity } = data;
+  const { profile, showcases, stats } = data;
+  window._u_slug = profile.username_slug || '';
 
   // Page title
   document.title = (profile.display_name || profile.username_slug || 'Profile') + ' — Cartofia';
@@ -1195,9 +635,9 @@ function renderProfile(data) {
   // Banner
   if (profile.banner_url) {
     const img = document.getElementById('bannerImg');
-    img.src = profile.banner_url;
     img.onload  = () => img.classList.add('loaded');
     img.onerror = () => {};
+    img.src = profile.banner_url;
   }
 
   // Avatar
@@ -1222,8 +662,8 @@ function renderProfile(data) {
   document.getElementById('metaShowcases').textContent   = (showcases ? showcases.length : 0) + ' / 3';
 
   // Theme (read-only: apply owner's theme)
-  applyTheme(profile.theme || 'ocean');
-  renderStatusBadges(profile);
+  applyTheme(profile.theme || 'nightmarket');
+  renderStatusBadges({ ...profile, is_online: data.is_online, groups: data.groups || [] });
   fetch('/api/profile/' + encodeURIComponent(profile.username_slug || '') + '/achievements')
     .then(r => r.ok ? r.json() : null)
     .then(d => {
@@ -1244,7 +684,7 @@ function renderProfile(data) {
   const bc = document.getElementById('badgeCase');
   bc.innerHTML = profile.featured_badge
     ? `<div class="badge-item featured" title="Featured">${escHtml(profile.featured_badge)}</div>`
-    : '<div style="font-size:13px;color:var(--text-muted);">No badges yet</div>';
+    : '<div class="pf-muted-note">No badges yet</div>';
 
   // Showcases
   window._u_last_showcases = showcases || [];
@@ -1253,27 +693,55 @@ function renderProfile(data) {
     ? showcases.map(renderShowcase).join('')
     : '';
 
-  // Activity
-  renderActivity(activity);
+  // Activity (public endpoint; first 3 shown, rest behind "Show more")
+  loadActivity(window._u_slug).then(d => renderActivity(d.activity || [], d.has_more))
+    .catch(() => renderActivity([], false));
+  loadFriends(window._u_slug, (stats && stats.friends_count) || 0);
 
   // Show profile content
   document.getElementById('profileContent').style.display = 'block';
-
-  // Wire up scroll animations
-  document.querySelectorAll('.animate-in').forEach(el => {
-    el.style.animationPlayState = 'paused';
-    animObserver.observe(el);
-  });
+  if (location.hash === '#friends') {
+    requestAnimationFrame(() => document.getElementById('friends').scrollIntoView());
+  }
 }
 
+
+/* ─────────────────────────────────────────────
+   Friends card — /api/profile/<slug>/friends (public friends only)
+───────────────────────────────────────────── */
+function friendChip(f) {
+  const name = f.display_name || f.username;
+  const av = f.avatar_url
+    ? `<img src="${escHtml(f.avatar_url)}" alt="" onerror="this.remove()">`
+    : escHtml((name || '?').slice(0, 2).toUpperCase());
+  return `<a class="friend-chip" href="/u/${encodeURIComponent(f.username)}">
+      <span class="friend-chip-av${f.is_online ? ' online' : ''}">${av}</span>
+      <span class="friend-chip-text"><span class="friend-chip-name" style="display:block">${escHtml(name)}</span><span class="friend-chip-handle" style="display:block">@${escHtml(f.username)}${f.is_online ? ' · online' : ''}</span></span>
+      <span class="friend-chip-go" aria-hidden="true">→</span>
+    </a>`;
+}
+async function loadFriends(slug, count) {
+  const grid = document.getElementById('friendsGrid');
+  const label = document.getElementById('friendsCountLabel');
+  label.textContent = count ? String(count) : '';
+  try {
+    const r = await fetch('/api/profile/' + encodeURIComponent(slug) + '/friends');
+    const d = r.ok ? await r.json() : { friends: [] };
+    const list = d.friends || [];
+    grid.innerHTML = list.length ? list.map(friendChip).join('')
+      : '<div class="showcase-empty" style="grid-column:1/-1">No friends to show yet.</div>';
+  } catch (_) {
+    grid.innerHTML = '<div class="showcase-empty" style="grid-column:1/-1">Could not load friends.</div>';
+  }
+}
 
 /* ─────────────────────────────────────────────
    Add Friend button — real wiring against /api/profile/me/friends
 ───────────────────────────────────────────── */
 const FRIEND_ICON =
-  "<svg width='14' height='14' viewBox='0 0 16 16' fill='none'><path d='M8 1a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 8c3.3 0 6 1.3 6 3v1H2v-1c0-1.7 2.7-3 6-3z' fill='currentColor' opacity='0.6'/><path d='M13 5v4M11 7h4' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/></svg>";
+  "<svg width='15' height='15' viewBox='0 0 16 16' fill='none' aria-hidden='true'><path d='M7 1.5a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 8c3.1 0 5.5 1.3 5.5 3v1h-11v-1c0-1.7 2.4-3 5.5-3z' fill='currentColor' opacity='0.7'/><path d='M13.5 3.5v4M11.5 5.5h4' stroke='currentColor' stroke-width='1.6' stroke-linecap='round'/></svg>";
 const CHECK_ICON =
-  "<svg width='14' height='14' viewBox='0 0 16 16' fill='none'><path d='M3 8l3 3 7-7' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>";
+  "<svg width='15' height='15' viewBox='0 0 16 16' fill='none' aria-hidden='true'><path d='M3 8l3 3 7-7' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>";
 
 async function wireFriendButton(profileSlug) {
   const btn = document.getElementById('friendBtn');
@@ -1283,8 +751,16 @@ async function wireFriendButton(profileSlug) {
   const token = sessionStorage.getItem('oidc_access_token')
              || localStorage.getItem('oidc_access_token');
 
-  // Not signed in — invite them to sign in to add friends.
+  // Not signed in (no cookie session and no legacy JWT) — invite them to sign in.
+  let cookieSignedIn = false;
   if (!token) {
+    try {
+      const r = await fetch('/api/auth/me', { credentials: 'include' });
+      const d = r.ok ? await r.json() : null;
+      cookieSignedIn = !!(d && d.authenticated);
+    } catch (_) {}
+  }
+  if (!token && !cookieSignedIn) {
     btn.hidden = false;
     btn.innerHTML = FRIEND_ICON + ' Sign in to add';
     btn.disabled = false;
@@ -1296,12 +772,13 @@ async function wireFriendButton(profileSlug) {
   // we just leave the button hidden rather than show a confusing state.
   let viewerSlug = '';
   try {
-    const r = await fetch('/application/o/userinfo/', {
-      headers: { 'Authorization': 'Bearer ' + token }
+    const r = await fetch('/api/profile/me', {
+      credentials: 'include',
+      headers: (token ? { 'Authorization': 'Bearer ' + token } : {})
     });
     if (r.ok) {
-      const claims = await r.json();
-      viewerSlug = (claims.preferred_username || '').toLowerCase();
+      const d = await r.json();
+      viewerSlug = ((d.profile && d.profile.username_slug) || '').toLowerCase();
     }
   } catch (_) { return; }
 
@@ -1314,7 +791,8 @@ async function wireFriendButton(profileSlug) {
   async function pullState() {
     try {
       const r = await fetch('/api/profile/me/friends', {
-        headers: { 'Authorization': 'Bearer ' + token }
+        credentials: 'include',
+        headers: (token ? { 'Authorization': 'Bearer ' + token } : {})
       });
       if (!r.ok) return null;
       return await r.json();
@@ -1329,21 +807,26 @@ async function wireFriendButton(profileSlug) {
     btn.hidden = false;
     btn.disabled = false;
     btn.classList.remove('is-friend', 'is-pending');
+    btn.dataset.state = state;
 
     if (state === 'friends') {
       btn.innerHTML = CHECK_ICON + ' Friends';
+      btn.title = 'You are friends. Click to remove.';
       btn.classList.add('is-friend');
       btn.onclick = () => act('remove');
     } else if (state === 'outgoing') {
       btn.innerHTML = FRIEND_ICON + ' Cancel request';
+      btn.title = 'Friend request sent';
       btn.classList.add('is-pending');
       btn.onclick = () => act('cancel');
     } else if (state === 'incoming') {
       btn.innerHTML = CHECK_ICON + ' Accept request';
+      btn.title = 'This player sent you a friend request';
       btn.classList.add('is-pending');
       btn.onclick = () => act('accept');
     } else {
       btn.innerHTML = FRIEND_ICON + ' Add Friend';
+      btn.title = '';
       btn.onclick = () => act('add');
     }
   }
@@ -1356,19 +839,22 @@ async function wireFriendButton(profileSlug) {
       if (what === 'add') {
         resp = await fetch('/api/profile/me/friends/' + encoded, {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token }
+          credentials: 'include',
+          headers: (token ? { 'Authorization': 'Bearer ' + token } : {})
         });
       } else if (what === 'remove') {
         if (!confirm('Remove this friend?')) { btn.disabled = false; return; }
         resp = await fetch('/api/profile/me/friends/' + encoded, {
           method: 'DELETE',
-          headers: { 'Authorization': 'Bearer ' + token }
+          credentials: 'include',
+          headers: (token ? { 'Authorization': 'Bearer ' + token } : {})
         });
       } else {
         resp = await fetch('/api/profile/me/friends/' + encoded, {
           method: 'PATCH',
+          credentials: 'include',
           headers: {
-            'Authorization': 'Bearer ' + token,
+            ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ action: what })
@@ -1379,6 +865,9 @@ async function wireFriendButton(profileSlug) {
         throw new Error(err.error || ('HTTP ' + resp.status));
       }
       await refresh();
+      window.dispatchEvent(new Event('cartofia:notifications-refresh'));
+      const pr = await fetch('/api/profile/' + encodeURIComponent(slug)).then(x => x.ok ? x.json() : null).catch(() => null);
+      if (pr && pr.stats) { renderStats(pr.stats); loadFriends(slug, pr.stats.friends_count || 0); }
     } catch (e) {
       alert(e.message || 'Failed');
       await refresh();
@@ -1397,6 +886,9 @@ async function wireFriendButton(profileSlug) {
     render('none');
   }
 
+  /* A request accepted/declined from the bell while this page is open */
+  window.addEventListener('cartofia:friends-changed', () => { refresh(); });
+
   await refresh();
 }
 
@@ -1404,18 +896,19 @@ async function wireFriendButton(profileSlug) {
    Show "This is you" banner if viewer owns profile
 ───────────────────────────────────────────── */
 function checkOwnProfile(profileSlug) {
-  // Use site.js's stored token to silently check userinfo
+  // Works for cookie sessions and legacy JWTs: /api/profile/me returns the
+  // viewer's own profile (401 for guests), whose slug we compare.
   const token = sessionStorage.getItem('oidc_access_token')
               || localStorage.getItem('oidc_access_token');
-  if (!token) return;
-
-  fetch('/application/o/userinfo/', {
-    headers: { 'Authorization': 'Bearer ' + token },
-  })
+  fetch('/api/auth/me', { credentials: 'include' })
     .then(r => r.ok ? r.json() : null)
-    .then(claims => {
-      if (!claims) return;
-      const viewerSlug = (claims.preferred_username || '').toLowerCase();
+    .then(me => (token || (me && me.authenticated))
+      ? fetch('/api/profile/me', { credentials: 'include', headers: (token ? { 'Authorization': 'Bearer ' + token } : {}) })
+      : null)
+    .then(r => r && r.ok ? r.json() : null)
+    .then(d => {
+      if (!d || !d.profile) return;
+      const viewerSlug = (d.profile.username_slug || '').toLowerCase();
       if (viewerSlug && viewerSlug === profileSlug.toLowerCase()) {
         document.getElementById('ownProfileNotice').classList.add('visible');
       }
@@ -1435,25 +928,15 @@ function escHtml(s) {
 }
 
 /* ─────────────────────────────────────────────
-   Intersection observer for scroll animations
-───────────────────────────────────────────── */
-const animObserver = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) e.target.style.animationPlayState = 'running';
-  });
-}, { threshold: 0.1 });
-
-/* ─────────────────────────────────────────────
    Share button
 ───────────────────────────────────────────── */
 document.getElementById('shareBtn').addEventListener('click', () => {
-  navigator.clipboard.writeText(window.location.href).then(
-    () => { /* silent success */ },
-    () => { /* silent fail */ },
-  );
   const btn = document.getElementById('shareBtn');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(window.location.href).catch(() => {});
+  }
   const orig = btn.innerHTML;
-  btn.textContent = 'Copied!';
+  btn.textContent = 'Link copied!';
   setTimeout(() => { btn.innerHTML = orig; }, 1500);
 });
 

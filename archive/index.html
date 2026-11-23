@@ -4,232 +4,197 @@
   <meta charset="utf-8" />
   <title>Cartofia Archive</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/site.css?v=4" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=3">
-  <style>
-    .activity-list b {
-      color: #66c7ff;
-      font-weight: 700;
-    }
-
-    .activity-time {
-      display: block;
-      color: #7f95ad;
-      font-size: 12px;
-      margin-top: 3px;
-    }
-
-    .selected-file {
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 8px;
-    }
-
-    .selected-file strong {
-      color: var(--text);
-      font-weight: 700;
-    }
-
-    .table-name {
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .table-muted {
-      color: var(--muted);
-      font-size: 12px;
-      display: block;
-      margin-top: 2px;
-    }
-
-    .empty-message {
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: 10px;
-    }
-
-    .dropzone-icon {
-      width: 28px;
-      height: 28px;
-    }
-
-    .upload-progress {
-      margin-top: 8px;
-      display: grid;
-      gap: 6px;
-    }
-
-    .upload-progress-track {
-      height: 12px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(6, 12, 18, 0.88);
-      overflow: hidden;
-    }
-
-    .upload-progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #2ea8ff, #67d0ff);
-      transition: width 0.16s linear;
-    }
-
-    .upload-progress-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .upload-progress-meta b {
-      color: #9ad9ff;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=7" />
+  <link rel="stylesheet" href="/assets/notifications.css?v=6">
+  <link rel="stylesheet" href="/assets/community-v2.css?v=1" />
+  <style>button.nav-avatar { appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer; }</style>
 </head>
-<body class="hidden">
-  <div class="site-shell" style="position:relative;z-index:1;">
-    <header class="nav">
-      <a class="nav-brand" href="/">
-        <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+<body class="cm cm-archive hidden">
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/>
+      </svg>
       Cartofia
-      </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="/">Home</a>
-        <a class="active" href="#archive">Archive</a>
-        <a href="#upload">Upload</a>
-        <a href="#activity">Activity</a>
-      </nav>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
+    </nav>
+    <div class="nav-right">
       <div class="account-menu" data-account-menu>
         <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
         <div class="account-dropdown hidden" data-account-dropdown role="menu">
           <a class="account-item" href="/account/" role="menuitem">Open Account</a>
         </div>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <main>
-      <section class="hero-card reveal" data-delay="1">
-        <div class="hero-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 4H10V10H4V4ZM14 4H20V10H14V4ZM4 14H10V20H4V14ZM14 14H20V20H14V14Z" fill="#4FC0FF"></path>
-          </svg>
+  <main id="main">
+    <!-- HERO -->
+    <section class="cm-wrap ar-hero" aria-labelledby="archiveTitle">
+      <div>
+        <p class="cm-kicker"><span class="cm-bulbs" aria-hidden="true"><i></i><i></i><i></i></span>Private storage</p>
+        <h1 class="cm-title" id="archiveTitle">The <span>Archive.</span></h1>
+        <p class="cm-lead">A members-only shelf for sharing files. Upload, browse and download — access comes from your Cartofia account groups.</p>
+      </div>
+      <div class="ar-stats" aria-label="Archive summary">
+        <div class="stat-tile"><span class="stat-tile-value" id="arStatFiles">—</span><span class="stat-tile-label">Files</span></div>
+        <div class="stat-tile"><span class="stat-tile-value" id="arStatSize">—</span><span class="stat-tile-label">Stored</span></div>
+        <div class="stat-tile"><span class="stat-tile-value" id="arStatRole">—</span><span class="stat-tile-label">Your access</span></div>
+      </div>
+    </section>
+
+    <!-- NO ACCESS (signed in, but not in an archive group) -->
+    <section class="cm-wrap ar-denied hidden" id="archiveDenied" aria-labelledby="deniedTitle">
+      <div class="ar-denied-card" role="alert">
+        <div class="ar-denied-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="40%" height="40%"><rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.6"/></svg>
         </div>
-        <div class="hero-copy">
-          <p class="hero-kicker">Private Storage</p>
-          <h1 class="hero-title">Cartofia Archive</h1>
-          <p class="hero-lead">
-            A private page where account holders can upload and download files, with a shared index for the whole group.
-          </p>
-          <div class="pill-row">
-            <span class="pill"><strong>SSO</strong> Cartofia account required</span>
-            <span class="pill"><strong>Upload</strong> drag and browse</span>
-            <span class="pill"><strong>Groups</strong> role-based access</span>
+        <div>
+          <p class="cm-eyebrow">No access yet</p>
+          <h2 id="deniedTitle">This shelf is locked for your account.</h2>
+          <p>You're signed in as <b id="deniedUser">—</b>, but the Archive is limited to members of the archive groups (view, upload or admin). If you should have access, ask an admin to add you.</p>
+          <div class="cm-actions">
+            <a class="btn btn-coral" href="/">Back to home</a>
+            <a class="btn btn-ghost" href="/account/">Your account</a>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="layout-grid hidden" id="archiveContent">
-        <article class="card reveal" data-delay="2" id="upload">
-          <h2 class="card-title">Upload Files</h2>
-          <p class="card-subtitle">Drag a file into the area or click to browse from your device.</p>
+    <!-- FILE BROWSER -->
+    <section class="cm-wrap ar-layout hidden" id="archiveContent">
+      <aside class="ar-side" aria-label="Upload and activity">
+        <article class="cm-panel" id="upload" aria-labelledby="uploadTitle">
+          <div class="ar-panel-head"><h2 class="ar-panel-title" id="uploadTitle">Upload</h2><span class="badge badge-lemon">Uploader</span></div>
+          <p class="ar-panel-sub">Drop a file or click to browse. Any type works.</p>
 
           <div class="dropzone" id="dropZone" role="button" tabindex="0" aria-label="Select file to upload">
-            <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M12 4V16" stroke="#56C3FF" stroke-width="1.8" stroke-linecap="round"></path>
-              <path d="M7 9L12 4L17 9" stroke="#56C3FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-              <path d="M5 18H19" stroke="#56C3FF" stroke-width="1.8" stroke-linecap="round"></path>
-            </svg>
-            <strong>Drag files here or click to browse</strong>
-            <span>Any file type is supported. Access is restricted to signed-in users.</span>
+            <span class="ar-drop-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none"><path d="M12 15V4M7 9l5-5 5 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+            </span>
+            <strong>Drag a file here</strong>
+            <span>or click to browse your device</span>
           </div>
           <input id="fileInput" class="hidden" type="file" />
 
           <p class="selected-file" id="selectedFileLabel">No file selected.</p>
 
-          <div class="button-row">
-            <button id="uploadButton" class="btn btn-primary" type="button" disabled>Upload File</button>
-          </div>
+          <div class="ar-upload-actions">
+            <button id="uploadButton" class="btn btn-coral" type="button" disabled>Upload File</button>
 
-          <div id="uploadProgress" class="upload-progress hidden" aria-live="polite">
-            <div id="uploadProgressTrack" class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-              <div id="uploadProgressFill" class="upload-progress-fill"></div>
+            <div id="uploadProgress" class="upload-progress hidden" aria-live="polite">
+              <div id="uploadProgressTrack" class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Upload progress">
+                <div id="uploadProgressFill" class="upload-progress-fill"></div>
+              </div>
+              <div class="upload-progress-meta">
+                <span id="uploadProgressLabel">Preparing upload...</span>
+                <b id="uploadProgressPercent">0%</b>
+              </div>
             </div>
-            <div class="upload-progress-meta">
-              <span id="uploadProgressLabel">Preparing upload...</span>
-              <b id="uploadProgressPercent">0%</b>
-            </div>
-          </div>
 
-          <div class="notice" id="uploadNotice">Checking access...</div>
+            <div class="notice" id="uploadNotice" role="status">Checking access...</div>
+          </div>
         </article>
 
-        <div class="stack">
-          <article class="card reveal" data-delay="3" id="activity">
-            <h2 class="card-title">Recent Activity</h2>
-            <p class="card-subtitle">Latest file events from this archive.</p>
-            <ul class="list activity-list" id="activityList">
-              <li>Checking access...</li>
-            </ul>
-          </article>
+        <div class="cm-panel ar-viewonly hidden" id="viewOnlyNote">
+          <span class="mc-callout-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
+          <p><strong>View-only access</strong>You can browse and download. Uploading needs the archive upload group — ask an admin if you need it.</p>
         </div>
 
-        <article class="card col-span-2 reveal" data-delay="2" id="archive">
-          <h2 class="card-title">File Archive</h2>
-          <p class="card-subtitle">Search and filter files, then download what you need.</p>
-
-          <div class="search-row">
-            <input id="searchInput" class="input" type="search" placeholder="Search files..." />
-            <select id="typeFilter" class="select">
-              <option value="all">All types</option>
-            </select>
-          </div>
-
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Size</th>
-                  <th>Uploaded by</th>
-                  <th>Date</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="filesBody"></tbody>
-            </table>
-          </div>
-          <p class="empty-message" id="emptyMessage">Checking access...</p>
+        <article class="cm-panel" id="activity" aria-labelledby="activityTitle">
+          <div class="ar-panel-head"><h2 class="ar-panel-title" id="activityTitle">Recent activity</h2></div>
+          <p class="ar-panel-sub">Latest uploads to the archive.</p>
+          <ul class="activity-list" id="activityList">
+            <li>Checking access...</li>
+          </ul>
         </article>
-      </section>
-    </main>
+      </aside>
 
-    <footer class="footer">
-      <span>Only authenticated accounts can upload and download archive files.</span>
-      <div class="footer-links">
-        <a href="/">Home</a>
-        <a href="/arcade/">Arcade</a>
-        <a href="/minecraft/">Minecraft</a>
-      </div>
-    </footer>
-  </div>
+      <article class="cm-panel ar-browser" id="archive" aria-labelledby="filesTitle">
+        <div class="ar-browser-head">
+          <div>
+            <h2 class="ar-panel-title" id="filesTitle">Files</h2>
+            <p class="ar-panel-sub" id="filesSummary">Search, filter and download.</p>
+          </div>
+          <div class="tabs ar-view" role="group" aria-label="View">
+            <button class="tab" type="button" data-view="list" aria-pressed="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.5M4 12h.5M4 18h.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>List
+            </button>
+            <button class="tab" type="button" data-view="grid" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="4" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="4" y="13" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="13" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>Grid
+            </button>
+          </div>
+        </div>
 
-  <script src="/assets/theme.js?v=1"></script>
-  <script src="/assets/site.js?v=8"></script>
-  <script src="/assets/notifications.js?v=1" defer></script>
+        <div class="ar-toolbar">
+          <label class="ar-search">
+            <span class="cm-sr">Search files</span>
+            <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <input id="searchInput" class="input" type="search" placeholder="Search by file name or uploader…" autocomplete="off" />
+          </label>
+          <select id="typeFilter" class="select" aria-label="Filter by file type">
+            <option value="all">All types</option>
+          </select>
+        </div>
+
+        <div class="table-wrap ar-table-wrap" id="fileTableWrap">
+          <table class="ar-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Size</th>
+                <th>Uploaded by</th>
+                <th>Date</th>
+                <th><span class="cm-sr">Action</span></th>
+              </tr>
+            </thead>
+            <tbody id="filesBody"></tbody>
+          </table>
+        </div>
+        <p class="empty-message" id="emptyMessage">Checking access...</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span class="footer-copy">Only authorised accounts can upload and download archive files.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/">Home</a>
+      <a href="/arcade/">Arcade</a>
+      <a href="/minecraft/">Minecraft</a>
+      <a href="/forum/">Forum</a>
+      <a href="/account/">Account</a>
+    </nav>
+  </footer>
+
+  <script src="/assets/theme.js?v=3"></script>
+  <script src="/assets/site.js?v=10"></script>
+  <script src="/assets/notifications.js?v=3" defer></script>
   <script>
     /* ── OIDC / access configuration ───────────────────────────────── */
-    var OIDC_USERINFO_URL = "/application/o/userinfo/";
+    var OIDC_USERINFO_URL = "/application/o/userinfo/";   // legacy-token path only
     var NOT_FOUND_URL     = "/404.html";
 
     var ARCHIVE_VIEW_GROUPS   = ["archive_view", "archive_upload", "archive_admin"];
     var ARCHIVE_UPLOAD_GROUPS = ["archive_upload", "archive_admin"];
+
+    /* Guests and signed-in accounts without an archive group both get the
+       neutral 404, so the archive stays invisible (owner's Mar 2026 choice).
+       Set this to true to show signed-in users a "no access" panel instead. */
+    var SHOW_NO_ACCESS_PANEL = false;
 
     /* ── State ─────────────────────────────────────────────────────── */
     var state = {
@@ -244,7 +209,9 @@
     /* ── DOM refs ──────────────────────────────────────────────────── */
     var refs = {
       archiveContent:    document.getElementById("archiveContent"),
+      archiveDenied:     document.getElementById("archiveDenied"),
       uploadSection:     document.getElementById("upload"),
+      viewOnlyNote:      document.getElementById("viewOnlyNote"),
       dropZone:          document.getElementById("dropZone"),
       fileInput:         document.getElementById("fileInput"),
       uploadButton:      document.getElementById("uploadButton"),
@@ -259,12 +226,17 @@
       typeFilter:        document.getElementById("typeFilter"),
       filesBody:         document.getElementById("filesBody"),
       emptyMessage:      document.getElementById("emptyMessage"),
-      activityList:      document.getElementById("activityList")
+      activityList:      document.getElementById("activityList"),
+      tableWrap:         document.getElementById("fileTableWrap"),
+      filesSummary:      document.getElementById("filesSummary"),
+      statFiles:         document.getElementById("arStatFiles"),
+      statSize:          document.getElementById("arStatSize"),
+      statRole:          document.getElementById("arStatRole")
     };
 
     /* ── Helpers ───────────────────────────────────────────────────── */
     function getToken() {
-      /* Reads the access token stored by the account page after OIDC callback. */
+      /* Legacy: access token stored by the old account page after OIDC callback. */
       try {
         var sessionToken = typeof sessionStorage !== "undefined"
           ? sessionStorage.getItem("oidc_access_token")
@@ -332,10 +304,23 @@
       return dt.toLocaleString();
     }
 
+    function formatShortDate(iso) {
+      var dt = new Date(iso);
+      if (Number.isNaN(dt.getTime())) return iso;
+      return dt.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+    }
+
     function getFileType(name) {
       var idx = name.lastIndexOf(".");
       if (idx <= 0 || idx === name.length - 1) return "none";
       return name.slice(idx + 1).toLowerCase();
+    }
+
+    var EXT_COLORS = ["#8b6cff", "#ff6b4a", "#3ee6a6", "#ffd84a", "#7cc8ff", "#ff52a2"];
+    function extColor(ext) {
+      var h = 0;
+      for (var i = 0; i < ext.length; i++) h = (h * 31 + ext.charCodeAt(i)) >>> 0;
+      return EXT_COLORS[h % EXT_COLORS.length];
     }
 
     /* ── Authenticated fetch wrapper ───────────────────────────────── */
@@ -415,7 +400,7 @@
       });
     }
 
-    /* ── Download via fetch + blob (sends Bearer token) ────────────── */
+    /* ── Download via fetch + blob (cookie session; Bearer if legacy) ─ */
     async function downloadFile(fileId, fileName) {
       try {
         var resp = await fetch("/api/archive/download/" + fileId, {
@@ -449,13 +434,23 @@
     function setSelectedFile(file) {
       state.selectedFile = file || null;
       if (state.selectedFile) {
-        refs.selectedFileLabel.textContent = "Selected file: " + state.selectedFile.name + " (" + formatBytes(state.selectedFile.size) + ")";
+        refs.selectedFileLabel.textContent = "Selected: " + state.selectedFile.name + " (" + formatBytes(state.selectedFile.size) + ")";
       } else {
         refs.selectedFileLabel.textContent = "No file selected.";
       }
     }
 
     /* ── User / permission state ───────────────────────────────────── */
+    function showNoAccess() {
+      document.getElementById("deniedUser").textContent = state.user.username || "your account";
+      refs.statRole.textContent = "None";
+      refs.statFiles.textContent = "—";
+      refs.statSize.textContent = "—";
+      refs.archiveDenied.classList.remove("hidden");
+      refs.archiveContent.classList.add("hidden");
+      document.body.classList.remove("hidden");
+    }
+
     function setUser(user) {
       state.user = user || null;
 
@@ -469,15 +464,17 @@
       state.canUpload = hasAnyGroup(groups, ARCHIVE_UPLOAD_GROUPS);
 
       if (!state.canView) {
-        redirectNotFound();
+        if (SHOW_NO_ACCESS_PANEL) showNoAccess(); else redirectNotFound();
         return;
       }
 
       refs.archiveContent.classList.remove("hidden");
       document.body.classList.remove("hidden");
+      refs.statRole.textContent = groups.indexOf("archive_admin") !== -1 ? "Admin" : (state.canUpload ? "Uploader" : "Viewer");
 
       if (state.canUpload) {
         refs.uploadSection.classList.remove("hidden");
+        refs.viewOnlyNote.classList.add("hidden");
         refs.dropZone.style.pointerEvents = "";
         refs.dropZone.style.opacity = "";
         refs.fileInput.disabled = false;
@@ -485,6 +482,7 @@
         setNotice(refs.uploadNotice, "Ready to upload files as " + state.user.username + ".", "ok");
       } else {
         refs.uploadSection.classList.add("hidden");
+        refs.viewOnlyNote.classList.remove("hidden");
         refs.dropZone.style.pointerEvents = "";
         refs.dropZone.style.opacity = "";
         refs.uploadButton.disabled = true;
@@ -493,13 +491,30 @@
     }
 
     async function loadSession() {
+      /* 1) Cookie session (current auth): no Authentik round-trip. */
       try {
-        var token = getToken();
-        var headers = token ? { "Authorization": "Bearer " + token } : {};
+        var meResp = await fetch("/api/auth/me", { credentials: "include" });
+        var me = meResp.ok ? await meResp.json() : null;
+        if (me && me.authenticated && me.user) {
+          setUser({
+            username: me.user.username || "",
+            email: me.user.email || "",
+            groups: me.user.groups || [],
+          });
+          return;
+        }
+      } catch (_e) { /* fall through to the legacy path */ }
 
+      /* 2) Legacy JWT only: ask Authentik's userinfo with the Bearer token. */
+      var token = getToken();
+      if (!token) {
+        redirectNotFound();
+        return;
+      }
+      try {
         var response = await fetch(OIDC_USERINFO_URL, {
           credentials: "include",
-          headers: headers,
+          headers: { "Authorization": "Bearer " + token },
         });
 
         if (response.status === 401 || !response.ok) {
@@ -540,7 +555,7 @@
       types.forEach(function (type) {
         var option = document.createElement("option");
         option.value = type;
-        option.textContent = type;
+        option.textContent = "." + type;
         refs.typeFilter.appendChild(option);
       });
 
@@ -561,7 +576,7 @@
 
       if (!files.length) {
         var li2 = document.createElement("li");
-        li2.textContent = "No activity yet. Upload a file to start.";
+        li2.textContent = state.canUpload ? "No activity yet. Upload a file to start." : "No activity yet.";
         refs.activityList.appendChild(li2);
         return;
       }
@@ -586,7 +601,22 @@
       });
     }
 
+    /* ── Summary stats ─────────────────────────────────────────────── */
+    function renderStats() {
+      var total = 0;
+      state.files.forEach(function (f) { total += Number(f.size_bytes) || 0; });
+      refs.statFiles.textContent = String(state.files.length);
+      refs.statSize.textContent = state.files.length ? formatBytes(total) : "0 B";
+    }
+
     /* ── File table ────────────────────────────────────────────────── */
+    function cell(text, label) {
+      var td = document.createElement("td");
+      td.textContent = text;
+      if (label) td.setAttribute("data-label", label);
+      return td;
+    }
+
     function renderFiles() {
       refs.filesBody.innerHTML = "";
 
@@ -608,43 +638,58 @@
       });
 
       if (!filtered.length) {
-        refs.emptyMessage.textContent = state.files.length ? "No files match your filters." : "No files in the archive yet.";
+        refs.emptyMessage.textContent = state.files.length
+          ? "No files match your filters."
+          : (state.canUpload ? "The archive is empty — drop the first file in the upload panel." : "The archive is empty for now.");
         refs.emptyMessage.style.display = "block";
+        refs.tableWrap.classList.add("hidden");
       } else {
         refs.emptyMessage.style.display = "none";
+        refs.tableWrap.classList.remove("hidden");
       }
+      refs.filesSummary.textContent = state.files.length
+        ? (filtered.length === state.files.length
+            ? state.files.length + (state.files.length === 1 ? " file" : " files") + ", newest first."
+            : "Showing " + filtered.length + " of " + state.files.length + " files.")
+        : "Search, filter and download.";
 
       filtered.forEach(function (file) {
         var tr = document.createElement("tr");
+        var ext = getFileType(file.name);
 
         var nameTd = document.createElement("td");
+        var nameWrap = document.createElement("div");
+        nameWrap.className = "ar-name";
+        var badge = document.createElement("span");
+        badge.className = "ar-ext";
+        badge.setAttribute("aria-hidden", "true");
+        badge.textContent = ext === "none" ? "file" : ext.slice(0, 4);
+        badge.style.setProperty("--e", extColor(ext));
+        var nameText = document.createElement("span");
         var nameMain = document.createElement("span");
         nameMain.className = "table-name";
         nameMain.textContent = file.name;
         var nameSub = document.createElement("span");
         nameSub.className = "table-muted";
         nameSub.textContent = "ID " + file.id;
-        nameTd.appendChild(nameMain);
-        nameTd.appendChild(nameSub);
+        nameText.appendChild(nameMain);
+        nameText.appendChild(nameSub);
+        nameWrap.appendChild(badge);
+        nameWrap.appendChild(nameText);
+        nameTd.appendChild(nameWrap);
 
-        var sizeTd = document.createElement("td");
-        sizeTd.textContent = formatBytes(file.size_bytes);
-
-        var byTd = document.createElement("td");
-        byTd.textContent = file.uploaded_by;
-
-        var dateTd = document.createElement("td");
-        dateTd.textContent = formatDate(file.uploaded_at);
+        var sizeTd = cell(formatBytes(file.size_bytes), "Size");
+        var byTd = cell(file.uploaded_by, "By");
+        var dateTd = cell(formatShortDate(file.uploaded_at), "Date");
+        dateTd.title = formatDate(file.uploaded_at);
 
         var actionTd = document.createElement("td");
         var dlBtn = document.createElement("button");
-        dlBtn.className = "inline-link";
+        dlBtn.className = "btn btn-ghost btn-sm ar-dl";
         dlBtn.type = "button";
-        dlBtn.textContent = "Download";
-        dlBtn.style.background = "none";
-        dlBtn.style.border = "none";
-        dlBtn.style.cursor = "pointer";
-        dlBtn.style.font = "inherit";
+        dlBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        dlBtn.appendChild(document.createTextNode("Download"));
+        dlBtn.setAttribute("aria-label", "Download " + file.name);
         dlBtn.setAttribute("data-file-id", file.id);
         dlBtn.setAttribute("data-file-name", file.name);
         actionTd.appendChild(dlBtn);
@@ -675,6 +720,7 @@
         state.files = Array.isArray(result.files) ? result.files : [];
         updateTypeFilterOptions();
         renderFiles();
+        renderStats();
       } catch (error) {
         state.files = [];
         updateTypeFilterOptions();
@@ -781,6 +827,16 @@
       downloadFile(Number(btn.getAttribute("data-file-id")), btn.getAttribute("data-file-name"));
     }
 
+    /* ── List / grid view toggle (remembered per browser) ──────────── */
+    function setView(view) {
+      var grid = view === "grid";
+      refs.tableWrap.classList.toggle("is-grid", grid);
+      document.querySelectorAll(".ar-view [data-view]").forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-view") === view));
+      });
+      try { localStorage.setItem("cartofia_archive_view", view); } catch (_e) { /* ignore */ }
+    }
+
     /* ── Wire up events ────────────────────────────────────────────── */
     function bindEvents() {
       refs.uploadButton.addEventListener("click", handleUpload);
@@ -796,12 +852,19 @@
       refs.typeFilter.addEventListener("change", renderFiles);
 
       refs.filesBody.addEventListener("click", onTableClick);
+
+      document.querySelectorAll(".ar-view [data-view]").forEach(function (b) {
+        b.addEventListener("click", function () { setView(b.getAttribute("data-view")); });
+      });
     }
 
     /* ── Boot ──────────────────────────────────────────────────────── */
     async function boot() {
       bindEvents();
       hideUploadProgress();
+      var saved = null;
+      try { saved = localStorage.getItem("cartofia_archive_view"); } catch (_e) { /* ignore */ }
+      setView(saved === "grid" ? "grid" : "list");
       await loadSession();
       await refreshFiles();
       refs.uploadButton.disabled = !state.canUpload || !state.selectedFile;
@@ -811,5 +874,3 @@
   </script>
 </body>
 </html>
-
-

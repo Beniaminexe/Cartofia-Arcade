@@ -3,1208 +3,287 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cartofia — Profile</title>
+<title>Edit profile — Cartofia</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-:root {
-  --bg-deep: #080b12;
-  --bg-base: #0d1117;
-  --bg-surface: #141b27;
-  --bg-elevated: #1a2332;
-  --bg-card: #161f2d;
-  --bg-hover: #1e2a3c;
-  --border: rgba(56, 130, 235, 0.12);
-  --border-bright: rgba(56, 130, 235, 0.25);
-  --accent: #3b82f6;
-  --accent-glow: rgba(59, 130, 246, 0.4);
-  --accent-soft: rgba(59, 130, 246, 0.15);
-  --accent-2: #06b6d4;
-  --accent-3: #8b5cf6;
-  --text-primary: #e8edf5;
-  --text-secondary: #7d8fa8;
-  --text-muted: #4a5b73;
-  --text-accent: #7cb3ff;
-  --success: #22c55e;
-  --warning: #eab308;
-  --font-body: 'Outfit', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --radius-lg: 16px;
-}
-
-html { scroll-behavior: smooth; }
-
-body {
-  font-family: var(--font-body);
-  background: var(--bg-deep);
-  color: var(--text-primary);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-/* ── NAV ── */
-.nav {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 32px;
-  height: 56px;
-  background: rgba(8, 11, 18, 0.85);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-}
-
-.nav-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-  text-decoration: none;
-}
-
-.nav-brand svg { width: 24px; height: 24px; }
-
-.nav-links {
-  display: flex;
-  gap: 28px;
-  list-style: none;
-}
-
-.nav-links a {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-.nav-links a:hover, .nav-links a.active { color: var(--text-primary); }
-
-.nav-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent-3));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
-  color: white;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-/* ── BANNER / HERO ── */
-.profile-banner {
-  position: relative;
-  width: 100%;
-  height: 320px;
-  margin-top: 56px;
-  overflow: hidden;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-}
-
-.banner-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: brightness(0.6);
-  display: none;
-}
-
-.banner-img.loaded { display: block; }
-
-.banner-gradient {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, transparent 30%, var(--bg-deep) 100%),
-    linear-gradient(90deg, rgba(8,11,18,0.6) 0%, transparent 50%);
-}
-
-.banner-edit-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  padding: 8px 14px;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-family: var(--font-body);
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s;
-}
-
-.banner-edit-btn:hover {
-  background: rgba(0,0,0,0.7);
-  color: var(--text-primary);
-  border-color: rgba(255,255,255,0.3);
-}
-
-/* ── IDENTITY HEADER ── */
-.identity-section {
-  position: relative;
-  max-width: 1100px;
-  margin: -80px auto 0;
-  padding: 0 24px;
-  z-index: 10;
-}
-
-.identity-card {
-  display: flex;
-  align-items: flex-end;
-  gap: 24px;
-  padding: 24px 28px 28px;
-  background: rgba(20, 27, 39, 0.8);
-  backdrop-filter: blur(24px);
-  border: 1px solid var(--border-bright);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 80px var(--accent-glow);
-}
-
-.avatar-frame {
-  position: relative;
-  flex-shrink: 0;
-  margin-bottom: -8px;
-  cursor: pointer;
-}
-
-.avatar-ring {
-  width: 120px;
-  height: 120px;
-  border-radius: 20px;
-  padding: 4px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
-  box-shadow: 0 0 30px var(--accent-glow);
-  animation: ring-glow 3s ease-in-out infinite alternate;
-}
-
-@keyframes ring-glow {
-  0% { box-shadow: 0 0 20px var(--accent-glow); }
-  100% { box-shadow: 0 0 40px var(--accent-glow), 0 0 60px rgba(139,92,246,0.15); }
-}
-
-.avatar-img {
-  width: 100%;
-  height: 100%;
-  border-radius: 17px;
-  object-fit: cover;
-  background: var(--bg-elevated);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 42px;
-  font-weight: 700;
-  color: var(--accent);
-  overflow: hidden;
-}
-
-.avatar-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 17px;
-}
-
-.avatar-upload-hint {
-  position: absolute;
-  inset: 4px;
-  border-radius: 17px;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
-  font-size: 11px;
-  color: white;
-  font-weight: 600;
-  text-align: center;
-  pointer-events: none;
-}
-
-.avatar-frame:hover .avatar-upload-hint { opacity: 1; }
-
-.level-badge {
-  position: absolute;
-  bottom: -6px;
-  right: -6px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent-3));
-  border: 3px solid var(--bg-surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: white;
-  box-shadow: 0 2px 10px var(--accent-glow);
-}
-
-.identity-info { flex: 1; min-width: 0; }
-
-.identity-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 4px;
-  flex-wrap: wrap;
-}
-
-.display-name {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-  outline: none;
-}
-
-.display-name[contenteditable="true"] {
-  outline: 1px dashed var(--border-bright);
-  outline-offset: 4px;
-  border-radius: 4px;
-  min-width: 60px;
-}
-
-.username {
-  font-size: 14px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-}
-
-.status-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  max-width: 100%;
-}
-
-.status-badge {
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.badge-online {
-  background: rgba(34, 197, 94, 0.15);
-  color: var(--success);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-.badge-role {
-  background: var(--accent-soft);
-  color: var(--text-accent);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-.tagline {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-top: 6px;
-  font-style: italic;
-  outline: none;
-  min-height: 20px;
-}
-
-.tagline[contenteditable="true"] {
-  outline: 1px dashed var(--border-bright);
-  outline-offset: 4px;
-  border-radius: 4px;
-  min-width: 120px;
-}
-
-.identity-actions {
-  display: flex;
-  gap: 10px;
-  flex-shrink: 0;
-  align-self: center;
-}
-
-.btn {
-  padding: 10px 20px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn-primary {
-  background: var(--accent);
-  color: white;
-  box-shadow: 0 2px 12px var(--accent-glow);
-}
-
-.btn-primary:hover {
-  background: #4f8ffc;
-  box-shadow: 0 4px 20px var(--accent-glow);
-  transform: translateY(-1px);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-secondary {
-  background: var(--bg-hover);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-bright);
-}
-
-.btn-secondary:hover {
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-}
-
-/* ── MAIN CONTENT ── */
-.profile-content {
-  max-width: 1100px;
-  margin: 28px auto 60px;
-  padding: 0 24px;
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 24px;
-}
-
-/* ── CARDS ── */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
-  transition: border-color 0.3s;
-}
-
-.card:hover { border-color: var(--border-bright); }
-
-.card-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-muted);
-  margin-bottom: 12px;
-}
-
-.card-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-}
-
-/* ── BIO ── */
-.bio-text {
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--text-secondary);
-  outline: none;
-  min-height: 40px;
-  white-space: pre-wrap;
-}
-
-.bio-text[contenteditable="true"] {
-  outline: 1px dashed var(--border-bright);
-  outline-offset: 4px;
-  border-radius: 4px;
-}
-
-.bio-meta {
-  margin-top: 16px;
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.bio-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.bio-meta-item svg {
-  width: 14px;
-  height: 14px;
-  opacity: 0.6;
-}
-
-/* ── SHOWCASES ── */
-.showcases { display: flex; flex-direction: column; gap: 20px; }
-
-.showcase-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.showcase-header .card-label { margin-bottom: 0; }
-
-/* Game showcase */
-.game-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.game-card {
-  position: relative;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  aspect-ratio: 3/4;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.game-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-
-.game-card-bg {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  filter: brightness(0.7);
-  transition: filter 0.2s;
-}
-
-.game-card:hover .game-card-bg { filter: brightness(0.9); }
-
-.game-card-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.85) 100%);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 12px;
-}
-
-.game-card-name { font-size: 12px; font-weight: 600; color: white; }
-.game-card-hours { font-size: 10px; color: rgba(255,255,255,0.6); font-family: var(--font-mono); }
-
-/* Achievement showcase */
-.achievement-row { display: flex; gap: 12px; flex-wrap: wrap; }
-
-.achievement-item {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-}
-
-.achievement-item:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 16px var(--accent-glow);
-  transform: scale(1.08);
-}
-
-.achievement-item.rare {
-  border-color: rgba(234, 179, 8, 0.4);
-  background: rgba(234, 179, 8, 0.08);
-}
-
-.achievement-item.rare:hover {
-  box-shadow: 0 0 16px rgba(234, 179, 8, 0.3);
-  border-color: var(--warning);
-}
-
-.achievement-tooltip {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-deep);
-  border: 1px solid var(--border-bright);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  white-space: nowrap;
-  font-size: 11px;
-  color: var(--text-primary);
-  z-index: 20;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-}
-
-.achievement-item:hover .achievement-tooltip { display: block; }
-
-/* Arcade records */
-.record-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  margin-bottom: 10px;
-}
-
-.record-row:last-child { margin-bottom: 0; }
-.record-game { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.record-label { font-size: 11px; color: var(--text-muted); }
-.record-value { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent); }
-
-/* Showcase empty state */
-.showcase-empty {
-  text-align: center;
-  padding: 24px;
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.achievement-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 10px;
-}
-
-.achievement-item {
-  width: auto;
-  height: auto;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-elevated);
-  cursor: default;
-  text-align: left;
-  transition: none;
-}
-
-.achievement-item:hover { transform: none; box-shadow: none; }
-.achievement-item.locked { opacity: 0.55; }
-.achievement-icon { font-size: 20px; }
-.achievement-name { font-size: 13px; font-weight: 600; }
-.achievement-description { margin-top: 3px; color: var(--text-secondary); font-size: 11px; line-height: 1.4; }
-.achievement-status { margin-top: 5px; color: var(--text-accent); font-size: 10px; }
-
-.friend-search {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.friend-search input {
-  min-width: 0;
-  flex: 1;
-  padding: 10px 12px;
-  color: var(--text-primary);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-bright);
-  border-radius: var(--radius-sm);
-  font: inherit;
-}
-
-.friend-list { display: grid; gap: 8px; }
-.friend-list + .friend-list { margin-top: 16px; }
-.friend-list-title { margin-bottom: 8px; color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
-.friend-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); }
-.friend-row img, .friend-avatar { width: 32px; height: 32px; flex: 0 0 32px; border-radius: 50%; object-fit: cover; background: var(--accent-soft); display: grid; place-items: center; color: var(--text-accent); font-size: 11px; font-weight: 700; }
-.friend-name { flex: 1; min-width: 0; color: var(--text-primary); font-size: 13px; overflow-wrap: anywhere; }
-.friend-name small { display: block; color: var(--text-muted); font-size: 11px; }
-.friend-empty { padding: 10px 0; color: var(--text-muted); font-size: 13px; }
-
-/* ── ACTIVITY FEED ── */
-.activity-list { display: flex; flex-direction: column; gap: 0; }
-
-.activity-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.activity-item:last-child { border-bottom: none; }
-
-.activity-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.activity-icon.play { background: rgba(59, 130, 246, 0.15); }
-.activity-icon.badge { background: rgba(234, 179, 8, 0.15); }
-.activity-icon.upload { background: rgba(34, 197, 94, 0.15); }
-.activity-icon.level { background: rgba(139, 92, 246, 0.15); }
-.activity-icon.avatar { background: rgba(59, 130, 246, 0.1); }
-
-.activity-text {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-.activity-text strong { color: var(--text-primary); font-weight: 500; }
-.activity-text .highlight { color: var(--text-accent); font-weight: 500; }
-
-.activity-time {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  margin-top: 2px;
-}
-
-/* ── SIDEBAR ── */
-.sidebar { display: flex; flex-direction: column; gap: 20px; }
-
-/* Stats */
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.stat-cell {
-  padding: 14px;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-sm);
-  text-align: center;
-  border: 1px solid var(--border);
-  transition: border-color 0.3s;
-}
-
-.stat-cell:hover { border-color: var(--border-bright); }
-
-.stat-value {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-top: 6px;
-  font-weight: 600;
-}
-
-/* Level progress */
-.level-section { text-align: center; }
-
-.level-ring {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 12px;
-  position: relative;
-}
-
-.level-ring svg {
-  width: 80px;
-  height: 80px;
-  transform: rotate(-90deg);
-}
-
-.level-ring-bg { fill: none; stroke: var(--bg-hover); stroke-width: 4; }
-
-.level-ring-fill {
-  fill: none;
-  stroke: url(#level-gradient);
-  stroke-width: 4;
-  stroke-linecap: round;
-  stroke-dasharray: 226;
-  stroke-dashoffset: 226;
-  transition: stroke-dashoffset 1s ease;
-}
-
-.level-number {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.level-xp { font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); }
-
-/* Badge case */
-.badge-case { display: flex; gap: 10px; flex-wrap: wrap; }
-
-.badge-item {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.badge-item.featured {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: 0 0 12px var(--accent-glow);
-}
-
-.badge-item:hover { transform: scale(1.1); border-color: var(--accent); }
-
-/* Profile meta */
-.meta-list { display: flex; flex-direction: column; gap: 10px; }
-
-.meta-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-}
-
-.meta-key { color: var(--text-muted); }
-.meta-value { color: var(--text-secondary); font-family: var(--font-mono); font-size: 12px; }
-
-/* ── THEME SELECTOR ── */
-.theme-bar {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 20px;
-  background: rgba(20, 27, 39, 0.9);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border-bright);
-  border-radius: 40px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-  z-index: 50;
-  animation: slideUp 0.5s ease;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translate(-50%, 20px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
-}
-
-.theme-bar-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.theme-dot {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: all 0.2s;
-}
-
-.theme-dot:hover { transform: scale(1.2); }
-.theme-dot.active { border-color: white; box-shadow: 0 0 12px rgba(255,255,255,0.3); }
-
-/* ── LOADING / TOAST ── */
-.toast {
-  position: fixed;
-  top: 70px;
-  right: 20px;
-  padding: 12px 18px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-bright);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  color: var(--text-primary);
-  z-index: 200;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  opacity: 0;
-  transform: translateX(20px);
-  transition: all 0.3s;
-  pointer-events: none;
-}
-
-.toast.show { opacity: 1; transform: translateX(0); }
-.toast.ok { border-color: rgba(34,197,94,0.4); color: var(--success); }
-.toast.err { border-color: rgba(239,68,68,0.4); color: #f87171; }
-
-/* ── ANIMATIONS ── */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-in { animation: fadeInUp 0.5s ease forwards; opacity: 0; }
-.delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
-.delay-3 { animation-delay: 0.3s; }
-.delay-4 { animation-delay: 0.4s; }
-.delay-5 { animation-delay: 0.5s; }
-.delay-6 { animation-delay: 0.6s; }
-
-/* ── RESPONSIVE ── */
-@media (max-width: 860px) {
-  .profile-content { grid-template-columns: 1fr; }
-  .identity-card { flex-direction: column; align-items: flex-start; }
-  .identity-actions { align-self: flex-start; margin-top: 12px; }
-  .avatar-ring { width: 96px; height: 96px; }
-  .display-name { font-size: 22px; }
-  .game-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (max-width: 520px) {
-  .profile-banner { height: 200px; }
-  .identity-section { margin-top: -50px; }
-  .identity-card { padding: 16px 18px 20px; gap: 16px; }
-  .avatar-ring { width: 72px; height: 72px; }
-  .level-badge { width: 28px; height: 28px; font-size: 11px; }
-  .display-name { font-size: 20px; }
-  .game-grid { grid-template-columns: repeat(2, 1fr); }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-  .nav { padding: 0 16px; }
-  .profile-content { padding: 0 16px; }
-  .identity-section { padding: 0 16px; }
-}
-
-.discord-link-card {
-  display: grid;
-  gap: 14px;
-  padding: 18px;
-  margin: 0 0 24px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(88,101,242,0.10), rgba(10,14,26,0.6));
-  border: 1px solid rgba(88,101,242,0.35);
-}
-.discord-link-card[hidden] { display: none; }
-.discord-link-head {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.discord-link-head svg { color: #5865F2; flex-shrink: 0; }
-.discord-link-head h3 {
-  margin: 0 0 4px;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-.discord-link-head p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-.discord-link-head p .linked {
-  color: #86efac;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-}
-.discord-link-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-</style>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/assets/site.css?v=7">
+<link rel="stylesheet" href="/assets/notifications.css?v=6">
+<link rel="stylesheet" href="/assets/profile-v2.css?v=1">
 </head>
-<body>
+<body class="pf pf-editor">
 
 <!-- TOAST -->
-<div class="toast" id="toast"></div>
+<div class="site-toasts"><div class="site-toast" id="toast" role="status" aria-live="polite"></div></div>
 
 <!-- NAV -->
-<nav class="nav">
-  <a href="/" class="nav-brand">
-    <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.6"/></svg>
+<header class="nav">
+  <a class="nav-brand" href="/">
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.55"/></svg>
     Cartofia
   </a>
-  <ul class="nav-links">
-    <li><a href="/">Home</a></li>
-    <li><a href="/arcade/">Arcade</a></li>
-  </ul>
-  <div class="nav-avatar" id="navAvatar">–</div>
-</nav>
-
-<!-- BANNER -->
-<div class="profile-banner">
-  <img class="banner-img" id="bannerImg" alt="Profile banner">
-  <div class="banner-gradient"></div>
-  <button class="banner-edit-btn" id="bannerEditBtn">
-    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5l3 3-9 9H2.5v-3l9-9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-    Edit Banner
-  </button>
-  <input type="file" id="bannerUpload" hidden accept="image/png,image/jpeg,image/gif,image/webp">
-</div>
-
-<!-- IDENTITY HEADER -->
-<div class="identity-section animate-in">
-  <div class="identity-card">
-    <div class="avatar-frame" id="avatarFrame">
-      <div class="avatar-ring">
-        <div class="avatar-img" id="avatarDisplay">–</div>
+  <nav class="nav-links" aria-label="Primary">
+    <a href="/">Home</a>
+    <a href="/arcade/">Arcade</a>
+    <a href="/minecraft/">Minecraft</a>
+    <a href="/forum/">Forum</a>
+    <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
+  </nav>
+  <div class="nav-right">
+    <div class="account-menu" data-account-menu>
+      <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
+      <div class="account-dropdown hidden" data-account-dropdown role="menu">
+        <a class="account-item" href="/account/" role="menuitem">Open Account</a>
       </div>
-      <div class="level-badge" id="levelBadge">1</div>
-      <div class="avatar-upload-hint">📷 Change</div>
-    </div>
-    <input type="file" id="avatarUpload" hidden accept="image/png,image/jpeg,image/gif,image/webp">
-
-    <div class="identity-info">
-      <div class="identity-top">
-        <span class="display-name" id="displayName">Loading…</span>
-        <span class="username" id="usernameDisplay">@—</span>
-        <div class="status-badges">
-          <span id="profileStatusBadges" class="status-badges"></span>
-        </div>
-      </div>
-      <div class="tagline" id="tagline">—</div>
-    </div>
-
-    <div class="identity-actions">
-      <button class="btn btn-primary" id="editBtn">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5l3 3-9 9H2.5v-3l9-9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-        Edit Profile
-      </button>
-      <button class="btn btn-secondary" id="shareBtn">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="12" cy="3" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 9l4 3M10 4L6 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Share
-      </button>
     </div>
   </div>
-</div>
+</header>
 
-<!-- MAIN CONTENT -->
-<div class="profile-content">
+<main class="pf-wrap pe-main">
 
-  <!-- LEFT COLUMN -->
-  <div class="main-column">
-
-    <!-- BIO -->
-    <div class="card animate-in delay-1">
-      <div class="card-label">About Me</div>
-      <div class="bio-text" id="bioText">Loading…</div>
-      <div class="bio-meta">
-        <div class="bio-meta-item">
-          <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 4v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          Joined <span id="joinedDate">—</span>
-        </div>
-        <div class="bio-meta-item">
-          <svg viewBox="0 0 16 16" fill="none"><path d="M2 13V3h12v10H2zM5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          <span id="profileViewsCount">0</span> profile views
-        </div>
-      </div>
+  <header class="pf-head">
+    <div>
+      <p class="pf-kicker"><span class="pf-bulbs" aria-hidden="true"><i></i><i></i><i></i></span>Profile editor</p>
+      <h1 class="pf-title">Your <span>player card</span></h1>
+      <p class="pf-lead">Change your details and watch the card update live. Nothing goes public until you hit <strong>Save</strong>.</p>
     </div>
-
-    <!-- SHOWCASES -->
-    <div class="showcases" id="showcasesContainer"></div>
-
-    <div class="card animate-in">
-      <div class="card-label">Game Achievements</div>
-      <div class="achievement-grid" id="achievementList">
-        <div class="showcase-empty">Loading achievements…</div>
-      </div>
+    <div class="pf-head-actions">
+      <a class="btn btn-ghost" id="viewPublicBtn" href="/account/">View public profile</a>
+      <button class="btn btn-ghost" type="button" id="shareBtn">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="12" cy="3" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 9l4 3M10 4L6 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Copy link
+      </button>
     </div>
+  </header>
 
-    <div class="card animate-in">
-      <div class="card-label">Find Players</div>
-      <!-- Discord link card (shown to the owner only) -->
-      <div class="discord-link-card" id="discordLinkCard" hidden>
-        <div class="discord-link-head">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
-            <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
-          </svg>
-          <div>
-            <h3>Discord</h3>
-            <p id="discordLinkSub">Link your Discord account to get a DM when your Minecraft server comes online.</p>
+  <!-- ===== EDIT + LIVE PREVIEW ===== -->
+  <section class="pe-grid" aria-label="Edit profile">
+
+    <form class="pe-form" id="profileForm" novalidate>
+
+      <section class="pf-panel" aria-labelledby="pe-identity">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Step 1</p><h2 class="pf-h2" id="pe-identity">Identity</h2></div></div>
+        <div class="pe-fields">
+          <div class="pe-field">
+            <div class="pe-label-row"><label for="editDisplayName">Display name</label><span class="pe-count-num" data-count-for="editDisplayName"></span></div>
+            <input class="input" id="editDisplayName" name="display_name" type="text" maxlength="50" required autocomplete="nickname">
+          </div>
+          <div class="pe-field">
+            <div class="pe-label-row"><label for="editTagline">Tagline</label><span class="pe-count-num" data-count-for="editTagline"></span></div>
+            <input class="input" id="editTagline" name="tagline" type="text" maxlength="150" placeholder="One line about you — shows under your name">
+          </div>
+          <div class="pe-field">
+            <div class="pe-label-row"><label for="editBio">About me</label><span class="pe-count-num" data-count-for="editBio"></span></div>
+            <textarea class="textarea" id="editBio" name="bio" maxlength="2000" rows="5" placeholder="Favourite games, your main, where you hang out…"></textarea>
           </div>
         </div>
-        <div class="discord-link-actions">
-          <button id="discordLinkBtn"       class="btn btn-primary btn-sm" type="button" hidden>Link Discord</button>
-          <button id="discordDisconnectBtn" class="btn btn-ghost  btn-sm" type="button" hidden>Disconnect</button>
+      </section>
+
+      <section class="pf-panel" aria-labelledby="pe-images">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Step 2</p><h2 class="pf-h2" id="pe-images">Avatar &amp; banner</h2></div><span class="pe-hint">PNG, JPG, GIF or WEBP · saves instantly</span></div>
+        <div class="pe-media">
+          <button class="pe-media-btn" type="button" id="avatarPickBtn">
+            <span class="pe-media-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="9" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg></span>
+            <span><strong>Change avatar</strong><small>Square images look best</small></span>
+          </button>
+          <button class="pe-media-btn" type="button" id="bannerEditBtn">
+            <span class="pe-media-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg></span>
+            <span><strong>Change banner</strong><small>Wide images, about 3:1</small></span>
+          </button>
+        </div>
+        <input type="file" id="avatarUpload" hidden accept="image/png,image/jpeg,image/gif,image/webp">
+        <input type="file" id="bannerUpload" hidden accept="image/png,image/jpeg,image/gif,image/webp">
+      </section>
+
+      <section class="pf-panel" aria-labelledby="pe-theme">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Step 3</p><h2 class="pf-h2" id="pe-theme">Theme</h2></div><span class="pe-hint">Your accent colours across Cartofia</span></div>
+        <div class="theme-bar" id="themeBar" role="radiogroup" aria-label="Theme">
+          <button type="button" class="theme-dot active" role="radio" aria-checked="true" data-theme="nightmarket" title="Night Market"><i style="background:linear-gradient(135deg,#7c5cff,#ff6b4a)"></i>Night Market</button>
+          <button type="button" class="theme-dot" role="radio" aria-checked="false" data-theme="ocean" title="Deep Ocean"><i style="background:linear-gradient(135deg,#3b82f6,#06b6d4)"></i>Deep Ocean</button>
+          <button type="button" class="theme-dot" role="radio" aria-checked="false" data-theme="neon" title="Neon Night"><i style="background:linear-gradient(135deg,#a855f7,#ec4899)"></i>Neon Night</button>
+          <button type="button" class="theme-dot" role="radio" aria-checked="false" data-theme="ember" title="Ember"><i style="background:linear-gradient(135deg,#f59e0b,#ef4444)"></i>Ember</button>
+          <button type="button" class="theme-dot" role="radio" aria-checked="false" data-theme="matrix" title="Matrix"><i style="background:linear-gradient(135deg,#22c55e,#06b6d4)"></i>Matrix</button>
+          <button type="button" class="theme-dot" role="radio" aria-checked="false" data-theme="synthwave" title="Synthwave"><i style="background:linear-gradient(135deg,#e11d48,#9333ea)"></i>Synthwave</button>
+        </div>
+      </section>
+
+      <section class="pf-panel" aria-labelledby="pe-vis">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Step 4</p><h2 class="pf-h2" id="pe-vis">Visibility</h2></div></div>
+        <div class="tabs pe-seg" role="radiogroup" aria-label="Profile visibility">
+          <input type="radio" name="visibility" id="visPublic" value="public" checked><label class="tab" for="visPublic">Public</label>
+          <input type="radio" name="visibility" id="visPrivate" value="private"><label class="tab" for="visPrivate">Private</label>
+        </div>
+        <p class="pe-hint" style="margin-top:10px">Private hides your /u/ page, friends list and records from everyone else.</p>
+      </section>
+
+      <div class="pe-savebar" id="saveBar">
+        <span class="pe-save-state" id="saveState" aria-live="polite">All changes saved</span>
+        <div class="pe-save-actions">
+          <button class="btn btn-ghost" type="button" id="resetBtn" disabled>Reset</button>
+          <button class="btn btn-coral" type="submit" id="editBtn">Save changes</button>
         </div>
       </div>
+    </form>
 
-      <form class="friend-search" id="friendSearchForm">
-        <input id="friendSearchInput" type="search" minlength="2" maxlength="64" placeholder="Search by username or display name" aria-label="Search users">
+    <!-- LIVE PREVIEW -->
+    <aside class="pe-preview" aria-label="Live preview">
+      <div class="pe-preview-head">
+        <p class="pf-eyebrow"><span class="pe-live-dot" aria-hidden="true"></span>Live preview</p>
+        <a class="pf-link" id="viewPublicLink" href="/account/">Open public page →</a>
+      </div>
+      <div class="pc pc-compact">
+        <div class="profile-banner">
+          <img class="banner-img" id="bannerImg" alt="">
+          <div class="banner-gradient"></div>
+        </div>
+        <div class="pc-identity identity-card">
+          <div class="avatar-frame" id="avatarFrame" role="button" tabindex="0" aria-label="Change avatar">
+            <div class="avatar-ring">
+              <div class="avatar-img" id="avatarDisplay">–</div>
+            </div>
+            <div class="avatar-upload-hint" aria-hidden="true">Change</div>
+            <div class="level-badge" id="levelBadge" title="Level">1</div>
+          </div>
+          <div class="identity-info">
+            <div class="status-badges" id="profileStatusBadges"></div>
+            <div class="display-name" id="displayName">Loading…</div>
+            <div class="pc-sub">
+              <span class="username" id="usernameDisplay">@—</span>
+              <span class="tagline" id="tagline"></span>
+            </div>
+          </div>
+        </div>
+        <div class="pc-bio">
+          <div class="bio-text" id="bioText">Loading…</div>
+          <div class="bio-meta">
+            <div class="bio-meta-item">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 4v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              Joined <span id="joinedDate">—</span>
+            </div>
+            <div class="bio-meta-item">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+              <span id="profileViewsCount">0</span> views
+            </div>
+          </div>
+        </div>
+        <div class="stats-grid pc-stats" aria-label="Stats">
+          <a class="stat-cell" href="#friends" id="statFriendsCell" title="See friends">
+            <span class="stat-value" id="statFriends">0</span>
+            <span class="stat-label">Friends</span>
+          </a>
+          <div class="stat-cell"><span class="stat-value" id="statPlaytime">0h</span><span class="stat-label">Playtime</span></div>
+          <div class="stat-cell"><span class="stat-value" id="statAchievements">0</span><span class="stat-label">Achievements</span></div>
+          <div class="stat-cell"><span class="stat-value" id="statUploads">0</span><span class="stat-label">Uploads</span></div>
+          <div class="stat-cell"><span class="stat-value" id="statBadges">0</span><span class="stat-label">Badges</span></div>
+          <div class="stat-cell"><span class="stat-value" id="statViews">0</span><span class="stat-label">Views</span></div>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ===== FRIENDS ===== -->
+  <section class="pf-panel" id="friends" style="margin-top:clamp(36px,5vw,56px)" aria-labelledby="friendsTitle">
+    <div class="pf-panel-head">
+      <div><p class="pf-eyebrow">Squad</p><h2 class="pf-h2" id="friendsTitle">Friends</h2></div>
+      <form class="friend-search" id="friendSearchForm" role="search" style="margin:0;flex:1 1 320px;max-width:460px">
+        <input class="input" id="friendSearchInput" type="search" minlength="2" maxlength="64" placeholder="Find players by name" aria-label="Search users">
         <button class="btn btn-primary" type="submit">Search</button>
       </form>
-      <div class="friend-list" id="userSearchResults" aria-live="polite"></div>
+    </div>
+    <div class="friend-list" id="userSearchResults" aria-live="polite" style="margin-bottom:18px"></div>
+    <div class="pe-friends-cols">
       <div class="friend-list" id="friendRequests"></div>
       <div class="friend-list" id="friendsList"></div>
     </div>
+  </section>
 
-    <!-- ACTIVITY FEED -->
-    <div class="card animate-in delay-5">
-      <div class="card-label">Recent Activity</div>
-      <div class="activity-list" id="activityList">
-        <div class="activity-item">
-          <div class="activity-icon play">⏳</div>
-          <div><div class="activity-text">Loading activity…</div></div>
+  <!-- ===== TROPHIES, RECORDS, ACTIVITY ===== -->
+  <div class="pe-lower">
+    <div class="pe-col">
+      <section class="pf-panel" aria-labelledby="achTitle">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Trophies</p><h2 class="pf-h2" id="achTitle">Achievements <span class="pf-count" id="achCountLabel"></span></h2></div></div>
+        <div class="achievement-grid" id="achievementList">
+          <div class="showcase-empty">Loading achievements…</div>
         </div>
-      </div>
+        <div class="more-row" id="achievementMore"></div>
+      </section>
+
+      <!-- SHOWCASES (favorite games / arcade records) -->
+      <div class="showcases" id="showcasesContainer"></div>
     </div>
 
+    <div class="pe-col">
+      <section class="pf-panel" aria-labelledby="levelTitle">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Progress</p><h2 class="pf-h2" id="levelTitle">Level</h2></div></div>
+        <div class="level-section">
+          <div class="level-ring">
+            <svg viewBox="0 0 80 80" aria-hidden="true">
+              <defs>
+                <linearGradient id="level-gradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="var(--accent)"/>
+                  <stop offset="100%" stop-color="var(--accent-2)"/>
+                </linearGradient>
+              </defs>
+              <circle class="level-ring-bg" cx="40" cy="40" r="36"/>
+              <circle class="level-ring-fill" id="levelRingFill" cx="40" cy="40" r="36"/>
+            </svg>
+            <div class="level-number" id="levelNumber">1</div>
+          </div>
+          <div class="level-copy">
+            <strong>Arcade level</strong>
+            <div class="level-xp" id="levelXp">0 XP</div>
+            <p class="level-hint">XP comes from games played, achievements, uploads and badges.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="pf-panel" aria-labelledby="activityTitle">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Feed</p><h2 class="pf-h2" id="activityTitle">Recent activity</h2></div></div>
+        <div class="activity-list" id="activityList">
+          <div class="activity-item">
+            <div class="activity-icon play" aria-hidden="true">⏳</div>
+            <div><div class="activity-text">Loading activity…</div></div>
+          </div>
+        </div>
+        <div class="more-row" id="activityMore" hidden>
+          <button class="show-more-btn" type="button" id="activityMoreBtn" aria-expanded="false" aria-controls="activityList">Show more</button>
+        </div>
+      </section>
+
+      <section class="pf-panel" aria-labelledby="badgeTitle">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Flair</p><h2 class="pf-h2" id="badgeTitle">Badge case</h2></div></div>
+        <div class="badge-case" id="badgeCase">
+          <div class="pf-muted-note">No badges yet</div>
+        </div>
+      </section>
+
+      <section class="pf-panel" aria-labelledby="metaTitle">
+        <div class="pf-panel-head"><div><p class="pf-eyebrow">Details</p><h2 class="pf-h2" id="metaTitle">Profile</h2></div></div>
+        <div class="meta-list">
+          <div class="meta-row"><span class="meta-key">Account age</span><span class="meta-value" id="metaAccountAge">—</span></div>
+          <div class="meta-row"><span class="meta-key">Visibility</span><span class="meta-value" id="metaVisibility">Public</span></div>
+          <div class="meta-row"><span class="meta-key">Theme</span><span class="meta-value" id="metaTheme">Night Market</span></div>
+          <div class="meta-row"><span class="meta-key">Featured badge</span><span class="meta-value" id="metaFeaturedBadge">None</span></div>
+          <div class="meta-row"><span class="meta-key">Showcases</span><span class="meta-value" id="metaShowcases">0 / 3</span></div>
+        </div>
+      </section>
+    </div>
   </div>
+</main>
 
-  <!-- RIGHT SIDEBAR -->
-  <div class="sidebar">
+<footer class="site-footer">
+  <span class="footer-copy">© 2026 Cartofia. Built on a homelab.</span>
+  <nav class="footer-links" aria-label="Footer">
+    <a href="/arcade/">Arcade</a>
+    <a href="/achievements/">Achievements</a>
+    <a href="/forum/">Forum</a>
+    <a href="/account/">Account</a>
+    <a href="https://discord.gg/2uPuU3zyWW" target="_blank" rel="noopener noreferrer">Discord</a>
+  </nav>
+</footer>
 
-    <!-- Level -->
-    <div class="card animate-in delay-2">
-      <div class="card-label">Level</div>
-      <div class="level-section">
-        <div class="level-ring">
-          <svg viewBox="0 0 80 80">
-            <defs>
-              <linearGradient id="level-gradient" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="var(--accent)"/>
-                <stop offset="100%" stop-color="var(--accent-3)"/>
-              </linearGradient>
-            </defs>
-            <circle class="level-ring-bg" cx="40" cy="40" r="36"/>
-            <circle class="level-ring-fill" id="levelRingFill" cx="40" cy="40" r="36"/>
-          </svg>
-          <div class="level-number" id="levelNumber">1</div>
-        </div>
-        <div class="level-xp" id="levelXp">0 XP</div>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="card animate-in delay-3">
-      <div class="card-label">Stats</div>
-      <div class="stats-grid">
-        <div class="stat-cell">
-          <div class="stat-value" id="statGamesPlayed">0</div>
-          <div class="stat-label">Games Played</div>
-        </div>
-        <div class="stat-cell">
-          <div class="stat-value" id="statPlaytime">0h</div>
-          <div class="stat-label">Playtime</div>
-        </div>
-        <div class="stat-cell">
-          <div class="stat-value" id="statAchievements">0</div>
-          <div class="stat-label">Achievements</div>
-        </div>
-        <div class="stat-cell">
-          <div class="stat-value" id="statUploads">0</div>
-          <div class="stat-label">Uploads</div>
-        </div>
-        <div class="stat-cell">
-          <div class="stat-value" id="statBadges">0</div>
-          <div class="stat-label">Badges</div>
-        </div>
-        <div class="stat-cell">
-          <div class="stat-value" id="statViews">0</div>
-          <div class="stat-label">Profile Views</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Badge Case -->
-    <div class="card animate-in delay-4">
-      <div class="card-label">Badge Case</div>
-      <div class="badge-case" id="badgeCase">
-        <div style="font-size:13px;color:var(--text-muted);">No badges yet</div>
-      </div>
-    </div>
-
-    <!-- Profile Meta -->
-    <div class="card animate-in delay-5">
-      <div class="card-label">Profile</div>
-      <div class="meta-list">
-        <div class="meta-row">
-          <span class="meta-key">Account Age</span>
-          <span class="meta-value" id="metaAccountAge">—</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-key">Visibility</span>
-          <span class="meta-value" id="metaVisibility">Public</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-key">Theme</span>
-          <span class="meta-value" id="metaTheme">Ocean</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-key">Featured Badge</span>
-          <span class="meta-value" id="metaFeaturedBadge">None</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-key">Showcases</span>
-          <span class="meta-value" id="metaShowcases">0 / 3</span>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- THEME BAR -->
-<div class="theme-bar" id="themeBar">
-  <span class="theme-bar-label">Theme</span>
-  <div class="theme-dot active" style="background:linear-gradient(135deg,#3b82f6,#06b6d4);" data-theme="ocean" title="Deep Ocean"></div>
-  <div class="theme-dot" style="background:linear-gradient(135deg,#8b5cf6,#ec4899);" data-theme="neon" title="Neon Night"></div>
-  <div class="theme-dot" style="background:linear-gradient(135deg,#f59e0b,#ef4444);" data-theme="ember" title="Ember"></div>
-  <div class="theme-dot" style="background:linear-gradient(135deg,#22c55e,#06b6d4);" data-theme="matrix" title="Matrix"></div>
-  <div class="theme-dot" style="background:linear-gradient(135deg,#e11d48,#9333ea);" data-theme="synthwave" title="Synthwave"></div>
-</div>
-
-<script src="/assets/theme.js?v=1"></script>
-  <script src="/assets/site.js?v=8"></script>
-  <script src="/assets/notifications.js?v=1" defer></script>
+<script src="/assets/theme.js?v=3"></script>
+<script src="/assets/site.js?v=10"></script>
+<script src="/assets/notifications.js?v=3" defer></script>
 <script>
 /* ─────────────────────────────────────────────
    Token helpers — same storage site.js uses
@@ -1213,15 +292,31 @@ function getToken() {
   return sessionStorage.getItem('oidc_access_token') ||
          localStorage.getItem('oidc_access_token') || '';
 }
+/* Cookie session is primary (credentials sent on every call); a legacy
+   JWT is attached only if one is still stored. */
+function authHeaders() {
+  const t = getToken();
+  return t ? { 'Authorization': 'Bearer ' + t } : {};
+}
+let _authMe;
+async function cookieSession() {
+  if (_authMe !== undefined) return _authMe;
+  try {
+    const r = await fetch('/api/auth/me', { credentials: 'include' });
+    const d = r.ok ? await r.json() : null;
+    _authMe = (d && d.authenticated && d.user) ? d.user : null;
+  } catch (_) { _authMe = null; }
+  return _authMe;
+}
 
 /* ─────────────────────────────────────────────
-   Toast
-───────────────────────────────────────��───── */
+   Toast (site.css .site-toast)
+───────────────────────────────────────────── */
 let _toastTimer = null;
 function showToast(msg, type) {
   const el = document.getElementById('toast');
   el.textContent = msg;
-  el.className = 'toast show' + (type ? ' ' + type : '');
+  el.className = 'site-toast show' + (type === 'ok' ? ' is-ok' : type === 'err' ? ' is-error' : '');
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => { el.classList.remove('show'); }, 3000);
 }
@@ -1229,78 +324,59 @@ function showToast(msg, type) {
 /* ─────────────────────────────────────────────
    API helpers
 ───────────────────────────────────────────── */
+async function _fail(r) {
+  const error = new Error((await r.json().catch(() => ({}))).error || r.statusText || ('HTTP ' + r.status));
+  error.status = r.status;
+  throw error;
+}
 async function apiGet(url) {
-  const r = await fetch(url, {
-    headers: { 'Authorization': 'Bearer ' + getToken() },
-  });
-  if (!r.ok) {
-    const error = new Error((await r.json().catch(() => ({}))).error || r.statusText);
-    error.status = r.status;
-    throw error;
-  }
+  const r = await fetch(url, { credentials: 'include', headers: authHeaders() });
+  if (!r.ok) await _fail(r);
   return r.json();
 }
-
+/* /api/profile/me only accepts PUT (the old editor sent PATCH → 405). */
 async function apiPut(url, body) {
   const r = await fetch(url, {
-    method: 'PATCH',
-    headers: {
-      'Authorization': 'Bearer ' + getToken(),
-      'Content-Type': 'application/json',
-    },
+    method: 'PUT',
+    credentials: 'include',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  if (!r.ok) await _fail(r);
   return r.json();
 }
-
 async function apiPost(url, body) {
   const r = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + getToken(),
-      'Content-Type': 'application/json',
-    },
+    credentials: 'include',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  if (!r.ok) await _fail(r);
   return r.json();
 }
-
 async function apiPatch(url, body) {
   const r = await fetch(url, {
     method: 'PATCH',
-    headers: {
-      'Authorization': 'Bearer ' + getToken(),
-      'Content-Type': 'application/json',
-    },
+    credentials: 'include',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  if (!r.ok) await _fail(r);
   return r.json();
 }
-
 async function apiDelete(url) {
-  const r = await fetch(url, {
-    method: 'DELETE',
-    headers: { 'Authorization': 'Bearer ' + getToken() },
-  });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  const r = await fetch(url, { method: 'DELETE', credentials: 'include', headers: authHeaders() });
+  if (!r.ok) await _fail(r);
   return r.json();
 }
-
 async function apiUpload(url, file) {
   const fd = new FormData();
   fd.append('file', file);
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + getToken() },
-    body: fd,
-  });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  const r = await fetch(url, { method: 'POST', credentials: 'include', headers: authHeaders(), body: fd });
+  if (!r.ok) await _fail(r);
   return r.json();
 }
-
 
 /* Status badges (ONLINE + groups) rendered from /api/profile/me so what
    the owner sees matches what strangers see on /u/<slug>. */
@@ -1321,57 +397,58 @@ function renderOwnerBadges(me) {
   if (me.is_online !== false) {
     const p = document.createElement('span');
     p.className = 'status-badge badge-online';
-    p.textContent = '● ONLINE';
+    p.textContent = '● Online';
     host.appendChild(p);
   }
-  const groups = me.groups || [];
-  groups.forEach(g => {
+  (me.groups || []).forEach(g => {
     const label = _ME_GROUP_DISPLAY[g];
     if (!label) return;
     const p = document.createElement('span');
     p.className = 'status-badge badge-role';
-    p.textContent = label.toUpperCase();
+    p.textContent = label;
     host.appendChild(p);
   });
 }
 
 /* ─────────────────────────────────────────────
-   Theme system — thin wrapper around the shared
-   window.CartofiaTheme defined in /assets/theme.js
+   Theme — previews through the shared window.CartofiaTheme
+   (assets/theme.js); persisted together with the form on Save.
 ───────────────────────────────────────────── */
 const THEME_NAMES = window.CartofiaTheme.THEME_NAMES;
 
-function applyTheme(name, save) {
-  window.CartofiaTheme.apply(name, !!save);
+function applyTheme(name) {
+  if (!window.CartofiaTheme.THEMES[name]) name = 'nightmarket';
+  window.CartofiaTheme.apply(name, false);
   document.querySelectorAll('.theme-dot').forEach(d => {
-    d.classList.toggle('active', d.dataset.theme === name);
+    const on = d.dataset.theme === name;
+    d.classList.toggle('active', on);
+    d.setAttribute('aria-checked', String(on));
   });
-  var meta = document.getElementById('metaTheme');
-  if (meta) meta.textContent = THEME_NAMES[name] || name;
+  return name;
 }
 
 document.querySelectorAll('.theme-dot').forEach(dot => {
-  dot.addEventListener('click', () => applyTheme(dot.dataset.theme, true));
+  dot.addEventListener('click', () => {
+    _draft.theme = applyTheme(dot.dataset.theme);
+    updateDirty();
+  });
 });
 
 /* ─────────────────────────────────────────────
-   Avatar rendering
+   Avatar rendering (preview card + nav avatar)
 ───────────────────────────────────────────── */
 function setAvatar(url, initials) {
   const el = document.getElementById('avatarDisplay');
   if (url) {
-    el.innerHTML = `<img src="${url}" alt="avatar" onerror="this.parentElement.textContent='${initials}'">`;
+    el.innerHTML = `<img src="${escHtml(url)}" alt="">`;
+    el.querySelector('img').onerror = () => { el.textContent = initials; };
   } else {
     el.textContent = initials;
   }
-  // Nav avatar
-  const nav = document.getElementById('navAvatar');
-  if (url) {
-    nav.innerHTML = `<img src="${url}" alt="avatar">`;
-    nav.style.background = 'none';
-  } else {
-    nav.textContent = initials;
-    nav.style.background = '';
+  const nav = document.querySelector('.nav [data-account-toggle]');
+  if (nav && url) {
+    nav.innerHTML = `<img src="${escHtml(url)}" alt="">`;
+    nav.classList.add('has-image');
   }
 }
 
@@ -1394,16 +471,14 @@ function calcLevel(stats) {
 
 function renderLevel(stats) {
   const { level, xp, xpForNext, progress } = calcLevel(stats);
-  const circumference = 226;
   document.getElementById('levelNumber').textContent = level;
   document.getElementById('levelBadge').textContent = level;
   document.getElementById('levelXp').textContent = xp.toLocaleString() + ' / ' + xpForNext.toLocaleString() + ' XP';
-  document.getElementById('levelRingFill').style.strokeDashoffset =
-    circumference * (1 - progress);
+  document.getElementById('levelRingFill').style.strokeDashoffset = 226 * (1 - progress);
 }
 
 /* ─────────────────────────────────────────────
-   Relative time
+   Time helpers
 ───────────────────────────────────────────── */
 function relTime(iso) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -1413,7 +488,6 @@ function relTime(iso) {
   if (diff < 86400 * 7) return Math.floor(diff / 86400) + 'd ago';
   return new Date(iso).toLocaleDateString();
 }
-
 function accountAge(iso) {
   const months = Math.floor((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24 * 30.44));
   if (months < 1) return '< 1 month';
@@ -1421,13 +495,11 @@ function accountAge(iso) {
   const y = Math.floor(months / 12), m = months % 12;
   return y + 'y' + (m ? ' ' + m + 'mo' : '');
 }
-
 function fmtPlaytime(seconds) {
   const h = Math.floor(seconds / 3600);
   if (h < 1) return Math.floor(seconds / 60) + 'm';
   return h + 'h';
 }
-
 function joinedFmt(iso) {
   return new Date(iso).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 }
@@ -1436,140 +508,190 @@ function joinedFmt(iso) {
    Activity rendering
 ───────────────────────────────────────────── */
 const ACTIVITY_MAP = {
-  played_game:         { icon: '🎮', cls: 'play',   text: m => `Played <span class="highlight">${m.game || 'a game'}</span>` },
-  earned_badge:        { icon: '🏆', cls: 'badge',  text: m => `Earned badge <strong>${m.badge || ''}</strong>` },
-  unlocked_achievement:{ icon: '🎖️', cls: 'badge',  text: m => `Unlocked achievement <strong>${m.achievement || ''}</strong>` },
+  played_game:         { icon: '🎮', cls: 'play',   text: m => `Played <span class="highlight">${escHtml(gameName(m.game))}</span>${m.result ? ' · ' + escHtml(resultText(m)) : ''}` },
+  created_thread:      { icon: '💬', cls: 'level',  text: m => `Started a forum thread${m.title ? ' <strong>' + escHtml(m.title) + '</strong>' : ''}` },
+  replied_thread:      { icon: '💬', cls: 'level',  text: () => 'Replied in the forum' },
+  earned_badge:        { icon: '🏆', cls: 'badge',  text: m => `Earned badge <strong>${escHtml(m.badge || '')}</strong>` },
+  unlocked_achievement:{ icon: '🎖️', cls: 'badge',  text: m => `Unlocked achievement <strong>${escHtml(m.achievement || '')}</strong>` },
   uploaded_file:       { icon: '📁', cls: 'upload', text: m => `Uploaded <strong>${m.filename ? '1 file' : 'a file'}</strong> to Archive` },
-  reached_level:       { icon: '⬆️', cls: 'level',  text: m => `Reached <span class="highlight">Level ${m.level || '?'}</span>` },
+  reached_level:       { icon: '⬆️', cls: 'level',  text: m => `Reached <span class="highlight">Level ${escHtml(String(m.level || '?'))}</span>` },
   changed_avatar:      { icon: '🖼️', cls: 'avatar', text: () => 'Updated profile avatar' },
   changed_banner:      { icon: '🖼️', cls: 'avatar', text: () => 'Updated profile banner' },
 };
 
-function renderActivity(items) {
-  const list = document.getElementById('activityList');
-  if (!items || items.length === 0) {
-    list.innerHTML = '<div class="activity-item"><div class="activity-icon play">💤</div><div><div class="activity-text">No activity yet</div></div></div>';
-    return;
-  }
-  list.innerHTML = items.map(item => {
-    const def = ACTIVITY_MAP[item.event_type] || { icon: '●', cls: 'play', text: () => item.event_type };
-    return `<div class="activity-item">
-      <div class="activity-icon ${def.cls}">${def.icon}</div>
+const ACTIVITY_PREVIEW = 3;
+let _activityAll = [], _activityHasMore = false, _activityExpanded = false;
+function activityRow(item) {
+  const def = ACTIVITY_MAP[item.event_type] || { icon: '●', cls: 'play', text: () => escHtml(item.event_type) };
+  return `<div class="activity-item">
+      <div class="activity-icon ${def.cls}" aria-hidden="true">${def.icon}</div>
       <div>
         <div class="activity-text">${def.text(item.metadata || {})}</div>
         <div class="activity-time">${relTime(item.created_at)}</div>
       </div>
     </div>`;
-  }).join('');
 }
+function renderActivity(items, hasMore) {
+  const list = document.getElementById('activityList');
+  const more = document.getElementById('activityMore');
+  _activityAll = items || [];
+  _activityHasMore = hasMore === undefined ? _activityAll.length >= 10 : !!hasMore;
+  if (!_activityAll.length) {
+    list.innerHTML = '<div class="activity-item"><div class="activity-icon play" aria-hidden="true">💤</div><div><div class="activity-text">No activity yet</div></div></div>';
+    more.hidden = true;
+    return;
+  }
+  const shown = _activityExpanded ? _activityAll : _activityAll.slice(0, ACTIVITY_PREVIEW);
+  list.innerHTML = shown.map(activityRow).join('');
+  const canExpand = !_activityExpanded && _activityAll.length > ACTIVITY_PREVIEW;
+  const canLoadMore = _activityExpanded && _activityHasMore;
+  more.hidden = !(canExpand || _activityExpanded);
+  const btn = document.getElementById('activityMoreBtn');
+  btn.textContent = canExpand ? 'Show more' : (canLoadMore ? 'Load older' : 'Show less');
+  btn.setAttribute('aria-expanded', String(_activityExpanded));
+}
+document.getElementById('activityMoreBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('activityMoreBtn');
+  if (!_activityExpanded) { _activityExpanded = true; renderActivity(_activityAll, _activityHasMore); return; }
+  if (_activityHasMore && window._mySlug) {
+    btn.disabled = true;
+    const last = _activityAll[_activityAll.length - 1];
+    try {
+      const d = await apiGet('/api/profile/' + encodeURIComponent(window._mySlug) + '/activity?limit=20'
+                             + (last ? '&before=' + encodeURIComponent(last.id) : ''));
+      renderActivity(_activityAll.concat(d.activity || []), d.has_more);
+    } catch (_) { _activityHasMore = false; renderActivity(_activityAll, false); }
+    btn.disabled = false;
+    return;
+  }
+  _activityExpanded = false;
+  renderActivity(_activityAll, _activityHasMore);
+});
 
 /* ─────────────────────────────────────────────
-   Showcase rendering
+   Showcase rendering (favorite games, arcade records)
 ───────────────────────────────────────────── */
-const GAME_COLORS = {
-  'bomber-raid':  'linear-gradient(135deg,#b91c1c,#ef4444)',
-  'blackjack':    'linear-gradient(135deg,#0f766e,#2dd4bf)',
-  'chess':        'linear-gradient(135deg,#7c3aed,#a78bfa)',
-  'checkers':     'linear-gradient(135deg,#c2410c,#fb923c)',
-  'snake':        'linear-gradient(135deg,#15803d,#4ade80)',
-  'zuma-temple':  'linear-gradient(135deg,#b45309,#fbbf24)',
-  'minesweeper':  'linear-gradient(135deg,#475569,#94a3b8)',
-  'maze-chase':   'linear-gradient(135deg,#1d4ed8,#60a5fa)',
+const GAME_ACCENT = {
+  cartofia: '#7cc8ff', ludo: '#ffb54a', snake: '#8bd94a', chess: '#b08cff', 'brick-blitz': '#ff52a2',
+  'bomber-raid': '#ff8c3a', minesweeper: '#9fb4d8', blackjack: '#2fc184', 'maze-chase': '#8c84ff',
+  'word-puzzle': '#f2c94c', zuma: '#2cc6b4',
 };
-const GAME_COLORS_FALLBACK = [
-  'linear-gradient(135deg,#b91c1c,#ef4444)',
-  'linear-gradient(135deg,#0f766e,#2dd4bf)',
-  'linear-gradient(135deg,#7c3aed,#a78bfa)',
-  'linear-gradient(135deg,#1d4ed8,#60a5fa)',
-  'linear-gradient(135deg,#b45309,#fbbf24)',
-];
+const GAME_ACCENT_FALLBACK = ['#8b6cff', '#ff6b4a', '#3ee6a6', '#ffd84a', '#7cc8ff'];
 let arcadeStats = null;
 
-function gameColor(gameId, idx) {
-  return GAME_COLORS[gameId] || GAME_COLORS_FALLBACK[idx % GAME_COLORS_FALLBACK.length];
+function gameAccent(slug, idx) {
+  return GAME_ACCENT[slug] || GAME_ACCENT_FALLBACK[(idx || 0) % GAME_ACCENT_FALLBACK.length];
 }
-
+function gameColor(slug, idx) {
+  const c = gameAccent(slug, idx);
+  return `linear-gradient(135deg, color-mix(in srgb, ${c} 75%, #000), #120b24)`;
+}
 function fmtHrs(seconds) {
-  const h = seconds / 3600;
-  return h < 0.1 ? '<1m' : h.toFixed(1) + ' hrs';
+  const s = Math.max(0, Number(seconds) || 0);
+  if (s < 60) return s ? '<1m' : '0m';
+  if (s < 3600) return Math.round(s / 60) + 'm';
+  const h = s / 3600;
+  return (h < 10 ? h.toFixed(1) : Math.round(h)) + 'h';
 }
 
-function renderShowcase(s) {
-  const label = {
-    favorite_games: '★ Favorite Games',
-    achievements:   '🏆 Achievement Showcase',
-    arcade_records: '🎯 Arcade Records',
-    badge_case:     '🎖️ Badge Case',
-  }[s.showcase_type] || s.showcase_type;
+/* Game slug -> folder slug (cover art, links) and display name. */
+const GAME_ALIASES = { 'zuma-temple': 'zuma' };
+const GAME_NAMES = {
+  'bomber-raid': 'Bomber Raid', blackjack: 'Blackjack', chess: 'Chess', snake: 'Snake',
+  cartofia: 'Cartofia', zuma: 'Zuma Temple', minesweeper: 'Minesweeper', 'maze-chase': 'Maze Chase',
+  ludo: 'Ludo', 'word-puzzle': 'Word Puzzle', 'brick-blitz': 'Brick Blitz',
+};
+function gameSlug(g) { g = String(g || '').toLowerCase(); return GAME_ALIASES[g] || g; }
+function gameName(g) { const s = gameSlug(g); return GAME_NAMES[s] || (s ? s.replace(/-/g, ' ') : 'a game'); }
+function resultText(m) {
+  const r = String(m.result || '').toLowerCase();
+  if (m.placement) return ({ 1: '1st', 2: '2nd', 3: '3rd' }[m.placement] || m.placement + 'th') + ' place';
+  if (r === 'win' || r === 'won') return 'won';
+  if (r === 'loss' || r === 'lose' || r === 'lost') return 'lost';
+  return String(m.result).slice(0, 40);
+}
+function gameCard(g, i) {
+  const slug = gameSlug(g.slug || g.game);
+  const name = g.display_name || gameName(slug);
+  return `<a class="game-card" href="/arcade/${encodeURIComponent(slug)}/" style="--g:${gameAccent(slug, i)}" aria-label="Play ${escHtml(name)}">
+      <span class="game-card-cover">
+        <span class="game-card-bg" style="background:${gameColor(slug, i)};"></span>
+        <img class="game-card-art" src="/assets/games/${encodeURIComponent(slug)}.svg" alt="" loading="lazy" onerror="this.remove()">
+      </span>
+      <span class="game-card-body game-card-overlay">
+        <span class="game-card-text">
+          <span class="game-card-name">${escHtml(name)}</span>
+          <span class="game-card-hours">${fmtHrs(g.total_playtime_seconds)} played</span>
+        </span>
+        <span class="game-card-play" aria-hidden="true">Play →</span>
+      </span>
+    </a>`;
+}
+function recordsBlock(games) {
+  const sorted = [...games].sort((a, b) => (b.games_played || 0) - (a.games_played || 0)
+    || (b.total_playtime_seconds || 0) - (a.total_playtime_seconds || 0));
+  return '<div class="record-list">' + sorted.map((r, i) => {
+    const n = r.games_played != null ? r.games_played : (r.total_sessions || 0);
+    const slug = gameSlug(r.slug || r.game);
+    const cells = [`<div class="record-stat"><b>${n}</b><span>game${n !== 1 ? 's' : ''}</span></div>`];
+    if (r.wins) cells.push(`<div class="record-stat"><b>${r.wins}</b><span>wins</span></div>`);
+    if (r.best_score != null && r.best_score > 0) cells.push(`<div class="record-stat"><b>${Number(r.best_score).toLocaleString()}</b><span>best</span></div>`);
+    cells.push(`<div class="record-stat"><b>${fmtHrs(r.total_playtime_seconds)}</b><span>played</span></div>`);
+    return `<div class="record-row" style="--g:${gameColor(slug, i)}">
+        <img class="record-thumb" src="/assets/games/${encodeURIComponent(slug)}.svg" alt="" loading="lazy" onerror="this.removeAttribute('src')">
+        <div style="min-width:0">
+          <div class="record-game"><a href="/arcade/${encodeURIComponent(slug)}/">${escHtml(r.display_name || gameName(slug))}</a></div>
+          <div class="record-label">${r.last_played ? 'last played ' + relTime(r.last_played) : ''}</div>
+        </div>
+        <div class="record-stats">${cells.join('')}</div>
+      </div>`;
+  }).join('') + '</div>';
+}
 
+const SHOWCASE_META = {
+  favorite_games: { eyebrow: 'Showcase', title: 'Favorite games', link: ['/arcade/', 'Arcade →'] },
+  arcade_records: { eyebrow: 'Records',  title: 'Arcade records' },
+  badge_case:     { eyebrow: 'Flair',    title: 'Badge showcase' },
+};
+function renderShowcase(s) {
+  /* The achievements showcase is the dedicated Achievements card here. */
+  if (s.showcase_type === 'achievements') return '';
+  const meta = SHOWCASE_META[s.showcase_type] || { eyebrow: 'Showcase', title: s.showcase_type };
   const games = (arcadeStats && arcadeStats.games) ? arcadeStats.games : [];
   let body = '';
-
   if (s.showcase_type === 'favorite_games') {
-    if (!games.length) {
-      body = '<div class="showcase-empty">No games played yet.</div>';
-    } else {
-      const top = games.slice(0, 3);
-      body = '<div class="game-grid">' + top.map((g, i) => `
-        <div class="game-card">
-          <div class="game-card-bg" style="background:${gameColor(g.game, i)};"></div>
-          <div class="game-card-overlay">
-            <div class="game-card-name">${escHtml(g.display_name || g.game)}</div>
-            <div class="game-card-hours">${fmtHrs(g.total_playtime_seconds)}</div>
-          </div>
-        </div>`).join('') + '</div>';
-    }
-
+    body = games.length
+      ? '<div class="game-grid">' + games.slice(0, 3).map(gameCard).join('') + '</div>'
+      : '<div class="showcase-empty">No games played yet. <a class="more-link" href="/arcade/">Pick one →</a></div>';
   } else if (s.showcase_type === 'arcade_records') {
-    if (!games.length) {
-      body = '<div class="showcase-empty">No games played yet.</div>';
-    } else {
-      const sorted = [...games].sort((a, b) => b.total_sessions - a.total_sessions);
-      body = '<div>' + sorted.map(r => `
-        <div class="record-row">
-          <div>
-            <div class="record-game">${escHtml(r.display_name || r.game)}</div>
-            <div class="record-label">${r.total_sessions} session${r.total_sessions !== 1 ? 's' : ''}</div>
-          </div>
-          <div class="record-value">${fmtHrs(r.total_playtime_seconds)}</div>
-        </div>`).join('') + '</div>';
-    }
-
-  } else if (s.showcase_type === 'achievements') {
-    body = '<div class="showcase-empty" style="padding:20px 24px;">Achievements coming soon.</div>';
-
+    body = games.length ? recordsBlock(games) : '<div class="showcase-empty">No games played yet.</div>';
   } else if (s.showcase_type === 'badge_case') {
-    const cfg = s.config || {};
-    const badges = cfg.badges || [];
+    const badges = (s.config || {}).badges || [];
     body = badges.length
       ? '<div class="badge-case">' + badges.map(b =>
           `<div class="badge-item" title="${escHtml(b.label || '')}">${escHtml(b.emoji || '🏅')}</div>`
         ).join('') + '</div>'
       : '<div class="showcase-empty">No badges in showcase.</div>';
   }
-
-  return `<div class="card animate-in">
+  const link = meta.link ? `<a class="pf-link" href="${meta.link[0]}">${meta.link[1]}</a>` : '';
+  return `<section class="pf-panel" data-showcase="${escHtml(s.showcase_type)}">
     <div class="showcase-header">
-      <div class="card-label">${label}</div>
+      <div><p class="pf-eyebrow">${escHtml(meta.eyebrow)}</p><h2 class="pf-h2">${escHtml(meta.title)}</h2></div>
+      ${link}
     </div>
     ${body}
-  </div>`;
+  </section>`;
 }
-
 function renderShowcases(showcases) {
-  const container = document.getElementById('showcasesContainer');
-  if (!showcases || !showcases.length) {
-    container.innerHTML = '';
-    return;
-  }
-  container.innerHTML = showcases.map(renderShowcase).join('');
+  document.getElementById('showcasesContainer').innerHTML =
+    (showcases && showcases.length) ? showcases.map(renderShowcase).join('') : '';
 }
 
 /* ─────────────────────────────────────────────
    Stats rendering
 ───────────────────────────────────────────── */
 function renderStats(stats) {
-  document.getElementById('statGamesPlayed').textContent  = (stats.games_played || 0).toLocaleString();
+  document.getElementById('statFriends').textContent      = (stats.friends_count || 0).toLocaleString();
   document.getElementById('statPlaytime').textContent     = fmtPlaytime(stats.total_playtime_seconds || 0);
   document.getElementById('statAchievements').textContent = (stats.achievements_unlocked || 0).toLocaleString();
   document.getElementById('statUploads').textContent      = (stats.uploads || stats.upload_count || 0).toLocaleString();
@@ -1578,23 +700,47 @@ function renderStats(stats) {
   document.getElementById('profileViewsCount').textContent = (stats.profile_views || 0).toLocaleString();
 }
 
+/* ─────────────────────────────────────────────
+   Achievements (earned only: first 6, rest behind "Show more")
+───────────────────────────────────────────── */
+const ACH_PREVIEW = 6;
+let _achExpanded = false;
 function renderAchievements(items) {
+  window._achAll = items || [];
   const list = document.getElementById('achievementList');
-  if (!items || !items.length) {
-    list.innerHTML = '<div class="showcase-empty">Play a game to start earning achievements.</div>';
+  const more = document.getElementById('achievementMore');
+  const earned = window._achAll.filter(a => a.earned)
+    .sort((a, b) => String(b.unlocked_at || '').localeCompare(String(a.unlocked_at || '')));
+  document.getElementById('achCountLabel').textContent =
+    window._achAll.length ? earned.length + ' / ' + window._achAll.length : '';
+  const slug = window._mySlug || '';
+  const allHref = '/achievements/' + (slug ? '?user=' + encodeURIComponent(slug) : '');
+  if (!earned.length) {
+    list.innerHTML = '<div class="showcase-empty" style="grid-column:1/-1">No achievements earned yet. Play a game to start earning them.</div>';
+    more.innerHTML = '<span></span><a class="more-link" href="' + allHref + '">See all achievements →</a>';
     return;
   }
-  list.innerHTML = items.map(item => `
-    <div class="achievement-item ${item.earned ? '' : 'locked'}">
+  const shown = _achExpanded ? earned : earned.slice(0, ACH_PREVIEW);
+  list.innerHTML = shown.map(item => `
+    <a class="achievement-item${['rare','epic','legendary'].includes(item.rarity) ? ' rare' : ''}" href="${allHref}#${encodeURIComponent(item.id)}" title="${escHtml(item.description)}">
       <span class="achievement-icon" aria-hidden="true">${escHtml(item.icon || '🏅')}</span>
-      <div>
-        <div class="achievement-name">${escHtml(item.name)}</div>
-        <div class="achievement-description">${escHtml(item.description)}</div>
-        <div class="achievement-status">${item.earned ? 'Unlocked' : 'Not yet earned'}</div>
-      </div>
-    </div>`).join('');
+      <span class="achievement-text">
+        <span class="achievement-name">${escHtml(item.name)}</span>
+        <span class="achievement-status">${escHtml(item.game_name || '')}${item.unlocked_at ? ' · ' + relTime(item.unlocked_at) : ''}</span>
+      </span>
+    </a>`).join('');
+  const extra = earned.length - ACH_PREVIEW;
+  more.innerHTML = (extra > 0
+      ? `<button class="show-more-btn" type="button" id="achMoreBtn" aria-expanded="${_achExpanded}">${_achExpanded ? 'Show less' : 'Show ' + extra + ' more'}</button>`
+      : '<span></span>')
+    + '<a class="more-link" href="' + allHref + '">See all achievements →</a>';
+  const btn = document.getElementById('achMoreBtn');
+  if (btn) btn.onclick = () => { _achExpanded = !_achExpanded; renderAchievements(window._achAll); };
 }
 
+/* ─────────────────────────────────────────────
+   Friends — search, requests, list
+───────────────────────────────────────────── */
 let friendData = { friends: [], incoming_requests: [], outgoing_requests: [] };
 const friendBaseUrl = '/api/profile/me/friends';
 
@@ -1612,21 +758,28 @@ function renderFriendRow(user, actions) {
     avatar.textContent = (user.display_name || user.username || '?').slice(0, 2).toUpperCase();
     row.appendChild(avatar);
   }
-  const link = document.createElement('div');
+  const link = document.createElement('a');
   link.className = 'friend-name';
+  link.href = '/u/' + encodeURIComponent(user.username);
   link.textContent = user.display_name || user.username;
+  if (user.is_online) {
+    const dot = document.createElement('span');
+    dot.className = 'friend-online';
+    dot.title = 'Online';
+    link.appendChild(dot);
+  }
   const handle = document.createElement('small');
   handle.textContent = '@' + user.username;
   link.appendChild(handle);
   row.appendChild(link);
   actions.forEach(action => {
     if (action.href) {
-      const link = document.createElement('a');
-      link.className = 'btn btn-secondary';
-      link.href = action.href;
-      link.textContent = action.label;
-      link.setAttribute('aria-label', action.label + ' for ' + (user.display_name || user.username));
-      row.appendChild(link);
+      const a = document.createElement('a');
+      a.className = 'btn btn-secondary';
+      a.href = action.href;
+      a.textContent = action.label;
+      a.setAttribute('aria-label', action.label + ' for ' + (user.display_name || user.username));
+      row.appendChild(a);
       return;
     }
     if (action.disabled) {
@@ -1637,7 +790,8 @@ function renderFriendRow(user, actions) {
       return;
     }
     const button = document.createElement('button');
-    button.className = 'btn btn-secondary';
+    button.className = 'btn ' + (action.action === 'accept' || action.action === 'add' ? 'btn-coral'
+      : action.action === 'remove' ? 'btn-danger-soft' : 'btn-secondary');
     button.type = 'button';
     button.textContent = action.label;
     button.dataset.friendAction = action.action;
@@ -1665,14 +819,20 @@ function renderFriendSection(container, title, users, actions, emptyText) {
 
 function renderFriends(data) {
   friendData = data || { friends: [], incoming_requests: [], outgoing_requests: [] };
-  renderFriendSection(document.getElementById('friendsList'), 'Friends', friendData.friends,
-    () => [{ action: 'remove', label: 'Remove' }], 'No friends yet.');
-  renderFriendSection(document.getElementById('friendRequests'), 'Friend Requests',
+  renderFriendSection(document.getElementById('friendsList'), 'Friends · ' + friendData.friends.length, friendData.friends,
+    user => [{ label: 'Profile', href: '/u/' + encodeURIComponent(user.username) }, { action: 'remove', label: 'Remove' }],
+    'No friends yet. Search for players above.');
+  renderFriendSection(document.getElementById('friendRequests'), 'Friend requests',
     friendData.incoming_requests.concat(friendData.outgoing_requests),
     user => friendData.incoming_requests.some(item => item.username === user.username)
       ? [{ action: 'accept', label: 'Accept' }, { action: 'decline', label: 'Decline' }]
-      : [{ action: 'cancel', label: 'Cancel' }],
+      : [{ label: 'Request sent', disabled: true }, { action: 'cancel', label: 'Cancel' }],
     'No pending requests.');
+  document.querySelectorAll('#friendRequests .friend-row').forEach((row, i) => {
+    if (i < friendData.incoming_requests.length) row.classList.add('new-request');
+  });
+  const sf = document.getElementById('statFriends');
+  if (sf) sf.textContent = friendData.friends.length.toLocaleString();
 }
 
 function renderUserSearch(users) {
@@ -1680,7 +840,7 @@ function renderUserSearch(users) {
   resultList.replaceChildren();
   const heading = document.createElement('div');
   heading.className = 'friend-list-title';
-  heading.textContent = 'Search Results';
+  heading.textContent = 'Search results';
   resultList.appendChild(heading);
   if (!users.length) {
     const empty = document.createElement('div');
@@ -1694,7 +854,9 @@ function renderUserSearch(users) {
     const normalizedUser = { ...user, username };
     let action;
     const profileLink = { label: 'See profile', href: '/u/' + encodeURIComponent(username) };
-    if (friendData.friends.some(item => item.username === username)) {
+    if (username === window._mySlug) {
+      action = [profileLink, { label: 'You', disabled: true }];
+    } else if (friendData.friends.some(item => item.username === username)) {
       action = [profileLink, { label: 'Friends', disabled: true }];
     } else if (friendData.outgoing_requests.some(item => item.username === username)) {
       action = [profileLink, { label: 'Request sent', disabled: true }];
@@ -1712,7 +874,7 @@ document.getElementById('friendSearchForm').addEventListener('submit', async eve
   const query = document.getElementById('friendSearchInput').value.trim();
   const results = document.getElementById('userSearchResults');
   if (query.length < 2) {
-    results.textContent = 'Enter at least two characters.';
+    results.innerHTML = '<div class="friend-empty">Enter at least two characters.</div>';
     return;
   }
   try {
@@ -1728,7 +890,8 @@ document.getElementById('friendSearchForm').addEventListener('submit', async eve
     }
     renderUserSearch(data.users || []);
   } catch (error) {
-    results.textContent = error.status === 404 ? 'No users found.' : 'Search failed: ' + error.message;
+    results.innerHTML = '<div class="friend-empty"></div>';
+    results.firstChild.textContent = error.status === 404 ? 'No users found.' : 'Search failed: ' + error.message;
   }
 });
 
@@ -1741,14 +904,19 @@ async function handleFriendAction(event) {
   if (!button) return;
   const username = encodeURIComponent(button.dataset.username);
   const action = button.dataset.friendAction;
+  if (action === 'remove' && !confirm('Remove this friend?')) return;
   button.disabled = true;
   try {
     if (action === 'add') await apiPost(friendBaseUrl + '/' + username);
     else if (action === 'remove') await apiDelete(friendBaseUrl + '/' + username);
     else await apiPatch(friendBaseUrl + '/' + username, { action });
     renderFriends(await apiGet(friendBaseUrl));
-    document.getElementById('friendSearchForm').dispatchEvent(new Event('submit', { cancelable: true }));
-    showToast(action === 'add' ? 'Friend request sent' : 'Friends updated', 'ok');
+    window.dispatchEvent(new Event('cartofia:notifications-refresh'));
+    if (document.getElementById('friendSearchInput').value.trim().length >= 2) {
+      document.getElementById('friendSearchForm').dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+    showToast({ add: 'Friend request sent', accept: 'Friend added', decline: 'Request declined',
+                cancel: 'Request cancelled', remove: 'Friend removed' }[action] || 'Friends updated', 'ok');
   } catch (error) {
     button.disabled = false;
     showToast(error.message, 'err');
@@ -1756,8 +924,112 @@ async function handleFriendAction(event) {
 }
 
 /* ─────────────────────────────────────────────
+   Editor state: inputs → live preview → Save (PUT /api/profile/me)
+───────────────────────────────────────────── */
+const F = {
+  name: document.getElementById('editDisplayName'),
+  tagline: document.getElementById('editTagline'),
+  bio: document.getElementById('editBio'),
+};
+let _saved = null;                 /* last values the server confirmed */
+const _draft = { theme: 'nightmarket' };
+
+function currentVisibility() {
+  return document.getElementById('visPrivate').checked ? 'private' : 'public';
+}
+function readDraft() {
+  return {
+    display_name: F.name.value.trim(),
+    tagline: F.tagline.value.trim(),
+    bio: F.bio.value.trim(),
+    theme: _draft.theme,
+    visibility: currentVisibility(),
+  };
+}
+function isDirty() {
+  if (!_saved) return false;
+  const d = readDraft();
+  return Object.keys(d).some(k => (d[k] || '') !== (_saved[k] || ''));
+}
+function updateCounts() {
+  document.querySelectorAll('[data-count-for]').forEach(el => {
+    const inp = document.getElementById(el.dataset.countFor);
+    const max = Number(inp.getAttribute('maxlength')) || 0;
+    el.textContent = inp.value.length + ' / ' + max;
+    el.classList.toggle('is-near', max && inp.value.length > max * 0.9);
+  });
+}
+function updatePreview() {
+  const d = readDraft();
+  document.getElementById('displayName').textContent = d.display_name || window._mySlug || '—';
+  document.getElementById('tagline').textContent = d.tagline;
+  document.getElementById('bioText').textContent = d.bio || 'No bio yet.';
+  if (!_avatarUrl) {
+    document.getElementById('avatarDisplay').textContent =
+      (d.display_name || window._mySlug || '?').slice(0, 2).toUpperCase();
+  }
+  updateCounts();
+}
+function updateDirty() {
+  const dirty = isDirty();
+  document.getElementById('saveBar').classList.toggle('is-dirty', dirty);
+  document.getElementById('saveState').textContent = dirty ? 'Unsaved changes' : 'All changes saved';
+  document.getElementById('resetBtn').disabled = !dirty;
+}
+function fillForm(values) {
+  F.name.value = values.display_name || '';
+  F.tagline.value = values.tagline || '';
+  F.bio.value = values.bio || '';
+  document.getElementById(values.visibility === 'private' ? 'visPrivate' : 'visPublic').checked = true;
+  _draft.theme = applyTheme(values.theme || 'nightmarket');
+  updatePreview();
+  updateDirty();
+}
+
+[F.name, F.tagline, F.bio].forEach(inp => inp.addEventListener('input', () => { updatePreview(); updateDirty(); }));
+document.querySelectorAll('input[name="visibility"]').forEach(r => r.addEventListener('change', updateDirty));
+document.getElementById('resetBtn').addEventListener('click', () => { if (_saved) fillForm(_saved); });
+
+document.getElementById('profileForm').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const btn = document.getElementById('editBtn');
+  const d = readDraft();
+  if (!d.display_name) {
+    showToast('Display name cannot be empty', 'err');
+    F.name.focus();
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try {
+    const res = await apiPut('/api/profile/me', d);
+    const p = (res && res.profile) || {};
+    _saved = {
+      display_name: p.display_name != null ? p.display_name : d.display_name,
+      tagline: p.tagline != null ? p.tagline : d.tagline,
+      bio: p.bio != null ? p.bio : d.bio,
+      theme: p.theme || d.theme,
+      visibility: p.visibility || d.visibility,
+    };
+    fillForm(_saved);
+    document.getElementById('metaVisibility').textContent = _saved.visibility === 'private' ? 'Private' : 'Public';
+    document.getElementById('metaTheme').textContent = THEME_NAMES[_saved.theme] || _saved.theme;
+    showToast('Profile saved', 'ok');
+  } catch (e) {
+    showToast('Save failed: ' + e.message, 'err');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Save changes';
+});
+
+window.addEventListener('beforeunload', (ev) => {
+  if (isDirty()) { ev.preventDefault(); ev.returnValue = ''; }
+});
+
+/* ─────────────────────────────────────────────
    Full profile render
 ───────────────────────────────────────────── */
+let _avatarUrl = '';
 function renderProfile(data) {
   const profile = data.profile || data;
   const showcases = data.showcases || [];
@@ -1767,33 +1039,43 @@ function renderProfile(data) {
   // Banner
   if (profile.banner_url) {
     const img = document.getElementById('bannerImg');
-    img.src = profile.banner_url;
     img.onload = () => img.classList.add('loaded');
     img.onerror = () => {};
+    img.src = profile.banner_url;
   }
 
-  // Avatar + nav avatar
+  // Avatar
   const profileUsername = profile.username_slug || profile.username || '';
+  window._mySlug = profileUsername;
+  _avatarUrl = profile.avatar_url || '';
   const initials = (profile.display_name || profileUsername || '?').slice(0, 2).toUpperCase();
   setAvatar(profile.avatar_url, initials);
 
   // Identity
-  document.getElementById('displayName').textContent = profile.display_name || profileUsername || '—';
   document.getElementById('usernameDisplay').textContent = '@' + (profileUsername || '—');
-  document.getElementById('tagline').textContent = profile.tagline || '';
-  document.getElementById('bioText').textContent = profile.bio || 'No bio yet.';
+  const pub = '/u/' + encodeURIComponent(profileUsername);
+  document.getElementById('viewPublicLink').href = pub;
+  document.getElementById('viewPublicBtn').href = pub;
+
+  // Form + preview + theme
+  _saved = {
+    display_name: profile.display_name || profileUsername || '',
+    tagline: profile.tagline || '',
+    bio: profile.bio || '',
+    theme: window.CartofiaTheme.THEMES[profile.theme] ? profile.theme : 'nightmarket',
+    visibility: profile.visibility === 'private' ? 'private' : 'public',
+  };
+  fillForm(_saved);
 
   // Bio meta
   document.getElementById('joinedDate').textContent = joinedFmt(profile.created_at);
 
-  // Meta sidebar
+  // Meta
   document.getElementById('metaAccountAge').textContent = accountAge(profile.created_at);
-  document.getElementById('metaVisibility').textContent = profile.visibility === 'private' ? 'Private' : 'Public';
+  document.getElementById('metaVisibility').textContent = _saved.visibility === 'private' ? 'Private' : 'Public';
+  document.getElementById('metaTheme').textContent = THEME_NAMES[_saved.theme] || _saved.theme;
   document.getElementById('metaFeaturedBadge').textContent = profile.featured_badge || 'None';
   document.getElementById('metaShowcases').textContent = (showcases ? showcases.length : 0) + ' / 3';
-
-  // Theme
-  applyTheme(profile.theme || 'ocean', false);
   renderOwnerBadges(data || {});
 
   // Stats
@@ -1802,68 +1084,23 @@ function renderProfile(data) {
 
   // Badge case
   const bc = document.getElementById('badgeCase');
-  if (profile.featured_badge) {
-    bc.innerHTML = `<div class="badge-item featured" title="Featured">${escHtml(profile.featured_badge)}</div>`;
-  } else {
-    bc.innerHTML = '<div style="font-size:13px;color:var(--text-muted);">No badges yet</div>';
-  }
+  bc.innerHTML = profile.featured_badge
+    ? `<div class="badge-item featured" title="Featured">${escHtml(profile.featured_badge)}</div>`
+    : '<div class="pf-muted-note">No badges yet</div>';
 
-  // Showcases
   renderShowcases(showcases);
-
-  // Activity
   renderActivity(activity);
-  renderAchievements(data.achievements || []);
 }
 
 /* ─────────────────────────────────────────────
-   Edit mode
+   Avatar / banner upload (saved immediately)
 ───────────────────────────────────────────── */
-let editMode = false;
-const editableIds = ['displayName', 'tagline', 'bioText'];
-let savedValues = {};
-
-document.getElementById('editBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('editBtn');
-  if (!editMode) {
-    editMode = true;
-    editableIds.forEach(id => {
-      const el = document.getElementById(id);
-      savedValues[id] = el.textContent;
-      el.contentEditable = 'true';
-    });
-    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8l4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Save Profile`;
-  } else {
-    btn.disabled = true;
-    try {
-      await apiPut('/api/profile/me', {
-        display_name: document.getElementById('displayName').textContent.trim(),
-        tagline: document.getElementById('tagline').textContent.trim(),
-        bio: document.getElementById('bioText').textContent.trim(),
-      });
-      showToast('Profile saved', 'ok');
-    } catch (e) {
-      showToast('Save failed: ' + e.message, 'err');
-      editableIds.forEach(id => {
-        document.getElementById(id).textContent = savedValues[id];
-      });
-    }
-    editMode = false;
-    editableIds.forEach(id => {
-      const el = document.getElementById(id);
-      el.contentEditable = 'false';
-    });
-    btn.disabled = false;
-    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5l3 3-9 9H2.5v-3l9-9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg> Edit Profile`;
-  }
+function pickAvatar() { document.getElementById('avatarUpload').click(); }
+document.getElementById('avatarFrame').addEventListener('click', pickAvatar);
+document.getElementById('avatarFrame').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickAvatar(); }
 });
-
-/* ─────────────────────────────────────────────
-   Avatar upload
-───────────────────────────────────────────── */
-document.getElementById('avatarFrame').addEventListener('click', () => {
-  document.getElementById('avatarUpload').click();
-});
+document.getElementById('avatarPickBtn').addEventListener('click', pickAvatar);
 
 document.getElementById('avatarUpload').addEventListener('change', async function () {
   const file = this.files[0];
@@ -1871,7 +1108,8 @@ document.getElementById('avatarUpload').addEventListener('change', async functio
   this.value = '';
   try {
     const data = await apiUpload('/api/profile/me/avatar', file);
-    const initials = document.getElementById('displayName').textContent.slice(0, 2).toUpperCase();
+    _avatarUrl = data.avatar_url || '';
+    const initials = (F.name.value || window._mySlug || '?').slice(0, 2).toUpperCase();
     setAvatar(data.avatar_url, initials);
     showToast('Avatar updated', 'ok');
   } catch (e) {
@@ -1879,13 +1117,9 @@ document.getElementById('avatarUpload').addEventListener('change', async functio
   }
 });
 
-/* ─────────────────────────────────────────────
-   Banner upload
-───────────────────────────────────────────── */
 document.getElementById('bannerEditBtn').addEventListener('click', () => {
   document.getElementById('bannerUpload').click();
 });
-
 document.getElementById('bannerUpload').addEventListener('change', async function () {
   const file = this.files[0];
   if (!file) return;
@@ -1902,11 +1136,13 @@ document.getElementById('bannerUpload').addEventListener('change', async functio
 });
 
 /* ─────────────────────────────────────────────
-   Share button
+   Share: copy the public profile link
 ───────────────────────────────────────────── */
 document.getElementById('shareBtn').addEventListener('click', () => {
-  navigator.clipboard.writeText(window.location.href).then(
-    () => showToast('Link copied!', 'ok'),
+  const url = location.origin + '/u/' + encodeURIComponent(window._mySlug || '');
+  if (!navigator.clipboard) { showToast(url); return; }
+  navigator.clipboard.writeText(url).then(
+    () => showToast('Profile link copied', 'ok'),
     () => showToast('Could not copy link', 'err'),
   );
 });
@@ -1923,39 +1159,21 @@ function escHtml(s) {
 }
 
 /* ─────────────────────────────────────────────
-   Intersection observer for scroll animations
-───────────────────────────────────────────── */
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) e.target.style.animationPlayState = 'running';
-  });
-}, { threshold: 0.1 });
-
-document.querySelectorAll('.animate-in').forEach(el => {
-  el.style.animationPlayState = 'paused';
-  observer.observe(el);
-});
-
-/* ─────────────────────────────────────────────
    Bootstrap
 ───────────────────────────────────────────── */
 (async function init() {
-  const token = getToken();
-  if (!token) {
-    window.location.href = '/account/?next=' + encodeURIComponent(window.location.pathname);
+  /* Old Discord callback links pointed here; the card now lives on /account/. */
+  if (new URLSearchParams(location.search).has('discord')) {
+    location.replace('/account/' + location.search + '#discord');
     return;
   }
 
-  // Grab groups from userinfo so we can show role badge
-  try {
-    const info = await fetch('/application/o/userinfo/', {
-      headers: { 'Authorization': 'Bearer ' + token },
-    });
-    if (info.ok) {
-      const claims = await info.json();
-      window._profileGroups = claims.groups || [];
-    }
-  } catch (_) {}
+  const token = getToken();
+  const me = await cookieSession();
+  if (!me && !token) {
+    window.location.href = '/account/?next=' + encodeURIComponent(window.location.pathname);
+    return;
+  }
 
   try {
     const [data, statsData, friendsData, achvData] = await Promise.all([
@@ -1965,93 +1183,22 @@ document.querySelectorAll('.animate-in').forEach(el => {
       apiGet('/api/profile/me/achievements').catch(() => null),
     ]);
     arcadeStats = statsData;
+    window._achAll = (achvData && achvData.achievements) || [];
     renderProfile(data);
     renderFriends(friendsData);
-    renderAchievements((achvData && achvData.achievements) || []);
+    renderAchievements(window._achAll);
+    if (location.hash === '#friends') document.getElementById('friends').scrollIntoView();
   } catch (e) {
     showToast('Could not load profile: ' + e.message, 'err');
     document.getElementById('displayName').textContent = 'Error loading profile';
   }
 })();
 
-
-/* ─────────────────────────────────────────────
-   Discord link
-───────────────────────────────────────────── */
-(async function () {
-  const card = document.getElementById('discordLinkCard');
-  if (!card) return;
-  const sub  = document.getElementById('discordLinkSub');
-  const linkBtn = document.getElementById('discordLinkBtn');
-  const discBtn = document.getElementById('discordDisconnectBtn');
-
-  function tok() {
-    return sessionStorage.getItem('oidc_access_token')
-        || localStorage.getItem('oidc_access_token');
-  }
-  if (!tok()) return;
-
-  async function refresh() {
-    try {
-      const r = await fetch('/api/discord/me', {
-        headers: { 'Authorization': 'Bearer ' + tok() }
-      });
-      if (!r.ok) return;
-      const d = await r.json();
-      card.hidden = false;
-      if (d.linked) {
-        sub.innerHTML = 'Linked as <span class="linked">@' + (d.username || 'unknown') + '</span>. '
-                      + 'The bot will DM you when your personal server comes online.';
-        linkBtn.hidden = true;
-        discBtn.hidden = false;
-      } else {
-        sub.textContent = 'Link your Discord account to get a DM when your Minecraft server comes online.';
-        linkBtn.hidden = false;
-        discBtn.hidden = true;
-      }
-    } catch (_) { /* ignore */ }
-  }
-
-  linkBtn.addEventListener('click', async () => {
-    linkBtn.disabled = true;
-    try {
-      const r = await fetch('/api/discord/link/start', {
-        headers: { 'Authorization': 'Bearer ' + tok() }
-      });
-      const d = await r.json();
-      if (d.redirect) window.location.href = d.redirect;
-      else { showToast(d.error || 'Could not start Discord link', 'err'); linkBtn.disabled = false; }
-    } catch (e) { showToast(e.message, 'err'); linkBtn.disabled = false; }
-  });
-
-  discBtn.addEventListener('click', async () => {
-    if (!confirm('Disconnect Discord?')) return;
-    discBtn.disabled = true;
-    try {
-      const r = await fetch('/api/discord/link/disconnect', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + tok() }
-      });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      showToast('Discord disconnected', 'ok');
-      await refresh();
-    } catch (e) { showToast(e.message, 'err'); }
-    discBtn.disabled = false;
-  });
-
-  // Toast on OAuth callback redirect ?discord=ok|error
-  const params = new URLSearchParams(location.search);
-  if (params.has('discord')) {
-    const status = params.get('discord');
-    const msg = params.get('msg') || '';
-    showToast(status === 'ok' ? 'Discord linked ✓' : ('Discord link failed: ' + msg),
-              status === 'ok' ? 'ok' : 'err');
-    history.replaceState(null, '', location.pathname);
-  }
-
-  await refresh();
-})();
-
+/* Friend requests arriving while this page is open (notifications.js
+   polls the bell and dispatches this event) refresh the friends card. */
+window.addEventListener('cartofia:friends-changed', async () => {
+  try { renderFriends(await apiGet(friendBaseUrl)); } catch (_) {}
+});
 </script>
 
 </body>

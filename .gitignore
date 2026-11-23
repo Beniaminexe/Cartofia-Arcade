@@ -28,3 +28,6 @@ env/
 *.swo
 .DS_Store
 Thumbs.db
+
+# Ludo renderer replay fixtures (regenerate with arcade/ludo/dev/make_fixtures.py)
+arcade/ludo/dev/fixtures/

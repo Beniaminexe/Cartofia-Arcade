@@ -16,13 +16,14 @@
 */
 (function () {
   var THEMES = {
+    nightmarket: { accent:"#7c5cff", accentGlow:"rgba(124,92,255,0.45)", accentSoft:"rgba(124,92,255,0.16)", accent2:"#ff6b4a", accent3:"#3ee6a6", textAccent:"#ffcf5c" },
     ocean:     { accent:"#3b82f6", accentGlow:"rgba(59,130,246,0.4)",  accentSoft:"rgba(59,130,246,0.15)",  accent2:"#06b6d4", accent3:"#8b5cf6", textAccent:"#7cb3ff" },
     neon:      { accent:"#a855f7", accentGlow:"rgba(168,85,247,0.4)",  accentSoft:"rgba(168,85,247,0.15)",  accent2:"#ec4899", accent3:"#f472b6", textAccent:"#d8b4fe" },
     ember:     { accent:"#f59e0b", accentGlow:"rgba(245,158,11,0.4)",  accentSoft:"rgba(245,158,11,0.15)",  accent2:"#ef4444", accent3:"#f97316", textAccent:"#fcd34d" },
     matrix:    { accent:"#22c55e", accentGlow:"rgba(34,197,94,0.4)",   accentSoft:"rgba(34,197,94,0.15)",   accent2:"#06b6d4", accent3:"#10b981", textAccent:"#86efac" },
     synthwave: { accent:"#e11d48", accentGlow:"rgba(225,29,72,0.4)",   accentSoft:"rgba(225,29,72,0.15)",   accent2:"#9333ea", accent3:"#ec4899", textAccent:"#fda4af" }
   };
-  var THEME_NAMES = { ocean:"Deep Ocean", neon:"Neon Night", ember:"Ember", matrix:"Matrix", synthwave:"Synthwave" };
+  var THEME_NAMES = { nightmarket:"Night Market", ocean:"Deep Ocean", neon:"Neon Night", ember:"Ember", matrix:"Matrix", synthwave:"Synthwave" };
   var STORAGE_KEY = "cartofia_theme";
 
   function getToken() {
@@ -62,9 +63,15 @@
   function syncFromServer() {
     if (location.pathname.indexOf("/u/") === 0) return;
     var tok = getToken();
-    if (!tok) return;
-    fetch("/api/profile/me", { headers: { "Authorization": "Bearer " + tok } })
+    window.__cartofiaSignedIn = window.__cartofiaSignedIn || fetch('/api/auth/me', { credentials: 'include' })
       .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { return !!(d && d.authenticated); })
+      .catch(function () { return false; });
+    window.__cartofiaSignedIn.then(function (signedIn) {
+      if (!tok && !signedIn) return null;
+      return fetch("/api/profile/me", { credentials: "include", headers: tok ? { "Authorization": "Bearer " + tok } : {} });
+    })
+      .then(function (r) { return r && r.ok ? r.json() : null; })
       .then(function (data) {
         if (!data) return;
         var p = data.profile || data;
@@ -87,21 +94,20 @@
   window.CartofiaTheme = {
     THEMES: THEMES,
     THEME_NAMES: THEME_NAMES,
-    current: function () { return cached() || "ocean"; },
+    current: function () { return cached() || "nightmarket"; },
     apply: function (name, save) {
       if (!applyVars(name)) return;
       remember(name);
       document.dispatchEvent(new CustomEvent("cartofia:theme-changed", { detail: { theme: name } }));
       if (save) {
         var tok = getToken();
-        if (!tok) return;
         try {
+          var hdrs = { "Content-Type": "application/json" };
+          if (tok) hdrs["Authorization"] = "Bearer " + tok;
           fetch("/api/profile/me", {
             method: "PUT",
-            headers: {
-              "Authorization": "Bearer " + tok,
-              "Content-Type":  "application/json"
-            },
+            credentials: "include",
+            headers: hdrs,
             body: JSON.stringify({ theme: name })
           }).catch(function () {});
         } catch (_) {}

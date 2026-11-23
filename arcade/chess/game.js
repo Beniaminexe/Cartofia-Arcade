@@ -603,11 +603,27 @@
       if (!activityLogged) {
         activityLogged = true;
         const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
-        if (typeof window !== "undefined" && typeof window.logGameActivity === "function") {
-          window.logGameActivity({ game: "chess", result: st.result, duration_seconds: _dur });
-        }
+        reportChessResult(_dur);
       }
     }
+  }
+
+  // Result reporting (game-utils.js): translate the board result into this
+  // player's win/loss/draw. Same-device games are recorded as "played".
+  function reportChessResult(dur) {
+    if (typeof window === "undefined" || !window.CartofiaGame) return;
+    const txt = String(st.result || "");
+    const winner = /white wins/i.test(txt) ? "w" : (/black wins/i.test(txt) ? "b" : "");
+    const mode = st.mode === "online" ? "online" : (st.mode === "bot" ? "bot" : "local");
+    let me = "";
+    if (mode === "bot") me = st.botColor === "w" ? "b" : "w";
+    else if (mode === "online") me = localOnlineColor() || "";
+    let result = "played";
+    if (mode !== "local") result = !winner ? "draw" : (winner === me ? "win" : "loss");
+    const extra = { mode: mode, moves: Math.ceil(st.log.length / 2) };
+    if (me) extra.color = me;
+    if (mode === "bot") extra.difficulty = st.diff;
+    window.CartofiaGame.reportResult({ slug: "chess", result: result, duration_seconds: dur, extra: extra });
   }
 
   function applyMoveAndLog(m) {
@@ -704,9 +720,7 @@
     if (st.over && !wasOver && !activityLogged) {
       activityLogged = true;
       const _dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
-      if (typeof window !== "undefined" && typeof window.logGameActivity === "function") {
-        window.logGameActivity({ game: "chess", result: st.result, duration_seconds: _dur });
-      }
+      reportChessResult(_dur);
     }
     renderAll();
   }
