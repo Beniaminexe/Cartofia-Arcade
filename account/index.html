@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/site.css?v=4" />
-  <link rel="stylesheet" href="/assets/notifications.css?v=3">
+  <link rel="stylesheet" href="/assets/notifications.css?v=4">
   <link rel="stylesheet" href="/home.css?v=2" />
   <style>
     /* nav-avatar button reset (matches homepage) */
@@ -411,6 +411,19 @@
       .guest-actions .btn { justify-content: center; width: 100%; }
     }
   </style>
+  <style>
+    .acct-stat-link { text-decoration: none; color: inherit; border-radius: 12px; transition: background 0.15s; }
+    .acct-stat-link:hover { background: rgba(255,255,255,0.04); }
+    .discord-icon { color: #5865F2; display: inline-flex; }
+    .discord-state { font-size: 11px; font-weight: 600; margin-left: 6px; }
+    .discord-state.on { color: #22c55e; }
+    .discord-msg { font-size: 12px; margin-top: 4px; }
+    .discord-msg.ok { color: #22c55e; }
+    .discord-msg.err { color: #f87171; }
+    .discord-actions { display: inline-flex; gap: 6px; }
+    .setting-row[hidden] { display: none; }
+    .discord-actions [hidden], .discord-msg[hidden] { display: none !important; }
+  </style>
 </head>
 <body>
 
@@ -510,11 +523,11 @@
       <!-- Stats row -->
       <div class="acct-stats-strip">
         <div class="acct-stats-inner">
-          <div class="acct-stat">
-            <span class="acct-stat-icon" aria-hidden="true">🎮</span>
-            <span class="acct-stat-value" id="statGames">0</span>
-            <span class="acct-stat-label">Games Played</span>
-          </div>
+          <a class="acct-stat acct-stat-link" href="/account/profile/#friends" title="Your friends">
+            <span class="acct-stat-icon" aria-hidden="true">👥</span>
+            <span class="acct-stat-value" id="statFriends">0</span>
+            <span class="acct-stat-label">Friends</span>
+          </a>
           <div class="acct-stat">
             <span class="acct-stat-icon" aria-hidden="true">⏱️</span>
             <span class="acct-stat-value" id="statPlaytime">0m</span>
@@ -550,6 +563,20 @@
             <div class="setting-desc">Update your password, email, or security settings.</div>
           </div>
           <a class="btn btn-ghost btn-sm" href="https://accounts.cartofia.com/if/user/" target="_blank" rel="noopener noreferrer">Open Settings</a>
+        </div>
+        <div class="setting-row" id="discord">
+          <span class="setting-icon discord-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+          </span>
+          <div>
+            <div class="setting-title">Discord <span class="discord-state" id="discordState"></span></div>
+            <div class="setting-desc" id="discordDesc">Link Discord to get a DM when your Minecraft server comes online.</div>
+            <div class="discord-msg" id="discordMsg" role="status" aria-live="polite" hidden></div>
+          </div>
+          <span class="discord-actions">
+            <button id="discordLinkBtn" class="btn btn-ghost btn-sm" type="button" hidden>Link</button>
+            <button id="discordDisconnectBtn" class="btn btn-ghost btn-sm" type="button" hidden>Disconnect</button>
+          </span>
         </div>
         <div class="setting-row">
           <span class="setting-icon" aria-hidden="true">📦</span>
@@ -606,7 +633,7 @@
 
   <script src="/assets/theme.js?v=2"></script>
   <script src="/assets/site.js?v=9"></script>
-  <script src="/assets/notifications.js?v=2" defer></script>
+  <script src="/assets/notifications.js?v=3" defer></script>
   <script>
     /* ============================================================
        OIDC PKCE auth — same logic as the previous account page.
@@ -650,7 +677,7 @@
       dashFooterUsername: document.getElementById("dashFooterUsername"),
       viewPublicLink:     document.getElementById("viewPublicLink"),
       viewPublicLink2:    document.getElementById("viewPublicLink2"),
-      statGames:          document.getElementById("statGames"),
+      statFriends:        document.getElementById("statFriends"),
       statPlaytime:       document.getElementById("statPlaytime"),
       statUploads:        document.getElementById("statUploads"),
       statViews:          document.getElementById("statViews"),
@@ -926,7 +953,7 @@
 
       /* Stats */
       const stats = (profileData && profileData.stats) || {};
-      refs.statGames.textContent    = String(stats.games_played || 0);
+      refs.statFriends.textContent  = String(stats.friends_count || 0);
       refs.statPlaytime.textContent = formatPlaytime(stats.total_playtime_seconds);
       refs.statUploads.textContent  = String(stats.uploads || 0);
       refs.statViews.textContent    = String(stats.profile_views || 0);
@@ -951,6 +978,74 @@
       showView("dash");
       const profileData = await fetchProfile(token);
       applyDashboard(user, profileData);
+      initDiscord(token);
+    }
+
+    /* Discord link (Connections). The OAuth callback returns here with
+       ?discord=ok|error&msg=…#discord. */
+    async function initDiscord(token) {
+      const row = document.getElementById("discord");
+      const state = document.getElementById("discordState");
+      const desc = document.getElementById("discordDesc");
+      const msg = document.getElementById("discordMsg");
+      const linkBtn = document.getElementById("discordLinkBtn");
+      const discBtn = document.getElementById("discordDisconnectBtn");
+      const hdrs = token ? { "Authorization": "Bearer " + token } : {};
+      function say(text, ok) {
+        msg.hidden = !text;
+        msg.textContent = text || "";
+        msg.className = "discord-msg " + (ok ? "ok" : "err");
+      }
+      async function refresh() {
+        let d = null;
+        try {
+          const r = await fetch("/api/discord/me", { credentials: "include", headers: hdrs });
+          d = r.ok ? await r.json() : null;
+        } catch (_) {}
+        if (!d) { row.hidden = true; return; }
+        row.hidden = false;
+        if (d.linked) {
+          state.textContent = "Linked";
+          state.className = "discord-state on";
+          desc.textContent = "Linked as @" + (d.username || "unknown") + ". The bot DMs you when your Minecraft server comes online.";
+          linkBtn.hidden = true; discBtn.hidden = false;
+        } else {
+          state.textContent = "";
+          state.className = "discord-state";
+          desc.textContent = "Link Discord to get a DM when your Minecraft server comes online.";
+          linkBtn.hidden = false; discBtn.hidden = true;
+        }
+      }
+      linkBtn.addEventListener("click", async function () {
+        linkBtn.disabled = true;
+        say("");
+        try {
+          const r = await fetch("/api/discord/link/start", { credentials: "include", headers: hdrs });
+          const d = await r.json().catch(function () { return {}; });
+          if (r.ok && d.redirect) { window.location.href = d.redirect; return; }
+          say(r.status === 503 ? "Discord linking isn't available right now." : (d.error || "Could not start Discord link."), false);
+        } catch (e) { say("Could not reach the server.", false); }
+        linkBtn.disabled = false;
+      });
+      discBtn.addEventListener("click", async function () {
+        if (!confirm("Disconnect Discord?")) return;
+        discBtn.disabled = true;
+        try {
+          const r = await fetch("/api/discord/link/disconnect", { method: "POST", credentials: "include", headers: hdrs });
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          say("Discord disconnected.", true);
+          await refresh();
+        } catch (e) { say("Disconnect failed: " + e.message, false); }
+        discBtn.disabled = false;
+      });
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("discord")) {
+        const ok = params.get("discord") === "ok";
+        say(ok ? "Discord linked." : "Discord link failed: " + (params.get("msg") || "unknown error"), ok);
+        history.replaceState(null, "", "/account/#discord");
+        row.scrollIntoView({ block: "center" });
+      }
+      await refresh();
     }
 
     /* Wire events */
@@ -988,6 +1083,7 @@
         showView("dash");
         const profileData = await fetchProfile(null);
         applyDashboard(cookieUser, profileData);
+        initDiscord(null);
         return;
       }
 

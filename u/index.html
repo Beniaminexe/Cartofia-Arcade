@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="/assets/site.css?v=4">
-  <link rel="stylesheet" href="/assets/notifications.css?v=3">
+  <link rel="stylesheet" href="/assets/notifications.css?v=4">
 <style>
 /* ── PROFILE-SPECIFIC TOKENS ── */
 :root {
@@ -697,6 +697,45 @@
 }
 .btn-friend[disabled] { opacity: 0.6; cursor: wait; }
 
+/* ── Batch 2: profile blocks ── */
+.achievement-item[hidden] { display: none !important; }
+@media (max-width: 620px) {
+  .nav-brand { flex: 0 0 auto; }
+  .nav-links { flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; margin: 0 10px; }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-right { flex: 0 0 auto; }
+}
+.nav-right { display: flex; align-items: center; }
+.game-card { aspect-ratio: 16/10; display: block; color: inherit; text-decoration: none; }
+.game-card-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.82); transition: filter 0.2s; }
+.game-card:hover .game-card-art { filter: brightness(1); }
+.game-card:focus-visible, a.stat-cell:focus-visible, a.achievement-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.record-game a { color: inherit; text-decoration: none; }
+.record-game a:hover { color: var(--text-accent); }
+.record-stats { display: flex; gap: 16px; text-align: right; }
+.record-stat b { display: block; font-family: var(--font-mono); font-size: 15px; color: var(--text-primary); }
+.record-stat span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+a.achievement-item { text-decoration: none; color: inherit; }
+a.stat-cell { display: block; text-decoration: none; color: inherit; }
+a.stat-cell:hover { border-color: var(--accent); }
+.more-row { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 12px; }
+.show-more-btn { appearance: none; background: transparent; border: 1px solid var(--border); color: var(--text-secondary); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 12px; cursor: pointer; }
+.show-more-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+.more-link { font-size: 12px; color: var(--text-accent); text-decoration: none; }
+.more-link:hover { text-decoration: underline; }
+.friend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.friend-chip { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--radius-sm); background: var(--bg-elevated); border: 1px solid var(--border); text-decoration: none; color: var(--text-primary); min-width: 0; }
+.friend-chip:hover { border-color: var(--accent); }
+.friend-chip-av { width: 34px; height: 34px; border-radius: 50%; flex: 0 0 34px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; background: var(--accent-soft); color: var(--text-accent); overflow: hidden; position: relative; }
+.friend-chip-av img { width: 100%; height: 100%; object-fit: cover; }
+.friend-chip-av.online::after { content: ""; position: absolute; right: 1px; bottom: 1px; width: 9px; height: 9px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 2px var(--bg-elevated); }
+.friend-chip-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.friend-chip-handle { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 520px) {
+  .game-grid { grid-template-columns: 1fr 1fr; }
+  .record-stats { gap: 10px; }
+  .record-row { gap: 10px; }
+}
 </style>
 </head>
 <body>
@@ -714,11 +753,13 @@
   <a href="/forum/">Forum</a>
       <a href="/#tab-messages" class="has-soon">Messages<span class="nav-soon-pill">soon</span></a>
   </nav>
+  <div class="nav-right">
   <div class="account-menu" data-account-menu>
     <button class="nav-avatar" type="button" aria-haspopup="menu" aria-expanded="false" data-account-toggle>CA</button>
     <div class="account-dropdown hidden" data-account-dropdown role="menu">
       <a class="account-item" href="/account/" role="menuitem">Open Account</a>
     </div>
+  </div>
   </div>
 </header>
 
@@ -808,6 +849,15 @@
             <div><div class="activity-text">Loading activity…</div></div>
           </div>
         </div>
+        <div class="more-row" id="activityMore" hidden>
+          <button class="show-more-btn" type="button" id="activityMoreBtn" aria-expanded="false">Show more</button>
+        </div>
+      </div>
+
+      <!-- FRIENDS -->
+      <div class="pcard animate-in" id="friends">
+        <div class="card-label">Friends <span id="friendsCountLabel"></span></div>
+        <div class="friend-grid" id="friendsGrid"><div class="showcase-empty">Loading…</div></div>
       </div>
 
     </div>
@@ -840,10 +890,10 @@
       <div class="pcard animate-in delay-3">
         <div class="card-label">Stats</div>
         <div class="stats-grid">
-          <div class="stat-cell">
-            <div class="stat-value" id="statGamesPlayed">0</div>
-            <div class="stat-label">Games Played</div>
-          </div>
+          <a class="stat-cell" href="#friends" id="statFriendsCell" title="See friends">
+            <div class="stat-value" id="statFriends">0</div>
+            <div class="stat-label">Friends</div>
+          </a>
           <div class="stat-cell">
             <div class="stat-value" id="statPlaytime">0h</div>
             <div class="stat-label">Playtime</div>
@@ -904,7 +954,7 @@
 
 <script src="/assets/theme.js?v=2"></script>
   <script src="/assets/site.js?v=9"></script>
-  <script src="/assets/notifications.js?v=2" defer></script>
+  <script src="/assets/notifications.js?v=3" defer></script>
 <script>
 /* ─────────────────────────────────────────────
    URL parsing — extract username from /u/<username>
@@ -1043,7 +1093,9 @@ function joinedFmt(iso) {
    Activity rendering
 ───────────────────────────────────────────── */
 const ACTIVITY_MAP = {
-  played_game:          { icon: '🎮', cls: 'play',   text: m => `Played <span class="highlight">${escHtml(m.game || 'a game')}</span>` },
+  played_game:          { icon: '🎮', cls: 'play',   text: m => `Played <span class="highlight">${escHtml(gameName(m.game))}</span>${m.result ? ' · ' + escHtml(resultText(m)) : ''}` },
+  created_thread:       { icon: '💬', cls: 'level',  text: m => `Started a forum thread${m.title ? ' <strong>' + escHtml(m.title) + '</strong>' : ''}` },
+  replied_thread:       { icon: '💬', cls: 'level',  text: m => `Replied in the forum${m.title ? ' to <strong>' + escHtml(m.title) + '</strong>' : ''}` },
   earned_badge:         { icon: '🏆', cls: 'badge',  text: m => `Earned badge <strong>${escHtml(m.badge || '')}</strong>` },
   unlocked_achievement: { icon: '🎖️', cls: 'badge',  text: m => `Unlocked achievement <strong>${escHtml(m.achievement || '')}</strong>` },
   uploaded_file:        { icon: '📁', cls: 'upload', text: () => 'Uploaded a file to Archive' },
@@ -1052,23 +1104,61 @@ const ACTIVITY_MAP = {
   changed_banner:       { icon: '🖼️', cls: 'avatar', text: () => 'Updated profile banner' },
 };
 
-function renderActivity(items) {
-  const list = document.getElementById('activityList');
-  if (!items || items.length === 0) {
-    list.innerHTML = '<div class="activity-item"><div class="activity-icon play">💤</div><div><div class="activity-text">No activity yet</div></div></div>';
-    return;
-  }
-  list.innerHTML = items.map(item => {
-    const def = ACTIVITY_MAP[item.event_type] || { icon: '●', cls: 'play', text: () => escHtml(item.event_type) };
-    return `<div class="activity-item">
+const ACTIVITY_PREVIEW = 3;
+function activityRow(item) {
+  const def = ACTIVITY_MAP[item.event_type] || { icon: '●', cls: 'play', text: () => escHtml(item.event_type) };
+  return `<div class="activity-item">
       <div class="activity-icon ${def.cls}">${def.icon}</div>
       <div>
         <div class="activity-text">${def.text(item.metadata || {})}</div>
         <div class="activity-time">${relTime(item.created_at)}</div>
       </div>
     </div>`;
-  }).join('');
 }
+
+let _activityAll = [], _activityHasMore = false, _activityExpanded = false;
+function renderActivity(items, hasMore) {
+  const list = document.getElementById('activityList');
+  const more = document.getElementById('activityMore');
+  _activityAll = items || [];
+  _activityHasMore = !!hasMore;
+  if (!_activityAll.length) {
+    list.innerHTML = '<div class="activity-item"><div class="activity-icon play">💤</div><div><div class="activity-text">No activity yet</div></div></div>';
+    more.hidden = true;
+    return;
+  }
+  const shown = _activityExpanded ? _activityAll : _activityAll.slice(0, ACTIVITY_PREVIEW);
+  list.innerHTML = shown.map(activityRow).join('');
+  const canExpand = !_activityExpanded && (_activityAll.length > ACTIVITY_PREVIEW);
+  const canLoadMore = _activityExpanded && _activityHasMore;
+  more.hidden = !(canExpand || canLoadMore || _activityExpanded);
+  const btn = document.getElementById('activityMoreBtn');
+  btn.textContent = canExpand ? 'Show more' : (canLoadMore ? 'Load older' : 'Show less');
+  btn.setAttribute('aria-expanded', String(_activityExpanded));
+}
+
+async function loadActivity(slug, before) {
+  const q = '?limit=20' + (before ? '&before=' + encodeURIComponent(before) : '');
+  const r = await fetch('/api/profile/' + encodeURIComponent(slug) + '/activity' + q);
+  if (!r.ok) return { activity: [], has_more: false };
+  return r.json();
+}
+
+document.getElementById('activityMoreBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('activityMoreBtn');
+  if (!_activityExpanded) { _activityExpanded = true; renderActivity(_activityAll, _activityHasMore); return; }
+  if (_activityHasMore && window._u_slug) {
+    btn.disabled = true;
+    const last = _activityAll[_activityAll.length - 1];
+    const d = await loadActivity(window._u_slug, last && last.id).catch(() => null);
+    btn.disabled = false;
+    if (d) renderActivity(_activityAll.concat(d.activity || []), d.has_more);
+    return;
+  }
+  _activityExpanded = false;
+  renderActivity(_activityAll, _activityHasMore);
+  document.getElementById('activityList').scrollIntoView({ block: 'nearest' });
+});
 
 /* ─────────────────────────────────────────────
    Showcase rendering
@@ -1083,6 +1173,10 @@ const GAME_COLORS = {
   'minesweeper':  'linear-gradient(135deg,#475569,#94a3b8)',
   'maze-chase':   'linear-gradient(135deg,#1d4ed8,#60a5fa)',
   'ludo':         'linear-gradient(135deg,#dc2626,#facc15)',
+  'zuma':         'linear-gradient(135deg,#b45309,#fbbf24)',
+  'cartofia':     'linear-gradient(135deg,#a16207,#facc15)',
+  'word-puzzle':  'linear-gradient(135deg,#0e7490,#67e8f9)',
+  'brick-blitz':  'linear-gradient(135deg,#be185d,#f472b6)',
 };
 const GAME_COLORS_FALLBACK = [
   'linear-gradient(135deg,#b91c1c,#ef4444)',
@@ -1098,9 +1192,71 @@ function gameColor(gameId, idx) {
 }
 
 function fmtHrs(seconds) {
-  const h = seconds / 3600;
-  return h < 0.1 ? '<1m' : h.toFixed(1) + ' hrs';
+  const s = Math.max(0, Number(seconds) || 0);
+  if (s < 60) return s ? '<1m' : '0m';
+  if (s < 3600) return Math.round(s / 60) + 'm';
+  const h = s / 3600;
+  return (h < 10 ? h.toFixed(1) : Math.round(h)) + 'h';
 }
+
+/* Game slug -> folder slug (cover art, links) and display name. */
+const GAME_ALIASES = { 'zuma-temple': 'zuma' };
+const GAME_NAMES = {
+  'bomber-raid': 'Bomber Raid', blackjack: 'Blackjack', chess: 'Chess', snake: 'Snake',
+  cartofia: 'Cartofia', zuma: 'Zuma Temple', minesweeper: 'Minesweeper', 'maze-chase': 'Maze Chase',
+  ludo: 'Ludo', 'word-puzzle': 'Word Puzzle', 'brick-blitz': 'Brick Blitz',
+};
+function gameSlug(g) { g = String(g || '').toLowerCase(); return GAME_ALIASES[g] || g; }
+function gameName(g) { const s = gameSlug(g); return GAME_NAMES[s] || (s ? s.replace(/-/g, ' ') : 'a game'); }
+function resultText(m) {
+  const r = String(m.result || '').toLowerCase();
+  if (m.placement) return ({ 1: '1st', 2: '2nd', 3: '3rd' }[m.placement] || m.placement + 'th') + ' place';
+  if (r === 'win' || r === 'won') return 'won';
+  if (r === 'loss' || r === 'lose' || r === 'lost') return 'lost';
+  return String(m.result).slice(0, 40);
+}
+function gameCard(g, i) {
+  const slug = gameSlug(g.slug || g.game);
+  return `<a class="game-card" href="/arcade/${encodeURIComponent(slug)}/" title="Play ${escHtml(g.display_name || gameName(slug))}">
+      <div class="game-card-bg" style="background:${gameColor(slug, i)};"></div>
+      <img class="game-card-art" src="/assets/games/${encodeURIComponent(slug)}.svg" alt="" loading="lazy" onerror="this.remove()">
+      <div class="game-card-overlay">
+        <div class="game-card-name">${escHtml(g.display_name || gameName(slug))}</div>
+        <div class="game-card-hours">${fmtHrs(g.total_playtime_seconds)}</div>
+      </div>
+    </a>`;
+}
+const ACH_PREVIEW = 6;
+function achievementTile(a, slug, extra) {
+  const href = '/achievements/' + (slug ? '?user=' + encodeURIComponent(slug) : '') + '#' + encodeURIComponent(a.id);
+  return `<a class="achievement-item${['rare','epic','legendary'].includes(a.rarity) ? ' rare' : ''}${extra ? ' ach-extra' : ''}" href="${href}"${extra ? ' hidden' : ''} aria-label="${escHtml(a.name)}: ${escHtml(a.description)}">`
+    + `<span style="font-size:22px;line-height:1">${escHtml(a.icon || '🏅')}</span>`
+    + `<div class="achievement-tooltip"><strong>${escHtml(a.name)}</strong><br>${escHtml(a.description)}</div>`
+    + '</a>';
+}
+function achievementsBlock(all, slug) {
+  const items = (all || []).filter(a => a.earned)
+    .sort((a, b) => String(b.unlocked_at || '').localeCompare(String(a.unlocked_at || '')));
+  const allLink = '<a class="more-link" href="/achievements/' + (slug ? '?user=' + encodeURIComponent(slug) : '') + '">All achievements →</a>';
+  if (!items.length) {
+    return '<div class="showcase-empty" style="padding:20px 24px;">No achievements earned yet.</div><div class="more-row">' + allLink + '</div>';
+  }
+  const extra = items.length - ACH_PREVIEW;
+  return '<div class="achievement-row" style="gap:10px;">'
+    + items.map((a, i) => achievementTile(a, slug, i >= ACH_PREVIEW)).join('') + '</div>'
+    + '<div class="more-row">'
+    + (extra > 0 ? `<button class="show-more-btn" type="button" data-ach-more aria-expanded="false">Show ${extra} more</button>` : '<span></span>')
+    + allLink + '</div>';
+}
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('[data-ach-more]');
+  if (!btn) return;
+  const card = btn.closest('.pcard, .card') || document;
+  const open = btn.getAttribute('aria-expanded') !== 'true';
+  card.querySelectorAll('.ach-extra').forEach(el => { el.hidden = !open; });
+  btn.setAttribute('aria-expanded', String(open));
+  btn.textContent = open ? 'Show less' : 'Show ' + card.querySelectorAll('.ach-extra').length + ' more';
+});
 
 function renderShowcase(s) {
   const label = {
@@ -1117,42 +1273,36 @@ function renderShowcase(s) {
     if (!games.length) {
       body = '<div class="showcase-empty">No games played yet.</div>';
     } else {
-      const top = games.slice(0, 3);
-      body = '<div class="game-grid">' + top.map((g, i) => `
-          <div class="game-card">
-            <div class="game-card-bg" style="background:${gameColor(g.game, i)};"></div>
-            <div class="game-card-overlay">
-              <div class="game-card-name">${escHtml(g.display_name || g.game)}</div>
-              <div class="game-card-hours">${fmtHrs(g.total_playtime_seconds)}</div>
-            </div>
-          </div>`).join('') + '</div>';
+      body = '<div class="game-grid">' + games.slice(0, 3).map(gameCard).join('') + '</div>';
     }
 
   } else if (s.showcase_type === 'arcade_records') {
     if (!games.length) {
       body = '<div class="showcase-empty">No games played yet.</div>';
     } else {
-      const sorted = [...games].sort((a, b) => b.total_sessions - a.total_sessions);
-      body = '<div>' + sorted.map(r => `
-          <div class="record-row">
+      const sorted = [...games].sort((a, b) => (b.games_played || 0) - (a.games_played || 0)
+        || (b.total_playtime_seconds || 0) - (a.total_playtime_seconds || 0));
+      body = '<div>' + sorted.map(r => {
+        const n = r.games_played != null ? r.games_played : (r.total_sessions || 0);
+        const slug = gameSlug(r.slug || r.game);
+        const cells = [`<div class="record-stat"><b>${n}</b><span>game${n !== 1 ? 's' : ''}</span></div>`];
+        if (r.wins) cells.push(`<div class="record-stat"><b>${r.wins}</b><span>wins</span></div>`);
+        if (r.best_score != null && r.best_score > 0) cells.push(`<div class="record-stat"><b>${Number(r.best_score).toLocaleString()}</b><span>best</span></div>`);
+        cells.push(`<div class="record-stat"><b>${fmtHrs(r.total_playtime_seconds)}</b><span>played</span></div>`);
+        return `<div class="record-row">
             <div>
-              <div class="record-game">${escHtml(r.display_name || r.game)}</div>
-              <div class="record-label">${r.total_sessions} session${r.total_sessions !== 1 ? 's' : ''}</div>
+              <div class="record-game"><a href="/arcade/${encodeURIComponent(slug)}/">${escHtml(r.display_name || gameName(slug))}</a></div>
+              <div class="record-label">${r.last_played ? 'last ' + relTime(r.last_played) : ''}</div>
             </div>
-            <div class="record-value">${fmtHrs(r.total_playtime_seconds)}</div>
-          </div>`).join('') + '</div>';
+            <div class="record-stats">${cells.join('')}</div>
+          </div>`;
+      }).join('') + '</div>';
     }
 
   } else if (s.showcase_type === 'achievements') {
-    const items = (window.achievements_data || []).filter(a => a.earned);
-    body = items.length
-      ? '<div class="achievement-row" style="padding:16px 24px;gap:10px;">'
-          + items.map(a => `<div class="achievement-item" title="${escHtml(a.name)} — ${escHtml(a.description)}">`
-              + `<span style="font-size:22px;line-height:1">${escHtml(a.icon || '🏅')}</span>`
-              + `<div class="achievement-tooltip"><strong>${escHtml(a.name)}</strong><br>${escHtml(a.description)}</div>`
-            + '</div>').join('')
-          + '</div>'
-      : '<div class="showcase-empty" style="padding:20px 24px;">No achievements earned yet.</div>';
+    body = window.achievements_data
+      ? achievementsBlock(window.achievements_data, window._u_slug)
+      : '<div class="showcase-empty" style="padding:20px 24px;">Loading achievements…</div>';
 
   } else if (s.showcase_type === 'badge_case') {
     const cfg = s.config || {};
@@ -1175,7 +1325,7 @@ function renderShowcase(s) {
    Stats rendering
 ───────────────────────────────────────────── */
 function renderStats(stats) {
-  document.getElementById('statGamesPlayed').textContent  = (stats.games_played || 0).toLocaleString();
+  document.getElementById('statFriends').textContent      = (stats.friends_count || 0).toLocaleString();
   document.getElementById('statPlaytime').textContent     = fmtPlaytime(stats.total_playtime_seconds || 0);
   document.getElementById('statAchievements').textContent = (stats.achievements_unlocked || 0).toLocaleString();
   document.getElementById('statUploads').textContent      = (stats.uploads || 0).toLocaleString();
@@ -1188,7 +1338,8 @@ function renderStats(stats) {
    Full profile render
 ───────────────────────────────────────────── */
 function renderProfile(data) {
-  const { profile, showcases, stats, activity } = data;
+  const { profile, showcases, stats } = data;
+  window._u_slug = profile.username_slug || '';
 
   // Page title
   document.title = (profile.display_name || profile.username_slug || 'Profile') + ' — Cartofia';
@@ -1224,7 +1375,7 @@ function renderProfile(data) {
 
   // Theme (read-only: apply owner's theme)
   applyTheme(profile.theme || 'ocean');
-  renderStatusBadges(profile);
+  renderStatusBadges({ ...profile, is_online: data.is_online, groups: data.groups || [] });
   fetch('/api/profile/' + encodeURIComponent(profile.username_slug || '') + '/achievements')
     .then(r => r.ok ? r.json() : null)
     .then(d => {
@@ -1254,8 +1405,10 @@ function renderProfile(data) {
     ? showcases.map(renderShowcase).join('')
     : '';
 
-  // Activity
-  renderActivity(activity);
+  // Activity (public endpoint; first 3 shown, rest behind "Show more")
+  loadActivity(window._u_slug).then(d => renderActivity(d.activity || [], d.has_more))
+    .catch(() => renderActivity([], false));
+  loadFriends(window._u_slug, stats.friends_count || 0);
 
   // Show profile content
   document.getElementById('profileContent').style.display = 'block';
@@ -1267,6 +1420,34 @@ function renderProfile(data) {
   });
 }
 
+
+/* ─────────────────────────────────────────────
+   Friends card — /api/profile/<slug>/friends (public friends only)
+───────────────────────────────────────────── */
+function friendChip(f) {
+  const name = f.display_name || f.username;
+  const av = f.avatar_url
+    ? `<img src="${escHtml(f.avatar_url)}" alt="" onerror="this.remove()">`
+    : escHtml((name || '?').slice(0, 2).toUpperCase());
+  return `<a class="friend-chip" href="/u/${encodeURIComponent(f.username)}">
+      <span class="friend-chip-av${f.is_online ? ' online' : ''}">${av}</span>
+      <span style="min-width:0"><div class="friend-chip-name">${escHtml(name)}</div><div class="friend-chip-handle">@${escHtml(f.username)}</div></span>
+    </a>`;
+}
+async function loadFriends(slug, count) {
+  const grid = document.getElementById('friendsGrid');
+  const label = document.getElementById('friendsCountLabel');
+  label.textContent = count ? '· ' + count : '';
+  try {
+    const r = await fetch('/api/profile/' + encodeURIComponent(slug) + '/friends');
+    const d = r.ok ? await r.json() : { friends: [] };
+    const list = d.friends || [];
+    grid.innerHTML = list.length ? list.map(friendChip).join('')
+      : '<div class="showcase-empty" style="grid-column:1/-1">No friends to show yet.</div>';
+  } catch (_) {
+    grid.innerHTML = '<div class="showcase-empty" style="grid-column:1/-1">Could not load friends.</div>';
+  }
+}
 
 /* ─────────────────────────────────────────────
    Add Friend button — real wiring against /api/profile/me/friends
@@ -1305,12 +1486,13 @@ async function wireFriendButton(profileSlug) {
   // we just leave the button hidden rather than show a confusing state.
   let viewerSlug = '';
   try {
-    const r = await fetch('/application/o/userinfo/', {
+    const r = await fetch('/api/profile/me', {
+      credentials: 'include',
       headers: (token ? { 'Authorization': 'Bearer ' + token } : {})
     });
     if (r.ok) {
-      const claims = await r.json();
-      viewerSlug = (claims.preferred_username || '').toLowerCase();
+      const d = await r.json();
+      viewerSlug = ((d.profile && d.profile.username_slug) || '').toLowerCase();
     }
   } catch (_) { return; }
 
@@ -1388,6 +1570,8 @@ async function wireFriendButton(profileSlug) {
         throw new Error(err.error || ('HTTP ' + resp.status));
       }
       await refresh();
+      const pr = await fetch('/api/profile/' + encodeURIComponent(slug)).then(x => x.ok ? x.json() : null).catch(() => null);
+      if (pr && pr.stats) { renderStats(pr.stats); loadFriends(slug, pr.stats.friends_count || 0); }
     } catch (e) {
       alert(e.message || 'Failed');
       await refresh();

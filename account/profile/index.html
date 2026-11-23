@@ -6,6 +6,7 @@
 <title>Cartofia — Profile</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/notifications.css?v=4">
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -861,6 +862,37 @@ body {
 .theme-dot.active { border-color: white; box-shadow: 0 0 12px rgba(255,255,255,0.3); }
 
 /* ── LOADING / TOAST ── */
+/* ── Batch 2: profile blocks ── */
+.nav-right { display: flex; align-items: center; }
+.game-card { aspect-ratio: 16/10; display: block; color: inherit; text-decoration: none; }
+.game-card-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.82); transition: filter 0.2s; }
+.game-card:hover .game-card-art { filter: brightness(1); }
+.game-card:focus-visible, a.stat-cell:focus-visible, a.achievement-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.record-game a { color: inherit; text-decoration: none; }
+.record-game a:hover { color: var(--text-accent); }
+.record-stats { display: flex; gap: 16px; text-align: right; }
+.record-stat b { display: block; font-family: var(--font-mono); font-size: 15px; color: var(--text-primary); }
+.record-stat span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+a.achievement-item { color: inherit; text-decoration: none; cursor: pointer; }
+a.achievement-item:hover { border-color: var(--accent); }
+a.stat-cell { display: block; text-decoration: none; color: inherit; }
+a.stat-cell:hover { border-color: var(--accent); }
+.more-row { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 12px; }
+.show-more-btn { appearance: none; background: transparent; border: 1px solid var(--border); color: var(--text-secondary); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 12px; cursor: pointer; }
+.show-more-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+.more-link { font-size: 12px; color: var(--text-accent); text-decoration: none; }
+.more-link:hover { text-decoration: underline; }
+a.friend-name { text-decoration: none; }
+a.friend-name:hover { color: var(--text-accent); }
+.friend-row.new-request { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft); }
+.friend-online { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; margin-left: 6px; vertical-align: middle; }
+@media (max-width: 520px) {
+  .game-grid { grid-template-columns: 1fr 1fr; }
+  .record-stats { gap: 10px; }
+  .friend-row { flex-wrap: wrap; }
+  .friend-row .btn { padding: 6px 10px; font-size: 12px; }
+}
+
 .toast {
   position: fixed;
   top: 70px;
@@ -976,7 +1008,7 @@ body {
     <li><a href="/">Home</a></li>
     <li><a href="/arcade/">Arcade</a></li>
   </ul>
-  <div class="nav-avatar" id="navAvatar">–</div>
+  <div class="nav-right"><div class="nav-avatar" id="navAvatar">–</div></div>
 </nav>
 
 <!-- BANNER -->
@@ -1052,31 +1084,15 @@ body {
     <div class="showcases" id="showcasesContainer"></div>
 
     <div class="card animate-in">
-      <div class="card-label">Game Achievements</div>
+      <div class="card-label">Achievements <span id="achCountLabel"></span></div>
       <div class="achievement-grid" id="achievementList">
         <div class="showcase-empty">Loading achievements…</div>
       </div>
+      <div class="more-row" id="achievementMore"></div>
     </div>
 
-    <div class="card animate-in">
-      <div class="card-label">Find Players</div>
-      <!-- Discord link card (shown to the owner only) -->
-      <div class="discord-link-card" id="discordLinkCard" hidden>
-        <div class="discord-link-head">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
-            <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
-          </svg>
-          <div>
-            <h3>Discord</h3>
-            <p id="discordLinkSub">Link your Discord account to get a DM when your Minecraft server comes online.</p>
-          </div>
-        </div>
-        <div class="discord-link-actions">
-          <button id="discordLinkBtn"       class="btn btn-primary btn-sm" type="button" hidden>Link Discord</button>
-          <button id="discordDisconnectBtn" class="btn btn-ghost  btn-sm" type="button" hidden>Disconnect</button>
-        </div>
-      </div>
-
+    <div class="card animate-in" id="friends">
+      <div class="card-label">Friends</div>
       <form class="friend-search" id="friendSearchForm">
         <input id="friendSearchInput" type="search" minlength="2" maxlength="64" placeholder="Search by username or display name" aria-label="Search users">
         <button class="btn btn-primary" type="submit">Search</button>
@@ -1094,6 +1110,9 @@ body {
           <div class="activity-icon play">⏳</div>
           <div><div class="activity-text">Loading activity…</div></div>
         </div>
+      </div>
+      <div class="more-row" id="activityMore" hidden>
+        <button class="show-more-btn" type="button" id="activityMoreBtn" aria-expanded="false">Show more</button>
       </div>
     </div>
 
@@ -1127,10 +1146,10 @@ body {
     <div class="card animate-in delay-3">
       <div class="card-label">Stats</div>
       <div class="stats-grid">
-        <div class="stat-cell">
-          <div class="stat-value" id="statGamesPlayed">0</div>
-          <div class="stat-label">Games Played</div>
-        </div>
+        <a class="stat-cell" href="#friends" id="statFriendsCell" title="See friends">
+          <div class="stat-value" id="statFriends">0</div>
+          <div class="stat-label">Friends</div>
+        </a>
         <div class="stat-cell">
           <div class="stat-value" id="statPlaytime">0h</div>
           <div class="stat-label">Playtime</div>
@@ -1204,7 +1223,7 @@ body {
 
 <script src="/assets/theme.js?v=2"></script>
   <script src="/assets/site.js?v=9"></script>
-  <script src="/assets/notifications.js?v=2" defer></script>
+  <script src="/assets/notifications.js?v=3" defer></script>
 <script>
 /* ─────────────────────────────────────────────
    Token helpers — same storage site.js uses
@@ -1452,32 +1471,65 @@ function joinedFmt(iso) {
    Activity rendering
 ───────────────────────────────────────────── */
 const ACTIVITY_MAP = {
-  played_game:         { icon: '🎮', cls: 'play',   text: m => `Played <span class="highlight">${m.game || 'a game'}</span>` },
-  earned_badge:        { icon: '🏆', cls: 'badge',  text: m => `Earned badge <strong>${m.badge || ''}</strong>` },
-  unlocked_achievement:{ icon: '🎖️', cls: 'badge',  text: m => `Unlocked achievement <strong>${m.achievement || ''}</strong>` },
+  played_game:         { icon: '🎮', cls: 'play',   text: m => `Played <span class="highlight">${escHtml(gameName(m.game))}</span>${m.result ? ' · ' + escHtml(resultText(m)) : ''}` },
+  created_thread:      { icon: '💬', cls: 'level',  text: m => `Started a forum thread${m.title ? ' <strong>' + escHtml(m.title) + '</strong>' : ''}` },
+  replied_thread:      { icon: '💬', cls: 'level',  text: () => 'Replied in the forum' },
+  earned_badge:        { icon: '🏆', cls: 'badge',  text: m => `Earned badge <strong>${escHtml(m.badge || '')}</strong>` },
+  unlocked_achievement:{ icon: '🎖️', cls: 'badge',  text: m => `Unlocked achievement <strong>${escHtml(m.achievement || '')}</strong>` },
   uploaded_file:       { icon: '📁', cls: 'upload', text: m => `Uploaded <strong>${m.filename ? '1 file' : 'a file'}</strong> to Archive` },
-  reached_level:       { icon: '⬆️', cls: 'level',  text: m => `Reached <span class="highlight">Level ${m.level || '?'}</span>` },
+  reached_level:       { icon: '⬆️', cls: 'level',  text: m => `Reached <span class="highlight">Level ${escHtml(String(m.level || '?'))}</span>` },
   changed_avatar:      { icon: '🖼️', cls: 'avatar', text: () => 'Updated profile avatar' },
   changed_banner:      { icon: '🖼️', cls: 'avatar', text: () => 'Updated profile banner' },
 };
 
-function renderActivity(items) {
-  const list = document.getElementById('activityList');
-  if (!items || items.length === 0) {
-    list.innerHTML = '<div class="activity-item"><div class="activity-icon play">💤</div><div><div class="activity-text">No activity yet</div></div></div>';
-    return;
-  }
-  list.innerHTML = items.map(item => {
-    const def = ACTIVITY_MAP[item.event_type] || { icon: '●', cls: 'play', text: () => item.event_type };
-    return `<div class="activity-item">
+const ACTIVITY_PREVIEW = 3;
+let _activityAll = [], _activityHasMore = false, _activityExpanded = false;
+function activityRow(item) {
+  const def = ACTIVITY_MAP[item.event_type] || { icon: '●', cls: 'play', text: () => escHtml(item.event_type) };
+  return `<div class="activity-item">
       <div class="activity-icon ${def.cls}">${def.icon}</div>
       <div>
         <div class="activity-text">${def.text(item.metadata || {})}</div>
         <div class="activity-time">${relTime(item.created_at)}</div>
       </div>
     </div>`;
-  }).join('');
 }
+function renderActivity(items, hasMore) {
+  const list = document.getElementById('activityList');
+  const more = document.getElementById('activityMore');
+  _activityAll = items || [];
+  _activityHasMore = hasMore === undefined ? _activityAll.length >= 10 : !!hasMore;
+  if (!_activityAll.length) {
+    list.innerHTML = '<div class="activity-item"><div class="activity-icon play">💤</div><div><div class="activity-text">No activity yet</div></div></div>';
+    more.hidden = true;
+    return;
+  }
+  const shown = _activityExpanded ? _activityAll : _activityAll.slice(0, ACTIVITY_PREVIEW);
+  list.innerHTML = shown.map(activityRow).join('');
+  const canExpand = !_activityExpanded && _activityAll.length > ACTIVITY_PREVIEW;
+  const canLoadMore = _activityExpanded && _activityHasMore;
+  more.hidden = !(canExpand || _activityExpanded);
+  const btn = document.getElementById('activityMoreBtn');
+  btn.textContent = canExpand ? 'Show more' : (canLoadMore ? 'Load older' : 'Show less');
+  btn.setAttribute('aria-expanded', String(_activityExpanded));
+}
+document.getElementById('activityMoreBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('activityMoreBtn');
+  if (!_activityExpanded) { _activityExpanded = true; renderActivity(_activityAll, _activityHasMore); return; }
+  if (_activityHasMore && window._mySlug) {
+    btn.disabled = true;
+    const last = _activityAll[_activityAll.length - 1];
+    try {
+      const d = await apiGet('/api/profile/' + encodeURIComponent(window._mySlug) + '/activity?limit=20'
+                             + (last ? '&before=' + encodeURIComponent(last.id) : ''));
+      renderActivity(_activityAll.concat(d.activity || []), d.has_more);
+    } catch (_) { _activityHasMore = false; renderActivity(_activityAll, false); }
+    btn.disabled = false;
+    return;
+  }
+  _activityExpanded = false;
+  renderActivity(_activityAll, _activityHasMore);
+});
 
 /* ─────────────────────────────────────────────
    Showcase rendering
@@ -1492,6 +1544,10 @@ const GAME_COLORS = {
   'minesweeper':  'linear-gradient(135deg,#475569,#94a3b8)',
   'maze-chase':   'linear-gradient(135deg,#1d4ed8,#60a5fa)',
   'ludo':         'linear-gradient(135deg,#dc2626,#facc15)',
+  'zuma':         'linear-gradient(135deg,#b45309,#fbbf24)',
+  'cartofia':     'linear-gradient(135deg,#a16207,#facc15)',
+  'word-puzzle':  'linear-gradient(135deg,#0e7490,#67e8f9)',
+  'brick-blitz':  'linear-gradient(135deg,#be185d,#f472b6)',
 };
 const GAME_COLORS_FALLBACK = [
   'linear-gradient(135deg,#b91c1c,#ef4444)',
@@ -1507,8 +1563,58 @@ function gameColor(gameId, idx) {
 }
 
 function fmtHrs(seconds) {
-  const h = seconds / 3600;
-  return h < 0.1 ? '<1m' : h.toFixed(1) + ' hrs';
+  const s = Math.max(0, Number(seconds) || 0);
+  if (s < 60) return s ? '<1m' : '0m';
+  if (s < 3600) return Math.round(s / 60) + 'm';
+  const h = s / 3600;
+  return (h < 10 ? h.toFixed(1) : Math.round(h)) + 'h';
+}
+
+/* Game slug -> folder slug (cover art, links) and display name. */
+const GAME_ALIASES = { 'zuma-temple': 'zuma' };
+const GAME_NAMES = {
+  'bomber-raid': 'Bomber Raid', blackjack: 'Blackjack', chess: 'Chess', snake: 'Snake',
+  cartofia: 'Cartofia', zuma: 'Zuma Temple', minesweeper: 'Minesweeper', 'maze-chase': 'Maze Chase',
+  ludo: 'Ludo', 'word-puzzle': 'Word Puzzle', 'brick-blitz': 'Brick Blitz',
+};
+function gameSlug(g) { g = String(g || '').toLowerCase(); return GAME_ALIASES[g] || g; }
+function gameName(g) { const s = gameSlug(g); return GAME_NAMES[s] || (s ? s.replace(/-/g, ' ') : 'a game'); }
+function resultText(m) {
+  const r = String(m.result || '').toLowerCase();
+  if (m.placement) return ({ 1: '1st', 2: '2nd', 3: '3rd' }[m.placement] || m.placement + 'th') + ' place';
+  if (r === 'win' || r === 'won') return 'won';
+  if (r === 'loss' || r === 'lose' || r === 'lost') return 'lost';
+  return String(m.result).slice(0, 40);
+}
+function gameCard(g, i) {
+  const slug = gameSlug(g.slug || g.game);
+  return `<a class="game-card" href="/arcade/${encodeURIComponent(slug)}/" title="Play ${escHtml(g.display_name || gameName(slug))}">
+      <div class="game-card-bg" style="background:${gameColor(slug, i)};"></div>
+      <img class="game-card-art" src="/assets/games/${encodeURIComponent(slug)}.svg" alt="" loading="lazy" onerror="this.remove()">
+      <div class="game-card-overlay">
+        <div class="game-card-name">${escHtml(g.display_name || gameName(slug))}</div>
+        <div class="game-card-hours">${fmtHrs(g.total_playtime_seconds)}</div>
+      </div>
+    </a>`;
+}
+function recordsBlock(games) {
+  const sorted = [...games].sort((a, b) => (b.games_played || 0) - (a.games_played || 0)
+    || (b.total_playtime_seconds || 0) - (a.total_playtime_seconds || 0));
+  return '<div>' + sorted.map(r => {
+    const n = r.games_played != null ? r.games_played : (r.total_sessions || 0);
+    const slug = gameSlug(r.slug || r.game);
+    const cells = [`<div class="record-stat"><b>${n}</b><span>game${n !== 1 ? 's' : ''}</span></div>`];
+    if (r.wins) cells.push(`<div class="record-stat"><b>${r.wins}</b><span>wins</span></div>`);
+    if (r.best_score != null && r.best_score > 0) cells.push(`<div class="record-stat"><b>${Number(r.best_score).toLocaleString()}</b><span>best</span></div>`);
+    cells.push(`<div class="record-stat"><b>${fmtHrs(r.total_playtime_seconds)}</b><span>played</span></div>`);
+    return `<div class="record-row">
+        <div>
+          <div class="record-game"><a href="/arcade/${encodeURIComponent(slug)}/">${escHtml(r.display_name || gameName(slug))}</a></div>
+          <div class="record-label">${r.last_played ? 'last ' + relTime(r.last_played) : ''}</div>
+        </div>
+        <div class="record-stats">${cells.join('')}</div>
+      </div>`;
+  }).join('') + '</div>';
 }
 
 function renderShowcase(s) {
@@ -1523,37 +1629,18 @@ function renderShowcase(s) {
   let body = '';
 
   if (s.showcase_type === 'favorite_games') {
-    if (!games.length) {
-      body = '<div class="showcase-empty">No games played yet.</div>';
-    } else {
-      const top = games.slice(0, 3);
-      body = '<div class="game-grid">' + top.map((g, i) => `
-        <div class="game-card">
-          <div class="game-card-bg" style="background:${gameColor(g.game, i)};"></div>
-          <div class="game-card-overlay">
-            <div class="game-card-name">${escHtml(g.display_name || g.game)}</div>
-            <div class="game-card-hours">${fmtHrs(g.total_playtime_seconds)}</div>
-          </div>
-        </div>`).join('') + '</div>';
-    }
+    body = games.length
+      ? '<div class="game-grid">' + games.slice(0, 3).map(gameCard).join('') + '</div>'
+      : '<div class="showcase-empty">No games played yet.</div>';
 
   } else if (s.showcase_type === 'arcade_records') {
-    if (!games.length) {
-      body = '<div class="showcase-empty">No games played yet.</div>';
-    } else {
-      const sorted = [...games].sort((a, b) => b.total_sessions - a.total_sessions);
-      body = '<div>' + sorted.map(r => `
-        <div class="record-row">
-          <div>
-            <div class="record-game">${escHtml(r.display_name || r.game)}</div>
-            <div class="record-label">${r.total_sessions} session${r.total_sessions !== 1 ? 's' : ''}</div>
-          </div>
-          <div class="record-value">${fmtHrs(r.total_playtime_seconds)}</div>
-        </div>`).join('') + '</div>';
-    }
+    body = games.length ? recordsBlock(games) : '<div class="showcase-empty">No games played yet.</div>';
 
   } else if (s.showcase_type === 'achievements') {
-    body = '<div class="showcase-empty" style="padding:20px 24px;">Achievements coming soon.</div>';
+    const earned = (window._achAll || []).filter(a => a.earned);
+    body = earned.length
+      ? '<div class="showcase-empty" style="padding:14px 24px;">' + earned.length + ' earned · <a class="more-link" href="#achievementList">see below</a></div>'
+      : '<div class="showcase-empty" style="padding:20px 24px;">No achievements earned yet.</div>';
 
   } else if (s.showcase_type === 'badge_case') {
     const cfg = s.config || {};
@@ -1586,7 +1673,7 @@ function renderShowcases(showcases) {
    Stats rendering
 ───────────────────────────────────────────── */
 function renderStats(stats) {
-  document.getElementById('statGamesPlayed').textContent  = (stats.games_played || 0).toLocaleString();
+  document.getElementById('statFriends').textContent      = (stats.friends_count || 0).toLocaleString();
   document.getElementById('statPlaytime').textContent     = fmtPlaytime(stats.total_playtime_seconds || 0);
   document.getElementById('statAchievements').textContent = (stats.achievements_unlocked || 0).toLocaleString();
   document.getElementById('statUploads').textContent      = (stats.uploads || stats.upload_count || 0).toLocaleString();
@@ -1595,21 +1682,40 @@ function renderStats(stats) {
   document.getElementById('profileViewsCount').textContent = (stats.profile_views || 0).toLocaleString();
 }
 
+const ACH_PREVIEW = 6;
+let _achExpanded = false;
 function renderAchievements(items) {
+  window._achAll = items || [];
   const list = document.getElementById('achievementList');
-  if (!items || !items.length) {
-    list.innerHTML = '<div class="showcase-empty">Play a game to start earning achievements.</div>';
+  const more = document.getElementById('achievementMore');
+  const earned = window._achAll.filter(a => a.earned)
+    .sort((a, b) => String(b.unlocked_at || '').localeCompare(String(a.unlocked_at || '')));
+  document.getElementById('achCountLabel').textContent =
+    window._achAll.length ? '· ' + earned.length + ' / ' + window._achAll.length : '';
+  const slug = window._mySlug || '';
+  const allHref = '/achievements/' + (slug ? '?user=' + encodeURIComponent(slug) : '');
+  if (!earned.length) {
+    list.innerHTML = '<div class="showcase-empty" style="grid-column:1/-1">No achievements earned yet. Play a game to start earning them.</div>';
+    more.innerHTML = '<span></span><a class="more-link" href="' + allHref + '">See all achievements →</a>';
     return;
   }
-  list.innerHTML = items.map(item => `
-    <div class="achievement-item ${item.earned ? '' : 'locked'}">
+  const shown = _achExpanded ? earned : earned.slice(0, ACH_PREVIEW);
+  list.innerHTML = shown.map(item => `
+    <a class="achievement-item" href="${allHref}#${encodeURIComponent(item.id)}">
       <span class="achievement-icon" aria-hidden="true">${escHtml(item.icon || '🏅')}</span>
       <div>
         <div class="achievement-name">${escHtml(item.name)}</div>
         <div class="achievement-description">${escHtml(item.description)}</div>
-        <div class="achievement-status">${item.earned ? 'Unlocked' : 'Not yet earned'}</div>
+        <div class="achievement-status">${escHtml(item.game_name || '')}${item.unlocked_at ? ' · ' + relTime(item.unlocked_at) : ''}</div>
       </div>
-    </div>`).join('');
+    </a>`).join('');
+  const extra = earned.length - ACH_PREVIEW;
+  more.innerHTML = (extra > 0
+      ? `<button class="show-more-btn" type="button" id="achMoreBtn" aria-expanded="${_achExpanded}">${_achExpanded ? 'Show less' : 'Show ' + extra + ' more'}</button>`
+      : '<span></span>')
+    + '<a class="more-link" href="' + allHref + '">See all achievements →</a>';
+  const btn = document.getElementById('achMoreBtn');
+  if (btn) btn.onclick = () => { _achExpanded = !_achExpanded; renderAchievements(window._achAll); };
 }
 
 let friendData = { friends: [], incoming_requests: [], outgoing_requests: [] };
@@ -1629,9 +1735,16 @@ function renderFriendRow(user, actions) {
     avatar.textContent = (user.display_name || user.username || '?').slice(0, 2).toUpperCase();
     row.appendChild(avatar);
   }
-  const link = document.createElement('div');
+  const link = document.createElement('a');
   link.className = 'friend-name';
+  link.href = '/u/' + encodeURIComponent(user.username);
   link.textContent = user.display_name || user.username;
+  if (user.is_online) {
+    const dot = document.createElement('span');
+    dot.className = 'friend-online';
+    dot.title = 'Online';
+    link.appendChild(dot);
+  }
   const handle = document.createElement('small');
   handle.textContent = '@' + user.username;
   link.appendChild(handle);
@@ -1682,14 +1795,20 @@ function renderFriendSection(container, title, users, actions, emptyText) {
 
 function renderFriends(data) {
   friendData = data || { friends: [], incoming_requests: [], outgoing_requests: [] };
-  renderFriendSection(document.getElementById('friendsList'), 'Friends', friendData.friends,
-    () => [{ action: 'remove', label: 'Remove' }], 'No friends yet.');
+  renderFriendSection(document.getElementById('friendsList'), 'Friends · ' + friendData.friends.length, friendData.friends,
+    user => [{ label: 'Profile', href: '/u/' + encodeURIComponent(user.username) }, { action: 'remove', label: 'Remove' }],
+    'No friends yet. Search for players above.');
   renderFriendSection(document.getElementById('friendRequests'), 'Friend Requests',
     friendData.incoming_requests.concat(friendData.outgoing_requests),
     user => friendData.incoming_requests.some(item => item.username === user.username)
       ? [{ action: 'accept', label: 'Accept' }, { action: 'decline', label: 'Decline' }]
-      : [{ action: 'cancel', label: 'Cancel' }],
+      : [{ label: 'Request sent', disabled: true }, { action: 'cancel', label: 'Cancel' }],
     'No pending requests.');
+  document.querySelectorAll('#friendRequests .friend-row').forEach((row, i) => {
+    if (i < friendData.incoming_requests.length) row.classList.add('new-request');
+  });
+  const sf = document.getElementById('statFriends');
+  if (sf) sf.textContent = friendData.friends.length.toLocaleString();
 }
 
 function renderUserSearch(users) {
@@ -1758,14 +1877,19 @@ async function handleFriendAction(event) {
   if (!button) return;
   const username = encodeURIComponent(button.dataset.username);
   const action = button.dataset.friendAction;
+  if (action === 'remove' && !confirm('Remove this friend?')) return;
   button.disabled = true;
   try {
     if (action === 'add') await apiPost(friendBaseUrl + '/' + username);
     else if (action === 'remove') await apiDelete(friendBaseUrl + '/' + username);
     else await apiPatch(friendBaseUrl + '/' + username, { action });
     renderFriends(await apiGet(friendBaseUrl));
-    document.getElementById('friendSearchForm').dispatchEvent(new Event('submit', { cancelable: true }));
-    showToast(action === 'add' ? 'Friend request sent' : 'Friends updated', 'ok');
+    window.dispatchEvent(new Event('cartofia:notifications-refresh'));
+    if (document.getElementById('friendSearchInput').value.trim().length >= 2) {
+      document.getElementById('friendSearchForm').dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+    showToast({ add: 'Friend request sent', accept: 'Friend added', decline: 'Request declined',
+                cancel: 'Request cancelled', remove: 'Friend removed' }[action] || 'Friends updated', 'ok');
   } catch (error) {
     button.disabled = false;
     showToast(error.message, 'err');
@@ -1791,6 +1915,7 @@ function renderProfile(data) {
 
   // Avatar + nav avatar
   const profileUsername = profile.username_slug || profile.username || '';
+  window._mySlug = profileUsername;
   const initials = (profile.display_name || profileUsername || '?').slice(0, 2).toUpperCase();
   setAvatar(profile.avatar_url, initials);
 
@@ -1828,9 +1953,8 @@ function renderProfile(data) {
   // Showcases
   renderShowcases(showcases);
 
-  // Activity
+  // Activity (first 3; rest behind "Show more")
   renderActivity(activity);
-  renderAchievements(data.achievements || []);
 }
 
 /* ─────────────────────────────────────────────
@@ -1987,9 +2111,11 @@ document.querySelectorAll('.animate-in').forEach(el => {
       apiGet('/api/profile/me/achievements').catch(() => null),
     ]);
     arcadeStats = statsData;
+    window._achAll = (achvData && achvData.achievements) || [];
     renderProfile(data);
     renderFriends(friendsData);
-    renderAchievements((achvData && achvData.achievements) || []);
+    renderAchievements(window._achAll);
+    if (location.hash === '#friends') document.getElementById('friends').scrollIntoView();
   } catch (e) {
     showToast('Could not load profile: ' + e.message, 'err');
     document.getElementById('displayName').textContent = 'Error loading profile';
@@ -1997,82 +2123,16 @@ document.querySelectorAll('.animate-in').forEach(el => {
 })();
 
 
-/* ─────────────────────────────────────────────
-   Discord link
-───────────────────────────────────────────── */
-(async function () {
-  const card = document.getElementById('discordLinkCard');
-  if (!card) return;
-  const sub  = document.getElementById('discordLinkSub');
-  const linkBtn = document.getElementById('discordLinkBtn');
-  const discBtn = document.getElementById('discordDisconnectBtn');
+/* Friend requests arriving while this page is open (notifications.js
+   polls the bell and dispatches this event) refresh the friends card. */
+window.addEventListener('cartofia:friends-changed', async () => {
+  try { renderFriends(await apiGet(friendBaseUrl)); } catch (_) {}
+});
 
-  function tok() {
-    return sessionStorage.getItem('oidc_access_token')
-        || localStorage.getItem('oidc_access_token');
-  }
-  if (!tok() && !(await cookieSession())) return;
-
-  async function refresh() {
-    try {
-      const r = await fetch('/api/discord/me', {
-        headers: authHeaders()
-      });
-      if (!r.ok) return;
-      const d = await r.json();
-      card.hidden = false;
-      if (d.linked) {
-        sub.innerHTML = 'Linked as <span class="linked">@' + (d.username || 'unknown') + '</span>. '
-                      + 'The bot will DM you when your personal server comes online.';
-        linkBtn.hidden = true;
-        discBtn.hidden = false;
-      } else {
-        sub.textContent = 'Link your Discord account to get a DM when your Minecraft server comes online.';
-        linkBtn.hidden = false;
-        discBtn.hidden = true;
-      }
-    } catch (_) { /* ignore */ }
-  }
-
-  linkBtn.addEventListener('click', async () => {
-    linkBtn.disabled = true;
-    try {
-      const r = await fetch('/api/discord/link/start', {
-        headers: authHeaders()
-      });
-      const d = await r.json();
-      if (d.redirect) window.location.href = d.redirect;
-      else { showToast(d.error || 'Could not start Discord link', 'err'); linkBtn.disabled = false; }
-    } catch (e) { showToast(e.message, 'err'); linkBtn.disabled = false; }
-  });
-
-  discBtn.addEventListener('click', async () => {
-    if (!confirm('Disconnect Discord?')) return;
-    discBtn.disabled = true;
-    try {
-      const r = await fetch('/api/discord/link/disconnect', {
-        method: 'POST',
-        headers: authHeaders()
-      });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      showToast('Discord disconnected', 'ok');
-      await refresh();
-    } catch (e) { showToast(e.message, 'err'); }
-    discBtn.disabled = false;
-  });
-
-  // Toast on OAuth callback redirect ?discord=ok|error
-  const params = new URLSearchParams(location.search);
-  if (params.has('discord')) {
-    const status = params.get('discord');
-    const msg = params.get('msg') || '';
-    showToast(status === 'ok' ? 'Discord linked ✓' : ('Discord link failed: ' + msg),
-              status === 'ok' ? 'ok' : 'err');
-    history.replaceState(null, '', location.pathname);
-  }
-
-  await refresh();
-})();
+/* Old Discord callback links pointed here; the card now lives on /account/. */
+if (new URLSearchParams(location.search).has('discord')) {
+  location.replace('/account/' + location.search + '#discord');
+}
 
 </script>
 
