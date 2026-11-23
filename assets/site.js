@@ -421,6 +421,9 @@
         /* Clear legacy JWT storage, then hit the backend logout which clears
            the session cookie and redirects through Authentik's end-session. */
         clearStoredTokens();
+        /* Forget this account's accent theme so the next visitor on this
+           browser gets the default look, not the previous user's. */
+        try { localStorage.removeItem("cartofia_theme"); } catch (_) {}
         document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure";
         renderAccountDropdown(menu, { authenticated: false });
         setExpanded(button, dropdown, false);
@@ -445,9 +448,51 @@
     });
   }
 
+  /* Phones: the header links collapse behind a menu button (CSS in
+     site.css "MOBILE NAV MENU"), so Forum/Minecraft stay reachable on every
+     page instead of being hidden or clipped. */
+  function initMobileNav() {
+    var header = document.querySelector("header.nav");
+    if (!header || header.querySelector(".nav-menu-btn")) return;
+    var links = header.querySelector(".nav-links");
+    if (!links) return;
+    if (!links.id) links.id = "site-nav-links";
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "nav-menu-btn";
+    btn.setAttribute("aria-controls", links.id);
+    btn.setAttribute("aria-expanded", "false");
+    btn.setAttribute("aria-label", "Open menu");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>';
+    var right = header.querySelector(".nav-right");
+    if (right) right.appendChild(btn); else header.appendChild(btn);
+    function setOpen(open) {
+      header.classList.toggle("nav-open", open);
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      btn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+    }
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      setOpen(!header.classList.contains("nav-open"));
+    });
+    links.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest("a")) setOpen(false);
+    });
+    document.addEventListener("click", function (e) {
+      if (!header.contains(e.target)) setOpen(false);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && header.classList.contains("nav-open")) { setOpen(false); btn.focus(); }
+    });
+    window.addEventListener("resize", function () {
+      if (window.innerWidth > 760) setOpen(false);
+    });
+  }
+
   function init() {
     const menus = document.querySelectorAll("[data-account-menu]");
     menus.forEach(initAccountMenu);
+    initMobileNav();
   }
 
   if (document.readyState === "loading") {
