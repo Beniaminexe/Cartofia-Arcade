@@ -1,37 +1,39 @@
 /* ============================================================
    Cartofia Design System — site.css
    Source of truth: profile page visual design
-   Fonts: Outfit (body) + JetBrains Mono (numbers/code)
+   Fonts: Unbounded (display) + Outfit (body) + JetBrains Mono (numbers/code)
+   Theme: "Night Market" (Nov 2026) — palette carried over from the
+   arcade page redesign; per-user accents still come from theme.js
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* ── DESIGN TOKENS ── */
 :root {
   /* Backgrounds */
-  --bg-deep:     #080b12;
-  --bg-base:     #0d1117;
-  --bg-surface:  #141b27;
-  --bg-elevated: #1a2332;
-  --bg-card:     #161f2d;
-  --bg-hover:    #1e2a3c;
+  --bg-deep:     #0a0818;
+  --bg-base:     #0d0a1c;
+  --bg-surface:  #141030;
+  --bg-elevated: #1a1535;
+  --bg-card:     #171233;
+  --bg-hover:    #221b45;
 
   /* Borders */
-  --border:        rgba(56, 130, 235, 0.12);
-  --border-bright: rgba(56, 130, 235, 0.25);
+  --border:        rgba(255, 255, 255, 0.08);
+  --border-bright: rgba(255, 255, 255, 0.16);
 
   /* Accent (ocean/blue — overrideable by theme switcher) */
-  --accent:      #3b82f6;
-  --accent-glow: rgba(59, 130, 246, 0.4);
-  --accent-soft: rgba(59, 130, 246, 0.15);
-  --accent-2:    #06b6d4;
-  --accent-3:    #8b5cf6;
+  --accent:      #7c5cff;
+  --accent-glow: rgba(124, 92, 255, 0.45);
+  --accent-soft: rgba(124, 92, 255, 0.16);
+  --accent-2:    #ff6b4a;
+  --accent-3:    #3ee6a6;
 
   /* Text */
-  --text-primary:   #e8edf5;
-  --text-secondary: #7d8fa8;
-  --text-muted:     #4a5b73;
-  --text-accent:    #7cb3ff;
+  --text-primary:   #f5f0ff;
+  --text-secondary: #b3aacf;
+  --text-muted:     #8a82a8;
+  --text-accent:    #ffcf5c;
 
   /* Status */
   --success: #22c55e;
@@ -40,6 +42,7 @@
 
   /* Typography */
   --font-body: 'Outfit', 'Segoe UI', sans-serif;
+  --font-display: 'Unbounded', 'Outfit', 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
 
   /* Radii */
@@ -91,7 +94,10 @@ body::before {
   left: 0;
   right: 0;
   height: 60vh;
-  background: radial-gradient(ellipse at 50% 0%, rgba(120, 60, 180, 0.15) 0%, rgba(60, 30, 120, 0.08) 40%, transparent 70%);
+  background:
+    radial-gradient(ellipse at 15% -5%, rgba(124, 92, 255, 0.22) 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 10%, rgba(255, 107, 74, 0.10) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 110%, rgba(62, 230, 166, 0.06) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
 }
@@ -763,4 +769,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .btn { width: 100%; justify-content: center; }
   .button-row { width: 100%; }
   .status-row { grid-template-columns: 1fr; gap: 2px; }
+}
+
+
+/* ── NIGHT MARKET THEME: display headings (Nov 2026) ── */
+main h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
 }
