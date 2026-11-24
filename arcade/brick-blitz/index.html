@@ -14,7 +14,8 @@
   <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=1" />
   <style>
     /* Brick Blitz — page-specific pieces only; the stage shell lives in /arcade/game-shell-v2.css */
-    #game { aspect-ratio: 3 / 2; background: #04101a; }
+    /* board art is drawn by render.js at devicePixelRatio; the bg only shows before the first frame */
+    #game { aspect-ratio: 3 / 2; background: #0a0412; }
 
     .pad-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .pad-btn { font-size: 14px; }
@@ -200,10 +201,15 @@
   <script src="/assets/notifications.js?v=3" defer></script>
   <script src="/assets/game-utils.js?v=4"></script>
   <script src="/assets/game-stats.js?v=1" defer></script>
+  <script src="/arcade/brick-blitz/render.js?v=1"></script>
   <script>
     (function () {
       const canvas = document.getElementById("game");
       const ctx    = canvas.getContext("2d");
+      /* Logical playfield. The physics always ran in the canvas's 900x600 attribute space;
+         these constants keep it there now that render.js sizes the backing store for the
+         screen's devicePixelRatio. */
+      const W = 900, H = 600;
       const overlay   = document.getElementById("overlay");
       const actionBar = document.getElementById("action-bar");
 
@@ -247,8 +253,8 @@
 
       const keyState = { left: false, right: false };
 
-      const paddle = { w: 130, h: 14, x: (canvas.width - 130) / 2, y: canvas.height - 42, speed: 8 };
-      const ball   = { x: canvas.width / 2, y: canvas.height - 54, r: 9, vx: 0, vy: 0, stuck: true };
+      const paddle = { w: 130, h: 14, x: (W - 130) / 2, y: H - 42, speed: 8 };
+      const ball   = { x: W / 2, y: H - 54, r: 9, vx: 0, vy: 0, stuck: true };
 
       const brickColors  = ["#4ebdff", "#61d7ff", "#73ebb1", "#ffc857", "#ff7b7b"];
       const brickLayout  = { rows: 5, cols: 10, gap: 8, top: 58, side: 18, height: 22 };
@@ -290,7 +296,7 @@
       function makeBricks() {
         bricks = [];
         const totalGap = brickLayout.gap * (brickLayout.cols - 1);
-        const width = (canvas.width - brickLayout.side * 2 - totalGap) / brickLayout.cols;
+        const width = (W - brickLayout.side * 2 - totalGap) / brickLayout.cols;
         for (let row = 0; row < brickLayout.rows; row++) {
           for (let col = 0; col < brickLayout.cols; col++) {
             bricks.push({ x: brickLayout.side + col * (width + brickLayout.gap), y: brickLayout.top + row * (brickLayout.height + brickLayout.gap), w: width, h: brickLayout.height, alive: true, color: brickColors[row % brickColors.length] });
@@ -309,7 +315,7 @@
       function resetRun() {
         score = 0; lives = 3; level = 1;
         running = false; paused = false; gameOver = false; gameStartTime = null;
-        paddle.x = (canvas.width - paddle.w) / 2;
+        paddle.x = (W - paddle.w) / 2;
         makeBricks(); resetBall(true);
         setOverlay("Press Start to launch the ball.");
         updateHud();
@@ -330,7 +336,7 @@
 
       function clampPaddle() {
         if (paddle.x < 0) paddle.x = 0;
-        else if (paddle.x + paddle.w > canvas.width) paddle.x = canvas.width - paddle.w;
+        else if (paddle.x + paddle.w > W) paddle.x = W - paddle.w;
       }
 
       function showGameOver(heading, label) {
@@ -410,16 +416,29 @@
         if (ball.stuck || !running) return;
         ball.x += ball.vx; ball.y += ball.vy;
         if (ball.x - ball.r <= 0)            { ball.x = ball.r;              ball.vx =  Math.abs(ball.vx); }
-        else if (ball.x + ball.r >= canvas.width) { ball.x = canvas.width - ball.r; ball.vx = -Math.abs(ball.vx); }
+        else if (ball.x + ball.r >= W) { ball.x = W - ball.r; ball.vx = -Math.abs(ball.vx); }
         if (ball.y - ball.r <= 0)             { ball.y = ball.r;              ball.vy =  Math.abs(ball.vy); }
         handlePaddleCollision();
         handleBrickCollision();
         checkLevelClear();
-        if (ball.y - ball.r > canvas.height) loseLife();
+        if (ball.y - ball.r > H) loseLife();
       }
 
+      /* ── board art (render.js). Presentation only: it reads this view, never writes it.
+         The plain draw below stays as a fallback if the renderer is unavailable. ── */
+      let art = null;
+      try { art = window.BrickBlitzArt ? window.BrickBlitzArt.create(canvas) : null; } catch (_) { art = null; }
+      const artView = { bricks: null, paddle: paddle, ball: ball, level: 1, lives: 3, score: 0, running: false, paused: false, gameOver: false };
+
       function draw() {
-        ctx.fillStyle = "#05101a"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (art) {
+          artView.bricks = bricks; artView.level = level; artView.lives = lives; artView.score = score;
+          artView.running = running; artView.paused = paused; artView.gameOver = gameOver;
+          art.draw(artView);
+          return;
+        }
+        ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+        ctx.fillStyle = "#05101a"; ctx.fillRect(0, 0, W, H);
         bricks.forEach(b => {
           if (!b.alive) return;
           ctx.fillStyle = b.color; ctx.fillRect(b.x, b.y, b.w, b.h);
@@ -469,7 +488,7 @@
       canvas.addEventListener("pointermove", (event) => {
         if (event.pointerType === "touch" || event.buttons === 1) {
           const rect = canvas.getBoundingClientRect();
-          paddle.x = ((event.clientX - rect.left) / rect.width) * canvas.width - paddle.w / 2;
+          paddle.x = ((event.clientX - rect.left) / rect.width) * W - paddle.w / 2;
           clampPaddle();
         }
       });
