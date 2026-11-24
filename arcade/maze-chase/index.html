@@ -14,7 +14,20 @@
   <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=1" />
   <style>
     /* Maze Chase — page-specific pieces only; the stage shell lives in /arcade/game-shell-v2.css */
-    #game { aspect-ratio: 21 / 17; background: #01060f; }
+    /* board art is drawn by render.js at devicePixelRatio; the bg only shows before the first frame */
+    #game { aspect-ratio: 21 / 17; background: radial-gradient(circle at 50% 42%, #211d5e, #07061a 80%); }
+    /* the "Press Start / Paused / Life lost" veil: lighter, so the neon maze still reads through */
+    .gx #overlay.board-overlay {
+      background: radial-gradient(120% 90% at 50% 45%, rgba(20, 14, 60, 0.42), rgba(8, 6, 24, 0.7));
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+    }
+    /* after a catch / clear, the veil waits for the animation on the board (hiding stays instant).
+       .hidden is display:none, so this is a keyframe fade that starts when the veil is shown. */
+    .gx #overlay.board-overlay.mc-hold:not(.hidden) { animation: mc-veil-in 1.2s ease both; }
+    @keyframes mc-veil-in { 0%, 75% { opacity: 0; } 100% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      .gx #overlay.board-overlay.mc-hold:not(.hidden) { animation-duration: .45s; }
+    }
 
     /* joystick */
     .inframe-joystick {
@@ -93,10 +106,10 @@
       </div>
       <p class="pre-game-label">Arcade · Maze Chase</p>
       <h2 class="pre-game-title">Maze Chase</h2>
-      <p class="pre-game-desc">Clear the pellets, dodge the ghosts, grab power orbs to turn the tables.</p>
+      <p class="pre-game-desc">Guide Spud through the neon maze: clear the pellets, dodge the critters, grab power orbs to turn the tables.</p>
       <ul class="gx-howto" aria-label="How to play">
         <li><b>Move</b><span>Arrow keys, WASD, or drag the on-board joystick</span></li>
-        <li><b>Power</b><span>Eat an orb, then chase the ghosts while they're blue</span></li>
+        <li><b>Power</b><span>Eat an orb, then catch the critters while they're pale and scared</span></li>
         <li><b>Goal</b><span>Clear every pellet with your 3 lives</span></li>
       </ul>
       <button class="start-btn" id="preGameStart" type="button">Start Game</button>
@@ -108,7 +121,7 @@
   <div class="game-over-overlay hidden" id="gameOverOverlay">
     <div class="game-over-card">
       <p class="game-over-label" id="goLabel">Game Over</p>
-      <h2 class="game-over-heading" id="goHeading">Caught! 👻</h2>
+      <h2 class="game-over-heading" id="goHeading">Caught!</h2>
       <div class="game-over-score" id="goScore">0</div>
       <p class="game-over-score-label">Score</p>
       <div class="game-over-stats">
@@ -236,7 +249,7 @@
                 <li><b>Move</b><span>Arrow keys or W A S D</span></li>
                 <li><b>Touch</b><span>Press and drag on the board for the joystick</span></li>
                 <li><b>Pause</b><span>Space or P</span></li>
-                <li><b>Power</b><span>During blue mode, eat ghosts</span></li>
+                <li><b>Power</b><span>While powered up, catch the scared critters (they flash before it ends)</span></li>
                 <li><b>Goal</b><span>Clear every pellet in the maze</span></li>
               </ul>
             </section>
@@ -266,6 +279,7 @@
   <script src="/assets/notifications.js?v=3" defer></script>
   <script src="/assets/game-utils.js?v=4"></script>
   <script src="/assets/game-stats.js?v=1" defer></script>
+  <script src="/arcade/maze-chase/render.js?v=1"></script>
   <script>
     (() => {
       const canvas = document.getElementById("game");
@@ -321,6 +335,28 @@
       const mapW = mazeRows[0].length;
       canvas.width = mapW * TILE;
       canvas.height = mapH * TILE;
+
+      /* ── board art (render.js). Presentation only: it reads this state, never writes it. ── */
+      let art = null;
+      try {
+        art = window.MazeChaseArt ? window.MazeChaseArt.create(canvas, { tile: TILE, cols: mapW, rows: mapH, powerMs: POWER_MS, graceMs: START_GRACE_MS }) : null;
+      } catch (_e) { art = null; }
+      const artView = { map: null, pellets: null, player: null, ghosts: null, frightMs: 0, graceMs: 0, running: false, paused: false, gameOver: false, won: false, pf: 0 };
+      /* tell the art where a catch / an eaten critter happened, before the game resets positions */
+      function artEvent(type, gi, x, y) {
+        if (!art) { return; }
+        try { art.event(type, gi, x, y); } catch (_e) {}
+      }
+      let endTimer = 0;
+      /* let the death / clear animation play on the board before the card covers it */
+      function revealEnd(opts) {
+        clearTimeout(endTimer);
+        endTimer = 0;
+        const hold = art ? (opts.won ? art.clearHoldMs() : art.deathHoldMs()) : 0;
+        const show = () => { endTimer = 0; showGameOverOverlay(opts); };
+        if (hold > 0) { endTimer = setTimeout(show, hold); } else { show(); }
+      }
+      function holdOverlay() { if (art) { overlay.classList.add("mc-hold"); } }
 
       let map = [];
       let pellets = new Map();
@@ -381,7 +417,7 @@
       }
 
       function showGameOverOverlay(opts) {
-        const dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+        const dur = opts.dur != null ? opts.dur : (gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0);
         if (opts.won) {
           goLabel.textContent = "Maze Clear";
           goHeading.textContent = "Maze Cleared!";
@@ -389,7 +425,7 @@
           document.querySelector(".go-stat:nth-child(2) .go-stat-label").textContent = "Lives Left";
         } else {
           goLabel.textContent = "Game Over";
-          goHeading.textContent = "Caught! 👻";
+          goHeading.textContent = "Caught!";
           goLivesLeft.textContent = "0";
           document.querySelector(".go-stat:nth-child(2) .go-stat-label").textContent = "Lives Left";
         }
@@ -540,6 +576,9 @@
       }
 
       function resetGame() {
+        clearTimeout(endTimer);
+        endTimer = 0;
+        overlay.classList.remove("mc-hold");
         parseMaze();
         score = 0;
         lives = 3;
@@ -559,6 +598,7 @@
         resetActors();
         running = false;
         paused = false;
+        holdOverlay();
         setOverlay("Life lost. Press Start to continue.", true);
         updateHud();
       }
@@ -628,8 +668,9 @@
             CartofiaGame.reportResult({ slug: "maze-chase", result: "win", score: score, duration_seconds: _dur,
                                         extra: { lives_left: lives } });
           }
+          holdOverlay();
           setOverlay("You cleared the maze! Press Restart for another run.", true);
-          showGameOverOverlay({ won: true });
+          revealEnd({ won: true, dur: _dur });
         }
       }
 
@@ -644,9 +685,10 @@
             CartofiaGame.reportResult({ slug: "maze-chase", result: "loss", score: score, duration_seconds: _dur,
                                         extra: { lives_left: 0 } });
           }
+          holdOverlay();
           setOverlay("Game over. Press Restart to play again.", true);
           updateHud();
-          showGameOverOverlay({ won: false });
+          revealEnd({ won: false, dur: _dur });
           return;
         }
         restartRoundAfterHit();
@@ -657,11 +699,13 @@
         if (ghost.x !== player.x || ghost.y !== player.y) { return; }
         if (frightMs > 0) {
           scorePoints(200);
+          artEvent("eat", ghosts.indexOf(ghost), player.x, player.y);
           ghost.x = ghost.home.x;
           ghost.y = ghost.home.y;
           ghost.dir = "u";
           return;
         }
+        artEvent("caught", ghosts.indexOf(ghost), player.x, player.y);
         loseLife();
       }
 
@@ -841,6 +885,23 @@
       }
 
       function draw(now) {
+        if (art) {
+          artView.map = map;
+          artView.pellets = pellets;
+          artView.player = player;
+          artView.ghosts = ghosts;
+          artView.frightMs = frightMs;
+          artView.graceMs = graceMs;
+          artView.running = running;
+          artView.paused = paused;
+          artView.gameOver = gameOver;
+          artView.won = won;
+          /* glide fraction between hero steps: the same accumulator the tick uses, so timing is unchanged */
+          artView.pf = playerAcc / PLAYER_STEP_MS;
+          art.draw(now, artView);
+          return;
+        }
+        /* plain fallback (only if render.js failed to load) */
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawWalls();
         drawPellets(now);
@@ -872,6 +933,7 @@
         running = true;
         paused = false;
         if (!gameStartTime) { gameStartTime = Date.now(); }
+        overlay.classList.remove("mc-hold");
         setOverlay("", false);
         updateHud();
       }
