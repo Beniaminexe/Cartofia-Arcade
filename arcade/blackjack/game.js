@@ -318,6 +318,17 @@
     return "Ready — host can start the round.";
   }
 
+  // A soft hand counts an ace as 11 (display only; handValue is the rule).
+  function isSoftHand(cards) {
+    let hard = 0, aces = 0;
+    (cards || []).forEach((card) => {
+      const rank = cardRank(card);
+      if (rank === "A") { aces += 1; hard += 1; }
+      else hard += cardValue(card);
+    });
+    return aces > 0 && hard + 10 <= 21;
+  }
+
   function renderTable() {
     phasePillEl.textContent = phaseText();
     tableStatusEl.textContent = statusText();
@@ -325,75 +336,124 @@
     // Dealer zone
     const dealerCards = Array.isArray(game.dealer.cards) ? game.dealer.cards : [];
     const hideHole = (!game.dealer.reveal && game.phase === "playing");
-    renderCardsInto(dealerCardsEl, dealerCards, { hideHoleCard: hideHole });
+    let dealerText = "";
     if (dealerCards.length) {
       if (game.dealer.reveal || game.phase === "results") {
-        dealerTotalEl.textContent = "Total: " + handValue(dealerCards);
+        dealerText = "Total: " + handValue(dealerCards);
       } else {
         // Show just the up-card's value so players can plan
         const up = dealerCards[0];
         const upVal = cardValue(up);
-        dealerTotalEl.textContent = "Showing: " + (upVal === 11 ? "A (soft 11)" : String(upVal));
+        dealerText = "Showing: " + (upVal === 11 ? "A (soft 11)" : String(upVal));
       }
-    } else {
-      dealerTotalEl.textContent = "";
     }
-
-    // Player seats
-    playersListEl.innerHTML = "";
     const order = Array.isArray(game.order) ? game.order : [];
     const turnId = currentTurnId();
-    order.forEach((id) => {
-      const item = document.createElement("li");
-      item.className = "player-item";
-      const isActive = (String(id) === String(turnId) && game.phase === "playing");
-      if (isActive) item.classList.add("active");
 
-      const head = document.createElement("div");
-      head.className = "player-head";
-      const left = document.createElement("strong");
-      left.className = "player-name-label";
-      left.textContent = playerNameById(id) + (String(id) === String(online.clientId) ? " (You)" : "");
-      const right = document.createElement("span");
-      right.className = "player-meta";
-      const bet = Number(game.bets[id] || 0);
-      const dbl = !!game.doubled[id];
-      if (game.phase === "results") {
-        right.textContent = String(game.results[id] || "");
-        right.classList.add("player-result");
-      } else if (bet > 0) {
-        right.textContent = (dbl ? "Bet " + fmtChips(bet) + " ×2" : "Bet " + fmtChips(bet));
-      } else {
-        right.textContent = game.done[id] ? "Done" : "Playing";
+    if (window.BJArt) {
+      // Read-only view of the table for the art layer (render.js).
+      const dealerOpen = !!dealerCards.length && (game.dealer.reveal || game.phase === "results");
+      const dealerVal = dealerOpen ? handValue(dealerCards) : 0;
+      window.BJArt.renderTable({
+        round: game.round,
+        phase: game.phase,
+        hideHole: hideHole,
+        dealer: dealerCards.slice(),
+        dealerText: dealerText,
+        dealerState: !dealerOpen ? "" : (dealerVal > 21 ? "bust" : (isBlackjack(dealerCards) ? "bj" : (dealerVal === 21 ? "21" : ""))),
+        myTurn: game.phase === "playing" && !!online.clientId && String(turnId) === String(online.clientId),
+        emptyText: "No active round players yet.",
+        seats: order.map((id, idx) => {
+          const cards = Array.isArray(game.hands[id]) ? game.hands[id] : [];
+          const total = handValue(cards);
+          const bet = Number(game.bets[id] || 0);
+          const dbl = !!game.doubled[id];
+          const result = game.phase === "results" ? String(game.results[id] || "") : "";
+          const outcome = result ? resultToOutcome(result) : "";
+          let metaText;
+          if (game.phase === "results") metaText = result;
+          else if (bet > 0) metaText = (dbl ? "Bet " + fmtChips(bet) + " ×2" : "Bet " + fmtChips(bet));
+          else metaText = game.done[id] ? "Done" : "Playing";
+          return {
+            id: String(id),
+            idx: idx,
+            name: playerNameById(id),
+            label: playerNameById(id) + (String(id) === String(online.clientId) ? " (You)" : ""),
+            you: String(id) === String(online.clientId),
+            active: String(id) === String(turnId) && game.phase === "playing",
+            cards: cards.slice(),
+            total: total,
+            soft: isSoftHand(cards),
+            bet: bet,
+            doubled: dbl,
+            blackjack: isBlackjack(cards) || !!game.blackjacks[id],
+            bust: total > 21,
+            stand: !!game.done[id] && !game.blackjacks[id] && total <= 21 && cards.length > 0,
+            metaText: metaText,
+            result: result,
+            outcome: outcome,
+            payout: outcome ? estimateDelta(outcome, bet, dbl) : 0
+          };
+        })
+      });
+    } else {
+      renderCardsInto(dealerCardsEl, dealerCards, { hideHoleCard: hideHole });
+      dealerTotalEl.textContent = dealerText;
+
+      // Player seats
+      playersListEl.innerHTML = "";
+      order.forEach((id) => {
+        const item = document.createElement("li");
+        item.className = "player-item";
+        const isActive = (String(id) === String(turnId) && game.phase === "playing");
+        if (isActive) item.classList.add("active");
+
+        const head = document.createElement("div");
+        head.className = "player-head";
+        const left = document.createElement("strong");
+        left.className = "player-name-label";
+        left.textContent = playerNameById(id) + (String(id) === String(online.clientId) ? " (You)" : "");
+        const right = document.createElement("span");
+        right.className = "player-meta";
+        const bet = Number(game.bets[id] || 0);
+        const dbl = !!game.doubled[id];
+        if (game.phase === "results") {
+          right.textContent = String(game.results[id] || "");
+          right.classList.add("player-result");
+        } else if (bet > 0) {
+          right.textContent = (dbl ? "Bet " + fmtChips(bet) + " ×2" : "Bet " + fmtChips(bet));
+        } else {
+          right.textContent = game.done[id] ? "Done" : "Playing";
+        }
+        head.appendChild(left);
+        head.appendChild(right);
+        item.appendChild(head);
+
+        const cardsWrap = document.createElement("div");
+        cardsWrap.className = "cards";
+        const cards = Array.isArray(game.hands[id]) ? game.hands[id] : [];
+        renderCardsInto(cardsWrap, cards, {});
+        item.appendChild(cardsWrap);
+
+        const meta = document.createElement("div");
+        meta.className = "player-meta";
+        const total = handValue(cards);
+        const tags = [];
+        tags.push("Total " + total);
+        if (isBlackjack(cards) || game.blackjacks[id]) tags.push("Blackjack");
+        if (total > 21) tags.push("Bust");
+        if (game.done[id] && !game.blackjacks[id] && total <= 21 && !cards.length === false) tags.push("Stand");
+        meta.textContent = tags.join(" · ");
+        item.appendChild(meta);
+        playersListEl.appendChild(item);
+      });
+
+      if (!order.length) {
+        const empty = document.createElement("li");
+        empty.className = "player-item player-item-empty";
+        empty.textContent = "No active round players yet.";
+        playersListEl.appendChild(empty);
       }
-      head.appendChild(left);
-      head.appendChild(right);
-      item.appendChild(head);
-
-      const cardsWrap = document.createElement("div");
-      cardsWrap.className = "cards";
-      const cards = Array.isArray(game.hands[id]) ? game.hands[id] : [];
-      renderCardsInto(cardsWrap, cards, {});
-      item.appendChild(cardsWrap);
-
-      const meta = document.createElement("div");
-      meta.className = "player-meta";
-      const total = handValue(cards);
-      const tags = [];
-      tags.push("Total " + total);
-      if (isBlackjack(cards) || game.blackjacks[id]) tags.push("Blackjack");
-      if (total > 21) tags.push("Bust");
-      if (game.done[id] && !game.blackjacks[id] && total <= 21 && !cards.length === false) tags.push("Stand");
-      meta.textContent = tags.join(" · ");
-      item.appendChild(meta);
-      playersListEl.appendChild(item);
-    });
-
-    if (!order.length) {
-      const empty = document.createElement("li");
-      empty.className = "player-item player-item-empty";
-      empty.textContent = "No active round players yet.";
-      playersListEl.appendChild(empty);
     }
 
     // Action buttons
@@ -448,6 +508,7 @@
     const chips = wallet ? Number(wallet.chips) : Infinity;
     if (betDownBtn) betDownBtn.disabled = online.localBet <= BET_MIN;
     if (betUpBtn)   betUpBtn.disabled   = online.localBet >= BET_MAX || online.localBet + BET_STEP > chips;
+    if (window.BJArt) window.BJArt.betPreview(document.getElementById("betPreview"), online.localBet);
   }
 
   let _lastLoggedPhase = "";
@@ -519,6 +580,7 @@
 
   function showRoundResult(text, kind) {
     if (!roundResultEl) return;
+    if (window.BJArt) { window.BJArt.banner(roundResultEl, text || "", kind || ""); return; }
     roundResultEl.textContent = text || "";
     roundResultEl.classList.remove("win", "lose", "push", "warn", "ok");
     if (kind) roundResultEl.classList.add(kind);
@@ -564,8 +626,11 @@
 
   function resultToOutcome(resultText) {
     const s = String(resultText || "").toLowerCase();
+    // Losses and pushes first: "Lose (Dealer Blackjack)" and
+    // "Push (both Blackjack)" mention blackjack but must not pay 3:2.
+    if (s.startsWith("lose")) return "lose";
+    if (s.startsWith("push")) return "push";
     if (s.indexOf("blackjack") >= 0) return "blackjack";
-    if (s.indexOf("push") >= 0) return "push";
     if (s.indexOf("win") >= 0) return "win";
     return "lose";
   }

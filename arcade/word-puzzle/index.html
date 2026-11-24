@@ -11,107 +11,10 @@
   <link rel="stylesheet" href="/assets/notifications.css?v=6">
   <link rel="stylesheet" href="/arcade/game-common.css?v=2" />
   <link rel="stylesheet" href="/assets/game-stats.css?v=2" />
-  <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=1" />
-  <style>
-    /* Word Puzzle — page-specific pieces only; the stage shell lives in /arcade/game-shell-v2.css */
-    .puzzle-panel {
-      display: grid;
-      gap: 16px;
-      justify-items: center;
-      padding-top: clamp(16px, 2.4vw, 26px);
-      padding-bottom: clamp(16px, 2.4vw, 26px);
-    }
-    .puzzle-panel > * { width: 100%; max-width: 500px; }
-
-    /* ── Board ── */
-    .board {
-      display: grid;
-      gap: 8px;
-      max-width: 340px;
-      margin: 0 auto;
-      width: 100%;
-    }
-    .board-row {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 8px;
-    }
-    .cell {
-      height: 58px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 12px;
-      border: 2px solid var(--gx-line-2);
-      background: var(--gx-well);
-      color: var(--gx-text);
-      font: 700 clamp(20px, 3vw, 26px)/1 var(--gx-display);
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-      transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
-    }
-    .cell.filled  { border-color: rgba(255, 255, 255, 0.34); transform: scale(1.02); }
-    .cell.correct { background: #1f9d6b; border-color: var(--gx-mint); color: #f5fff9; transform: none; }
-    .cell.present { background: #e0b13a; border-color: var(--gx-lemon); color: var(--gx-ink); transform: none; }
-    .cell.absent  { background: #2a2350; border-color: rgba(255, 255, 255, 0.06); color: var(--gx-dim); transform: none; }
-
-    /* ── Keyboard ── */
-    .keyboard { display: grid; gap: 7px; }
-    .kbd-row {
-      display: grid;
-      grid-template-columns: repeat(10, minmax(0, 1fr));
-      gap: 6px;
-    }
-    .kbd-row.middle {
-      grid-template-columns: repeat(9, minmax(0, 1fr));
-      margin-left: 4.5%;
-      margin-right: 4.5%;
-    }
-    .kbd-row.bottom { grid-template-columns: 1.4fr repeat(7, minmax(0, 1fr)) 1.4fr; }
-    .kbd-btn {
-      min-height: 46px;
-      border-radius: 10px;
-      border: 2px solid var(--gx-ink);
-      background: linear-gradient(180deg, #2c2456, #211a42);
-      color: var(--gx-text);
-      font: 700 14px/1 var(--gx-body);
-      text-transform: uppercase;
-      box-shadow: 0 3px 0 #0b0717;
-      cursor: pointer;
-      touch-action: manipulation;
-      transition: background 0.16s ease, transform 0.1s ease, box-shadow 0.1s ease;
-    }
-    .kbd-btn:hover { background: linear-gradient(180deg, #352c66, #271f4e); }
-    .kbd-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #0b0717; }
-    .kbd-btn.correct { background: #1f9d6b; color: #f5fff9; }
-    .kbd-btn.present { background: #e0b13a; color: var(--gx-ink); }
-    .kbd-btn.absent  { background: #1a1535; color: #6f678c; }
-
-    .puzzle-notice {
-      min-height: 22px;
-      padding: 10px 14px;
-      border-radius: 12px;
-      border: 1px solid var(--gx-line);
-      background: var(--gx-well);
-      color: var(--gx-muted);
-      font-size: 14px;
-      text-align: center;
-    }
-    .puzzle-notice.warn { color: var(--gx-lemon); border-color: rgba(255, 216, 74, 0.35); }
-    .puzzle-notice.ok   { color: var(--gx-mint); border-color: rgba(62, 230, 166, 0.35); }
-
-    /* colour legend in the rail */
-    .wp-legend { list-style: none; display: grid; gap: 10px; color: var(--gx-muted); font-size: 13.5px; }
-    .wp-legend li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: center; }
-    .wp-legend .cell { height: 34px; border-radius: 9px; font-size: 15px; }
-    .wp-actions .btn { width: 100%; }
-
-    @media (max-width: 480px) {
-      .cell { height: 50px; }
-      .kbd-btn { min-height: 44px; font-size: 13px; border-radius: 8px; }
-      .kbd-row { gap: 4px; }
-    }
-  </style>
+  <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=2" />
+  <link rel="stylesheet" href="/arcade/word-puzzle/render.css?v=1" />
+  <!-- Word Puzzle: the stage shell lives in /arcade/game-shell-v2.css;
+       the tray, tiles, keyboard and effects in render.css (+ render.js) -->
 </head>
 <body class="gx" style="--g:#f2c94c">
 
@@ -127,8 +30,8 @@
       <p class="pre-game-desc">Six guesses. One word. How fast can you crack it?</p>
       <ul class="gx-howto" aria-label="How to play">
         <li><b>Guess</b><span>Type any 5-letter word and press Enter</span></li>
-        <li><b>Green</b><span>Right letter, right spot</span></li>
-        <li><b>Gold</b><span>In the word, wrong spot</span></li>
+        <li><b>Mint</b><span>Right letter, right spot (check mark)</span></li>
+        <li><b>Lemon</b><span>In the word, wrong spot (arrows)</span></li>
       </ul>
       <div id="preStreak" class="pre-game-streak" style="display:none;">
         <span>Current streak:</span>
@@ -217,19 +120,22 @@
       <div class="game-container-inner">
         <div class="puzzle-layout gx-layout">
 
-          <section class="puzzle-panel gx-stage" aria-label="Puzzle">
-            <div class="board" id="board"></div>
+          <section class="puzzle-panel gx-stage wp-stage" aria-label="Puzzle">
+            <div class="wp-tray">
+              <div class="board" id="board"></div>
+              <div class="wp-fx" aria-hidden="true"></div>
+            </div>
+            <div class="notice puzzle-notice" id="puzzleNotice" role="status" aria-live="polite">Type a 5-letter word and press Enter.</div>
             <div class="keyboard" id="keyboard"></div>
-            <div class="notice puzzle-notice" id="puzzleNotice">Type a 5-letter word and press Enter.</div>
           </section>
 
           <aside class="gx-rail" aria-label="Game info">
             <section class="gx-card">
               <h2 class="panel-section-label">How to play</h2>
               <ul class="wp-legend">
-                <li><span class="cell correct" aria-hidden="true">A</span><span>Green — right letter in the right spot</span></li>
-                <li><span class="cell present" aria-hidden="true">B</span><span>Gold — in the word, but somewhere else</span></li>
-                <li><span class="cell absent" aria-hidden="true">C</span><span>Grey — not in the word at all</span></li>
+                <li><span class="wp-mini" data-show="correct" aria-hidden="true">A</span><span><b>Mint, check mark</b> — right letter in the right spot</span></li>
+                <li><span class="wp-mini" data-show="present" aria-hidden="true">B</span><span><b>Lemon, arrows</b> — in the word, but somewhere else</span></li>
+                <li><span class="wp-mini" data-show="absent" aria-hidden="true">C</span><span><b>Slate, dash</b> — not in the word at all</span></li>
               </ul>
             </section>
 
@@ -263,6 +169,7 @@
   <script src="/assets/notifications.js?v=3" defer></script>
   <script src="/assets/game-utils.js?v=4"></script>
   <script src="/assets/game-stats.js?v=1" defer></script>
+  <script src="/arcade/word-puzzle/render.js?v=1"></script>
   <script>
     (function () {
       const WORDS = [
@@ -303,6 +210,14 @@
 
       /* ── state ── */
       let target = "", guesses = [], currentGuess = "", gameOver = false, keyState = {}, gameStartTime = null;
+      let overlayTimer = 0;
+
+      /* presentation hooks (render.js) — they only draw, never change the game */
+      function art(name, arg) {
+        const A = window.WordArt;
+        if (!A || typeof A[name] !== "function") return undefined;
+        try { return A[name](arg); } catch (err) { console.error(err); return undefined; }
+      }
 
       function loadNumber(key) {
         const v = Number(localStorage.getItem(key) || "0");
@@ -407,6 +322,13 @@
         });
 
         if (headerGuess) headerGuess.textContent = guesses.length + "/" + MAX_GUESSES;
+
+        art("afterRender", {
+          guesses: guesses.map((g) => ({ word: g.word, states: g.states.slice() })),
+          current: currentGuess,
+          over: gameOver,
+          keyState: Object.assign({}, keyState)
+        });
       }
 
       function winHeading(guessCount) {
@@ -433,7 +355,12 @@
           goWord.textContent = target.toUpperCase();
           goWord.style.display = "";
         }
-        gameOverOverlay.classList.remove("hidden");
+        /* let the last row finish flipping (and the win bounce play) before the card covers the board */
+        clearTimeout(overlayTimer);
+        overlayTimer = setTimeout(() => {
+          overlayTimer = 0;
+          gameOverOverlay.classList.remove("hidden");
+        }, art("revealDelay") || 0);
       }
 
       function finishGame(won) {
@@ -460,8 +387,8 @@
       }
 
       function submitGuess() {
-        if (currentGuess.length !== WORD_LENGTH) { setNotice("Word must be exactly 5 letters.", "warn"); return; }
-        if (!WORDS.includes(currentGuess))        { setNotice("Word not in puzzle dictionary.", "warn"); return; }
+        if (currentGuess.length !== WORD_LENGTH) { setNotice("Word must be exactly 5 letters.", "warn"); art("invalid", guesses.length); return; }
+        if (!WORDS.includes(currentGuess))        { setNotice("Word not in puzzle dictionary.", "warn"); art("invalid", guesses.length); return; }
         const states = evaluateGuess(currentGuess);
         guesses.push({ word: currentGuess, states });
         for (let i = 0; i < WORD_LENGTH; i++) setKeyColor(currentGuess[i], states[i]);
@@ -481,6 +408,9 @@
       }
 
       function newPuzzle() {
+        clearTimeout(overlayTimer);
+        overlayTimer = 0;
+        art("reset");
         target = pickWord();
         guesses = []; currentGuess = ""; gameOver = false; keyState = {};
         gameStartTime = Date.now();
