@@ -423,14 +423,27 @@
     const byW = [];
     const byB = [];
     ["q", "r", "b", "n", "p"].forEach((t) => {
-      for (let i = 0; i < START_COUNTS.b[t] - c.b[t]; i += 1) byW.push(GLYPH[t]);
-      for (let i = 0; i < START_COUNTS.w[t] - c.w[t]; i += 1) byB.push(GLYPH[t.toUpperCase()]);
+      for (let i = 0; i < START_COUNTS.b[t] - c.b[t]; i += 1) byW.push(t);
+      for (let i = 0; i < START_COUNTS.w[t] - c.w[t]; i += 1) byB.push(t.toUpperCase());
     });
-    capWEl.textContent = byW.join(" ");
-    capBEl.textContent = byB.join(" ");
+    const art = window.ChessArt;
+    if (art) {
+      // Presentation only: material on the board in pawn units (1/3/3/5/9).
+      let adv = 0;
+      ["p", "n", "b", "r", "q"].forEach((t) => { adv += (c.w[t] - c.b[t]) * art.points(t); });
+      art.renderTray(capWEl, byW, adv > 0 ? adv : 0);
+      art.renderTray(capBEl, byB, adv < 0 ? -adv : 0);
+      return;
+    }
+    capWEl.textContent = byW.map((t) => GLYPH[t]).join(" ");
+    capBEl.textContent = byB.map((t) => GLYPH[t]).join(" ");
   }
 
   function renderLog() {
+    if (window.ChessArt) {
+      window.ChessArt.renderLog(logEl, st.log);
+      return;
+    }
     logEl.innerHTML = "";
     if (!st.log.length) {
       const e = document.createElement("div");
@@ -545,16 +558,24 @@
   }
 
   function renderBoard() {
+    // Presentation (render.js): the board is always built from the FINAL
+    // position; ChessArt.observe() diffs it against the previous one so
+    // afterRender() can glide the moved piece in and play capture effects
+    // on the destination square. Rules and input are unchanged.
+    const art = window.ChessArt || null;
+    const change = art ? art.observe(st.pos.board, st.log.length) : null;
+    const last = art ? art.lastMove() : null;
     boardEl.innerHTML = "";
-    // Flip the board for Same-Device mode so the side to move is always at
-    // the bottom. Click handling still uses the true (r, c) via dataset, so
-    // nothing downstream has to care about orientation.
     // Same-Device: fixed board (White at bottom) with Black's pieces
     // always rotated 180 degrees so the player across the table sees
     // them upright, exactly like a physical chessboard. Online as the
     // Black player still flips the whole board.
     const flip = (st.mode === "online" && localOnlineColor() === "b");
     boardEl.classList.toggle("same-device", st.mode === "multi");
+    boardEl.classList.toggle("flipped", flip);
+    const enabled = isSquareEnabled();
+    const mated = st.over && /checkmate/i.test(String(st.result || ""));
+    const checked = (!st.over || mated) && inCheck(st.pos, st.pos.turn) ? st.pos.turn : "";
     for (let i = 0; i < 8; i += 1) {
       for (let j = 0; j < 8; j += 1) {
         const r = flip ? 7 - i : i;
@@ -565,17 +586,62 @@
         b.dataset.r = String(r);
         b.dataset.c = String(c);
         const p = st.pos.board[r][c];
+        let name = sq(r, c);
+        if (art) {
+          if (j === 0) {
+            const rk = document.createElement("span");
+            rk.className = "cb-co cb-rank";
+            rk.textContent = String(8 - r);
+            b.appendChild(rk);
+          }
+          if (i === 7) {
+            const fl = document.createElement("span");
+            fl.className = "cb-co cb-file";
+            fl.textContent = FILES[c];
+            b.appendChild(fl);
+          }
+        }
         if (p) {
-          b.textContent = GLYPH[p];
+          if (art) {
+            b.appendChild(art.piece(p));
+            b.dataset.piece = p;
+            name += ", " + art.label(p);
+          } else {
+            b.textContent = GLYPH[p];
+          }
           b.classList.add(color(p) === "w" ? "piece-white" : "piece-black");
+          if (enabled && color(p) === st.pos.turn) b.classList.add("cb-own");
+          if (checked && type(p) === "k" && color(p) === checked) b.classList.add("in-check");
+          if (st.over && type(p) === "k") {
+            if (mated) b.classList.add(color(p) === st.pos.turn ? "cb-fallen" : "cb-victor");
+            else b.classList.add("cb-draw");
+          }
+        }
+        if (last && ((last.fr === r && last.fc === c) || (last.tr === r && last.tc === c))) {
+          b.classList.add("last-move", (last.tr === r && last.tc === c) ? "last-to" : "last-from");
         }
         if (st.selected && st.selected.r === r && st.selected.c === c) b.classList.add("selected");
         const hit = st.selectedMoves.find((m) => m.toR === r && m.toC === c);
         if (hit) b.classList.add(hit.capture || hit.enPassant ? "capture" : "move");
-        if (!isSquareEnabled()) b.classList.add("disabled");
+        if (!enabled) b.classList.add("disabled");
+        if (art) b.setAttribute("aria-label", name);
         b.addEventListener("click", onSquare);
         boardEl.appendChild(b);
       }
+    }
+    if (art) {
+      let you = "";
+      if (st.mode === "bot") you = st.botColor === "w" ? "b" : "w";
+      else if (st.mode === "online") you = localOnlineColor();
+      art.afterRender(boardEl, change, {
+        flip: flip,
+        sameDevice: st.mode === "multi",
+        turn: st.pos.turn,
+        check: !!checked,
+        over: st.over,
+        result: st.result,
+        you: you
+      });
     }
   }
 
