@@ -603,10 +603,16 @@ kbd {
 .emote-pop {
   position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 30;
   display: grid; grid-template-columns: repeat(4, 44px); gap: 4px; padding: 8px; border-radius: 16px;
-  background: var(--glass-strong); border: 1px solid var(--glass-border-h); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  background: #171233; border: 1px solid var(--glass-border-h); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
   animation: ludo-rise 0.18s ease-out;
 }
 .emote-pop.hidden { display: none; }
+/* The tools card is its own stacking context (.glass backdrop-filter), so the
+   pop's z-index can't beat the board's layers (tokens 4, pods 6, flashes 55)
+   on its own: on phones the pop opened under the board. Lift the whole card
+   only while the pop is open (a permanent lift would cover the sticky header
+   when scrolled); 58 stays under the phone play dock (60). */
+.tools-card:has(.emote-pop:not(.hidden)) { position: relative; z-index: 58; }
 .emote-btn { width: 44px; height: 44px; border-radius: 11px; font-size: 24px; transition: transform 0.12s, background 0.12s; }
 .emote-btn:hover { background: rgba(255, 255, 255, 0.08); transform: scale(1.12); }
 
@@ -1092,6 +1098,7 @@ kbd {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
+      "tools  tools"
       "turn   turn"
       "act    power"
       "target target"
@@ -1144,12 +1151,31 @@ kbd {
   .play-dock .power-slot.empty { position: relative; }
   .play-dock .power-slot.empty .pw-icon { opacity: 0.45; }
 
-  .ludo-body[data-screen="game"] main.ludo-inner { padding-bottom: calc(var(--dock-h, 116px) + 16px); }
+  /* Tools (emote, chat, sound, autopilot, resign, leave) ride in the dock as a
+     compact icon strip so they stay reachable; the emote pop then opens above
+     the dock, over the board. Labels stay for screen readers only. */
+  .play-dock > .tools-card {
+    grid-area: tools; display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px;
+    padding: 0; margin: 0 0 2px; background: none; border: 0; box-shadow: none; border-radius: 0;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  .play-dock .tool-btn { min-height: 36px; padding: 4px 2px; flex-direction: row; gap: 0; border-radius: 10px; }
+  .play-dock .tool-btn > [aria-hidden="true"] { font-size: 18px; }
+  .play-dock .tool-label {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .play-dock .tool-btn { position: relative; }
+  .play-dock .emote-pop { left: 0; bottom: calc(100% + 10px); }
+
+  .ludo-body[data-screen="game"] main.ludo-inner { padding-bottom: calc(var(--dock-h, 166px) + 16px); }
+  /* scrollIntoView / focus scrolling must stop above the fixed dock, or the
+     chat box opens (and stays) hidden behind it. */
+  html:has(body.ludo-body[data-screen="game"]) { scroll-padding-bottom: calc(var(--dock-h, 166px) + 12px); }
   /* Board sized from the height left between the headers and a typical dock
      (a fixed figure, so the board doesn't jump when the dock grows for a
      target choice). The board plus player pods is ~1.36x taller than wide. */
   .ludo-body .board-host {
-    width: clamp(280px, calc((100dvh - 132px - 116px) / 1.36), min(100%, 680px));
+    width: clamp(260px, calc((100dvh - 132px - 166px) / 1.36), min(100%, 680px));
     margin: 0 auto;
   }
 }
