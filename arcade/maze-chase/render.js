@@ -711,7 +711,10 @@
           gliding = false; HPX = HLX; HPY = HLY;          // a step went by without moving (blocked)
         }
         lastPf = v.pf;
-        const e = gliding ? clamp(v.pf, 0, 1) : 1;
+        // The sim stops on the last pellet, so the step fraction freezes mid-glide:
+        // finish the step on a win so the hero (and the clear confetti) sit on
+        // the tile he actually reached.
+        const e = gliding && !v.won ? clamp(v.pf, 0, 1) : 1;
         const nx = (lerp(HPX, HLX, e) + 0.5) * T, ny = (lerp(HPY, HLY, e) + 0.5) * T;
         const mv = Math.abs(nx - hvx) + Math.abs(ny - hvy);
         if (mv < T * 1.5) walk += mv / T;

@@ -488,7 +488,19 @@
     let trN = 0;
     const seenCols = [];
 
+    // A restart must not carry the previous run's effects (cracked heart,
+    // drain flash, pending pops) onto the fresh board; a level-up keeps them.
+    function resetFx() {
+      for (let i = 0; i < parts.length; i++) parts[i].on = false;
+      for (let i = 0; i < rings.length; i++) rings[i].on = false;
+      for (let i = 0; i < pops.length; i++) pops[i].on = false;
+      for (let i = 0; i < ghosts.length; i++) ghosts[i].on = false;
+      shakeAt = squashAt = lostAt = clearAt = overAt = -1e9;
+      trN = 0;
+    }
+
     function adopt(v, now, levelUp) {
+      if (!levelUp) resetFx();
       const bricks = v.bricks;
       bricksRef = bricks;
       nB = Math.min(bricks.length, MAXB);
