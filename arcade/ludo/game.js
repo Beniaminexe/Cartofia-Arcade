@@ -1212,6 +1212,18 @@
     dom.boardHost.innerHTML = "";
   }
 
+  // Phones: the play dock (turn card + power-ups) is fixed to the bottom of
+  // the screen. Publish its live height so the page can pad under it.
+  (function trackPlayDock() {
+    const dock = document.getElementById("playDock");
+    if (!dock || !window.ResizeObserver) return;
+    const ro = new ResizeObserver(() => {
+      const h = getComputedStyle(dock).position === "fixed" ? dock.offsetHeight : 0;
+      document.documentElement.style.setProperty("--dock-h", h + "px");
+    });
+    ro.observe(dock);
+  })();
+
   let resizeRaf = 0;
   window.addEventListener("resize", () => {
     cancelAnimationFrame(resizeRaf);
@@ -1546,7 +1558,7 @@
       for (let i = 0; i < 2; i++) {
         const p = inv[i];
         if (!p) {
-          dom.powerBar.appendChild(h("div", { class: "power-slot empty" },
+          dom.powerBar.appendChild(h("div", { class: "power-slot empty", title: "Empty slot — land on a crate" },
             h("span", { class: "pw-icon pw-empty", "aria-hidden": "true", text: "📦" }),
             h("span", { class: "power-slot-text" }, h("span", { class: "power-slot-name", text: "Empty slot" }), h("span", { class: "power-slot-desc", text: "Land on a crate" }))));
           continue;

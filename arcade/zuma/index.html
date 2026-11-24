@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=1" />
   <style>
     /* Zuma Temple — page-specific pieces only; the stage shell lives in /arcade/game-shell-v2.css */
-    #game { aspect-ratio: 16 / 10; background: #020913; }
+    #game { aspect-ratio: 16 / 10; background: #0b2f33; }
 
     #board-frame:fullscreen,
     #board-frame:-webkit-full-screen {
@@ -155,6 +155,28 @@
 
     @media (max-width: 980px) {
       .inframe-actions .btn.btn-compact { min-width: 0; }
+    }
+
+    /* Narrow screens: the in-frame buttons sat on top of the track's first row
+       (where the marbles enter), hiding marbles and eating taps. Dock them in a
+       strip under the board instead; fullscreen keeps the overlay layout. */
+    @media (max-width: 720px) {
+      .gx #board-frame > #action-bar {
+        position: static;
+        display: flex;
+        gap: 6px;
+        padding: 6px;
+        border-top: 2px solid var(--gx-ink);
+        background: linear-gradient(180deg, #0f2a2e, #0a0818);
+      }
+      .gx #board-frame > #action-bar .btn { flex: 1; }
+      .gx #board-frame > #overlay { bottom: auto; height: auto; aspect-ratio: 16 / 10; }
+      .gx #board-frame:fullscreen > #action-bar { position: absolute; padding: 0; border: 0; background: none; }
+      .gx #board-frame:fullscreen > #overlay { bottom: 0; aspect-ratio: auto; }
+    }
+    @media (max-width: 720px) {
+      .gx #board-frame:-webkit-full-screen > #action-bar { position: absolute; padding: 0; border: 0; background: none; }
+      .gx #board-frame:-webkit-full-screen > #overlay { bottom: 0; aspect-ratio: auto; }
     }
   </style>
 </head>
@@ -360,7 +382,7 @@
   <script src="/assets/notifications.js?v=3" defer></script>
   <script src="/assets/game-utils.js?v=4"></script>
   <script src="/assets/game-stats.js?v=1" defer></script>
-  <script src="/arcade/zuma/game.js?v=20261123-1"></script>
+  <script src="/arcade/zuma/game.js?v=20261124-art1"></script>
   <script>
     (function () {
       // ── Pre-game: show level progress from localStorage ──
