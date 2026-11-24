@@ -1,0 +1,506 @@
+/* ==========================================================================
+   Cartofia Minesweeper — board art (pairs with render.js)
+   The cover (assets/games/minesweeper.svg) come to life inside the Night
+   Market shell: a steel-navy tray with an ink rim and a dot texture, pale
+   steel keycap tiles that sit raised on it, revealed cells sunk into the
+   tray, the cover's ink-outlined mine with its coral halo and its red flag.
+   Numbers: own colour + weight + a ring for the higher counts, so they read
+   without colour too. Sizes come from --cell-size (set by render.js).
+   ========================================================================== */
+.ms-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
+
+/* ---------- stage + tray ---------- */
+.ms-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);   /* the column never grows past the stage */
+  justify-items: center;
+  gap: 14px;
+  overflow: hidden;   /* effects never widen the page */
+  overflow: clip;
+}
+.ms-stage .classic-shell {
+  --ms-ink: #1b1230;
+  position: relative;
+  width: max-content;
+  max-width: 100%;
+  padding: 11px;
+  border: 3px solid var(--ms-ink);
+  border-radius: 20px;
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.075) 1px, transparent 1.6px) 0 0 / 12px 12px,
+    radial-gradient(130% 95% at 22% 0%, #44567f 0%, #2a3653 46%, #19213d 100%);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -3px 0 rgba(6, 8, 20, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 0 0 7px color-mix(in srgb, var(--g, #9fb4d8) 13%, transparent),
+    0 26px 50px -22px rgba(0, 0, 0, 0.95);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ms-stage .classic-shell::before {
+  /* lacquer sheen */
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0) 34%);
+}
+.ms-fx { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: visible; }
+
+/* ---------- HUD: mines pod · face · timer pod ---------- */
+.ms-stage .classic-top {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+.ms-pod {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  height: 50px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  background: linear-gradient(180deg, #0a0f1f, #131b33);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.ms-pod-time { justify-content: flex-end; text-align: right; }
+.ms-pod-ico { flex: none; width: 24px; height: 24px; overflow: visible; }
+.ms-pod-mines .ms-pod-ico {
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 90, 78, 0.55), rgba(255, 90, 78, 0));
+  filter: drop-shadow(0 0 1px rgba(255, 190, 170, 0.6));
+}
+.ms-pod-txt { display: grid; gap: 3px; min-width: 0; }
+.ms-pod-lbl {
+  color: #8a93b8;
+  font: 600 9px/1 var(--gx-mono, 'JetBrains Mono', monospace);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.ms-stage .digit {
+  display: block;
+  min-width: 0;
+  color: #ff8466;
+  font: 500 25px/1 var(--gx-mono, 'JetBrains Mono', monospace);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 12px rgba(255, 107, 74, 0.55);
+  white-space: nowrap;
+}
+.ms-pod-time .digit { color: #ffcf5c; text-shadow: 0 0 12px rgba(255, 207, 92, 0.45); }
+.ms-stage .digit .z { opacity: 0.22; text-shadow: none; }
+.ms-stage .digit.is-neg { color: #ff5470; }
+.ms-clock-hand {
+  transform-box: view-box;
+  transform-origin: 12px 13.5px;
+  transform: rotate(calc(var(--sec, 0) * 30deg));
+  transition: transform 0.32s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.ms-stage .face-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px; height: 56px;
+  min-width: 0; min-height: 0;
+  margin: 0; padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #2c375b, #121830 72%);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.65),
+    0 0 0 2px var(--ms-ink),
+    0 0 0 4px rgba(255, 255, 255, 0.08),
+    0 7px 14px -6px rgba(0, 0, 0, 0.85),
+    0 0 22px -6px color-mix(in srgb, var(--accent, #7c5cff) 70%, transparent);
+  color: #1d1d1d;
+  font: 700 18px/1 var(--gx-body, sans-serif);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ms-face { display: block; width: 46px; height: 46px; overflow: visible; transition: transform 0.14s ease; }
+.ms-stage .face-btn:hover .ms-face { transform: translateY(-1.5px) scale(1.05); }
+.ms-stage .face-btn:active .ms-face, .ms-stage .face-btn.pressed .ms-face { transform: translateY(1px) scale(0.93); }
+.ms-stage .face-btn:focus-visible { outline: 2px solid var(--accent, #7c5cff); outline-offset: 4px; }
+.ms-face .fx { display: none; }
+.ms-face[data-mode="normal"] .fx-normal,
+.ms-face[data-mode="wow"] .fx-wow,
+.ms-face[data-mode="dead"] .fx-dead,
+.ms-face[data-mode="cool"] .fx-cool { display: inline; }
+.ms-face[data-mode="dead"] .f-head { fill: url(#msg-face-dead); }
+
+/* ---------- the well the tiles sit in ---------- */
+.ms-stage .board-wrap {
+  position: relative;
+  max-width: 100%;
+  overflow: auto;
+  padding: 6px;
+  border-radius: 13px;
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  background: radial-gradient(120% 80% at 50% 0%, #19223f, #0d1326 72%);
+  box-shadow: inset 0 3px 9px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.09);
+  touch-action: manipulation;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.ms-stage .board-wrap::after {
+  /* win shine (idle: nothing) */
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+}
+
+.ms-stage .board-grid {
+  --cell-size: 28px;
+  position: relative;
+  display: grid;
+  width: max-content;
+  gap: 0;
+  border-radius: 8px;
+  transition: box-shadow 0.2s ease;
+}
+.ms-stage .board-grid.is-flag-mode {
+  box-shadow: 0 0 0 2px rgba(255, 107, 74, 0.75), 0 0 16px rgba(255, 107, 74, 0.35);
+}
+
+/* ---------- a cell: full-size hit area, the tile is drawn inside it ---------- */
+.ms-stage .board-grid .cell {
+  --gap: max(1px, calc(var(--cell-size) * 0.05));
+  --rad: calc(var(--cell-size) * 0.21);
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  margin: 0; padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: 800 calc(var(--cell-size) * 0.56)/1 var(--gx-display, 'Unbounded', 'Outfit', sans-serif);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  outline: none;
+}
+.ms-stage .board-grid .cell > * { position: relative; z-index: 2; pointer-events: none; }
+.ms-stage .board-grid .cell::before,
+.ms-stage .board-grid .cell::after {
+  content: '';
+  position: absolute;
+  inset: var(--gap);
+  border-radius: var(--rad);
+  pointer-events: none;
+}
+.ms-stage .board-grid .cell::after { display: none; z-index: 3; }
+
+/* covered: a raised steel keycap with a lit top edge */
+.ms-stage .board-grid .cell::before,
+.ms-stage .board-grid .cell.ms-dig::after {
+  background:
+    radial-gradient(95% 70% at 28% 14%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 62%),
+    linear-gradient(162deg, #d5e0f4 0%, #adbfe0 48%, #879dc7 100%);
+  box-shadow:
+    inset 0 max(1px, calc(var(--cell-size) * 0.055)) 0 rgba(255, 255, 255, 0.8),
+    inset 0 calc(var(--cell-size) * -0.09) 0 #6e84b2,
+    inset 0 0 0 1px rgba(27, 18, 48, 0.3),
+    0 max(1px, calc(var(--cell-size) * 0.05)) max(1.5px, calc(var(--cell-size) * 0.1)) rgba(3, 4, 14, 0.6);
+}
+.ms-stage .board-grid .cell::before { transition: transform 0.1s ease, filter 0.12s ease; }
+
+@media (hover: hover) {
+  .ms-stage .board-grid:not(.is-over) .cell:not(.revealed):hover::before {
+    filter: brightness(1.07) saturate(1.12);
+    outline: max(1.5px, calc(var(--cell-size) * 0.06)) solid color-mix(in srgb, var(--accent, #7c5cff) 75%, #ffffff);
+    outline-offset: 0;
+  }
+  .ms-stage .board-grid.is-flag-mode:not(.is-over) .cell:not(.revealed):not(.flagged):not(.question):hover::after {
+    display: block;
+    background: var(--ms-ghost-flag) center 46% / 74% no-repeat;
+    box-shadow: none;
+    opacity: 0.45;
+  }
+}
+.ms-stage .board-grid:not(.is-over) .cell:not(.revealed):active::before {
+  transform: translateY(max(1px, calc(var(--cell-size) * 0.04)));
+  filter: brightness(0.95);
+}
+.ms-stage .board-grid .cell:focus-visible { z-index: 4; }
+.ms-stage .board-grid .cell:focus-visible::before {
+  outline: max(2px, calc(var(--cell-size) * 0.08)) solid var(--accent, #7c5cff);
+  outline-offset: 1px;
+}
+.ms-stage .board-grid.is-over .cell { cursor: default; }
+
+/* revealed: sunk into the tray */
+.ms-stage .board-grid .cell.revealed { cursor: default; }
+.ms-stage .board-grid .cell.revealed::before {
+  inset: calc(var(--gap) * 0.7);
+  border-radius: calc(var(--rad) * 0.8);
+  background: linear-gradient(180deg, #18203a 0%, #222c49 100%);
+  box-shadow:
+    inset 0 calc(var(--cell-size) * 0.07) calc(var(--cell-size) * 0.11) rgba(2, 3, 10, 0.62),
+    inset 0 -1px 0 rgba(170, 190, 240, 0.09);
+}
+.ms-stage .board-grid .cell[class*="num"]::before {
+  background:
+    radial-gradient(circle at 50% 52%, color-mix(in srgb, var(--nc) 15%, transparent), transparent 72%),
+    linear-gradient(180deg, #18203a 0%, #222c49 100%);
+}
+
+/* numbers: colour + weight + ring, so 1 to 8 read without colour too */
+.ms-n {
+  color: var(--nc, #fff);
+  line-height: 1;
+  transform: translateY(3%);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6), 0 0 calc(var(--cell-size) * 0.32) color-mix(in srgb, var(--nc) 40%, transparent);
+}
+.ms-stage .board-grid .cell.num1 { --nc: #84b6ff; font-weight: 600; }
+.ms-stage .board-grid .cell.num2 { --nc: #4fe2a2; font-weight: 700; }
+.ms-stage .board-grid .cell.num3 { --nc: #ff7d70; }
+.ms-stage .board-grid .cell.num4 { --nc: #bca2ff; }
+.ms-stage .board-grid .cell.num5 { --nc: #ffb14d; }
+.ms-stage .board-grid .cell.num6 { --nc: #46dce9; }
+.ms-stage .board-grid .cell.num7 { --nc: #ff88d8; }
+.ms-stage .board-grid .cell.num8 { --nc: #eef2ff; }
+.ms-stage .board-grid .cell.num3::before,
+.ms-stage .board-grid .cell.num4::before {
+  box-shadow:
+    inset 0 0 0 max(1px, calc(var(--cell-size) * 0.035)) color-mix(in srgb, var(--nc) 55%, transparent),
+    inset 0 calc(var(--cell-size) * 0.07) calc(var(--cell-size) * 0.11) rgba(2, 3, 10, 0.62);
+}
+.ms-stage .board-grid .cell.num5::before,
+.ms-stage .board-grid .cell.num6::before,
+.ms-stage .board-grid .cell.num7::before,
+.ms-stage .board-grid .cell.num8::before {
+  box-shadow:
+    inset 0 0 0 max(1.5px, calc(var(--cell-size) * 0.07)) color-mix(in srgb, var(--nc) 62%, transparent),
+    inset 0 calc(var(--cell-size) * 0.07) calc(var(--cell-size) * 0.11) rgba(2, 3, 10, 0.62);
+}
+
+/* flags, question marks, mines, wrong flags */
+.ms-ico { display: block; width: 80%; height: 80%; overflow: visible; }
+.ms-stage .board-grid .cell .ms-flag { transform-origin: 44% 82%; }
+.ms-q {
+  color: #3a2c6e;
+  font-weight: 800;
+  font-size: calc(var(--cell-size) * 0.6);
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+.ms-stage .board-grid .cell.mine::before {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 90, 78, 0.38), rgba(255, 90, 78, 0) 70%),
+    linear-gradient(180deg, #18203a 0%, #222c49 100%);
+}
+.ms-stage .board-grid .cell .ms-mine { width: 84%; height: 84%; }
+.ms-stage .board-grid .cell.ms-wf::before {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(62, 230, 166, 0.3), rgba(62, 230, 166, 0) 72%),
+    linear-gradient(180deg, #18203a 0%, #222c49 100%);
+  box-shadow: inset 0 0 0 max(1px, calc(var(--cell-size) * 0.05)) rgba(62, 230, 166, 0.7);
+}
+.ms-stage .board-grid .cell .ms-badge {
+  position: absolute;
+  right: 2%; top: 0;
+  width: 46%; height: 46%;
+  z-index: 3;
+}
+.ms-stage .board-grid .cell.exploded { z-index: 3; }
+.ms-stage .board-grid .cell.exploded::before {
+  background: radial-gradient(circle at 50% 45%, #ffe08a 0%, #ff6b4a 42%, #b8391f 88%);
+  box-shadow:
+    inset 0 0 0 max(1px, calc(var(--cell-size) * 0.05)) rgba(255, 226, 160, 0.75),
+    0 0 calc(var(--cell-size) * 0.55) rgba(255, 107, 74, 0.85);
+}
+.ms-stage .board-grid .cell.wrong .ms-flag { opacity: 0.42; filter: saturate(0.4); }
+.ms-stage .board-grid .cell.wrong .ms-x {
+  position: absolute;
+  left: 12%; top: 12%;
+  width: 76%; height: 76%;
+  z-index: 3;
+}
+
+/* flag mode ghost + the lid used when a flagged mine is revealed */
+.ms-stage .board-grid {
+  --ms-ghost-flag: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M44 80V16' stroke='%231b1230' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M46 15C59 18 71 23 82 30C71 36 59 42 46 46Z' fill='%23ff4d4d' stroke='%231b1230' stroke-width='5' stroke-linejoin='round'/%3E%3Crect x='28' y='76' width='40' height='11' rx='4' fill='%232a2148' stroke='%231b1230' stroke-width='4'/%3E%3C/svg%3E");
+}
+
+/* ======================================================================
+   Motion (render.js adds these classes; --d is the per-cell delay)
+   ====================================================================== */
+/* new board: tiles settle in on a diagonal */
+.ms-stage .board-grid .cell.ms-deal { animation: ms-deal 0.34s cubic-bezier(0.3, 1.4, 0.5, 1) both; animation-delay: var(--d, 0ms); }
+@keyframes ms-deal { from { transform: scale(0.55); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* dig: the keycap pops off, then what was under it lands */
+.ms-stage .board-grid .cell.ms-dig::after {
+  display: block;
+  animation: ms-lid 0.27s cubic-bezier(0.45, 0, 0.6, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+.ms-stage .board-grid .cell.ms-dig.ms-wf::after {
+  background:
+    var(--ms-ghost-flag) center 46% / 74% no-repeat,
+    radial-gradient(95% 70% at 28% 14%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 62%),
+    linear-gradient(162deg, #d5e0f4 0%, #adbfe0 48%, #879dc7 100%);
+}
+@keyframes ms-lid {
+  0% { transform: none; opacity: 1; }
+  35% { transform: translateY(-9%) scale(1.07) rotate(calc(var(--rot, 6deg) * -0.4)); opacity: 1; }
+  100% { transform: translateY(10%) scale(0.35) rotate(var(--rot, 6deg)); opacity: 0; }
+}
+.ms-stage .board-grid .cell.ms-dig > * {
+  animation: ms-land 0.34s cubic-bezier(0.3, 1.55, 0.5, 1) both;
+  animation-delay: calc(var(--d, 0ms) + 90ms);
+}
+@keyframes ms-land { from { scale: 0.25; opacity: 0; } 70% { opacity: 1; } to { scale: 1; opacity: 1; } }
+.ms-stage .board-grid .cell.ms-dig::before { animation: ms-well 0.5s ease-out both; animation-delay: var(--d, 0ms); }
+@keyframes ms-well { from { filter: brightness(1.9); } to { filter: none; } }
+.ms-stage .board-grid .cell.ms-dig.ms-hot::before { animation-name: ms-well-hot; animation-duration: 0.7s; }
+@keyframes ms-well-hot { from { filter: brightness(2.6) saturate(1.6); } to { filter: none; } }
+
+/* the mine that went off */
+.ms-stage .board-grid .cell.ms-blast > .ms-mine { animation: ms-blast 0.62s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+@keyframes ms-blast {
+  0% { scale: 1.9; opacity: 0; filter: brightness(3); }
+  30% { opacity: 1; }
+  100% { scale: 1; opacity: 1; filter: none; }
+}
+.ms-stage .board-grid .cell.ms-blast::before { animation: ms-hot 1.4s ease-out both; }
+@keyframes ms-hot {
+  0% { filter: brightness(2.2); box-shadow: inset 0 0 0 2px rgba(255, 240, 200, 0.9), 0 0 calc(var(--cell-size) * 2.2) rgba(255, 140, 80, 1); }
+  100% { filter: none; }
+}
+
+/* flag pop (+ ring), question pop */
+.ms-stage .board-grid .cell.ms-pop > .ms-flag {
+  animation: ms-flag-in 0.44s cubic-bezier(0.3, 1.6, 0.45, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes ms-flag-in {
+  0% { transform: translateY(38%) scale(0.2) rotate(-32deg); opacity: 0; }
+  55% { transform: translateY(-7%) scale(1.16) rotate(9deg); opacity: 1; }
+  78% { transform: translateY(0) scale(0.96) rotate(-3deg); }
+  100% { transform: none; opacity: 1; }
+}
+.ms-stage .board-grid .cell.ms-pop::after {
+  display: block;
+  inset: -6%;
+  border-radius: 50%;
+  background: none;
+  box-shadow: none;
+  border: max(1.5px, calc(var(--cell-size) * 0.07)) solid #ff6b4a;
+  animation: ms-ring 0.5s ease-out both;
+  animation-delay: var(--d, 0ms);
+}
+.ms-stage .board-grid .cell.ms-pop.ms-gold::after { border-color: #ffcf5c; }
+@keyframes ms-ring { from { transform: scale(0.3); opacity: 0.95; } to { transform: scale(1.45); opacity: 0; } }
+.ms-stage .board-grid .cell.ms-qpop > .ms-q { animation: ms-q 0.3s cubic-bezier(0.3, 1.7, 0.5, 1) both; }
+@keyframes ms-q { from { scale: 0.3; rotate: -20deg; opacity: 0; } to { scale: 1; rotate: 0deg; opacity: 1; } }
+
+/* wrong flag: the X is stamped on after the mines show */
+.ms-stage .board-grid .cell.ms-x-in > .ms-x { animation: ms-stamp 0.34s cubic-bezier(0.3, 1.5, 0.5, 1) both; animation-delay: var(--d, 0ms); }
+@keyframes ms-stamp { from { scale: 2.2; opacity: 0; } 60% { opacity: 1; } to { scale: 1; opacity: 1; } }
+
+/* reduced motion: a short fade instead */
+.ms-stage .board-grid .cell.ms-fade > * { animation: ms-fade 0.18s ease-out both; }
+@keyframes ms-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* HUD pulses */
+.ms-pod.ms-bump .digit { animation: ms-bump 0.26s ease-out; }
+@keyframes ms-bump { 40% { scale: 1.14; filter: brightness(1.35); } }
+
+/* game over: lost = red inner pulse; won = mint frame glow + a shine sweep */
+.ms-stage .classic-shell.ms-lost .board-wrap { animation: ms-red 1.1s ease-out both; }
+@keyframes ms-red {
+  0% { box-shadow: inset 0 0 0 2px rgba(255, 107, 74, 0.95), inset 0 0 40px rgba(255, 70, 50, 0.65), 0 1px 0 rgba(255, 255, 255, 0.09); }
+  100% { box-shadow: inset 0 0 0 1px rgba(255, 107, 74, 0.45), inset 0 3px 9px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.09); }
+}
+.ms-stage .classic-shell.ms-won {
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -3px 0 rgba(6, 8, 20, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 0 0 7px rgba(62, 230, 166, 0.28),
+    0 0 36px 4px rgba(62, 230, 166, 0.3),
+    0 26px 50px -22px rgba(0, 0, 0, 0.95);
+  animation: ms-glow 1.3s ease-in-out 2;
+}
+@keyframes ms-glow { 50% { box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.16), inset 0 -3px 0 rgba(6, 8, 20, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.07), 0 0 0 7px rgba(62, 230, 166, 0.55), 0 0 60px 10px rgba(62, 230, 166, 0.5), 0 26px 50px -22px rgba(0, 0, 0, 0.95); } }
+.ms-stage .classic-shell.ms-won .board-wrap::after {
+  background: linear-gradient(105deg, transparent 0 38%, rgba(255, 255, 255, 0.26) 50%, transparent 62% 100%) 0 0 / 300% 100% no-repeat;
+  animation: ms-sweep 1.15s ease-in-out both;
+  animation-delay: var(--ms-sweep-d, 250ms);
+}
+@keyframes ms-sweep { 0% { opacity: 1; background-position: 100% 0; } 100% { opacity: 1; background-position: 0% 0; } }
+
+/* ---------- effect particles (render.js) ---------- */
+.ms-p { position: absolute; left: 0; top: 0; pointer-events: none; will-change: transform, opacity; }
+.ms-ring { border-radius: 50%; border: 3px solid #ffcf5c; }
+.ms-flash { border-radius: 50%; }
+.ms-shard { width: 7px; height: 7px; border-radius: 2px; border: 1.5px solid #1b1230; }
+.ms-spark { width: 5px; height: 5px; border-radius: 50%; box-shadow: 0 0 6px currentColor; }
+.ms-smoke { border-radius: 50%; background: radial-gradient(closest-side, rgba(52, 40, 84, 0.75), rgba(52, 40, 84, 0)); }
+.ms-confetti { width: 8px; height: 12px; border-radius: 2px; }
+
+/* ---------- toolbar under the board ---------- */
+.ms-tools .btn::before {
+  content: '';
+  flex: none;
+  width: 16px; height: 16px;
+  margin-right: 8px;
+  background: currentColor;
+  -webkit-mask: var(--ms-ico) center / contain no-repeat;
+  mask: var(--ms-ico) center / contain no-repeat;
+}
+#new-board { --ms-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 12a8 8 0 1 1-2.34-5.66' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3Cpath d='M20.5 3.5v5h-5z' fill='black' stroke='black' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+#flag-mode { --ms-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 21V3.5' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M7 3.5l12 4.5-12 4.6z' fill='black'/%3E%3C/svg%3E"); }
+#flag-mode.btn-primary::before { background: #ffd2c6; }
+
+/* ---------- phones ---------- */
+@media (max-width: 720px) {
+  .gx .ms-stage { padding: 5px; gap: 10px; }
+  .ms-stage .classic-shell { padding: 6px; border-radius: 16px; }
+  .ms-stage .classic-top { gap: 7px; margin-bottom: 7px; }
+  .ms-pod { height: 46px; padding: 0 10px; gap: 7px; border-radius: 12px; }
+  .ms-pod-ico { width: 21px; height: 21px; }
+  .ms-stage .digit { font-size: 22px; }
+  .ms-stage .face-btn { width: 50px; height: 50px; }
+  .ms-face { width: 41px; height: 41px; }
+  .ms-stage .board-wrap { padding: 3px; border-radius: 11px; }
+}
+@media (max-width: 360px) {
+  .ms-pod-lbl { display: none; }
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .ms-stage .board-grid .cell.ms-deal,
+  .ms-stage .board-grid .cell.ms-dig::before,
+  .ms-stage .board-grid .cell.ms-dig > *,
+  .ms-stage .board-grid .cell.ms-blast > .ms-mine,
+  .ms-stage .board-grid .cell.ms-blast::before,
+  .ms-stage .board-grid .cell.ms-pop > .ms-flag,
+  .ms-stage .board-grid .cell.ms-qpop > .ms-q,
+  .ms-stage .board-grid .cell.ms-x-in > .ms-x,
+  .ms-pod.ms-bump .digit,
+  .ms-stage .classic-shell.ms-lost .board-wrap,
+  .ms-stage .classic-shell.ms-won { animation: none; }
+  .ms-stage .board-grid .cell.ms-dig::after,
+  .ms-stage .board-grid .cell.ms-pop::after,
+  .ms-stage .classic-shell.ms-won .board-wrap::after { display: none; animation: none; }
+  .ms-stage .classic-shell.ms-lost .board-wrap { box-shadow: inset 0 0 0 2px rgba(255, 107, 74, 0.7), inset 0 3px 9px rgba(0, 0, 0, 0.65); }
+  .ms-stage .board-grid .cell::before, .ms-face, .ms-clock-hand, .ms-stage .board-grid { transition: none; }
+}
