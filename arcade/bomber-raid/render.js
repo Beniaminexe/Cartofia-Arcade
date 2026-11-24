@@ -741,7 +741,13 @@
         return;
       }
       if (!alive) {
-        if (r.alive) { r.alive = false; r.dying = now; onDeath(r, now); }
+        if (r.alive) {
+          /* update() moves a player/bot before checking blast contact, so the
+             fatal step may not have been drawn yet: die on the final tile,
+             not the previous (possibly safe) one. */
+          r.x = r.fx = r.tx = lx; r.y = r.fy = r.ty = ly; r.mv = 0;
+          r.alive = false; r.dying = now; onDeath(r, now);
+        }
         return;
       }
       if (sh < r.sh) onShieldPop(r, now);
