@@ -14,7 +14,13 @@
   <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=1" />
   <style>
     /* Snake — page-specific pieces only; the stage shell lives in /arcade/game-shell-v2.css */
-    #game { aspect-ratio: 1 / 1; image-rendering: pixelated; background: #05101a; }
+    /* board art is drawn by render.js at devicePixelRatio; the bg only shows before the first frame */
+    #game { aspect-ratio: 1 / 1; background: radial-gradient(circle at 50% 42%, #47963c, #1d532b 80%); }
+    /* the "Press Start / Paused / Game Over" veil: a touch of lawn-green so the board still reads through */
+    .gx #overlay.board-overlay {
+      background: radial-gradient(120% 90% at 50% 45%, rgba(10, 26, 16, 0.5), rgba(10, 8, 24, 0.72));
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+    }
 
     .pad-grid {
       width: 192px;
@@ -209,10 +215,10 @@
   <script src="/assets/notifications.js?v=3" defer></script>
   <script src="/assets/game-utils.js?v=4"></script>
   <script src="/assets/game-stats.js?v=1" defer></script>
+  <script src="/arcade/snake/render.js?v=1"></script>
   <script>
     (function () {
       const canvas = document.getElementById("game");
-      const ctx = canvas.getContext("2d");
       const overlay = document.getElementById("overlay");
 
       const scoreEl = document.getElementById("score");
@@ -242,7 +248,7 @@
 
       /* ── game state ── */
       const gridCount = 24;
-      const cellSize = canvas.width / gridCount;
+      const cellSize = 576 / gridCount;   /* logical board px; only the plain fallback renderer uses it */
       const defaultDelay = 140;
       const minDelay = 70;
 
@@ -259,6 +265,11 @@
       let accumulator = 0;
       let lastFrameTime = 0;
       let gameStartTime = null;
+
+      /* ── board art (render.js). Presentation only: it reads this state, never writes it. ── */
+      const art = window.SnakeArt ? window.SnakeArt.create(canvas, { grid: gridCount }) : null;
+      let gameOverTimer = 0;
+      let deathDuration = 0;
 
       function loadBest() {
         try {
@@ -338,6 +349,7 @@
       }
 
       function resetState() {
+        clearTimeout(gameOverTimer); gameOverTimer = 0;
         snake = [{ x:10,y:12 },{ x:9,y:12 },{ x:8,y:12 }];
         direction = { x:1,y:0 };
         queuedDirection = { x:1,y:0 };
@@ -351,7 +363,7 @@
       }
 
       function showGameOver() {
-        const dur = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
+        const dur = deathDuration;
         goHeading.textContent = score >= 10 ? "Nice Run!" : "Game Over";
         goScore.textContent   = String(score);
         goLength.textContent  = String(snake.length);
@@ -368,8 +380,17 @@
         running = false; paused = false; gameOver = true;
         if (score > best) { best = score; saveBest(); }
         updateHud();
-        setOverlay("Game Over. Press Restart or Enter.");
-        showGameOver();
+        deathDuration = _dur;
+        /* let the death animation play on the board before the card covers it
+           (restarting during the hold just starts the new run, as before) */
+        const reveal = () => {
+          gameOverTimer = 0;
+          setOverlay("Game Over. Press Restart or Enter.");
+          showGameOver();
+        };
+        const hold = art ? art.deathHoldMs() : 0;
+        clearTimeout(gameOverTimer);
+        if (hold > 0) gameOverTimer = setTimeout(reveal, hold); else reveal();
       }
 
       function beginRun() {
@@ -421,46 +442,26 @@
         updateHud();
       }
 
-      function drawGrid() {
-        ctx.strokeStyle = "rgba(79, 125, 249, 0.1)";
-        ctx.lineWidth = 1;
-        for (let i = 1; i < gridCount; i++) {
-          const offset = i * cellSize + 0.5;
-          ctx.beginPath(); ctx.moveTo(offset, 0); ctx.lineTo(offset, canvas.height); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(0, offset); ctx.lineTo(canvas.width, offset); ctx.stroke();
-        }
-      }
-
-      function drawFood() {
-        const cx = food.x * cellSize + cellSize / 2;
-        const cy = food.y * cellSize + cellSize / 2;
-        ctx.fillStyle = "#ff5d7a";
-        ctx.shadowColor = "rgba(255, 93, 122, 0.4)";
-        ctx.shadowBlur = 10;
-        ctx.beginPath(); ctx.arc(cx, cy, cellSize * 0.33, 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0;
-      }
-
-      function drawSnake() {
+      /* plain fallback (only if render.js failed to load) */
+      let plainCtx = null;
+      function drawPlain() {
+        const ctx = plainCtx || (plainCtx = canvas.getContext("2d"));
+        ctx.setTransform(canvas.width / 576, 0, 0, canvas.width / 576, 0, 0);
+        ctx.fillStyle = "#1d532b";
+        ctx.fillRect(0, 0, 576, 576);
+        ctx.fillStyle = "#ff4d4d";
+        ctx.beginPath(); ctx.arc(food.x * cellSize + cellSize / 2, food.y * cellSize + cellSize / 2, cellSize * 0.33, 0, Math.PI * 2); ctx.fill();
         snake.forEach((part, index) => {
-          const pad = index === 0 ? 2 : 3;
-          const x = part.x * cellSize + pad;
-          const y = part.y * cellSize + pad;
-          const size = cellSize - pad * 2;
-          if (index === 0) { ctx.fillStyle = "#78d0ff"; }
-          else {
-            const alpha = 0.95 - Math.min(index, 10) * 0.05;
-            ctx.fillStyle = `rgba(79, 125, 249, ${Math.max(alpha, 0.35)})`;
-          }
-          ctx.fillRect(x, y, size, size);
+          ctx.fillStyle = index === 0 ? "#b8f58a" : "#4fd06a";
+          ctx.fillRect(part.x * cellSize + 2, part.y * cellSize + 2, cellSize - 4, cellSize - 4);
         });
       }
 
-      function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#05101a";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        drawGrid(); drawFood(); drawSnake();
+      function draw(now) {
+        if (!art) { drawPlain(); return; }
+        /* glide fraction between grid steps: the same accumulator the tick uses, so timing is unchanged */
+        const t = (running || paused) ? accumulator / stepDelay : 1;
+        art.draw(now || performance.now(), snake, food, direction, t, running, paused, gameOver);
       }
 
       function frame(timestamp) {
@@ -471,7 +472,7 @@
           accumulator += delta;
           while (accumulator >= stepDelay && running) { step(); accumulator -= stepDelay; }
         }
-        draw();
+        draw(timestamp);
         window.requestAnimationFrame(frame);
       }
 
