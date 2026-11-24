@@ -16,14 +16,25 @@
     /* Bomber Raid — page-specific pieces only; the stage shell lives in /arcade/game-shell-v2.css */
     #g {
       aspect-ratio: 13 / 11;
-      image-rendering: pixelated;
-      background: #071322;
+      background: #2c1230;              /* arena tone while the art renderer warms up */
       transform: translateZ(0);        /* promote to a layer so scaling runs on the GPU */
       will-change: transform;
       backface-visibility: hidden;
     }
-    #ov { position:absolute; inset:0; display:grid; place-items:center; text-align:center; padding:16px; background:rgba(13,10,28,.66); color:var(--gx-text); font:600 15px/1.5 var(--gx-body); pointer-events:none; transition:opacity .2s ease; text-wrap:balance; }
+    /* Status overlay: a soft dusk vignette so the arena (and win/loss effects) stay visible behind the message */
+    #ov {
+      position:absolute; inset:0; display:grid; place-items:center; text-align:center;
+      padding:16px 12%;
+      background:
+        radial-gradient(ellipse 62% 46% at 50% 50%, rgba(13,10,28,.86) 0%, rgba(13,10,28,.7) 55%, rgba(13,10,28,.34) 100%);
+      color:var(--gx-text);
+      font:600 clamp(13px, 1.55vw, 16.5px)/1.5 var(--gx-body);
+      letter-spacing:.005em;
+      text-shadow:0 2px 0 rgba(27,18,48,.9), 0 0 18px rgba(255,140,58,.25);
+      pointer-events:none; transition:opacity .2s ease; text-wrap:balance;
+    }
     #ov.hide { opacity:0; }
+    @media (prefers-reduced-motion: reduce) { #ov { transition:none; } }
 
     .joy-layer { position:absolute; inset:0; z-index:3; pointer-events:none; }
     .joystick-base { position:absolute; left:-9999px; top:-9999px; width:112px; height:112px; border-radius:50%; border:1px solid rgba(93,183,255,.42); background:radial-gradient(circle at 32% 28%,rgba(130,196,244,.2),rgba(12,28,43,.46) 58%),linear-gradient(180deg,rgba(8,22,34,.4),rgba(6,15,24,.34)); box-shadow:inset 0 0 0 1px rgba(191,228,255,.06); opacity:0; transform:translate(-50%,-50%) scale(.9); transition:opacity .12s ease,transform .12s ease; pointer-events:none; }
@@ -98,7 +109,9 @@
       transform:translateY(4px) scale(.98);
       box-shadow:0 1px 0 #6e1f0e, 0 6px 12px rgba(0,0,0,.45);
     }
-    .overlay-bomb-icon { font-size:40px; line-height:1; }
+    .overlay-bomb-icon { display:inline-flex; line-height:1; filter:drop-shadow(0 2px 0 rgba(27,18,48,.55)); }
+    .overlay-bomb-icon svg { width:46px; height:46px; display:block; }
+    .mode-card-icon svg { width:30px; height:30px; display:block; }
 
     /* Show floating bomb on touch devices (where the inline panel bomb is
        pages below the canvas and unreachable mid-game) and hide the panel
@@ -293,7 +306,16 @@
                 <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V3h6"/><path d="M21 9V3h-6"/><path d="M3 15v6h6"/><path d="M21 15v6h-6"/></svg>
               </button>
               <button id="bomb-overlay" class="overlay-bomb-btn" type="button" aria-label="Place bomb">
-                <span class="overlay-bomb-icon" aria-hidden="true">💣</span>
+                <span class="overlay-bomb-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="25.5" y="8.5" width="10.5" height="7.5" rx="2" transform="rotate(-25 30.75 12.25)" fill="#5a5470" stroke="#1b1230" stroke-width="2.2"/>
+                    <path d="M31 9 q3 -6 9 -4.5" stroke="#1b1230" stroke-width="3.6"/>
+                    <path d="M31 9 q3 -6 9 -4.5" stroke="#e8c48a" stroke-width="1.8"/>
+                    <circle cx="22" cy="28" r="14.5" fill="#2a2140" stroke="#1b1230" stroke-width="2.6"/>
+                    <path d="M12.6 23.6 a10.5 10.5 0 0 1 7 -6.6" stroke="#fff6e5" stroke-width="3.4" opacity=".88"/>
+                    <path d="M41 1.8 l1.2 3.2 3.3 -.4 -2.4 2.4 1.7 2.9 -3.2 -1.1 -1.5 3 -.5 -3.3 -3.3 -.4 2.9 -1.7 -1.1 -3.2z" fill="#ffe066" stroke="#1b1230" stroke-width="1.2"/>
+                  </svg>
+                </span>
               </button>
             </div>
           </section>
@@ -306,12 +328,26 @@
               <h2 class="panel-section-label">Game mode</h2>
               <div class="mode-cards">
                 <div class="mode-card" id="mode-single-card" role="button" tabindex="0" aria-pressed="false">
-                  <span class="mode-card-icon" aria-hidden="true">&#129302;</span>
+                  <span class="mode-card-icon" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" fill="none" stroke="#1b1230" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+                      <path d="M16 8 V4"/><circle cx="16" cy="3.6" r="2.2" fill="#ffb8bf"/>
+                      <rect x="4" y="12.5" width="3.4" height="8" rx="1.4" fill="#6f1022"/><rect x="24.6" y="12.5" width="3.4" height="8" rx="1.4" fill="#6f1022"/>
+                      <rect x="6.5" y="8" width="19" height="19" rx="7" fill="#ff5d6c"/>
+                      <rect x="9.2" y="12.3" width="13.6" height="7.4" rx="3.6" fill="#150d27"/>
+                      <circle cx="16" cy="16" r="2.1" fill="#ffb8bf" stroke="none"/>
+                    </svg>
+                  </span>
                   <span class="mode-card-title">Play with Bots</span>
                   <span class="mode-card-desc">Quick solo match against AI opponents.</span>
                 </div>
                 <div class="mode-card active" id="mode-multi-card" role="button" tabindex="0" aria-pressed="true">
-                  <span class="mode-card-icon" aria-hidden="true">&#127760;</span>
+                  <span class="mode-card-icon" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="16" cy="16" r="11.5" fill="#56b8ff" stroke="#1b1230" stroke-width="1.8"/>
+                      <path d="M4.8 16 H27.2 M16 4.5 C11 9 11 23 16 27.5 M16 4.5 C21 9 21 23 16 27.5 M7.2 9.5 H24.8 M7.2 22.5 H24.8" stroke="#14397f" stroke-width="1.4"/>
+                      <path d="M9.2 10.6 a9 9 0 0 1 5 -3.8" stroke="#fff" stroke-width="1.8" opacity=".75"/>
+                    </svg>
+                  </span>
                   <span class="mode-card-title">Play Online</span>
                   <span class="mode-card-desc">Create a room or join an existing one.</span>
                 </div>
@@ -403,6 +439,7 @@
   <script src="/assets/notifications.js?v=3" defer></script>
   <script src="/assets/game-utils.js?v=4"></script>
   <script src="/assets/game-stats.js?v=1" defer></script>
+  <script src="/arcade/bomber-raid/render.js?v=1"></script>
   <script>
   /* Floating overlays: fullscreen + big bomb. Bomb mirrors clicks onto the
      real #bomb button so the game's existing bomb handler fires. */
@@ -2502,7 +2539,42 @@
     }
   }
 
+  // Art renderer (render.js). It only reads this view; the plain draw below
+  // stays as a fallback if the renderer is unavailable.
+  let art = null;
+  try {
+    art = window.BomberRaidArt ? window.BomberRaidArt.create(g) : null;
+  } catch (_e) {
+    art = null;
+  }
+  const artView = {
+    m: null, players: null, en: null, bb: null, ex: null, powerups: null,
+    run: false, pau: false, over: false, win: false, mode: "multi", localId: "p1",
+    guestInterp: false, guestNoInterp: false, remotePlayers: null, remoteEnemies: null
+  };
+
   function draw() {
+    if (art) {
+      const guest = isOnlineGuest();
+      artView.m = m;
+      artView.players = players;
+      artView.en = en;
+      artView.bb = bb;
+      artView.ex = ex;
+      artView.powerups = powerups;
+      artView.run = run;
+      artView.pau = pau;
+      artView.over = over;
+      artView.win = win;
+      artView.mode = gameMode;
+      artView.localId = guest ? "p2" : "p1";
+      artView.guestInterp = guest && online.interpolationEnabled;
+      artView.guestNoInterp = guest && !online.interpolationEnabled;
+      artView.remotePlayers = remoteRender.players;
+      artView.remoteEnemies = remoteRender.enemies;
+      art.render(artView);
+      return;
+    }
     x.clearRect(0, 0, g.width, g.height);
     drawBoard();
     drawPowerups();
