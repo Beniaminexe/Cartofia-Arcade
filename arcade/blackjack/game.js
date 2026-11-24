@@ -626,8 +626,11 @@
 
   function resultToOutcome(resultText) {
     const s = String(resultText || "").toLowerCase();
+    // Losses and pushes first: "Lose (Dealer Blackjack)" and
+    // "Push (both Blackjack)" mention blackjack but must not pay 3:2.
+    if (s.startsWith("lose")) return "lose";
+    if (s.startsWith("push")) return "push";
     if (s.indexOf("blackjack") >= 0) return "blackjack";
-    if (s.indexOf("push") >= 0) return "push";
     if (s.indexOf("win") >= 0) return "win";
     return "lose";
   }
