@@ -1,0 +1,513 @@
+/* ==========================================================================
+   Cartofia Word Puzzle — "Night Market letter tiles" (pairs with render.js).
+   The cover (assets/games/word-puzzle.svg) come to life: chunky enamel tiles
+   with an ink outline and an extruded edge, sitting in a dotted slate tray
+   with the cover's four-point sparkles.
+
+   Tile faces are driven by data-show (set by render.js, which lags the game's
+   own .correct/.present/.absent classes while a row is flipping). If the art
+   script never runs, the :not(.wp-live) fallbacks style the game's classes.
+
+   States are never colour-only:
+     correct  mint enamel  + check badge
+     present  lemon enamel + diagonal stripes + two-way arrow badge
+     absent   slate, sunk flat into the tray, dimmed letter + dash badge
+   Palette: ink #120b24, mint #3ee6a6, lemon #ffcf5c, slate #3d3659,
+   pearl #f3ecff; typed tiles + the active row follow the user's --accent.
+   ========================================================================== */
+
+/* ---------- stage ---------- */
+.gx .wp-stage {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 12px;
+  padding-top: clamp(12px, 1.8vw, 20px);
+  padding-bottom: clamp(12px, 1.8vw, 20px);
+}
+.wp-stage > .keyboard, .wp-stage > .puzzle-notice { width: 100%; max-width: 500px; }
+
+/* ---------- the tray (board frame) ---------- */
+.wp-tray {
+  /* everything on the page that is not the tray, top to bottom (see sizing notes in render.js) */
+  --wp-reserve: 418px;
+  --wp-ink: #120b24;
+  position: relative;
+  box-sizing: border-box;
+  width: clamp(min(100%, 272px), (100vh - var(--wp-reserve)) / 1.2, min(100%, 410px));
+  width: clamp(min(100%, 272px), (100svh - var(--wp-reserve)) / 1.2, min(100%, 410px));
+  padding: 12px 13px 13px;
+  border-radius: 20px;
+  border: 3px solid var(--wp-ink);
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.075) 1px, transparent 1.6px) 1px 1px / 12px 12px,
+    radial-gradient(100% 85% at 50% 26%, #4d456c 0%, #2f2849 48%, #1b1628 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 2px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -14px 30px rgba(0, 0, 0, 0.42),
+    0 20px 36px -20px rgba(0, 0, 0, 0.95);
+  transition: box-shadow 0.6s ease;
+}
+.wp-tray::after {
+  /* the cover's vignette */
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 17px;
+  pointer-events: none;
+  background: radial-gradient(75% 70% at 50% 42%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.34) 100%);
+}
+.wp-tray[data-over="win"] {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 0 3px rgba(62, 230, 166, 0.55),
+    0 0 34px rgba(62, 230, 166, 0.28),
+    inset 0 2px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -14px 30px rgba(0, 0, 0, 0.42),
+    0 20px 36px -20px rgba(0, 0, 0, 0.95);
+}
+.wp-tray[data-over="loss"] {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 0 3px rgba(255, 107, 74, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -14px 30px rgba(0, 0, 0, 0.42),
+    0 20px 36px -20px rgba(0, 0, 0, 0.95);
+}
+.wp-tray[data-over="loss"] .board { filter: saturate(0.78) brightness(0.9); }
+.wp-tray .board { transition: filter 0.7s ease; }
+
+/* the cover's four-point sparkles, pinned to the tray edges */
+.wp-star {
+  position: absolute;
+  z-index: 2;
+  width: 20px; height: 20px;
+  pointer-events: none;
+  overflow: visible;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35));
+  animation: wp-twinkle 3.2s ease-in-out infinite;
+}
+.wp-star path { stroke: var(--wp-ink); stroke-width: 1.6; stroke-linejoin: round; }
+@keyframes wp-twinkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(0.72) rotate(18deg); opacity: 0.75; }
+}
+.wp-tray[data-over="win"] .wp-star { animation-duration: 0.9s; }
+
+.wp-fx {
+  /* particles; clipped a little outside the tray so nothing can widen the page */
+  position: absolute;
+  inset: -14px;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: 26px;
+}
+
+/* ---------- board ---------- */
+.gx .board {
+  --wp-gap: 7px;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--wp-gap);
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  container-type: inline-size;
+}
+.gx .board-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--wp-gap);
+}
+/* active-row pointer in the tray margin */
+.board-row[data-active]::before {
+  content: '';
+  position: absolute;
+  left: -12px; top: 50%;
+  width: 0; height: 0;
+  border: 5px solid transparent;
+  border-left: 7px solid var(--accent, #7c5cff);
+  border-right-width: 0;
+  transform: translateY(-50%);
+  filter: drop-shadow(0 0 4px var(--accent, #7c5cff));
+}
+
+/* ---------- tiles (board cells + legend minis) ---------- */
+.gx .board .cell, .wp-mini {
+  --d: 4px;          /* extrusion depth */
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 17%;
+  border: 2px solid rgba(10, 6, 24, 0.92);
+  background: linear-gradient(180deg, rgba(5, 3, 14, 0.62), rgba(26, 20, 48, 0.5));
+  box-shadow:
+    inset 0 3px 7px rgba(0, 0, 0, 0.6),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.07),
+    0 1px 0 rgba(255, 255, 255, 0.06);
+  color: var(--gx-text);
+  font: 800 clamp(16px, 9.4cqw, 34px)/1 var(--gx-display);
+  letter-spacing: 0;
+  text-transform: uppercase;
+  transform: none;
+  transition: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.gx .board .cell::before, .wp-mini::before {
+  /* enamel gloss (under the letter) */
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 9%; right: 9%; top: 6%;
+  height: 40%;
+  border-radius: 999px 999px 40% 40% / 999px 999px 60% 60%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0));
+  opacity: 0;
+  pointer-events: none;
+}
+.gx .board .cell::after, .wp-mini::after {
+  /* state badge, pinned over the top-right corner like a market price sticker */
+  content: none;
+  position: absolute;
+  z-index: 1;
+  top: -8%; right: -8%;
+  width: 32%; height: 32%;
+  background: center / 100% 100% no-repeat;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.35));
+  pointer-events: none;
+}
+
+/* raised faces: typed, correct, present */
+.gx .board .cell[data-show="typed"], .gx .board:not(.wp-live) .cell.filled:not(.correct):not(.present):not(.absent),
+.gx .board .cell[data-show="correct"], .gx .board:not(.wp-live) .cell.correct, .wp-mini[data-show="correct"],
+.gx .board .cell[data-show="present"], .gx .board:not(.wp-live) .cell.present, .wp-mini[data-show="present"] {
+  translate: 0 calc(var(--d) * -0.5);
+  border-color: var(--wp-ink, #120b24);
+}
+.gx .board .cell[data-show="correct"]::before, .wp-mini[data-show="correct"]::before,
+.gx .board .cell[data-show="present"]::before, .wp-mini[data-show="present"]::before,
+.gx .board:not(.wp-live) .cell.correct::before, .gx .board:not(.wp-live) .cell.present::before { opacity: 0.5; }
+.gx .board .cell[data-show="typed"]::before { opacity: 0.22; height: 30%; }
+
+/* typed (not yet scored): accent enamel */
+.gx .board .cell[data-show="typed"], .gx .board:not(.wp-live) .cell.filled:not(.correct):not(.present):not(.absent) {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent, #7c5cff) 62%, #4a3f86) 0%,
+    color-mix(in srgb, var(--accent, #7c5cff) 46%, #2a2156) 55%,
+    color-mix(in srgb, var(--accent, #7c5cff) 34%, #1d1640) 100%);
+  box-shadow:
+    0 var(--d) 0 color-mix(in srgb, var(--accent, #7c5cff) 28%, #0b0719),
+    0 calc(var(--d) * 2) 12px -4px rgba(0, 0, 0, 0.7),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.2);
+  color: #fbf8ff;
+  text-shadow: 0 2px 0 rgba(10, 6, 24, 0.6);
+}
+
+/* correct: mint + check */
+.gx .board .cell[data-show="correct"], .gx .board:not(.wp-live) .cell.correct, .wp-mini[data-show="correct"] {
+  background: linear-gradient(180deg, #9af7d4 0%, #4feab0 40%, #2bd296 72%, #1fb882 100%);
+  box-shadow:
+    0 var(--d) 0 #0f7a54,
+    0 calc(var(--d) * 2) 12px -4px rgba(0, 0, 0, 0.7),
+    inset 0 2px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 0 rgba(8, 80, 54, 0.3);
+  color: #0a2a1e;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.gx .board .cell[data-show="correct"]::after, .gx .board:not(.wp-live) .cell.correct::after, .wp-mini[data-show="correct"]::after {
+  content: '';
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%23120b24'/%3E%3Ccircle cx='10' cy='10' r='7.4' fill='none' stroke='%233ee6a6' stroke-opacity='.35' stroke-width='1'/%3E%3Cpath d='M5.7 10.3l2.9 2.9 5.7-6.4' fill='none' stroke='%233ee6a6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* present: lemon + stripes + arrows */
+.gx .board .cell[data-show="present"], .gx .board:not(.wp-live) .cell.present, .wp-mini[data-show="present"] {
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0) 0 5px, rgba(255, 255, 255, 0.26) 5px 8px),
+    linear-gradient(180deg, #ffeaa8 0%, #ffd56a 40%, #f6c04a 72%, #e8a934 100%);
+  box-shadow:
+    0 var(--d) 0 #a8741c,
+    0 calc(var(--d) * 2) 12px -4px rgba(0, 0, 0, 0.7),
+    inset 0 2px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -3px 0 rgba(120, 72, 0, 0.25);
+  color: #2b1b00;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.gx .board .cell[data-show="present"]::after, .gx .board:not(.wp-live) .cell.present::after, .wp-mini[data-show="present"]::after {
+  content: '';
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%23120b24'/%3E%3Cpath d='M5 10h10M7.7 7.1L4.8 10l2.9 2.9M12.3 7.1l2.9 2.9-2.9 2.9' fill='none' stroke='%23ffcf5c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* absent: slate, sunk flat into the tray */
+.gx .board .cell[data-show="absent"], .gx .board:not(.wp-live) .cell.absent, .wp-mini[data-show="absent"] {
+  translate: 0 0;
+  border-color: rgba(10, 6, 24, 0.95);
+  background: linear-gradient(180deg, #423b5e 0%, #363050 100%);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.4),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.06);
+  color: #9d95bb;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
+}
+.gx .board .cell[data-show="absent"]::after, .gx .board:not(.wp-live) .cell.absent::after, .wp-mini[data-show="absent"]::after {
+  content: '';
+  top: -4%; right: -4%;
+  width: 26%; height: 26%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%231a1530'/%3E%3Cpath d='M6 10h8' stroke='%239a92b8' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* active row: slots light up in the accent, a caret marks where the next letter lands */
+.board-row[data-active] .cell[data-show="empty"] {
+  box-shadow:
+    inset 0 3px 7px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1.5px color-mix(in srgb, var(--accent, #7c5cff) 42%, transparent),
+    0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.gx .board .cell[data-next]::after {
+  content: '';
+  top: auto; right: 32%;
+  left: 32%; bottom: 17%;
+  width: auto; height: max(3px, 6%);
+  border-radius: 3px;
+  background: var(--accent, #7c5cff);
+  box-shadow: 0 0 8px var(--accent, #7c5cff);
+  filter: none;
+  animation: wp-caret 1.05s ease-in-out infinite;
+}
+@keyframes wp-caret { 50% { opacity: 0.2; } }
+
+/* invalid word: the row's typed tiles get a coral rim while it shakes */
+.board-row[data-bad] .cell[data-show="typed"] {
+  border-color: #3a0f08;
+  box-shadow:
+    0 var(--d) 0 #7a2412,
+    0 0 0 2px rgba(255, 107, 74, 0.9),
+    0 0 18px rgba(255, 107, 74, 0.45),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* ---------- effects ---------- */
+.wp-spark {
+  position: absolute;
+  left: 0; top: 0;
+  width: 13px; height: 13px;
+  margin: -6.5px 0 0 -6.5px;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+.wp-confetti {
+  position: absolute;
+  left: 0; top: 0;
+  width: 7px; height: 12px;
+  margin: -6px 0 0 -3.5px;
+  border-radius: 2px;
+}
+.wp-ring {
+  position: absolute;
+  left: 0; top: 0;
+  border-radius: 22%;
+  border: 3px solid #fff;
+  box-sizing: border-box;
+}
+
+/* ---------- message strip ---------- */
+.gx .puzzle-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 34px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--gx-line);
+  background:
+    linear-gradient(180deg, rgba(5, 3, 14, 0.6), rgba(22, 16, 44, 0.55));
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+  color: var(--gx-muted);
+  font: 600 13.5px/1.25 var(--gx-body);
+  text-align: center;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.gx .puzzle-notice::before {
+  content: '';
+  flex: none;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent, #7c5cff) 80%, #fff);
+  box-shadow: 0 0 8px var(--accent, #7c5cff);
+}
+.gx .puzzle-notice.warn { color: #ffd98a; border-color: rgba(255, 207, 92, 0.42); }
+.gx .puzzle-notice.warn::before { width: 9px; height: 9px; border-radius: 2px; transform: rotate(45deg); background: var(--gx-lemon); box-shadow: 0 0 8px rgba(255, 207, 92, 0.7); }
+.gx .puzzle-notice.ok { color: var(--gx-mint); border-color: rgba(62, 230, 166, 0.42); }
+.gx .puzzle-notice.ok::before { background: var(--gx-mint); box-shadow: 0 0 8px rgba(62, 230, 166, 0.8); }
+/* while the final row is still flipping, the result line waits (no spoilers) */
+.gx .puzzle-notice[data-wp-hold] { position: relative; color: transparent; border-color: var(--gx-line); }
+.gx .puzzle-notice[data-wp-hold]::before { opacity: 0; }
+.gx .puzzle-notice[data-wp-hold]::after {
+  content: 'Revealing\2026';
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gx-dim);
+  letter-spacing: 0.02em;
+}
+
+/* ---------- keyboard ---------- */
+.gx .keyboard { display: grid; gap: 7px; }
+.gx .kbd-row { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
+.gx .kbd-row.middle { grid-template-columns: repeat(9, minmax(0, 1fr)); margin-left: 4.5%; margin-right: 4.5%; }
+.gx .kbd-row.bottom { grid-template-columns: 1.5fr repeat(7, minmax(0, 1fr)) 1.5fr; }
+.gx .kbd-btn {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0;
+  border-radius: 10px;
+  border: 2px solid #120b24;
+  background: linear-gradient(180deg, #4a3d92 0%, #352b72 48%, #282058 100%);
+  color: #f5f0ff;
+  font: 700 15px/1 var(--gx-body);
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(10, 6, 24, 0.6);
+  box-shadow:
+    0 3px 0 #120b24,
+    0 6px 10px -4px rgba(0, 0, 0, 0.65),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.22);
+  translate: 0 -1px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: translate 0.07s ease, box-shadow 0.07s ease, filter 0.15s ease;
+}
+.gx .kbd-btn::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 12%; right: 12%; top: 7%;
+  height: 34%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+.gx .kbd-btn::after {
+  content: none;
+  position: absolute;
+  top: 3px; right: 3px;
+  width: 9px; height: 9px;
+  background: center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+@media (hover: hover) {
+  .gx .kbd-btn:hover { filter: brightness(1.12); }
+}
+.gx .kbd-btn:active {
+  translate: 0 2px;
+  box-shadow: 0 0 0 #120b24, 0 2px 4px -2px rgba(0, 0, 0, 0.6), inset 0 1.5px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+.gx .kbd-btn:focus-visible { outline: 2px solid var(--gx-lemon); outline-offset: 2px; }
+
+.gx .kbd-btn[data-key="ENTER"] {
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent, #7c5cff) 85%, #fff) 0%,
+    var(--accent, #7c5cff) 45%,
+    color-mix(in srgb, var(--accent, #7c5cff) 72%, #120b24) 100%);
+}
+.gx .kbd-btn[data-key="BACK"] { font-size: 0; }
+.gx .kbd-btn[data-key="BACK"]::after {
+  content: '';
+  inset: 0;
+  width: auto; height: auto;
+  background: center / 22px 22px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8.6 5.5H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8.6L3 12z' fill='%23f5f0ff' fill-opacity='.14' stroke='%23f5f0ff' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M11.5 9.5l5 5m0-5l-5 5' stroke='%23f5f0ff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* key states (data-show from render.js; the game's classes only when the art is off) */
+.gx .kbd-btn[data-show="correct"], .gx .keyboard:not(.wp-live) .kbd-btn.correct {
+  background: linear-gradient(180deg, #9af7d4 0%, #44e7ab 48%, #24c48b 100%);
+  color: #0a2a1e;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 3px 0 #0f6a49, 0 6px 10px -4px rgba(0, 0, 0, 0.65), inset 0 1.5px 0 rgba(255, 255, 255, 0.55), inset 0 -2px 0 rgba(8, 80, 54, 0.25);
+}
+.gx .kbd-btn[data-show="present"], .gx .keyboard:not(.wp-live) .kbd-btn.present {
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0) 0 4px, rgba(255, 255, 255, 0.24) 4px 6px),
+    linear-gradient(180deg, #ffeaa8 0%, #ffd463 48%, #eeb23b 100%);
+  color: #2b1b00;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+  box-shadow: 0 3px 0 #8f6114, 0 6px 10px -4px rgba(0, 0, 0, 0.65), inset 0 1.5px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(120, 72, 0, 0.22);
+}
+.gx .kbd-btn[data-show="absent"], .gx .keyboard:not(.wp-live) .kbd-btn.absent {
+  translate: 0 1px;
+  border-color: rgba(18, 11, 36, 0.9);
+  background: linear-gradient(180deg, #2a2441, #221d36);
+  color: #6f678c;
+  text-shadow: none;
+  box-shadow: 0 1px 0 #120b24, inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+.gx .kbd-btn[data-show="absent"]::before, .gx .keyboard:not(.wp-live) .kbd-btn.absent::before { opacity: 0; }
+.gx .kbd-btn[data-show="correct"]::after, .gx .keyboard:not(.wp-live) .kbd-btn.correct::after {
+  content: '';
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6.3l2.4 2.4L10 3' fill='none' stroke='%23120b24' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.gx .kbd-btn[data-show="present"]::after, .gx .keyboard:not(.wp-live) .kbd-btn.present::after {
+  content: '';
+  width: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1.8 6h8.4M3.8 3.8L1.6 6l2.2 2.2M8.2 3.8L10.4 6 8.2 8.2' fill='none' stroke='%23120b24' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.gx .kbd-btn[data-show="absent"]::after, .gx .keyboard:not(.wp-live) .kbd-btn.absent::after {
+  content: '';
+  width: 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6h7' stroke='%236f678c' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+.gx .kbd-btn[data-bad] {
+  box-shadow: 0 3px 0 #7a2412, 0 0 0 2px rgba(255, 107, 74, 0.85), 0 0 14px rgba(255, 107, 74, 0.5), inset 0 1.5px 0 rgba(255, 255, 255, 0.24);
+}
+
+/* ---------- rail legend ---------- */
+.wp-legend { list-style: none; display: grid; gap: 12px; margin: 0; padding: 0; color: var(--gx-muted); font-size: 13.5px; line-height: 1.4; }
+.wp-legend li { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px; align-items: center; }
+.wp-legend b { color: var(--gx-text); font-weight: 600; }
+.wp-mini { --d: 3px; width: 34px; border-radius: 9px; font-size: 15px; }
+.wp-mini:not([data-show]) { color: var(--gx-dim); }
+.wp-actions .btn { width: 100%; }
+
+/* ---------- responsive ---------- */
+@media (min-width: 721px) {
+  .gx .kbd-btn { min-height: 48px; }
+}
+@media (max-width: 720px) {
+  .gx .wp-stage { gap: 10px; padding: 8px; }
+  .wp-tray { --wp-reserve: 404px; padding: 10px 11px 11px; border-radius: 18px; }
+  .wp-tray::after { border-radius: 15px; }
+  .gx .board { --wp-gap: 6px; }
+  .board-row[data-active]::before { left: -10px; border-width: 4px; border-left-width: 6px; border-right-width: 0; }
+  .wp-star { width: 16px; height: 16px; }
+  .gx .puzzle-notice { min-height: 32px; font-size: 13px; padding: 5px 12px; }
+}
+@media (max-width: 480px) {
+  .gx .keyboard { gap: 6px; }
+  .gx .kbd-row { gap: 4px; }
+  .gx .kbd-btn { min-height: 46px; font-size: 14px; border-radius: 8px; }
+  .gx .kbd-btn[data-key="ENTER"] { font-size: 10.5px; letter-spacing: 0.02em; }
+  .gx .kbd-btn::after { top: 2px; right: 2px; width: 8px; height: 8px; }
+  .gx .kbd-btn[data-show="present"]::after { width: 9px; }
+  .gx .board .cell { --d: 3px; }
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .wp-star, .wp-tray[data-over="win"] .wp-star { animation: none; }
+  .gx .board .cell[data-next]::after { animation: none; }
+  .gx .kbd-btn, .gx .puzzle-notice, .wp-tray, .wp-tray .board { transition: none; }
+}
