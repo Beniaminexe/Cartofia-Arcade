@@ -584,6 +584,11 @@ body.gx::before {
 .gx .game-over-actions { gap: 8px; }
 .gx .game-over-actions .btn { flex: 1 1 140px; min-width: 0; min-height: 46px; }
 .gx .game-over-actions .gs-btn-over { flex-basis: 100%; border-radius: 12px; }
+/* game-common.css stacks these in a column at <=768px; there the 140px
+   flex-basis above became a 140px HEIGHT. Size by content in the column. */
+@media (max-width: 768px) {
+  .gx .game-over-actions .btn { flex: 0 0 auto; width: 100%; }
+}
 
 /* ── Multiplayer lobby kit (chess, blackjack, bomber raid) ─── */
 .gx .online-input, .gx .lobby-input, .gx .settings-select {
