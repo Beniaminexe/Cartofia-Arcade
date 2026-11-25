@@ -1,4 +1,15 @@
 (() => {
+  "use strict";
+  // ---------------------------------------------------------------------------
+  // Cartofia Blackjack — thin client over the server-authoritative table.
+  //
+  // The table server (/ws/rooms/blackjack, Docs/BLACKJACK-SERVER-SPEC.md)
+  // shuffles, deals, runs the turns, plays the dealer, escrows and pays the
+  // chips and records the arcade result. This file only sends intents
+  // (create / join / bet / ready / start / action / leave) and renders the
+  // `state` the server sends, through the table art in render.js (BJArt).
+  // ---------------------------------------------------------------------------
+
   // ---------------------------------------------------------------------------
   // Constants
   // ---------------------------------------------------------------------------
@@ -6,21 +17,21 @@
     || ((window.location.protocol === "https:" ? "wss://" : "ws://")
         + window.location.host + "/ws/rooms/blackjack");
   const HEARTBEAT_MS = 20000;
-  const DEFAULT_NAME = "Player";
-  const SUIT_ICON  = { S: "♠", H: "♥", D: "♦", C: "♣" };
-  const SUIT_CLASS = { S: "black", H: "red",   D: "red",   C: "black" };
-  const SUITS = ["S", "H", "D", "C"];
-  const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K"];
-  const RANK_FACE = { T: "10" };
 
   const BET_MIN = 10;
   const BET_MAX = 10000;
   const BET_STEP = 10;
   const BET_DEFAULT = 100;
+  const BROKE_BELOW = 100;
+  const AUTH_ME_URL = "/api/auth/me";
   const WALLET_URL  = "/api/casino/wallet";
   const TOPUP_URL   = "/api/casino/wallet/topup";
-  const SETTLE_URL  = "/api/casino/blackjack/settle";
-  const BET_STORAGE_KEY = "cartofia_blackjack_bet";
+  const BET_STORAGE_KEY   = "cartofia_blackjack_bet";
+  const TABLE_STORAGE_KEY = "cartofia_blackjack_table"; // sessionStorage: table to rejoin after a reload
+  const PHASES = ["lobby", "playing", "dealer", "results"];
+  // Stand-in code for the face-down hole card. The server never sends the hole
+  // card before the reveal; the renderer only ever draws this one face down.
+  const HOLE = "XX";
 
   // ---------------------------------------------------------------------------
   // DOM refs
@@ -28,8 +39,6 @@
   const phasePillEl   = document.getElementById("phasePill");
   const tableStatusEl = document.getElementById("tableStatus");
   const dealerCardsEl = document.getElementById("dealerCards");
-  const dealerTotalEl = document.getElementById("dealerTotal");
-  const playersListEl = document.getElementById("playersList");
   const startRoundBtn = document.getElementById("startRoundBtn");
   const hitBtn        = document.getElementById("hitBtn");
   const standBtn      = document.getElementById("standBtn");
@@ -42,7 +51,6 @@
   const createRoomBtn = document.getElementById("createRoomBtn");
   const joinRoomBtn   = document.getElementById("joinRoomBtn");
   const leaveRoomBtn  = document.getElementById("leaveRoomBtn");
-  const saveNameBtn   = document.getElementById("saveNameBtn");
   const readyBtn      = document.getElementById("readyBtn");
   const lobbyStateEl  = document.getElementById("lobbyState");
   const lobbyListEl   = document.getElementById("lobbyList");
@@ -55,72 +63,76 @@
   const betDownBtn    = document.getElementById("betDown");
   const betUpBtn      = document.getElementById("betUp");
   const roundResultEl = document.getElementById("roundResult");
+  const backLinkEl    = document.querySelector(".game-header-back");
 
   // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
-  const online = {
+  const net = {
     ws: null,
-    connected: false,
-    room: "",
-    hasPassword: false,
-    clientId: "",
-    role: "",
-    participants: [],
-    canStart: false,
-    localReady: false,
-    playerName: DEFAULT_NAME,
-    localBet: BET_DEFAULT
+    manualClose: false,
+    attempt: 0,           // reconnect attempts since the last good `room`
+    retryTimer: 0,
+    dropTimer: 0          // closes a socket that got an error and never a room
   };
 
+  const online = {
+    connected: false,     // inside a room (got `room` from the server)
+    room: "",
+    wantRoom: "",         // room to (re)join if the socket drops
+    password: "",         // password of that room, in memory only
+    pendingPassword: "",
+    localBet: BET_DEFAULT, // the bet the player wants; mirrored to the seat
+    betSent: null,        // last bet we asked the server for (avoids resend loops)
+    busy: false,          // start / action in flight: wait for the next state
+    busyTimer: 0
+  };
+
+  // Mirror of the server's `state`, in the shape the view builder reads.
   const game = {
     phase: "lobby",
     round: 0,
+    host: "",
+    you: "",
+    seats: [],            // [{id, name, ready, bet, connected, playing}]
     order: [],
-    turnIndex: 0,
-    dealer: { cards: [], reveal: false },
+    turn: "",
+    turnDeadline: 0,
+    dealer: { cards: [], hidden: false, reveal: false, total: 0 },
     hands: {},
+    totals: {},
     done: {},
     results: {},
-    bets: {},        // per-player bet staked at round start
-    doubled: {},     // per-player: did they double down this round
-    blackjacks: {},  // per-player: did they draw a natural (2-card 21)
-    deck: []
+    payouts: {},
+    bets: {},             // per-seat stake of the current round
+    doubled: {},
+    blackjacks: {}
   };
-  let roundStartTime = 0;
-  let lastLoggedRound = -1;
-  let lastSettledRound = -1;
+  const roundBets = { round: -1, bets: {} };
 
-  // Wallet mirrored from the server. Null = not loaded / not authed.
+  // Wallet mirrored from the server. Null = not loaded / not signed in.
   let wallet = null;
+  let flash = { text: "", until: 0 };
+  let bannerRound = -1;
+  let statsRound = -1;
+  let lastView = null;
+  let feltDefer = { timer: 0, since: 0 };
 
   // ---------------------------------------------------------------------------
   // Utilities
   // ---------------------------------------------------------------------------
-  function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
-  function fmtChips(n) {
-    const v = Number(n || 0);
-    return v.toLocaleString();
-  }
-  function normalizeName(raw) {
-    const cleaned = String(raw || "").replace(/[^a-zA-Z0-9 _-]/g, "").trim();
-    return cleaned ? cleaned.slice(0, 16) : DEFAULT_NAME;
-  }
+  function fmtChips(n) { return Number(n || 0).toLocaleString(); }
   function normalizeRoomCode(raw) {
     return String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
-  }
-  function randomRoomCode() {
-    const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-    let out = "";
-    for (let i = 0; i < 6; i += 1) out += chars[Math.floor(Math.random() * chars.length)];
-    return out;
   }
   function clampBet(n) {
     const v = Math.round(Number(n) || 0);
     if (v < BET_MIN) return BET_MIN;
     if (v > BET_MAX) return BET_MAX;
-    // snap to step
     return Math.round(v / BET_STEP) * BET_STEP;
+  }
+  function floorBet(chips) {
+    return Math.max(BET_MIN, Math.min(BET_MAX, Math.floor(Number(chips || 0) / BET_STEP) * BET_STEP));
   }
   function getAuthToken() {
     try {
@@ -130,7 +142,7 @@
     } catch (_e) { return ""; }
   }
   function authedFetch(url, opts) {
-    const o = Object.assign({}, opts || {});
+    const o = Object.assign({ credentials: "include" }, opts || {});
     o.headers = Object.assign({}, o.headers || {});
     const token = getAuthToken();
     if (token) o.headers["Authorization"] = "Bearer " + token;
@@ -144,330 +156,398 @@
     netStatusEl.textContent = text;
   }
 
-  function updateReadyButton() {
-    readyBtn.textContent = "Ready: " + (online.localReady ? "On" : "Off");
-    readyBtn.classList.toggle("btn-primary", online.localReady);
-    readyBtn.classList.toggle("btn-ghost",  !online.localReady);
+  function setFlash(text, ms) {
+    const dur = ms || 4000;
+    flash = { text: String(text || ""), until: Date.now() + dur };
+    renderStatus();
+    setTimeout(renderStatus, dur + 50);
   }
 
-  function playerNameById(id) {
-    const p = online.participants.find((x) => String(x.id) === String(id));
-    if (!p) return "Player";
-    return normalizeName(p.name || "Player");
+  function seatById(id) {
+    const key = String(id || "");
+    return game.seats.find((s) => s.id === key) || null;
   }
+  function mySeat() { return game.you ? seatById(game.you) : null; }
+  function isHost() { return !!game.you && game.you === game.host; }
+  function nameOf(id) {
+    const s = seatById(id);
+    return (s && s.name) || "Player";
+  }
+  function betweenRounds() { return game.phase === "lobby" || game.phase === "results"; }
+  function inRound() { return game.phase === "playing" || game.phase === "dealer"; }
 
-  function currentTurnId() {
-    if (!Array.isArray(game.order) || game.turnIndex < 0 || game.turnIndex >= game.order.length) return "";
-    return String(game.order[game.turnIndex] || "");
+  // Chips the player can put on the next hand: the wallet, plus whatever is
+  // escrowed on the felt right now (it comes back or goes at results).
+  function availableChips() {
+    if (!wallet) return Infinity;
+    let c = Number(wallet.chips) || 0;
+    if (inRound() && game.you && game.order.indexOf(game.you) >= 0) {
+      c += Number(game.bets[game.you] || 0) * (game.doubled[game.you] ? 2 : 1);
+    }
+    return c;
+  }
+  function trimBetToWallet() {
+    const cap = availableChips();
+    if (online.localBet > cap) online.localBet = floorBet(cap);
   }
 
   // ---------------------------------------------------------------------------
-  // Cards + hand math
+  // Cards (display only: totals come from the server, these are fallbacks)
   // ---------------------------------------------------------------------------
   function cardRank(card) { return String(card || "").slice(0, 1); }
-  function cardSuit(card) { return String(card || "").slice(1, 2); }
-
-  function handValue(cards) {
-    let total = 0;
-    let aces = 0;
-    (cards || []).forEach((card) => {
-      const rank = cardRank(card);
-      if (rank === "A") { aces += 1; total += 11; }
-      else if (rank === "T" || rank === "J" || rank === "Q" || rank === "K") total += 10;
-      else total += Number(rank) || 0;
-    });
-    while (total > 21 && aces > 0) { total -= 10; aces -= 1; }
-    return total;
-  }
   function cardValue(card) {
     const rank = cardRank(card);
     if (rank === "A") return 11;
     if (rank === "T" || rank === "J" || rank === "Q" || rank === "K") return 10;
     return Number(rank) || 0;
   }
+  function handValue(cards) {
+    let total = 0, aces = 0;
+    (cards || []).forEach((card) => {
+      if (cardRank(card) === "A") aces += 1;
+      total += cardValue(card);
+    });
+    while (total > 21 && aces > 0) { total -= 10; aces -= 1; }
+    return total;
+  }
+  function isSoftHand(cards) {
+    let hard = 0, aces = 0;
+    (cards || []).forEach((card) => {
+      if (cardRank(card) === "A") { aces += 1; hard += 1; }
+      else hard += cardValue(card);
+    });
+    return aces > 0 && hard + 10 <= 21;
+  }
   function isBlackjack(cards) {
     return Array.isArray(cards) && cards.length === 2 && handValue(cards) === 21;
   }
-  function buildShuffledDeck() {
-    const deck = [];
-    SUITS.forEach((s) => RANKS.forEach((r) => deck.push(r + s)));
-    for (let i = deck.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const t = deck[i]; deck[i] = deck[j]; deck[j] = t;
-    }
-    return deck;
-  }
-  function drawCard() {
-    if (!game.deck.length) game.deck = buildShuffledDeck();
-    return game.deck.pop();
+  function resultToOutcome(resultText) {
+    const s = String(resultText || "").toLowerCase();
+    // "Lose (Dealer Blackjack)" and "Push (both Blackjack)" mention blackjack
+    // but are not a 3:2 win.
+    if (s.startsWith("lose")) return "lose";
+    if (s.startsWith("push")) return "push";
+    if (s.indexOf("blackjack") >= 0) return "blackjack";
+    if (s.indexOf("win") >= 0) return "win";
+    return "lose";
   }
 
-  function resetRoundState() {
+  // ---------------------------------------------------------------------------
+  // Server state -> game mirror
+  // ---------------------------------------------------------------------------
+  function idOrEmpty(v) { return v == null ? "" : String(v); }
+  function mapOf(obj, fn) {
+    const out = {};
+    if (obj && typeof obj === "object") Object.keys(obj).forEach((k) => { out[String(k)] = fn(obj[k]); });
+    return out;
+  }
+  function cardList(v) { return Array.isArray(v) ? v.slice(0, 32).map(String) : []; }
+
+  function resetGame() {
     game.phase = "lobby";
+    game.round = 0;
+    game.host = "";
+    game.you = "";
+    game.seats = [];
     game.order = [];
-    game.turnIndex = 0;
-    game.dealer = { cards: [], reveal: false };
+    game.turn = "";
+    game.turnDeadline = 0;
+    game.dealer = { cards: [], hidden: false, reveal: false, total: 0 };
     game.hands = {};
+    game.totals = {};
     game.done = {};
     game.results = {};
+    game.payouts = {};
     game.bets = {};
     game.doubled = {};
     game.blackjacks = {};
+    roundBets.round = -1;
+    roundBets.bets = {};
   }
 
-  // ---------------------------------------------------------------------------
-  // Card face rendering — casino look
-  // ---------------------------------------------------------------------------
-  function buildCard(card, opts) {
-    const faceDown = !!(opts && opts.faceDown);
-    const fresh    = !!(opts && opts.fresh);
-    const el = document.createElement("span");
-    el.className = "pcard";
-    if (fresh) el.classList.add("pcard-fresh");
-    if (faceDown) {
-      el.classList.add("pcard-back");
-      el.setAttribute("aria-label", "Hidden card");
-      return el;
+  function mirrorState(st) {
+    game.phase = PHASES.indexOf(st.phase) >= 0 ? st.phase : "lobby";
+    game.round = Math.max(0, Math.round(Number(st.round) || 0));
+    game.host = idOrEmpty(st.host);
+    game.you = idOrEmpty(st.you);
+    game.seats = (Array.isArray(st.seats) ? st.seats : []).slice(0, 12).map((s) => ({
+      id: idOrEmpty(s && s.id),
+      name: String((s && s.name) || "Player").slice(0, 32),
+      ready: !!(s && s.ready),
+      bet: Math.max(0, Math.round(Number(s && s.bet) || 0)),
+      connected: !(s && s.connected === false),
+      playing: !!(s && s.playing)
+    }));
+    game.order = Array.isArray(st.order) ? st.order.map(idOrEmpty) : [];
+    game.turn = idOrEmpty(st.turn);
+    game.turnDeadline = Number(st.turn_deadline) || 0;
+    const d = st.dealer || {};
+    const dCards = cardList(d.cards);
+    const dTotal = Number(d.total);
+    game.dealer = {
+      cards: dCards,
+      hidden: !!d.hidden,
+      reveal: !d.hidden,
+      total: Number.isFinite(dTotal) ? dTotal : handValue(dCards)
+    };
+    game.hands = mapOf(st.hands, cardList);
+    game.totals = mapOf(st.totals, (v) => ({ total: Math.round(Number(v && v.total) || 0), soft: !!(v && v.soft) }));
+    game.done = mapOf(st.done, Boolean);
+    game.doubled = mapOf(st.doubled, Boolean);
+    game.blackjacks = mapOf(st.blackjacks, Boolean);
+    game.results = mapOf(st.results, (v) => String(v || ""));
+    game.payouts = mapOf(st.payouts, (v) => Math.round(Number(v) || 0));
+
+    // The stake on the felt is the seat's bet as it stood when the round was
+    // dealt; a seat may already change its bet for the next hand at results.
+    if (st.bets && typeof st.bets === "object") {
+      game.bets = mapOf(st.bets, (v) => Math.max(0, Math.round(Number(v) || 0)));
+    } else {
+      if (roundBets.round !== game.round) { roundBets.round = game.round; roundBets.bets = {}; }
+      if (game.phase !== "lobby") {
+        game.seats.forEach((s) => {
+          if (game.order.indexOf(s.id) >= 0 && !(s.id in roundBets.bets)) roundBets.bets[s.id] = s.bet;
+        });
+      }
+      game.bets = roundBets.bets;
     }
-    const rank = cardRank(card);
-    const suit = cardSuit(card);
-    const face = RANK_FACE[rank] || rank;
-    const icon = SUIT_ICON[suit] || "?";
-    const col  = SUIT_CLASS[suit] || "black";
-    el.classList.add("pcard-" + col);
-    el.setAttribute("aria-label", face + " of " + ({S:"spades",H:"hearts",D:"diamonds",C:"clubs"}[suit] || suit));
-    el.innerHTML =
-      '<span class="pcard-corner tl">' + face + '<span class="pcard-suit">' + icon + '</span></span>' +
-      '<span class="pcard-pip">' + icon + '</span>' +
-      '<span class="pcard-corner br">' + face + '<span class="pcard-suit">' + icon + '</span></span>';
-    return el;
+
+    if (st.wallet && typeof st.wallet === "object") wallet = st.wallet;
   }
 
-  function renderCardsInto(container, cards, opts) {
-    const prevCount = (container.__renderedCount || 0);
-    container.innerHTML = "";
-    container.__renderedCount = (cards || []).length;
-    const hideHoleCard = !!(opts && opts.hideHoleCard);
-    (cards || []).forEach((card, idx) => {
-      const faceDown = hideHoleCard && idx > 0;
-      const fresh = idx >= prevCount; // only animate newly-dealt cards
-      container.appendChild(buildCard(card, { faceDown, fresh }));
-    });
-    if (!cards || !cards.length) {
-      const slot = document.createElement("span");
-      slot.className = "pcard pcard-empty";
-      slot.textContent = "";
-      container.appendChild(slot);
-    }
+  // Keep the seat's bet in step with the stepper (only allowed between rounds).
+  function syncBet() {
+    const me = mySeat();
+    if (!me || !online.connected || !betweenRounds()) return;
+    if (me.bet === online.localBet) { online.betSent = null; return; }
+    if (online.betSent === online.localBet) return; // asked already; server said no
+    if (send({ type: "bet", amount: online.localBet })) online.betSent = online.localBet;
   }
 
   // ---------------------------------------------------------------------------
   // Lobby render
   // ---------------------------------------------------------------------------
   function renderLobby() {
-    lobbyListEl.innerHTML = "";
+    lobbyListEl.textContent = "";
     if (!online.connected) {
-      lobbyStateEl.textContent = "Waiting for room connection.";
+      if (online.wantRoom) lobbyStateEl.textContent = "Reconnecting to table " + online.wantRoom + "…";
+      else if (net.ws) lobbyStateEl.textContent = "Connecting to the table…";
+      else lobbyStateEl.textContent = "Waiting for room connection.";
       return;
     }
-    const list = Array.isArray(online.participants) ? online.participants : [];
-    list.forEach((p, idx) => {
+    game.seats.forEach((p) => {
       const li = document.createElement("li");
       const left = document.createElement("span");
-      const role = p && p.role === "host" ? "Host" : "Guest";
-      const nm = normalizeName((p && p.name) || ("P" + (idx + 1)));
-      left.textContent = nm + " (" + role + ")";
+      left.textContent = p.name + (p.id === game.host ? " (Host)" : "")
+        + (p.id === game.you ? " · You" : "") + " · bet " + fmtChips(p.bet);
       const right = document.createElement("span");
-      right.className = p && p.ready ? "ready-on" : "ready-off";
-      right.textContent = p && p.ready ? "Ready" : "Not ready";
+      let on, txt;
+      if (!p.connected) { on = false; txt = "Away"; }
+      else if (inRound()) { on = p.playing; txt = p.playing ? "In hand" : "Sitting out"; }
+      else { on = p.ready; txt = p.ready ? "Ready" : "Not ready"; }
+      right.className = on ? "ready-on" : "ready-off";
+      right.textContent = txt;
       li.appendChild(left);
       li.appendChild(right);
       lobbyListEl.appendChild(li);
     });
 
-    if (!list.length) {
-      lobbyStateEl.textContent = "No players in room.";
-    } else if (!online.canStart) {
-      lobbyStateEl.textContent = "Waiting for players to ready up.";
+    const me = mySeat();
+    if (!me) {
+      lobbyStateEl.textContent = wallet
+        ? "Watching — every seat at this table is taken."
+        : "Watching — sign in to take a seat and play for chips.";
+    } else if (inRound()) {
+      if (me.playing) lobbyStateEl.textContent = "Round " + game.round + " in play.";
+      else lobbyStateEl.textContent = "Sitting this round out" + (wallet && Number(wallet.chips) < me.bet ? " — not enough chips for your bet." : ".");
+    } else if (isHost()) {
+      const n = game.seats.filter((p) => p.connected && (p.ready || p.id === game.host)).length;
+      lobbyStateEl.textContent = n <= 1 ? "Solo table ready — press Start Round." : n + " players ready — press Start Round.";
     } else {
-      const nReady = list.filter((p) => p && p.ready).length;
-      if (nReady === 1) lobbyStateEl.textContent = "Solo table ready — press Start Round.";
-      else lobbyStateEl.textContent = nReady + " players ready — press Start Round.";
+      lobbyStateEl.textContent = me.ready ? "You're in — waiting for the host to start." : "Ready up to be dealt into the next round.";
     }
   }
 
   // ---------------------------------------------------------------------------
-  // Table render
+  // Status line + phase pill
   // ---------------------------------------------------------------------------
   function phaseText() {
-    if (game.phase === "playing") return "Playing";
+    if (inRound()) return "Playing";
     if (game.phase === "results") return "Results";
     return "Lobby";
   }
+  function turnSecondsLeft() {
+    if (!game.turnDeadline) return null;
+    return Math.max(0, Math.min(99, Math.ceil((game.turnDeadline - Date.now()) / 1000)));
+  }
   function statusText() {
-    if (!online.connected) return "Connect to a table and ready up.";
+    if (flash.text && Date.now() < flash.until) return flash.text;
+    if (!online.connected) {
+      if (online.wantRoom) return "Connection lost — reconnecting…";
+      if (net.ws) return "Connecting…";
+      return "Connect to a table and ready up.";
+    }
     if (game.phase === "playing") {
-      const turnId = currentTurnId();
-      if (!turnId) return "Resolving round…";
-      if (String(turnId) === String(online.clientId)) return "Your turn — hit, stand, or double.";
-      return "Waiting on " + playerNameById(turnId) + "…";
+      if (!game.turn) return "Dealing…";
+      const secs = turnSecondsLeft();
+      const tail = secs == null ? "" : " (" + secs + "s)";
+      if (game.turn === game.you) return "Your turn — hit, stand, or double." + tail;
+      return "Waiting on " + nameOf(game.turn) + "…" + tail;
     }
-    if (game.phase === "results") return "Round " + game.round + " complete. Host can start the next round.";
-    // lobby, connected
-    if (!online.canStart) return "Place your bet and ready up when you want to play.";
-    return "Ready — host can start the round.";
+    if (game.phase === "dealer") return "Dealer plays…";
+    if (game.phase === "results") {
+      return "Round " + game.round + " complete. "
+        + (isHost() ? "Press Start Round for the next hand." : "Host can start the next round.");
+    }
+    if (!mySeat()) return "Watching the table.";
+    if (isHost()) return "Place your bet, then press Start Round.";
+    return "Place your bet and ready up when you want to play.";
+  }
+  function renderStatus() {
+    const pill = phaseText();
+    if (phasePillEl.textContent !== pill) phasePillEl.textContent = pill;
+    const txt = statusText();
+    if (tableStatusEl.textContent !== txt) tableStatusEl.textContent = txt;
   }
 
-  // A soft hand counts an ace as 11 (display only; handValue is the rule).
-  function isSoftHand(cards) {
-    let hard = 0, aces = 0;
-    (cards || []).forEach((card) => {
-      const rank = cardRank(card);
-      if (rank === "A") { aces += 1; hard += 1; }
-      else hard += cardValue(card);
-    });
-    return aces > 0 && hard + 10 <= 21;
-  }
-
+  // ---------------------------------------------------------------------------
+  // Table render (view for render.js)
+  // ---------------------------------------------------------------------------
   function renderTable() {
-    phasePillEl.textContent = phaseText();
-    tableStatusEl.textContent = statusText();
+    const phase = game.phase;
+    const dealerCards = game.dealer.cards.slice();
+    const hideHole = phase !== "lobby" && game.dealer.hidden && dealerCards.length > 0;
+    if (hideHole) dealerCards.push(HOLE);
 
-    // Dealer zone
-    const dealerCards = Array.isArray(game.dealer.cards) ? game.dealer.cards : [];
-    const hideHole = (!game.dealer.reveal && game.phase === "playing");
     let dealerText = "";
-    if (dealerCards.length) {
-      if (game.dealer.reveal || game.phase === "results") {
-        dealerText = "Total: " + handValue(dealerCards);
+    let dealerState = "";
+    const shown = game.dealer.cards;
+    if (shown.length) {
+      if (hideHole) {
+        const up = shown[0];
+        dealerText = "Showing: " + (shown.length === 1 && cardRank(up) === "A" ? "A (soft 11)" : String(game.dealer.total));
       } else {
-        // Show just the up-card's value so players can plan
-        const up = dealerCards[0];
-        const upVal = cardValue(up);
-        dealerText = "Showing: " + (upVal === 11 ? "A (soft 11)" : String(upVal));
-      }
-    }
-    const order = Array.isArray(game.order) ? game.order : [];
-    const turnId = currentTurnId();
-
-    if (window.BJArt) {
-      // Read-only view of the table for the art layer (render.js).
-      const dealerOpen = !!dealerCards.length && (game.dealer.reveal || game.phase === "results");
-      const dealerVal = dealerOpen ? handValue(dealerCards) : 0;
-      window.BJArt.renderTable({
-        round: game.round,
-        phase: game.phase,
-        hideHole: hideHole,
-        dealer: dealerCards.slice(),
-        dealerText: dealerText,
-        dealerState: !dealerOpen ? "" : (dealerVal > 21 ? "bust" : (isBlackjack(dealerCards) ? "bj" : (dealerVal === 21 ? "21" : ""))),
-        myTurn: game.phase === "playing" && !!online.clientId && String(turnId) === String(online.clientId),
-        emptyText: "No active round players yet.",
-        seats: order.map((id, idx) => {
-          const cards = Array.isArray(game.hands[id]) ? game.hands[id] : [];
-          const total = handValue(cards);
-          const bet = Number(game.bets[id] || 0);
-          const dbl = !!game.doubled[id];
-          const result = game.phase === "results" ? String(game.results[id] || "") : "";
-          const outcome = result ? resultToOutcome(result) : "";
-          let metaText;
-          if (game.phase === "results") metaText = result;
-          else if (bet > 0) metaText = (dbl ? "Bet " + fmtChips(bet) + " ×2" : "Bet " + fmtChips(bet));
-          else metaText = game.done[id] ? "Done" : "Playing";
-          return {
-            id: String(id),
-            idx: idx,
-            name: playerNameById(id),
-            label: playerNameById(id) + (String(id) === String(online.clientId) ? " (You)" : ""),
-            you: String(id) === String(online.clientId),
-            active: String(id) === String(turnId) && game.phase === "playing",
-            cards: cards.slice(),
-            total: total,
-            soft: isSoftHand(cards),
-            bet: bet,
-            doubled: dbl,
-            blackjack: isBlackjack(cards) || !!game.blackjacks[id],
-            bust: total > 21,
-            stand: !!game.done[id] && !game.blackjacks[id] && total <= 21 && cards.length > 0,
-            metaText: metaText,
-            result: result,
-            outcome: outcome,
-            payout: outcome ? estimateDelta(outcome, bet, dbl) : 0
-          };
-        })
-      });
-    } else {
-      renderCardsInto(dealerCardsEl, dealerCards, { hideHoleCard: hideHole });
-      dealerTotalEl.textContent = dealerText;
-
-      // Player seats
-      playersListEl.innerHTML = "";
-      order.forEach((id) => {
-        const item = document.createElement("li");
-        item.className = "player-item";
-        const isActive = (String(id) === String(turnId) && game.phase === "playing");
-        if (isActive) item.classList.add("active");
-
-        const head = document.createElement("div");
-        head.className = "player-head";
-        const left = document.createElement("strong");
-        left.className = "player-name-label";
-        left.textContent = playerNameById(id) + (String(id) === String(online.clientId) ? " (You)" : "");
-        const right = document.createElement("span");
-        right.className = "player-meta";
-        const bet = Number(game.bets[id] || 0);
-        const dbl = !!game.doubled[id];
-        if (game.phase === "results") {
-          right.textContent = String(game.results[id] || "");
-          right.classList.add("player-result");
-        } else if (bet > 0) {
-          right.textContent = (dbl ? "Bet " + fmtChips(bet) + " ×2" : "Bet " + fmtChips(bet));
-        } else {
-          right.textContent = game.done[id] ? "Done" : "Playing";
-        }
-        head.appendChild(left);
-        head.appendChild(right);
-        item.appendChild(head);
-
-        const cardsWrap = document.createElement("div");
-        cardsWrap.className = "cards";
-        const cards = Array.isArray(game.hands[id]) ? game.hands[id] : [];
-        renderCardsInto(cardsWrap, cards, {});
-        item.appendChild(cardsWrap);
-
-        const meta = document.createElement("div");
-        meta.className = "player-meta";
-        const total = handValue(cards);
-        const tags = [];
-        tags.push("Total " + total);
-        if (isBlackjack(cards) || game.blackjacks[id]) tags.push("Blackjack");
-        if (total > 21) tags.push("Bust");
-        if (game.done[id] && !game.blackjacks[id] && total <= 21 && !cards.length === false) tags.push("Stand");
-        meta.textContent = tags.join(" · ");
-        item.appendChild(meta);
-        playersListEl.appendChild(item);
-      });
-
-      if (!order.length) {
-        const empty = document.createElement("li");
-        empty.className = "player-item player-item-empty";
-        empty.textContent = "No active round players yet.";
-        playersListEl.appendChild(empty);
+        const total = game.dealer.total;
+        dealerText = "Total: " + total;
+        dealerState = total > 21 ? "bust" : (isBlackjack(shown) ? "bj" : (total === 21 ? "21" : ""));
       }
     }
 
-    // Action buttons
-    const isMyTurn = game.phase === "playing" && String(turnId) === String(online.clientId);
-    const myCards  = isMyTurn ? (game.hands[online.clientId] || []) : [];
-    const myBet    = Number(game.bets[online.clientId] || 0);
-    const chips    = wallet ? Number(wallet.chips) : 0;
-    const canAct   = isMyTurn && !game.done[online.clientId];
-    const canDouble = canAct && myCards.length === 2 && (!wallet || chips >= myBet);
+    const seats = (phase === "lobby" ? [] : game.order).map((id, idx) => {
+      const cards = game.hands[id] || [];
+      const t = game.totals[id];
+      const total = t ? t.total : handValue(cards);
+      const soft = t ? t.soft : isSoftHand(cards);
+      const bet = Number(game.bets[id] || 0);
+      const dbl = !!game.doubled[id];
+      const result = phase === "results" ? String(game.results[id] || "") : "";
+      const outcome = result ? resultToOutcome(result) : "";
+      const natural = !!game.blackjacks[id] || isBlackjack(cards);
+      let metaText;
+      if (phase === "results") metaText = result;
+      else if (bet > 0) metaText = dbl ? "Bet " + fmtChips(bet) + " ×2" : "Bet " + fmtChips(bet);
+      else metaText = game.done[id] ? "Done" : "Playing";
+      const you = !!game.you && id === game.you;
+      return {
+        id: id,
+        idx: idx,
+        name: nameOf(id),
+        label: nameOf(id) + (you ? " (You)" : ""),
+        you: you,
+        active: phase === "playing" && id === game.turn,
+        cards: cards.slice(),
+        total: total,
+        soft: soft,
+        bet: bet,
+        doubled: dbl,
+        blackjack: natural,
+        bust: total > 21,
+        stand: !!game.done[id] && !natural && total <= 21 && cards.length > 0,
+        metaText: metaText,
+        result: result,
+        outcome: outcome,
+        payout: outcome ? Math.max(0, Number(game.payouts[id] || 0)) : 0
+      };
+    });
 
-    hitBtn.disabled    = !canAct;
-    standBtn.disabled  = !canAct;
-    if (doubleBtn) doubleBtn.disabled = !canDouble;
-    startRoundBtn.disabled = !(online.connected && online.canStart && game.phase !== "playing");
+    return {
+      round: game.round,
+      // render.js knows lobby / playing / results; the dealer's turn is part of play
+      phase: phase === "dealer" ? "playing" : phase,
+      hideHole: hideHole,
+      dealer: dealerCards,
+      dealerText: dealerText,
+      dealerState: dealerState,
+      myTurn: phase === "playing" && !!game.you && game.turn === game.you,
+      emptyText: "No active round players yet.",
+      seats: seats
+    };
+  }
+
+  function dealerAnimating() {
+    try {
+      return dealerCardsEl.getAnimations({ subtree: true })
+        .some((a) => a.playState === "running" || a.playState === "pending");
+    } catch (_e) { return false; }
+  }
+
+  // Draw the felt. The hole card is on the felt under a stand-in code while it
+  // is face down; at the reveal the real card is swapped in first (still face
+  // down, no motion) so render.js turns it over and deals the dealer's draws
+  // instead of redrawing the dealer's hand.
+  function renderFelt() {
+    if (!window.BJArt) return;
+    const view = renderTable();
+    const prev = lastView;
+    const swap = !!prev && prev.phase !== "lobby" && view.phase !== "lobby"
+      && prev.round === view.round && prev.hideHole && !view.hideHole
+      && prev.dealer.length >= 2 && prev.dealer[1] === HOLE && view.dealer.length >= 2;
+    if (swap && dealerAnimating()) {
+      // the deal is still flying in: turn the card over once it has landed
+      if (!feltDefer.since) feltDefer.since = Date.now();
+      if (Date.now() - feltDefer.since < 2500) {
+        clearTimeout(feltDefer.timer);
+        feltDefer.timer = setTimeout(renderFelt, 120);
+        return;
+      }
+    }
+    clearTimeout(feltDefer.timer);
+    feltDefer = { timer: 0, since: 0 };
+    if (swap) window.BJArt.renderTable(Object.assign({}, prev, { dealer: [view.dealer[0], view.dealer[1]] }));
+    maybeShowRoundBanner();
+    window.BJArt.renderTable(view);
+    lastView = view;
+  }
+
+  function renderControls() {
+    const me = mySeat();
+    const you = game.you;
+    const isMyTurn = online.connected && game.phase === "playing" && !!you && game.turn === you;
+    const myCards = isMyTurn ? (game.hands[you] || []) : [];
+    const myBet = Number(game.bets[you] || 0);
+    const chips = wallet ? Number(wallet.chips) || 0 : 0;
+    const canAct = isMyTurn && !game.done[you] && !online.busy;
+    hitBtn.disabled = !canAct;
+    standBtn.disabled = !canAct;
+    if (doubleBtn) doubleBtn.disabled = !(canAct && myCards.length === 2 && !game.doubled[you] && chips >= myBet);
+    startRoundBtn.disabled = !(online.connected && isHost() && betweenRounds() && !online.busy);
+    readyBtn.disabled = !(online.connected && me && betweenRounds());
+    leaveRoomBtn.disabled = !(online.connected || online.wantRoom || net.ws);
+  }
+
+  function updateReadyButton() {
+    const me = mySeat();
+    const on = !!(me && me.ready);
+    readyBtn.textContent = "Ready: " + (on ? "On" : "Off");
+    readyBtn.classList.toggle("btn-primary", on);
+    readyBtn.classList.toggle("btn-ghost", !on);
+  }
+
+  function renderName() {
+    // The name at the table is the account's display name (set by the server).
+    const me = mySeat();
+    const name = me ? me.name : "";
+    if (playerNameEl.value !== name) playerNameEl.value = name;
   }
 
   // ---------------------------------------------------------------------------
@@ -490,12 +570,13 @@
       walletStatsEl.textContent =
         played + " hands · " + won + " won (" + wr + "%) · net " + fmtChips(wallet.net_lifetime);
     }
-    const broke = wallet.chips < 100;
+    // chips escrowed on the felt are not "broke"
+    const broke = availableChips() < BROKE_BELOW;
     if (topupBtn) topupBtn.hidden = !broke;
     if (walletBannerEl) {
       if (broke) {
         walletBannerEl.hidden = false;
-        walletBannerEl.textContent = "You are below " + fmtChips(100) + " chips — claim a free top-up.";
+        walletBannerEl.textContent = "You are below " + fmtChips(BROKE_BELOW) + " chips — claim a free top-up.";
       } else {
         walletBannerEl.hidden = true;
       }
@@ -504,78 +585,11 @@
 
   function renderBetInput() {
     if (!betInputEl) return;
-    betInputEl.value = String(online.localBet);
-    const chips = wallet ? Number(wallet.chips) : Infinity;
+    if (document.activeElement !== betInputEl) betInputEl.value = String(online.localBet);
+    const chips = availableChips();
     if (betDownBtn) betDownBtn.disabled = online.localBet <= BET_MIN;
     if (betUpBtn)   betUpBtn.disabled   = online.localBet >= BET_MAX || online.localBet + BET_STEP > chips;
     if (window.BJArt) window.BJArt.betPreview(document.getElementById("betPreview"), online.localBet);
-  }
-
-  let _lastLoggedPhase = "";
-  function logIfRoundComplete() {
-    if (game.phase !== "results") return;
-    const key = "results-" + game.round;
-    if (_lastLoggedPhase === key || !online.clientId) return;
-    _lastLoggedPhase = key;
-    lastLoggedRound = game.round;
-    const myResult = game.results[online.clientId] || "";
-    if (!myResult) return; // sat this round out
-    const dur = roundStartTime ? Math.round((Date.now() - roundStartTime) / 1000) : 0;
-    // Every hand is played at a room-server table ("online"): the room server
-    // logs the session to the profile; this feeds per-game stats only.
-    if (window.CartofiaGame) {
-      window.CartofiaGame.reportResult({ slug: "blackjack", result: "", duration_seconds: dur,
-        extra: { mode: "online", outcome: resultToOutcome(myResult), doubled: !!game.doubled[online.clientId] } });
-    }
-  }
-
-  function renderAll() {
-    maybeSettleMyHand();
-    renderLobby();
-    renderTable();
-    renderWallet();
-    renderBetInput();
-    updateReadyButton();
-    logIfRoundComplete();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Wallet + settle API
-  // ---------------------------------------------------------------------------
-  function loadWallet() {
-    // Cookie-session users have no legacy token; the server answers 401 for guests.
-    authedFetch(WALLET_URL)
-      .then((r) => r.ok ? r.json() : null)
-      .then((j) => {
-        if (j && j.wallet) {
-          wallet = j.wallet;
-          // If server returned chips < local bet, trim
-          if (online.localBet > wallet.chips) {
-            online.localBet = Math.max(BET_MIN, clampBet(wallet.chips));
-          }
-        } else {
-          wallet = null;
-        }
-        renderWallet();
-        renderBetInput();
-      })
-      .catch(() => { wallet = null; renderWallet(); });
-  }
-
-  function requestTopup() {
-    authedFetch(TOPUP_URL, { method: "POST" })
-      .then((r) => r.json().then((j) => ({ ok: r.ok, body: j })))
-      .then(({ ok, body }) => {
-        if (ok && body && body.wallet) {
-          wallet = body.wallet;
-          showRoundResult("+" + fmtChips(body.delta) + " chips topped up", "ok");
-        } else if (body && body.reason) {
-          showRoundResult(body.reason, "warn");
-          if (body.wallet) wallet = body.wallet;
-        }
-        renderWallet();
-      })
-      .catch(() => {});
   }
 
   function showRoundResult(text, kind) {
@@ -587,388 +601,333 @@
     roundResultEl.hidden = !text;
   }
 
-  function maybeSettleMyHand() {
-    if (game.phase !== "results") return;
-    if (!online.clientId) return;
-    if (lastSettledRound === game.round) return;
-    const result = String(game.results[online.clientId] || "");
-    if (!result) return;
-    lastSettledRound = game.round;
+  // The server settled the hand; show what it paid.
+  function maybeShowRoundBanner() {
+    if (game.phase !== "results" || !game.you || bannerRound === game.round) return;
+    const result = game.results[game.you];
+    if (!result) return; // sat this round out
+    bannerRound = game.round;
+    const delta = Number(game.payouts[game.you] || 0);
+    const kind = delta > 0 ? "win" : (delta < 0 ? "lose" : "push");
+    showRoundResult(result + " — " + (delta > 0 ? "+" : "") + fmtChips(delta) + " chips", kind);
+  }
 
-    const outcome = resultToOutcome(result);
-    const myBet = Number(game.bets[online.clientId] || online.localBet);
-    const doubled = !!game.doubled[online.clientId];
+  // The server recorded the round in the arcade stats: let the stats modal
+  // (game-stats.js) know its numbers are stale. Nothing is posted from here.
+  function noteRoundRecorded() {
+    if (game.phase !== "results" || !game.you || !game.results[game.you] || statsRound === game.round) return;
+    statsRound = game.round;
+    try {
+      window.dispatchEvent(new CustomEvent("cartofia:game-result", {
+        detail: { request: { slug: "blackjack", recorded_by: "table" }, response: null, status: 0 }
+      }));
+    } catch (_e) { /* old browser: the modal refreshes on open anyway */ }
+  }
 
-    // Show round banner immediately with a local estimate; actual delta from server.
-    const localDelta = estimateDelta(outcome, myBet, doubled);
-    const kind = localDelta > 0 ? "win" : (localDelta < 0 ? "lose" : "push");
-    const sign = localDelta > 0 ? "+" : "";
-    showRoundResult(result + " — " + sign + fmtChips(localDelta) + " chips", kind);
+  function renderAll() {
+    renderStatus();
+    renderLobby();
+    renderFelt();
+    renderControls();
+    updateReadyButton();
+    renderName();
+    renderWallet();
+    renderBetInput();
+  }
 
-    authedFetch(SETTLE_URL, {
-      method: "POST",
-      body: JSON.stringify({ bet: myBet, outcome, doubled })
-    })
-      .then((r) => r.ok ? r.json() : null)
+  // ---------------------------------------------------------------------------
+  // Wallet API (bankroll before sitting down; top-up)
+  // ---------------------------------------------------------------------------
+  function loadWallet() {
+    // Ask who we are first (200 for guests too) so a guest never hits the
+    // wallet's 401; a legacy bearer token goes straight to the wallet.
+    const who = getAuthToken()
+      ? Promise.resolve(true)
+      : fetch(AUTH_ME_URL, { credentials: "include" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => !!(j && j.authenticated))
+        .catch(() => true);
+    who
+      .then((signedIn) => (signedIn ? authedFetch(WALLET_URL) : null))
+      .then((r) => (r && r.ok ? r.json() : null))
       .then((j) => {
-        if (j && j.wallet) {
-          wallet = j.wallet;
-          const delta = Number(j.delta || 0);
-          const k = delta > 0 ? "win" : (delta < 0 ? "lose" : "push");
-          const s = delta > 0 ? "+" : "";
-          showRoundResult(result + " — " + s + fmtChips(delta) + " chips", k);
-          renderWallet();
-          renderBetInput();
+        // a seated player's wallet comes with every table state
+        if (j && j.wallet) { if (!mySeat()) wallet = j.wallet; }
+        else if (!mySeat()) wallet = null;
+        trimBetToWallet();
+        renderAll();
+      })
+      .catch(() => { renderAll(); });
+  }
+
+  function requestTopup() {
+    authedFetch(TOPUP_URL, { method: "POST" })
+      .then((r) => r.json().then((j) => ({ ok: r.ok, body: j })))
+      .then(({ ok, body }) => {
+        if (ok && body && body.wallet) {
+          wallet = body.wallet;
+          showRoundResult("+" + fmtChips(body.delta) + " chips topped up", "ok");
+          // the table re-reads the wallet on a heartbeat and sends a fresh state
+          if (online.connected) send({ type: "heartbeat" });
+        } else if (body && body.reason) {
+          showRoundResult(body.reason, "warn");
+          if (body.wallet) wallet = body.wallet;
         }
+        renderAll();
       })
       .catch(() => {});
-  }
-
-  function resultToOutcome(resultText) {
-    const s = String(resultText || "").toLowerCase();
-    // Losses and pushes first: "Lose (Dealer Blackjack)" and
-    // "Push (both Blackjack)" mention blackjack but must not pay 3:2.
-    if (s.startsWith("lose")) return "lose";
-    if (s.startsWith("push")) return "push";
-    if (s.indexOf("blackjack") >= 0) return "blackjack";
-    if (s.indexOf("win") >= 0) return "win";
-    return "lose";
-  }
-  function estimateDelta(outcome, bet, doubled) {
-    const stake = doubled ? bet * 2 : bet;
-    if (outcome === "blackjack") return Math.floor(bet * 1.5);
-    if (outcome === "win")       return stake;
-    if (outcome === "push")      return 0;
-    return -stake;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Snapshot + relay
-  // ---------------------------------------------------------------------------
-  function serializeGame() {
-    return {
-      phase: game.phase,
-      round: Number(game.round || 0),
-      order: Array.isArray(game.order) ? game.order.slice() : [],
-      turnIndex: Number(game.turnIndex || 0),
-      dealer: {
-        cards: Array.isArray(game.dealer.cards) ? game.dealer.cards.slice() : [],
-        reveal: !!game.dealer.reveal
-      },
-      hands: Object.assign({}, game.hands),
-      done: Object.assign({}, game.done),
-      results: Object.assign({}, game.results),
-      bets: Object.assign({}, game.bets),
-      doubled: Object.assign({}, game.doubled),
-      blackjacks: Object.assign({}, game.blackjacks),
-      deck: Array.isArray(game.deck) ? game.deck.slice() : []
-    };
-  }
-
-  function applyGameSnapshot(raw) {
-    if (!raw || typeof raw !== "object") return;
-    const prevPhase = game.phase;
-    game.phase = String(raw.phase || "lobby");
-    if (game.phase === "playing" && prevPhase !== "playing") {
-      roundStartTime = Date.now();
-      showRoundResult("", null);
-    }
-    if (prevPhase !== "results" && game.phase === "results") {
-      // New results — reset settle gate
-      // (handled by comparing game.round to lastSettledRound)
-    }
-    game.round = clamp(Number(raw.round || 0), 0, 99999);
-    game.order = Array.isArray(raw.order) ? raw.order.map((id) => String(id)) : [];
-    game.turnIndex = clamp(Number(raw.turnIndex || 0), 0, Math.max(0, game.order.length));
-    const dealerCards = raw.dealer && Array.isArray(raw.dealer.cards) ? raw.dealer.cards.slice(0, 32) : [];
-    game.dealer = { cards: dealerCards, reveal: !!(raw.dealer && raw.dealer.reveal) };
-    game.hands = {};
-    Object.keys(raw.hands || {}).forEach((id) => {
-      const cards = Array.isArray(raw.hands[id]) ? raw.hands[id].slice(0, 32) : [];
-      game.hands[String(id)] = cards;
-    });
-    game.done = {};
-    Object.keys(raw.done || {}).forEach((id) => { game.done[String(id)] = !!raw.done[id]; });
-    game.results = {};
-    Object.keys(raw.results || {}).forEach((id) => { game.results[String(id)] = String(raw.results[id] || ""); });
-    game.bets = {};
-    Object.keys(raw.bets || {}).forEach((id) => {
-      const n = Math.max(0, Math.round(Number(raw.bets[id]) || 0));
-      game.bets[String(id)] = n;
-    });
-    game.doubled = {};
-    Object.keys(raw.doubled || {}).forEach((id) => { game.doubled[String(id)] = !!raw.doubled[id]; });
-    game.blackjacks = {};
-    Object.keys(raw.blackjacks || {}).forEach((id) => { game.blackjacks[String(id)] = !!raw.blackjacks[id]; });
-    game.deck = Array.isArray(raw.deck) ? raw.deck.slice(0, 104) : [];
-    renderAll();
-  }
-
-  function sendOnline(payload) {
-    if (!online.ws || online.ws.readyState !== WebSocket.OPEN) return false;
-    try { online.ws.send(JSON.stringify(payload)); return true; }
-    catch (_e) { return false; }
-  }
-  function sendRelay(payload) { return sendOnline(payload || {}); }
-  function sendLobby(payload) { return sendOnline(Object.assign({ type: "lobby" }, payload || {})); }
-
-  function broadcastState(reason) {
-    if (!online.connected || online.role !== "host") return;
-    sendRelay({ kind: "state_update", reason: String(reason || ""), state: serializeGame() });
-  }
-
-  // ---------------------------------------------------------------------------
-  // Host logic
-  // ---------------------------------------------------------------------------
-  function hostAdvanceTurn() {
-    while (game.turnIndex < game.order.length) {
-      const pid = String(game.order[game.turnIndex] || "");
-      if (!game.done[pid]) break;
-      game.turnIndex += 1;
-    }
-    if (game.turnIndex >= game.order.length) hostResolveDealer();
-  }
-
-  function hostResolveDealer() {
-    game.dealer.reveal = true;
-    // If every player busted or got blackjack, dealer still plays per rule.
-    while (handValue(game.dealer.cards) < 17) {
-      game.dealer.cards.push(drawCard());
-    }
-    const dealerTotal = handValue(game.dealer.cards);
-    const dealerBust  = dealerTotal > 21;
-    const dealerBJ    = isBlackjack(game.dealer.cards);
-    game.results = {};
-    game.order.forEach((id) => {
-      const cards = game.hands[id] || [];
-      const total = handValue(cards);
-      const pbj   = !!game.blackjacks[id];
-      if (pbj && dealerBJ)       game.results[id] = "Push (both Blackjack)";
-      else if (pbj)              game.results[id] = "Blackjack! (3:2)";
-      else if (dealerBJ)         game.results[id] = "Lose (Dealer Blackjack)";
-      else if (total > 21)       game.results[id] = "Lose (Bust)";
-      else if (dealerBust)       game.results[id] = "Win (Dealer bust)";
-      else if (total > dealerTotal) game.results[id] = "Win";
-      else if (total < dealerTotal) game.results[id] = "Lose";
-      else                       game.results[id] = "Push";
-    });
-    game.phase = "results";
-    broadcastState("round_results");
-    renderAll();
-  }
-
-  function hostStartRound() {
-    if (!online.connected || online.role !== "host") return;
-    const participants = online.participants || [];
-    const active = participants
-      .filter((p) => !!(p && p.ready))
-      .map((p) => String(p.id || ""));
-    if (active.length < 1) { renderAll(); return; }
-
-    // Capture each player's declared bet from the lobby map (defaults to BET_DEFAULT).
-    const bets = {};
-    participants.forEach((p) => {
-      if (!p || !p.ready) return;
-      const b = clampBet(Number(p.bet) || BET_DEFAULT);
-      bets[String(p.id)] = b;
-    });
-
-    game.phase = "playing";
-    game.round += 1;
-    roundStartTime = Date.now();
-    game.order = active;
-    game.turnIndex = 0;
-    game.deck = buildShuffledDeck();
-    game.dealer = { cards: [drawCard(), drawCard()], reveal: false };
-    game.hands = {};
-    game.done = {};
-    game.results = {};
-    game.bets = bets;
-    game.doubled = {};
-    game.blackjacks = {};
-
-    active.forEach((id) => {
-      game.hands[id] = [drawCard(), drawCard()];
-      game.done[id] = false;
-      if (isBlackjack(game.hands[id])) {
-        game.done[id] = true;
-        game.blackjacks[id] = true;
-      }
-    });
-    hostAdvanceTurn();
-    broadcastState("round_start");
-    renderAll();
-  }
-
-  function hostApplyAction(playerId, action) {
-    if (game.phase !== "playing") return;
-    if (String(currentTurnId()) !== String(playerId)) return;
-    if (game.done[playerId]) return;
-
-    if (action === "hit") {
-      game.hands[playerId].push(drawCard());
-      if (handValue(game.hands[playerId]) >= 21) game.done[playerId] = true;
-    } else if (action === "stand") {
-      game.done[playerId] = true;
-    } else if (action === "double") {
-      // Must have exactly 2 cards; add exactly one and auto-stand.
-      if (!Array.isArray(game.hands[playerId]) || game.hands[playerId].length !== 2) return;
-      game.doubled[playerId] = true;
-      game.hands[playerId].push(drawCard());
-      game.done[playerId] = true;
-    } else {
-      return;
-    }
-    hostAdvanceTurn();
-    if (game.phase === "playing") broadcastState("player_action");
-    renderAll();
   }
 
   // ---------------------------------------------------------------------------
   // Socket plumbing
   // ---------------------------------------------------------------------------
-  function setDisconnected() {
+  function rawSend(ws, payload) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+    try { ws.send(JSON.stringify(payload)); return true; }
+    catch (_e) { return false; }
+  }
+  function send(payload) { return rawSend(net.ws, payload); }
+
+  function setBusy(on) {
+    online.busy = !!on;
+    clearTimeout(online.busyTimer);
+    if (on) online.busyTimer = setTimeout(() => { online.busy = false; renderControls(); }, 5000);
+  }
+
+  function roleLabel() {
+    if (isHost()) return "host";
+    if (mySeat()) return "seated";
+    return "watching";
+  }
+  function showOnline() {
+    netState("ok", "Online: " + online.room + " (" + roleLabel() + ")");
+  }
+
+  function saveTable(code) {
+    try {
+      if (code) sessionStorage.setItem(TABLE_STORAGE_KEY, code);
+      else sessionStorage.removeItem(TABLE_STORAGE_KEY);
+    } catch (_e) {}
+  }
+  function savedTable() {
+    try { return normalizeRoomCode(sessionStorage.getItem(TABLE_STORAGE_KEY) || ""); }
+    catch (_e) { return ""; }
+  }
+
+  function dropSocket() {
+    const ws = net.ws;
+    net.ws = null;
+    clearTimeout(net.retryTimer);
+    clearTimeout(net.dropTimer);
+    if (ws) { try { ws.close(); } catch (_e) {} }
+  }
+
+  function resetTable() {
     online.connected = false;
-    online.clientId = "";
-    online.role = "";
-    online.participants = [];
-    online.canStart = false;
-    online.hasPassword = false;
-    online.localReady = false;
+    online.room = "";
+    online.betSent = null;
+    setBusy(false);
+    resetGame();
+    bannerRound = -1;
+    showRoundResult("", null);
   }
 
-  function closeSocket(message, keepRoom) {
-    if (online.ws) {
-      try {
-        if (online.ws.readyState === WebSocket.OPEN) sendOnline({ type: "leave" });
-        online.ws.close();
-      } catch (_e) {}
-    }
-    online.ws = null;
-    setDisconnected();
-    if (!keepRoom) online.room = "";
-    resetRoundState();
-    netState("warn", online.room ? ("Disconnected (" + online.room + ")") : "Offline");
-    renderAll();
-  }
-
-  function handleRelay(payload, senderId) {
-    if (!payload || typeof payload !== "object") return;
-    const kind = String(payload.kind || "");
-    if (kind === "request_sync" && online.role === "host") {
-      sendRelay({ kind: "state_sync", state: serializeGame() });
-      return;
-    }
-    if ((kind === "state_update" || kind === "state_sync") && online.role !== "host") {
-      applyGameSnapshot(payload.state || {});
-      return;
-    }
-    if (kind === "start_request" && online.role === "host") {
-      hostStartRound();
-      return;
-    }
-    if (kind === "action_request" && online.role === "host") {
-      const action = String(payload.action || "");
-      if (action === "hit" || action === "stand" || action === "double") {
-        hostApplyAction(String(senderId || ""), action);
-      }
-    }
-  }
-
-  function connectRoom(rawCode) {
-    const code = normalizeRoomCode(rawCode);
-    roomCodeEl.value = code;
-    if (code.length < 4) {
-      tableStatusEl.textContent = "Room code must be at least 4 characters.";
-      return;
-    }
-    online.playerName = normalizeName(playerNameEl.value);
-    playerNameEl.value = online.playerName;
-    closeSocket("", true);
-    online.room = code;
-    netState("warn", "Connecting…");
-
+  // Open a socket and send `first()` once it is open.
+  function openSocket(first) {
+    dropSocket();
+    net.manualClose = false;
     let ws;
     try { ws = new WebSocket(WS_URL); }
     catch (_e) {
       netState("warn", "Socket error");
-      tableStatusEl.textContent = "Could not open websocket.";
+      setFlash("Could not open websocket.");
       return;
     }
-    online.ws = ws;
-
+    net.ws = ws;
     ws.addEventListener("open", () => {
-      sendOnline({
-        type: "join",
-        room: code,
-        password: String(roomPasswordEl.value || "").slice(0, 32),
-        name: online.playerName
-      });
-      netState("warn", "Joining room…");
+      if (net.ws !== ws) return;
+      rawSend(ws, first());
     });
-
     ws.addEventListener("message", (event) => {
+      if (net.ws !== ws) return;
       let data = null;
       try { data = JSON.parse(event.data); } catch (_e) { return; }
       if (!data || typeof data !== "object") return;
-
-      if (data.type === "error") {
-        netState("warn", String(data.message || "Connection error"));
-        tableStatusEl.textContent = String(data.message || "Room error");
-        return;
-      }
-      if (data.type === "joined") {
-        online.connected = true;
-        online.room = String(data.room || code);
-        online.clientId = String(data.client_id || "");
-        online.role = String(data.role || "");
-        online.participants = Array.isArray(data.participants) ? data.participants : [];
-        online.canStart = !!data.can_start;
-        online.hasPassword = !!data.has_password;
-        roomCodeEl.value = online.room;
-        netState("ok", "Online: " + online.room + " (" + (online.role || "-") + ")");
-        sendLobby({ name: online.playerName, ready: online.localReady, bet: online.localBet });
-        if (online.role === "guest") sendRelay({ kind: "request_sync" });
-        if (online.role === "host") broadcastState("host_joined");
-        renderAll();
-        return;
-      }
-      if (data.type === "room_state") {
-        online.participants = Array.isArray(data.participants) ? data.participants : [];
-        online.canStart = !!data.can_start;
-        online.hasPassword = !!data.has_password;
-        if (online.role === "host" && game.phase === "playing") {
-          const connectedIds = new Set(online.participants.map((p) => String(p.id || "")));
-          game.order = game.order.filter((id) => connectedIds.has(String(id)));
-          if (game.turnIndex >= game.order.length) hostResolveDealer();
-        }
-        renderAll();
-        return;
-      }
-      if (data.type === "relay") handleRelay(data.payload || {}, String(data.from || ""));
+      onMessage(data);
     });
+    ws.addEventListener("close", () => onSocketClosed(ws));
+    ws.addEventListener("error", () => { /* close follows */ });
+    renderAll();
+  }
 
-    ws.addEventListener("close", () => { closeSocket("Disconnected from room.", true); });
-    ws.addEventListener("error", () => { netState("warn", "Socket error"); });
+  function onSocketClosed(ws) {
+    if (net.ws !== ws) return;
+    net.ws = null;
+    clearTimeout(net.dropTimer);
+    online.connected = false;
+    setBusy(false);
+    if (!net.manualClose && online.wantRoom) {
+      scheduleReconnect();
+    } else {
+      resetTable();
+      netState("warn", "Offline");
+    }
+    renderAll();
+  }
+
+  function scheduleReconnect() {
+    clearTimeout(net.retryTimer);
+    net.attempt += 1;
+    const base = Math.min(10000, 600 * Math.pow(2, Math.min(net.attempt - 1, 5)));
+    const delay = Math.round(base * (0.8 + Math.random() * 0.4));
+    netState("warn", "Reconnecting (" + online.wantRoom + ")…");
+    net.retryTimer = setTimeout(rejoin, delay);
+  }
+  function rejoin() {
+    const code = online.wantRoom;
+    if (!code || net.ws) return;
+    online.pendingPassword = online.password;
+    openSocket(() => ({ type: "join", code: code, password: online.password || undefined }));
+  }
+
+  function onMessage(m) {
+    switch (m.type) {
+      case "room": onRoom(m); break;
+      case "state": onState(m.state); break;
+      case "error": onServerError(m); break;
+      case "left":
+        onLeft();
+        // the same account took this seat from another tab or device
+        if (m.reason === "replaced") setFlash("You're at this table in another window.", 8000);
+        break;
+      default: break;
+    }
+  }
+
+  function onRoom(m) {
+    clearTimeout(net.dropTimer);
+    online.connected = true;
+    online.room = normalizeRoomCode(m.code) || online.wantRoom;
+    online.wantRoom = online.room;
+    online.password = online.pendingPassword;
+    online.betSent = null;
+    net.attempt = 0;
+    if (!game.you && m.you != null) game.you = String(m.you);
+    roomCodeEl.value = online.room;
+    saveTable(online.room);
+    showOnline();
+    renderAll();
+  }
+
+  function onState(st) {
+    if (!st || typeof st !== "object") return;
+    setBusy(false);
+    const prevRound = game.round;
+    mirrorState(st);
+    if (game.round !== prevRound) online.betSent = null;
+    trimBetToWallet();
+    if (online.connected) showOnline();
+    syncBet();
+    renderAll();
+    noteRoundRecorded();
+  }
+
+  function onServerError(m) {
+    const msg = String(m.message || "Something went wrong.");
+    setBusy(false);
+    if (online.connected) {
+      setFlash(msg);
+      renderAll();
+      return;
+    }
+    // Not in a room yet. The server may still put us in one (a guest joining
+    // is told it can't sit, then watches), so give it a moment before closing.
+    netState("warn", msg);
+    setFlash(msg, 6000);
+    const reconnecting = !!online.wantRoom;
+    if (reconnecting) {
+      // the table we were at is gone (or won't have us back): stop retrying
+      online.wantRoom = "";
+      online.password = "";
+      saveTable("");
+      resetTable();
+      lastView = null;
+    }
+    clearTimeout(net.dropTimer);
+    const ws = net.ws;
+    net.dropTimer = setTimeout(() => {
+      if (net.ws !== ws || online.connected) return;
+      net.manualClose = true;
+      dropSocket();
+      netState("warn", msg);
+      renderAll();
+    }, 1500);
+    renderAll();
+  }
+
+  function onLeft() {
+    online.wantRoom = "";
+    online.password = "";
+    saveTable("");
+    net.manualClose = true;
+    dropSocket();
+    resetTable();
+    netState("warn", "Offline");
+    renderAll();
   }
 
   // ---------------------------------------------------------------------------
-  // Preferences
+  // Intents
   // ---------------------------------------------------------------------------
-  function savePlayerName() {
-    online.playerName = normalizeName(playerNameEl.value);
-    playerNameEl.value = online.playerName;
-    try { window.localStorage.setItem("cartofia_blackjack_name", online.playerName); }
-    catch (_e) {}
+  function leaveTable() {
+    if (net.ws && online.connected) send({ type: "leave" });
+    onLeft();
   }
-  function loadPlayerName() {
-    try {
-      online.playerName = normalizeName(window.localStorage.getItem("cartofia_blackjack_name") || DEFAULT_NAME);
-    } catch (_e) { online.playerName = DEFAULT_NAME; }
-    playerNameEl.value = online.playerName;
+
+  function createTable() {
+    const pw = String(roomPasswordEl.value || "").slice(0, 32);
+    if (online.connected) send({ type: "leave" });
+    online.wantRoom = "";
+    online.pendingPassword = pw;
+    saveTable("");
+    resetTable();
+    netState("warn", "Creating table…");
+    openSocket(() => ({ type: "create", password: pw || undefined }));
   }
-  function saveBet() {
+
+  function joinTable(rawCode) {
+    const code = normalizeRoomCode(rawCode);
+    roomCodeEl.value = code;
+    if (code.length < 4) {
+      setFlash("Room code must be at least 4 characters.");
+      return;
+    }
+    const pw = String(roomPasswordEl.value || "").slice(0, 32);
+    if (online.connected) send({ type: "leave" });
+    online.wantRoom = "";
+    online.pendingPassword = pw;
+    saveTable("");
+    resetTable();
+    netState("warn", "Joining " + code + "…");
+    openSocket(() => ({ type: "join", code: code, password: pw || undefined }));
+  }
+
+  function sendAction(action) {
+    if (!online.connected || game.phase !== "playing" || online.busy) return;
+    if (!game.you || game.turn !== game.you) return;
+    if (send({ type: "action", action: action })) { setBusy(true); renderControls(); }
+  }
+
+  function applyBet(nextRaw) {
+    let next = clampBet(nextRaw);
+    const cap = availableChips();
+    if (next > cap) next = floorBet(cap);
+    online.localBet = next;
+    online.betSent = null;
     try { window.localStorage.setItem(BET_STORAGE_KEY, String(online.localBet)); } catch (_e) {}
+    syncBet();
+    renderBetInput();
+    renderLobby();
   }
   function loadBet() {
     try {
@@ -981,63 +940,30 @@
   // Event wiring
   // ---------------------------------------------------------------------------
   roomCodeEl.addEventListener("input", () => { roomCodeEl.value = normalizeRoomCode(roomCodeEl.value); });
-  roomCodeEl.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); connectRoom(roomCodeEl.value); } });
-  roomPasswordEl.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); connectRoom(roomCodeEl.value); } });
-  playerNameEl.addEventListener("input", () => { playerNameEl.value = normalizeName(playerNameEl.value); });
-  playerNameEl.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      savePlayerName();
-      if (online.connected) sendLobby({ name: online.playerName });
-    }
-  });
+  roomCodeEl.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); joinTable(roomCodeEl.value); } });
+  roomPasswordEl.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); joinTable(roomCodeEl.value); } });
 
-  createRoomBtn.addEventListener("click", () => {
-    const code = randomRoomCode();
-    roomCodeEl.value = code;
-    connectRoom(code);
-  });
-  joinRoomBtn.addEventListener("click",  () => connectRoom(roomCodeEl.value));
-  leaveRoomBtn.addEventListener("click", () => closeSocket("Left room.", false));
+  createRoomBtn.addEventListener("click", createTable);
+  joinRoomBtn.addEventListener("click", () => joinTable(roomCodeEl.value));
+  leaveRoomBtn.addEventListener("click", leaveTable);
 
-  saveNameBtn.addEventListener("click", () => {
-    savePlayerName();
-    if (online.connected) sendLobby({ name: online.playerName });
-  });
   readyBtn.addEventListener("click", () => {
-    if (!online.connected) return;
-    online.localReady = !online.localReady;
-    updateReadyButton();
-    sendLobby({ ready: online.localReady, bet: online.localBet });
+    const me = mySeat();
+    if (!online.connected || !me || !betweenRounds()) return;
+    syncBet();
+    send({ type: "ready", ready: !me.ready });
   });
 
   startRoundBtn.addEventListener("click", () => {
-    if (!online.connected) return;
-    if (online.role === "host") hostStartRound();
-    else sendRelay({ kind: "start_request" });
+    if (!online.connected || !isHost() || !betweenRounds() || online.busy) return;
+    syncBet();
+    if (send({ type: "start" })) { setBusy(true); renderControls(); }
   });
 
-  function sendAction(action) {
-    if (!online.connected || game.phase !== "playing") return;
-    if (String(currentTurnId()) !== String(online.clientId)) return;
-    if (online.role === "host") hostApplyAction(online.clientId, action);
-    else sendRelay({ kind: "action_request", action });
-  }
   hitBtn.addEventListener("click",   () => sendAction("hit"));
   standBtn.addEventListener("click", () => sendAction("stand"));
   if (doubleBtn) doubleBtn.addEventListener("click", () => sendAction("double"));
 
-  // Bet controls
-  function applyBet(nextRaw) {
-    const chips = wallet ? Number(wallet.chips) : Infinity;
-    let next = clampBet(nextRaw);
-    if (next > chips) next = clampBet(chips);
-    if (next < BET_MIN) next = BET_MIN;
-    online.localBet = next;
-    saveBet();
-    renderBetInput();
-    if (online.connected) sendLobby({ bet: online.localBet });
-  }
   if (betInputEl) {
     betInputEl.addEventListener("change", () => applyBet(betInputEl.value));
     betInputEl.addEventListener("blur",   () => applyBet(betInputEl.value));
@@ -1046,19 +972,32 @@
   if (betUpBtn)   betUpBtn.addEventListener("click",   () => applyBet(online.localBet + BET_STEP));
   if (topupBtn)   topupBtn.addEventListener("click",   requestTopup);
 
-  // Heartbeat + unload
-  setInterval(() => {
-    if (online.ws && online.ws.readyState === WebSocket.OPEN) sendOnline({ type: "heartbeat" });
-  }, HEARTBEAT_MS);
-  window.addEventListener("beforeunload", () => closeSocket("", false));
+  // "Leave table" in the top bar really leaves; a reload keeps the seat
+  // (the server resumes it when this account reconnects).
+  if (backLinkEl) backLinkEl.addEventListener("click", () => {
+    if (net.ws && online.connected) send({ type: "leave" });
+    saveTable("");
+  });
+
+  setInterval(() => { if (net.ws) send({ type: "heartbeat" }); }, HEARTBEAT_MS);
+  // turn countdown in the status line
+  setInterval(() => { if (game.phase === "playing" && game.turnDeadline) renderStatus(); }, 500);
+  window.addEventListener("online", () => {
+    if (!net.ws && online.wantRoom) { clearTimeout(net.retryTimer); rejoin(); }
+  });
 
   // ---------------------------------------------------------------------------
   // Boot
   // ---------------------------------------------------------------------------
-  loadPlayerName();
   loadBet();
-  resetRoundState();
+  resetGame();
   netState("warn", "Offline");
-  loadWallet();
   renderAll();
+  loadWallet();
+  const resumeCode = savedTable();
+  if (resumeCode) {
+    roomCodeEl.value = resumeCode;
+    online.wantRoom = resumeCode;
+    rejoin();
+  }
 })();
