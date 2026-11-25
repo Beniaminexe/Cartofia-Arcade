@@ -6,8 +6,8 @@
   const FILES = "abcdefgh";
   const VALUE = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
   const START_COUNTS = { w: { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 }, b: { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 } };
-  const WS_URL = window.CARTOFIA_CHESS_WS_URL || ((window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + "/ws/chess");
-  const HEARTBEAT_MS = 20000;
+  const WS_URL = window.CARTOFIA_CHESS_WS_URL || ((window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + "/ws/rooms/chess");
+  const HEARTBEAT_MS = 20000; // the room server drops a socket after 30s of silence
   const DEFAULT_NAME = "Player";
 
   const boardEl = document.getElementById("board");
@@ -801,12 +801,23 @@
     }
   }
 
-  function sendRelay(payload) { return sendOnline(payload || {}); }
+  // Room protocol (/ws/rooms/chess, api_server.room_websocket): the server only
+  // relays known frame types, so the host-authoritative game rides on two:
+  //   host  -> guest  {type:"state",   kind:<reason>, state:<snapshot>}
+  //   guest -> host   {type:"control", kind:<request>, action:<request data>}
+  // Guest control frames are forwarded with a fixed field set, which is why
+  // request data travels inside `action`.
   function sendLobby(payload) { return sendOnline(Object.assign({ type: "lobby" }, payload || {})); }
+  function sendState(reason) {
+    return sendOnline({ type: "state", kind: String(reason || "state_update"), state: serializeState() });
+  }
+  function sendHostRequest(kind, data) {
+    return sendOnline({ type: "control", kind: kind, action: data || null });
+  }
 
   function broadcastState(reason) {
     if (st.mode !== "online" || online.role !== "host" || !online.connected) return;
-    sendRelay({ kind: "state_update", reason: String(reason || ""), state: serializeState() });
+    sendState(reason);
   }
 
   function setDisconnected() {
@@ -839,38 +850,46 @@
 
   function handleRelay(payload) {
     if (!payload || typeof payload !== "object") return;
+    const type = String(payload.type || "");
     const kind = String(payload.kind || "");
 
-    if (kind === "request_sync" && online.role === "host") {
-      sendRelay({ kind: "state_sync", state: serializeState() });
-      return;
-    }
-    if ((kind === "state_update" || kind === "state_sync") && online.role === "guest") {
-      const reason = String(payload.reason || "");
-      if (reason === "host_start" || reason === "host_reset") {
+    // Host -> guest: authoritative board snapshot; `kind` carries the reason.
+    if (type === "state") {
+      if (online.role !== "guest") return;
+      if (kind === "host_start" || kind === "host_reset") {
         gameStartTime = Date.now();
         activityLogged = false;
       }
       applyRemoteState(payload.state || {});
       return;
     }
-    if (kind === "start_request" && online.role === "host" && onlineModePlayable()) {
+
+    // Guest -> host: requests; the host validates everything against its board.
+    if (type !== "control" || online.role !== "host") return;
+    const data = (payload.action && typeof payload.action === "object") ? payload.action : {};
+
+    if (kind === "request_sync") {
+      sendState("state_sync");
+      return;
+    }
+    if (!onlineModePlayable()) return;
+    if (kind === "start_request") {
       resetLocalGame();
       broadcastState("host_start");
       return;
     }
-    if (kind === "reset_request" && online.role === "host" && onlineModePlayable()) {
+    if (kind === "reset_request") {
       resetLocalGame();
       broadcastState("host_reset");
       return;
     }
-    if (kind === "move_request" && online.role === "host" && onlineModePlayable()) {
-      const move = parseMove(payload.move);
+    if (kind === "move_request") {
+      const move = parseMove(data.move);
       if (!move || st.pos.turn !== "b") return;
       const all = legal(st.pos, st.pos.turn);
       const matched = all.find((m) => sameMove(m, move));
       if (!matched) {
-        sendRelay({ kind: "state_sync", state: serializeState() });
+        sendState("state_sync");
         return;
       }
       applyMoveAndLog(matched);
@@ -949,7 +968,7 @@
         roomCodeEl.value = online.room;
         netState("ok", "Online: " + online.room + " (" + (online.role || "-") + ")");
         sendLobby({ name: online.playerName, ready: online.localReady });
-        if (online.role === "guest") sendRelay({ kind: "request_sync" });
+        if (online.role === "guest") sendHostRequest("request_sync");
         if (online.role === "host") broadcastState("host_joined");
         renderAll();
         return;
@@ -966,6 +985,12 @@
 
       if (data.type === "relay") {
         handleRelay(data.payload || {});
+        return;
+      }
+
+      // The room server closes a room when its host disconnects.
+      if (data.type === "room_closed") {
+        closeSocket("The host left, so the room closed.", true);
         return;
       }
     });
@@ -987,7 +1012,7 @@
 
   function sendGuestMove(m) {
     if (!online.connected || online.role !== "guest") return;
-    sendRelay({ kind: "move_request", move: serializeMove(m), turn: st.pos.turn, move_number: st.pos.moveNumber });
+    sendHostRequest("move_request", { move: serializeMove(m), turn: st.pos.turn, move_number: st.pos.moveNumber });
   }
 
   function startOnlineRound() {
@@ -1003,7 +1028,7 @@
       resetLocalGame();
       broadcastState("host_start");
     } else {
-      sendRelay({ kind: "start_request" });
+      sendHostRequest("start_request");
       renderAll("Start request sent to host.");
     }
   }

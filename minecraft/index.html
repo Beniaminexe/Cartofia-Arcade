@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <title>Cartofia Minecraft — Shared Survival World</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="/favicon.ico?v=1" sizes="16x16 32x32 48x48" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=1" />
+  <link rel="manifest" href="/assets/icons/site.webmanifest?v=1" />
   <meta name="description" content="Cartofia's vanilla Minecraft Java server: live status, connect address, and controls to wake the server." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -401,7 +404,7 @@
     const CONFIG = {
       serverHost: "mc.cartofia.com",
       serverPort: 25565,
-      statusApi:  "https://api.mcstatus.io/v2/status/java/mc.cartofia.com:25565"
+      statusApi:  "/api/minecraft/info"
     };
 
     async function refreshMinecraftStatus() {
@@ -422,29 +425,37 @@
       }
 
       try {
-        const response = await fetch(CONFIG.statusApi);
+        const response = await fetch(CONFIG.statusApi, { cache: "no-store" });
         if (!response.ok) throw new Error("HTTP " + response.status);
         const data = await response.json();
+        const version = document.getElementById("mcVersionTag");
+        if (version && data.version) version.textContent = data.version;
 
-        if (data.online) {
+        if (data.online === true) {
           setState("is-online");
           dot.classList.add("online");
           statusText.textContent = "Online";
-          const online = data.players && typeof data.players.online === "number" ? data.players.online : 0;
-          const max    = data.players && typeof data.players.max    === "number" ? data.players.max    : "--";
-          playerCount.textContent = online + " / " + max;
-          note.textContent = online > 0
-            ? "The world is awake and " + online + (online === 1 ? " player is" : " players are") + " on. Hop in!"
-            : "The world is awake — nobody's on yet. It will nap again if it stays empty.";
-        } else {
+          const players = data.players;
+          playerCount.textContent = players ? players.online + " / " + players.max : "--";
+          note.textContent = !players ? "The world is awake. The player count is unavailable."
+            : players.online > 0
+              ? "The world is awake and " + players.online + (players.online === 1 ? " player is" : " players are") + " on. Hop in!"
+              : "The world is awake — nobody's on yet. It will nap again if it stays empty.";
+        } else if (data.running === false) {
           setState("is-sleeping");
           dot.classList.add("offline");
           statusText.textContent = "Sleeping";
           playerCount.textContent = "0 / --";
           note.textContent = "The server naps when nobody's online. Approved players can wake it with the controls below.";
+        } else if (data.running === true) {
+          setState("is-unknown");
+          statusText.textContent = "Waiting for server";
+          playerCount.textContent = "--";
+          note.textContent = "The main world is running and its Minecraft status is unavailable.";
+        } else {
+          throw new Error("The main world status is unavailable");
         }
       } catch (error) {
-        // External status service unreachable: say so plainly instead of guessing.
         console.warn("Minecraft status check unavailable:", error && error.message ? error.message : error);
         setState("is-unknown");
         statusText.textContent = "Status unknown";
@@ -462,19 +473,6 @@
        Copy server address to clipboard
     ---------------------------------------------------------- */
     wireCopy(document.getElementById("copyAddressBtn"), function () { return "mc.cartofia.com"; });
-
-
-    /* ----------------------------------------------------------
-       Dynamic version tag from autoupdater state
-    ---------------------------------------------------------- */
-    (function () {
-      const tag = document.getElementById("mcVersionTag");
-      if (!tag) return;
-      fetch("/api/minecraft/info", { credentials: "same-origin" })
-        .then(r => r.ok ? r.json() : null)
-        .then(data => { if (data && data.version) tag.textContent = data.version; })
-        .catch(() => {});
-    })();
 
 
     /* ----------------------------------------------------------
@@ -605,7 +603,10 @@
           lastResult = describeError("Request failed — the site API didn't answer.", 0);
         }
         showResult(feedback, lastResult);
-        setTimeout(fetchStatus, 1200);
+        setTimeout(function () {
+          fetchStatus();
+          refreshMinecraftStatus();
+        }, 1200);
       }
 
       async function requestAccess(feedback) {
@@ -658,6 +659,7 @@
       var createBtn     = document.getElementById("myServerCreateBtn");
       var createHint    = document.getElementById("myServerCreateHint");
       var address       = document.getElementById("myServerAddress");
+      var copyBtn       = document.getElementById("myServerCopy");
       var dot           = document.getElementById("myServerDot");
       var statusEl      = document.getElementById("myServerStatus");
       var createdEl     = document.getElementById("myServerCreated");
@@ -668,7 +670,7 @@
       var feedback      = document.getElementById("myServerFeedback");
       var lastError     = null;
 
-      wireCopy(document.getElementById("myServerCopy"), function () { return address.textContent; });
+      wireCopy(copyBtn, function () { return address.textContent; });
 
       function token() {
         try { return sessionStorage.getItem("oidc_access_token") || localStorage.getItem("oidc_access_token"); }
@@ -729,7 +731,8 @@
         emptyWrap.classList.add("hidden");
         card.classList.remove("hidden");
         var s = data.server;
-        address.textContent    = s.address;
+        address.textContent    = s.address || "Public join address pending";
+        copyBtn.disabled       = !s.address;
         statusEl.textContent   = s.running === true ? "Online" : (s.running === false ? "Offline" : "Unknown");
         dot.className          = "server-dot" + (s.running ? " online" : (s.running === false ? " offline" : ""));
         createdEl.textContent  = relative(s.created_at);
