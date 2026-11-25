@@ -12,11 +12,13 @@
   <link rel="stylesheet" href="/arcade/game-common.css?v=2" />
   <link rel="stylesheet" href="/assets/game-stats.css?v=2" />
   <link rel="stylesheet" href="/arcade/game-shell-v2.css?v=2" />
-  <link rel="stylesheet" href="/arcade/blackjack/render.css?v=1" />
+  <link rel="stylesheet" href="/arcade/blackjack/render.css?v=2" />
   <style>
     /* Blackjack — page layout only; the stage shell lives in /arcade/game-shell-v2.css,
        the table art (felt, cards, chips, seats, plaque, controls, rail bits) in render.css */
     .blackjack-layout { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); }
+    /* names come from the account: the field is read-only and has no Save */
+    .gx #saveNameBtn[hidden] { display: none; }
   </style>
 </head>
 <body class="gx" style="--g:#2fc184">
@@ -169,8 +171,8 @@
               </div>
 
               <div class="online-row">
-                <input id="playerName" class="online-input" type="text" maxlength="16" autocomplete="off" placeholder="Player name" aria-label="Player name" />
-                <button id="saveNameBtn" class="btn btn-ghost btn-sm" type="button">Save</button>
+                <input id="playerName" class="online-input" type="text" maxlength="32" autocomplete="off" placeholder="Your account name" aria-label="Your name at the table (from your account)" title="Your name at the table comes from your Cartofia account." readonly />
+                <button id="saveNameBtn" class="btn btn-ghost btn-sm" type="button" hidden>Save</button>
                 <button id="readyBtn" class="btn btn-ghost btn-sm" type="button">Ready: Off</button>
               </div>
 
@@ -178,7 +180,7 @@
               <ul id="lobbyList" class="lobby-list"></ul>
             </section>
 
-            <p class="game-note">Hit, stand, or double down. Dealer stands on all 17s. Blackjack pays 3:2.</p>
+            <p class="game-note">Hit, stand, or double down. Dealer stands on all 17s. Blackjack pays 3:2. The table server deals every hand and settles your chips.</p>
           </aside>
 
         </div>
@@ -219,6 +221,6 @@
   })();
   </script>
   <script src="/arcade/blackjack/render.js?v=1"></script>
-  <script src="/arcade/blackjack/game.js?v=7"></script>
+  <script src="/arcade/blackjack/game.js?v=8"></script>
 </body>
 </html>

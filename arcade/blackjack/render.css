@@ -613,6 +613,12 @@
   .bj-res-amt { font-size: 12px; }
 }
 @media (max-width: 540px) {
+  /* Seats are ~150px wide on phones: let the result wrap instead of
+     truncating ("Win (Deale…"). */
+  .bj-seat .player-head .player-meta.player-result {
+    white-space: normal; overflow: visible; text-overflow: clip;
+    align-items: flex-start; font-size: 10.5px; line-height: 1.2;
+  }
   .bj-table { --cw: 50px; --cwd: 56px; }
   .bj-felt .dealer-label { font-size: 10px; }
   .bj-res-ic { width: 30px; height: 30px; }
