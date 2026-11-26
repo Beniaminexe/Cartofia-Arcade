@@ -121,8 +121,8 @@ compete on one board.
 ## Release plan
 | Release | Contents |
 |---|---|
-| v1 | One board, both end modes, Classic + Market events twists, up to 6 players |
-| v1.1 | The second board (needs only a second price table, tuned by the simulation) |
+| v1 | Compact 32-space board, both end modes, Classic + Market events twists, up to 6 players |
+| v1.1 | Classic 40-space board (needs only a second price table, tuned by the simulation) |
 | v2 | Characters (needs per-character balancing) |
 
 ## Build order
@@ -140,10 +140,9 @@ One agent owns each step's files, as in the game redesigns.
 - Both board sizes, chosen per lobby.
 - All twists available as game modes.
 - Up to 6 players.
+- **v1 ships the compact 32-space board** (26 Nov 2026): easier testing, shorter games.
 
 ## Open questions
-1. **Which board ships in v1:** compact 32 (recommended: faster, better on
-   phones) or classic 40?
-2. Then: the full tile list with prices and rents, the event-card deck, and
-   the economy numbers (starting cash, Harvest payout, tax) — tuned by the
-   simulation, not guessed.
+1. The full tile list for the compact board with prices and rents, the
+   event-card deck, and the economy numbers (starting cash, Harvest payout,
+   tax) — tuned by the simulation, not guessed.
