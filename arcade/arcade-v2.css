@@ -208,8 +208,15 @@ body.ax main { position: relative; z-index: 1; display: block; max-width: none; 
   grid-auto-columns: minmax(240px, 1fr);
   gap: 12px;
   overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ax-dim) var(--ax-card);
   padding-bottom: 6px;
   scroll-snap-type: x proximity;
+}
+@supports not (scrollbar-color: auto) {
+  .ax-recent-list::-webkit-scrollbar { height: 8px; }
+  .ax-recent-list::-webkit-scrollbar-track { background: var(--ax-card); border-radius: 8px; }
+  .ax-recent-list::-webkit-scrollbar-thumb { background: var(--ax-dim); border-radius: 8px; }
 }
 .ax-recent-item a {
   display: flex; align-items: center; gap: 12px;
